@@ -1,0 +1,55 @@
+/* forms.css */
+
+/* Shared styles for all forms */
+
+.form-container {
+    width: 300px; /* Adjust width as needed */
+    margin: 50px auto 0; /* Add margin-top */
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Add box shadow for depth */
+}
+
+.form-title {
+    margin-bottom: 20px; /* Add margin below title */
+    text-align: center; /* Center the title */
+    font-size: 1.5rem; /* Increase font size for emphasis */
+    color: #333; /* Darken the title color for better readability */
+}
+
+.form-group {
+    margin-bottom: 20px; /* Add margin below each form group */
+}
+
+.form-label {
+    margin-bottom: 5px; /* Add margin below form label */
+    font-size: 1rem; /* Adjust font size for labels */
+    color: #555; /* Dim the label color for subtlety */
+    display: block; /* Display label as block-level element */
+}
+
+.form-input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    flex-grow: 1; /* Ensure all input fields have equal size */
+    display: block; /* Display input fields as block-level elements */
+    width: 100%; /* Ensure input fields take up full width */
+    box-sizing: border-box; /* Include padding and border in width calculation */
+}
+
+.form-btn {
+    padding: 12px 24px; /* Increase padding for buttons */
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s; /* Smooth transition on hover */
+}
+
+.form-btn:hover {
+    background-color: #0056b3;
+}
