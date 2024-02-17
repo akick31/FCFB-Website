@@ -8,7 +8,9 @@ import Login from './pages/LoginPage';
 import Registration from './pages/RegistrationPage';
 import Profile from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
+import VerifyPage from "./pages/VerifyPage";
 import NotFoundPage from './pages/NotFoundPage';
+import ErrorPage from "./pages/ErrorPage";
 import { getUserById } from './components/api/user';
 
 const App = () => {
@@ -53,6 +55,10 @@ const App = () => {
               <Route path="/register" element={<Registration />} />
               <Route path="/profile" element={<Profile user={user}/>} />
               <Route path="/admin" element={<AdminPage user={user}/>} />
+              <Route path="/verify" element={<VerifyPage
+                  userId={new URLSearchParams(window.location.search).get('id')}
+                  token={new URLSearchParams(window.location.search).get('token')} />} />
+              <Route path="/error" element={<ErrorPage />} />
               <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>

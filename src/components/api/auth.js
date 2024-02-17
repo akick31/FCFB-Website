@@ -1,6 +1,11 @@
 import axios from "axios";
 import {getUserById} from "./user";
 
+export const registerUser = async (formData) => {
+    const response = await axios.post('http://localhost:8080/arceus/auth/register', formData);
+    return response
+}
+
 export const login = async (usernameOrEmail, password, setIsAuthenticated, setUser) => {
     try {
         const response = await axios.post('http://localhost:8080/arceus/auth/login', null,{
@@ -50,3 +55,21 @@ export const logout = async (setIsAuthenticated, setUser) => {
         return false;
     }
 };
+
+export const verifyEmail = async (token) => {
+    if (token === null) {
+        return
+    }
+    return await axios.get(`http://localhost:8080/arceus/auth/verify?token=${token}`)
+}
+
+export const resendVerificationEmail = async (userId) => {
+    if (userId === null) {
+        return
+    }
+    return await axios.put('http://localhost:8080/arceus/auth/resend-verification-email', null, {
+        params: {
+            id: userId
+        }
+    })
+}

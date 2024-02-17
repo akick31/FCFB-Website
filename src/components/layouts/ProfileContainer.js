@@ -1,7 +1,21 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import '../../styles/profileContainer.css';
+import { getTeamByName } from '../api/team';
+import {getUserById} from "../api/user";
 
 const ProfileContainer = ({ user }) => {
+    console.log(user);
+    const [team, setTeam] = React.useState({});
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const team = await getTeamByName(user.team);
+            setTeam(team);
+            console.log(team);
+        }
+
+        fetchData();
+    }, []);
 
     return (
         <div className="profile-container">
@@ -35,17 +49,37 @@ const ProfileContainer = ({ user }) => {
                         <span className="profile-value">{user.email}</span>
                     </div>
                     <div className="profile-item">
-                        <div className="line"></div>
-                        <h1 className="team-info-title">Team Information</h1>
-                    </div>
-                    <div className="profile-item">
-                        <span className="profile-label">College:</span>
-                        <span className="profile-value">{user.team}</span>
-                    </div>
-                    <div className="profile-item">
-                        <span className="profile-label">Record:</span>
+                        <span className="profile-label">Overall Record:</span>
                         <span className="profile-value">{user.wins}-{user.losses} | {user.winPercentage.toFixed(3)}</span>
                     </div>
+                    {user.team && ( // Conditionally render if user has a team
+                        <>
+                        <div className="profile-item">
+                            <div className="line"></div>
+                            <h1 className="team-info-title">Team Information</h1>
+                        </div>
+                        <div className="profile-item">
+                            <span className="profile-label">College:</span>
+                            <span className="profile-value">{user.team}</span>
+                        </div>
+                        <div className="profile-item">
+                            <span className="profile-label">Conference:</span>
+                            <span className="profile-value">{team.subdivision} | {team.conference}</span>
+                        </div>
+                        <div className="profile-item">
+                            <span className="profile-label">Offensive Playbook:</span>
+                            <span className="profile-value">{team.offensivePlaybook}</span>
+                        </div>
+                        <div className="profile-item">
+                            <span className="profile-label">Defensive Playbook:</span>
+                            <span className="profile-value">{team.defensivePlaybook}</span>
+                        </div>
+                        <div className="profile-item">
+                            <span className="profile-label">Team Record:</span>
+                            <span className="profile-value">{team.currentWins}-{team.currentLosses} ({team.currentConferenceWins}-{team.currentConferenceLosses})</span>
+                        </div>
+                    </>
+                    )}
                 </div>
             </div>
         </div>
