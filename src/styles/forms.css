@@ -40,6 +40,18 @@
     box-sizing: border-box; /* Include padding and border in width calculation */
 }
 
+.password-input-container {
+    position: relative; /* Ensure relative positioning for the icon */
+}
+
+.toggle-password-icon {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
 .form-btn {
     padding: 12px 24px; /* Increase padding for buttons */
     background-color: #007bff;
@@ -52,4 +64,14 @@
 
 .form-btn:hover {
     background-color: #0056b3;
+}
+
+.error {
+    font-size: 0.9rem; /* Make font size smaller */
+    color: red; /* Change color to red */
+}
+
+.success {
+    font-size: 0.9rem; /* Make font size smaller */
+    color: green; /* Change color to red */
 }
