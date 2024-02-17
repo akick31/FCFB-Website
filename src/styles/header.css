@@ -27,6 +27,12 @@
   align-items: center; /* Center items vertically */
 }
 
+.header__separator {
+  margin-right: 1rem;
+  font-weight: bold;
+  color: #FFFFFF; /* Use the light color */
+}
+
 .header__logo {
   width: auto;
   height: 40px; /* Set the height of the logo */

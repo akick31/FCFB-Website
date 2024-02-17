@@ -1,34 +1,23 @@
 // ProfilePage.js
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import ProfileContainer from "../components/layouts/ProfileContainer";
+import '../styles/profileContainer.css';
 
-const ProfilePage = () => {
-    const [user, setUser] = useState(null);
+const ProfilePage = ({ user }) => {
+    const navigate = useNavigate();
 
-    useEffect(() => {
-        // Fetch user data from backend
-        axios.get('/arceus/users/current')
-            .then(response => {
-                setUser(response.data); // Assuming the response contains user data
-            })
-            .catch(error => {
-                console.error('Error fetching user data:', error);
-            });
-    }, []);
+    if (user === undefined) {
+        // Redirect to the login page if the user is not authenticated
+        navigate('/login');
+    }
 
     return (
         <div>
-            <h2>User Profile</h2>
-            {user && (
-                <div>
-                    <p>Username: {user.username}</p>
-                    <p>Coach Name: {user.coachName}</p>
-                    <p>Email: {user.email}</p>
-                    {/* Add more user information fields as needed */}
-                </div>
-            )}
+            <ProfileContainer user={user}/>
         </div>
     );
+
 };
 
 export default ProfilePage;

@@ -1,0 +1,69 @@
+/* Profile page */
+.profile-container {
+    width: 80%;
+    margin: 50px auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.profile-icon {
+    width: 50px;
+    height: auto;
+    margin-right: 10px;
+}
+
+.profile-title {
+    font-size: 24px;
+}
+
+.profile-details-container {
+    display: flex; /* Display detail containers side by side */
+}
+
+.profile-details {
+    flex: 1; /* Each profile details box takes up equal space */
+    margin-right: 20px; /* Add margin between profile details boxes */
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Add box shadow for depth */
+}
+
+.profile-details:last-child {
+    margin-right: 0; /* Remove margin for the last detail container */
+}
+
+.profile-item {
+    margin-bottom: 10px;
+}
+
+.profile-label {
+    font-weight: bold;
+}
+
+.profile-value {
+    margin-left: 10px;
+}
+
+.user-info-title {
+    margin-top: 5px;
+    font-size: 24px;
+}
+
+.team-info-title {
+    font-size: 24px;
+}
+
+.line {
+    height: 1px; /* Set the height of the line */
+    width: 100%; /* Set the width of the line */
+    background-color: black; /* Set the color of the line */
+    margin: 10px 0; /* Adjust margin as needed */
+}

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import '../../styles/forms.css';
+import { registerUser } from '../api/user.js'
 
 const RegistrationForm = () => {
     const [formData, setFormData] = useState({
@@ -58,32 +58,32 @@ const RegistrationForm = () => {
         e.preventDefault();
 
         if (formData.passwordValid === false) {
-            alert('Password is not strong enough');
+            setFormData({ ...formData, errorMessage: 'Password is not strong enough' });
             return;
         }
         if (formData.emailValid === false) {
-            alert('Invalid email address');
+            setFormData({ ...formData, errorMessage: 'Invalid email address' });
             return;
         }
         if (formData.redditValid === false) {
-            alert('Reddit Username cannot contain "/u/"');
+            setFormData({ ...formData, errorMessage: 'Reddit username cannot contain /u/' });
             return;
         }
         if (formData.email !== formData.confirmEmail) {
-            alert('Emails do not match');
+            setFormData({ ...formData, errorMessage: 'Emails do not match' });
             return;
         }
         if (formData.password !== formData.confirmPassword) {
-            alert('Passwords do not match');
+            setFormData({ ...formData, errorMessage: 'Passwords do not match. Please try again.' });
             return;
         }
 
         try {
-            await axios.post('http://localhost:8080/arceus/users', formData);
+            await registerUser(formData);
             setFormData({ ...formData, registrationSuccess: true });
             // Redirect to login page or handle success
         } catch (error) {
-            alert('Registration failed. Please try again.');
+            setFormData({ ...formData, errorMessage: 'Registration failed. Please try again.' });
         }
     };
 
@@ -184,6 +184,7 @@ const RegistrationForm = () => {
                     {formData.confirmPassword && formData.password === formData.confirmPassword && <p className="success">Passwords match</p>}
                 </div>
                 <button type="submit" className="form-btn">Register</button>
+                {formData.errorMessage && <p className="error-message">{formData.errorMessage}</p>}
             </form>
         </div>
     );

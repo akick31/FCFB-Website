@@ -1,10 +1,20 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import {Link, useLocation, useNavigate} from 'react-router-dom';
 import '../../styles/header.css';
 import trophy from '../../assets/graphics/trophy.png';
+import { logout } from "../api/auth";
 
-const Header = ({ isAuthenticated, isAdmin }) => {
+const Header = ({ isAuthenticated, user, setIsAuthenticated, setUser }) => {
     const location = useLocation();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        const response = logout(setIsAuthenticated, setUser); // Call the logout function
+        // Redirect the user to the login page or any other desired page
+        if (response === true) {
+            navigate('/');
+        }
+    };
 
     // Function to render the links based on authentication and role
     const renderLinks = () => {
@@ -12,12 +22,13 @@ const Header = ({ isAuthenticated, isAdmin }) => {
             // If user is authenticated
             return (
                 <>
-                    {!isAdmin && (
-                        // Show only if user is not admin
-                        <Link to="/admin" className={location.pathname === '/admin' ? 'header__item active' : 'header__item'}>Game Management</Link>
+                    <Link to="/profile" className={location.pathname === '/profile' ? 'header__item active' : 'header__item'}>{user.username}</Link>
+                    <span className="header__separator">|</span>
+                    {user.role === "admin" && (
+                        // Show only if user is admin
+                        <Link to="/admin" className={location.pathname === '/admin' ? 'header__item active' : 'header__item'}>Admin</Link>
                     )}
-                    <Link to="/profile" className={location.pathname === '/profile' ? 'header__item active' : 'header__item'}>Profile</Link>
-                    <Link to="/logout" className="header__item">Logout</Link> {/* Logout link */}
+                    <Link to="/" className="header__item" onClick={handleLogout}>Logout</Link> {/* Logout link */}
                 </>
             );
         } else {
@@ -34,7 +45,7 @@ const Header = ({ isAuthenticated, isAdmin }) => {
     return (
         <header className="header">
             <div className="header__left">
-                <img src={trophy} className="header__logo" />
+                <img src={trophy} className="header__logo"  alt={"image of fcfb trophy"}/>
                 <Link to="/" className={location.pathname === '/' ? 'header__item active' : 'header__item'}>Home</Link>
             </div>
             <div className="header__right">

@@ -68,7 +68,12 @@
 
 .error {
     font-size: 0.9rem; /* Make font size smaller */
-    color: red; /* Change color to red */
+    color: #d22830; /* Change color to red */
+}
+
+.error-message {
+    font-size: 0.9rem; /* Make font size smaller */
+    color: #d22830; /* Change color to red */
 }
 
 .success {

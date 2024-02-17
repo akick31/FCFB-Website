@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/forms.css';
+import { login } from "../api/auth";
 
-const LoginForm = () => {
+const LoginForm = ({ setIsAuthenticated, setUser }) => {
     const [formData, setFormData] = useState({
         usernameOrEmail: '',
         password: '',
@@ -19,16 +19,13 @@ const LoginForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
-            await axios.post('http://localhost:8080/arceus/users/login', null,{
-                params: {
-                    usernameOrEmail: formData.usernameOrEmail,
-                    password: formData.password
-                }
-            });
+
+        const loginSuccess = await login(formData.usernameOrEmail, formData.password, setIsAuthenticated, setUser);
+
+        if (loginSuccess) {
             setFormData({ ...formData, loginSuccess: true });
-        } catch (error) {
-            setFormData({ ...formData, errorMessage: 'Login failed. Please check your credentials and try again.' });
+        } else {
+            setFormData({ ...formData, errorMessage: 'Login failed. Please try again.' });
         }
     };
 
