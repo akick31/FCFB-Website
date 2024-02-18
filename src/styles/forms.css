@@ -3,7 +3,7 @@
 /* Shared styles for all forms */
 
 .form-container {
-    width: 300px; /* Adjust width as needed */
+    width: 450px; /* Adjust width as needed */
     margin: 50px auto 0; /* Add margin-top */
     padding: 20px;
     border: 1px solid #ccc;
@@ -21,6 +21,7 @@
 
 .form-group {
     margin-bottom: 20px; /* Add margin below each form group */
+    margin-right: 20px;
 }
 
 .form-label {
@@ -42,7 +43,7 @@
     border-radius: 5px;
     flex-grow: 1; /* Ensure all input fields have equal size */
     display: block; /* Display input fields as block-level elements */
-    width: 100%; /* Ensure input fields take up full width */
+    width: 200px; /* Ensure input fields take up full width */
     box-sizing: border-box; /* Include padding and border in width calculation */
 }
 
