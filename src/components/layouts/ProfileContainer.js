@@ -1,24 +1,45 @@
 import React, {useEffect} from 'react';
+import {useNavigate} from "react-router-dom";
 import '../../styles/profileContainer.css';
 import { getTeamByName } from '../api/team';
-import {getUserById} from "../api/user";
+import {resendVerificationEmail} from "../api/auth";
 
 const ProfileContainer = ({ user }) => {
-    console.log(user);
     const [team, setTeam] = React.useState({});
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchData = async () => {
             const team = await getTeamByName(user.team);
             setTeam(team);
-            console.log(team);
         }
 
         fetchData();
     }, []);
 
+    const handleResendVerification = async () => {
+        try {
+            // Logic to resend verification email
+            await resendVerificationEmail(user.id);
+            // If successful, inform the user and let them know to check their email
+            alert('Verification email has been resent. Please check your email.');
+            navigate('/')
+        } catch (error) {
+            // Handle any errors that occur during resending verification email
+            console.error('Error resending verification email:', error);
+            // Inform the user about the error
+            alert('Error resending verification email. Please try again later.');
+        }
+    };
+
     return (
         <div className="profile-container">
+            {!user.approved && (
+                <div className="profile-auth">
+                    <h1 className="profile-auth-message">Your email is not verified! Please check your email for the verification link or click the button below to resend the email</h1>
+                    <button className="profile-btn" onClick={handleResendVerification}>Resend Verification Email</button> {/* Use the verify button class */}
+                </div>
+            )}
             <div className="profile-details-container">
                 <div className="profile-details">
                     <div className="profile-item">
@@ -50,7 +71,10 @@ const ProfileContainer = ({ user }) => {
                     </div>
                     <div className="profile-item">
                         <span className="profile-label">Overall Record:</span>
-                        <span className="profile-value">{user.wins}-{user.losses} | {user.winPercentage.toFixed(3)}</span>
+                        <span className="profile-value">
+                            {user.wins}-{user.losses}
+                            {user.winPercentage !== undefined && ` | ${user.winPercentage.toFixed(3)}`}
+                        </span>
                     </div>
                     {user.team && ( // Conditionally render if user has a team
                         <>

@@ -24,6 +24,7 @@
 
 .profile-details-container {
     display: flex; /* Display detail containers side by side */
+    margin-top: 10px;
 }
 
 .profile-details {
@@ -50,6 +51,25 @@
 
 .profile-value {
     margin-left: 10px;
+}
+
+.profile-auth-message {
+    font-size: 0.9rem; /* Make font size smaller */
+    color: #d22830; /* Change color to red */
+}
+
+.profile-btn {
+    padding: 12px 24px; /* Increase padding for buttons */
+    background-color: #004260;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s; /* Smooth transition on hover */
+}
+
+.profile-btn:hover {
+    background-color: #0056b3;
 }
 
 .user-info-title {

@@ -59,9 +59,11 @@ main {
 }
 
 footer {
+    margin-top: auto;
     background-color: rgba(0, 0, 0, 0.5); /* Add a semi-transparent black background to the footer */
     color: #fff;
-    padding: 10px;
-    text-align: center;
+    text-align: center; /* Center-align text */
+    padding: 10px 0; /* Add padding for spacing */
 }
+
 

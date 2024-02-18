@@ -4,7 +4,7 @@
 
 .form-container {
     width: 300px; /* Adjust width as needed */
-    margin: 50px auto 0; /* Add margin-top */
+    margin: 50px auto 50px; /* Add margin-top */
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -54,7 +54,7 @@
 
 .form-btn {
     padding: 12px 24px; /* Increase padding for buttons */
-    background-color: #007bff;
+    background-color: #004260;
     color: white;
     border: none;
     border-radius: 5px;
@@ -76,7 +76,43 @@
     color: #d22830; /* Change color to red */
 }
 
-.success {
+.success-message {
     font-size: 0.9rem; /* Make font size smaller */
     color: green; /* Change color to red */
 }
+
+.grid-form-container {
+    width: 300px; /* Adjust width as needed */
+    margin: 20px auto 10px; /* Add margin-top */
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    background-color: #f9f9f9;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Add box shadow for depth */
+    grid-gap: 10px;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two columns */
+    grid-template-rows: repeat(3, auto); /* Three rows */
+    gap: 5px; /* Gap between grid items */
+    margin-bottom: 50px;
+}
+
+.grid-group {
+    margin-bottom: 20px; /* Add margin below each form group */
+    justify-content: center;
+}
+
+.grid-btn {
+    padding: 12px 24px; /* Increase padding for buttons */
+    background-color: #004260;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s; /* Smooth transition on hover */
+}
+

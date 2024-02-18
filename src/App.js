@@ -61,6 +61,9 @@ const App = () => {
               <Route path="/error" element={<ErrorPage />} />
               <Route path="*" element={<NotFoundPage />} />
           </Routes>
+        <footer>
+            <p>&copy; 2024 Fake College Football. All rights reserved.</p>
+        </footer>
         </div>
       </Router>
     );

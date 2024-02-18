@@ -13,9 +13,6 @@ const HomePage = () => {
                 <p>Experience the thrill of college football like never before.</p>
                 <button className="cta-button">Get Started</button>
             </main>
-            <footer>
-                <p>&copy; 2024 Fake College Football. All rights reserved.</p>
-            </footer>
         </div>
     );
 }
