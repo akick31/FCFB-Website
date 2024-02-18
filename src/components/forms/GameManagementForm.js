@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import  OptionField from "../fields/OptionField";
 
 const GameManagementForm = () =>{
     const [formData, setFormData] = useState({
@@ -66,13 +67,7 @@ function TeamSelection(props){
                 </div>
                 <div className="form-group">
                     <label className="form-label">{homeTeam ? "Home Team Platform" : "Away Team Platform"}</label>
-                    <select name={homeTeam ? "homeTeamPlatform" : "awayTeamPlatform"} value={teamPlatform} onChange={changeHandler} className="form-input">
-                        {platforms.map((item) =>{
-                            return(
-                                <option value={item}>{item}</option>
-                            );
-                        })}
-                    </select>
+                    <OptionField binding={teamPlatform} options={platforms} changeHandler={changeHandler} name={homeTeam ? "homeTeamPlatform" : "awayTeamPlatform"} />
                 </div>
             </div>
         </>
@@ -90,23 +85,11 @@ function SeasonWeekSelection(props){
         <div style={{display: "flex"}}>
             <div className="form-group">
                 <label className="form-label">Season</label>
-                <select id="season" name="season" value={seasonSelection} onChange={changeHandler} className="form-input">
-                    {seasonList.map((item) =>{
-                        return(
-                            <option value={item}>{item}</option>
-                        );
-                    })}
-                </select>
+                <OptionField binding={seasonSelection} options={seasonList} changeHandler={changeHandler} name="season" />
             </div>
             <div className="form-group">
                 <label className="form-label">Week</label>
-                <select id="weekList" name="week" value={weekSelection} onChange={changeHandler} className="form-input">
-                    {weekList.map((item) =>{
-                        return(
-                            <option value={item}>{item}</option>
-                        );
-                    })}
-                </select>
+                <OptionField binding={weekSelection} options={weekList} changeHandler={changeHandler} name="week" />
             </div>
         </div>
     );
@@ -133,13 +116,7 @@ function Subdivison(props) {
     return (
         <div className="form-group">
             <label className="form-label">Subdivision</label>
-            <select id="subdivision" name="subdivision" value={value} onChange={changeHandler} className="form-input">
-                {divisions.map((item) =>{
-                    return(
-                        <option value={item}>{item}</option>
-                    );
-                })}
-            </select>
+            <OptionField binding={value} changeHandler={changeHandler} options={divisions} name="subdivision"/>
         </div>
     );
 };
@@ -151,15 +128,9 @@ function TVChannel(props) {
 
     return (
         <div className="form-group">
-        <label className="form-label">TV Channel</label>
-        <select id="tvChannelInput" name="tvChannel" value={value} onChange={changeHandler} className="form-input">
-            {tvChannels.map((item) =>{
-                return(
-                    <option value={item}>{item}</option>
-                );
-            })}
-        </select>
-    </div>
+            <label className="form-label">TV Channel</label>
+            <OptionField binding={value} onChange={changeHandler} options={tvChannels} name="tvChannel" />
+        </div>
     )
 }
 
@@ -170,7 +141,7 @@ function Scrimmage(props){
     return (
         <div className="form-group">
             <label className="inline-form-label">Scrimmage?</label>
-            <input type="checkbox"  value={scrimmage} onChange={changeHandler}/>
+            <input type="checkbox" value={scrimmage} onChange={changeHandler}/>
         </div>
     );
 };
