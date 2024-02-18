@@ -30,6 +30,12 @@
     display: block; /* Display label as block-level element */
 }
 
+.inline-form-label{
+    font-size: 1rem; /* Adjust font size for labels */
+    color: #555; /* Dim the label color for subtlety */
+    display: inline-block; /* Display label as block-level element */
+}
+
 .form-input {
     padding: 10px;
     border: 1px solid #ccc;

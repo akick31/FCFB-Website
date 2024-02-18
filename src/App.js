@@ -12,6 +12,7 @@ import VerifyPage from "./pages/VerifyPage";
 import NotFoundPage from './pages/NotFoundPage';
 import ErrorPage from "./pages/ErrorPage";
 import { getUserById } from './components/api/user';
+import GameManagementPage from './pages/GameManagementPage';
 
 const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -59,6 +60,7 @@ const App = () => {
                   userId={new URLSearchParams(window.location.search).get('id')}
                   token={new URLSearchParams(window.location.search).get('token')} />} />
               <Route path="/error" element={<ErrorPage />} />
+              <Route path="/gamemanagement" element={<GameManagementPage />} />
               <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>

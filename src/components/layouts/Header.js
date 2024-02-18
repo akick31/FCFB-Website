@@ -47,6 +47,7 @@ const Header = ({ isAuthenticated, user, setIsAuthenticated, setUser }) => {
             <div className="header__left">
                 <img src={trophy} className="header__logo"  alt={"image of fcfb trophy"}/>
                 <Link to="/" className={location.pathname === '/' ? 'header__item active' : 'header__item'}>Home</Link>
+                <Link to="/gamemanagement" className={location.pathname === '/gamemanagement' ? 'header__item active' : 'header__item'}>Start Games</Link>
             </div>
             <div className="header__right">
                 {renderLinks()}
