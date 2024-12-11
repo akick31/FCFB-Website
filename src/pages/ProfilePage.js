@@ -1,8 +1,8 @@
 // ProfilePage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ProfileContainer from "../components/layouts/ProfileContainer";
-import ProfileForm from "../components/forms/ProfileForm";
+import ProfileContainer from "../layouts/ProfileContainer";
+import ProfileForm from "../forms/ProfileForm";
 import '../styles/profileContainer.css';
 
 const ProfilePage = ({ user }) => {

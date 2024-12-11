@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { resendVerificationEmail, verifyEmail } from "../components/api/auth";
+import { resendVerificationEmail, verifyEmail } from "../api/authApi";
 import { FaSpinner } from 'react-icons/fa';
 import '../styles/verifyPage.css'; // Import the verifyPage.css file
 
-const VerifyPage = ({ userId, token }) => {
+const Verify = ({ userId, token }) => {
     const [loading, setLoading] = useState(true);
     const [verificationSuccess, setVerificationSuccess] = useState(false);
     const navigate = useNavigate();
@@ -63,4 +63,4 @@ const VerifyPage = ({ userId, token }) => {
     );
 };
 
-export default VerifyPage;
+export default Verify;

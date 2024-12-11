@@ -1,6 +1,6 @@
 // Login.js
 import React from 'react';
-import LoginForm from '../components/forms/LoginForm';
+import LoginForm from '../forms/LoginForm';
 
 const Login = ({ setIsAuthenticated, setUser }) => {
     return (

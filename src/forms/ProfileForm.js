@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-import '../../styles/forms.css';
+import '../styles/forms.css';
 import {
     getUserById,
     updateCoachName,
@@ -11,7 +11,7 @@ import {
     updatePassword,
     updateRedditUsername,
     updateUsername
-} from '../api/user.js'
+} from '../api/userApi.js'
 import { validateEmail, isStrongPassword, validateRedditUsername } from '../utils/validations';
 
 const ProfileForm = ( { user }) => {

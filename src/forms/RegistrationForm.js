@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-import '../../styles/forms.css';
-import { registerUser } from '../api/auth.js'
+import '../styles/forms.css';
+import { registerUser } from '../api/authApi.js'
 
 const RegistrationForm = () => {
     const [formData, setFormData] = useState({

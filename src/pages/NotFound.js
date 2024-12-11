@@ -1,7 +1,7 @@
 import React from 'react';
 import flagIcon from '../assets/images/flag.png';
 
-const NotFoundPage = () => {
+const NotFound = () => {
     return (
         <div style={{ textAlign: 'center', marginTop: '100px' }}>
             <h1>404 - Page Not Found</h1>
@@ -11,4 +11,4 @@ const NotFoundPage = () => {
     );
 };
 
-export default NotFoundPage;
+export default NotFound;

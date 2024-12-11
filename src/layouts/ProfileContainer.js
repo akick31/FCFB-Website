@@ -1,8 +1,8 @@
 import React, {useEffect} from 'react';
 import {useNavigate} from "react-router-dom";
-import '../../styles/profileContainer.css';
-import { getTeamByName } from '../api/team';
-import {resendVerificationEmail} from "../api/auth";
+import '../styles/profileContainer.css';
+import { getTeamByName } from '../api/teamApi';
+import {resendVerificationEmail} from "../api/authApi";
 
 const ProfileContainer = ({ user }) => {
     const [team, setTeam] = React.useState({});
