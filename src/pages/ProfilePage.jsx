@@ -1,4 +1,4 @@
-// ProfilePage.js
+// ProfilePage.jsx
 import React, { } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProfileContainer from "../layouts/ProfileContainer";

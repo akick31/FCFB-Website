@@ -1,4 +1,4 @@
-// Home.js
+// Home.jsx
 import React from 'react';
 import logo from '../assets/graphics/main_logo.png'; // Import your logo image here
 

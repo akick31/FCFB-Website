@@ -1,4 +1,4 @@
-// Registration.js
+// Registration.jsx
 import React from 'react';
 import RegistrationForm from '../forms/RegistrationForm';
 

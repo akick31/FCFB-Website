@@ -14,7 +14,7 @@ const Games = () => {
     const [error, setError] = useState(null);
     const [gameType, setGameType] = useState("ongoing");
 
-    // Wrap fetchGames with useCallback
+    // Wrap fetchGames with useCallback (only depend on gameType)
     const fetchGames = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -23,10 +23,7 @@ const Games = () => {
             if (gameType === "ongoing") response = await getAllOngoingGames();
             else if (gameType === "past") response = await getAllPastGames();
             else if (gameType === "scrimmage") response = await getAllScrimmageGames();
-            else if (gameType === "past-scrimmage") {
-                response = await getAllPastScrimmageGames();
-                console.log("Response Data:", response.data);
-            }
+            else if (gameType === "past-scrimmage") response = await getAllPastScrimmageGames();
 
             setGames(response.data);
 
@@ -42,11 +39,11 @@ const Games = () => {
             setError(`Failed to load ${gameType} games`);
             setLoading(false);
         }
-    }, [gameType, scorebugs]); // Dependencies: gameType, scorebugs
+    }, [gameType]); // Only depend on gameType
 
     useEffect(() => {
         fetchGames();
-    }, [fetchGames]); // Only re-run if fetchGames changes (it will not change)
+    }, [fetchGames]); // Only re-run if fetchGames changes (which will only change if gameType changes)
 
     const handleTabChange = (event, newValue) => {
         setGameType(newValue);

@@ -1,4 +1,4 @@
-// Login.js
+// Login.jsx
 import React from 'react';
 import LoginForm from '../forms/LoginForm';
 

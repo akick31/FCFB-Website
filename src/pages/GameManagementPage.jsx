@@ -1,4 +1,4 @@
-// AdminPage.js
+// AdminPage.jsx
 import React from 'react';
 
 const GameManagementPage = () => {
