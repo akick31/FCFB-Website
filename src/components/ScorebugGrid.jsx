@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from "react-router-dom";
-import { Box, Grid, Paper, Typography } from '@mui/material';
+import { Box, Grid, Typography } from '@mui/material';
 import { byteArrayToBase64 } from "../utils/image";
 import { StyledPaper, GameImage } from '../styles/GridStyles';
 

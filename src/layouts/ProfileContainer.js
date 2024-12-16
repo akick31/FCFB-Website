@@ -15,7 +15,7 @@ const ProfileContainer = ({ user }) => {
         }
 
         fetchData();
-    }, []);
+    }, [user.team]);
 
     const handleResendVerification = async () => {
         try {

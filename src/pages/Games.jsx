@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { getAllOngoingGames, getAllPastGames, getAllScrimmageGames, getAllPastScrimmageGames } from "../api/gameApi";
-import { getScorebugByGameId, generateScorebugByGameId } from "../api/scorebugApi";
+import { getScorebugByGameId } from "../api/scorebugApi";
 import ScorebugGrid from "../components/ScorebugGrid";
-import { CircularProgress, Tab, Tabs, Typography, Box, Paper } from "@mui/material";
+import { CircularProgress, Tab, Tabs, Typography } from "@mui/material";
 import { PageContainer, Header, TabContainer, ScoreboardContainer } from "../styles/GamesStyles";
 
 // Styled Components
@@ -46,7 +46,7 @@ const Games = () => {
 
     useEffect(() => {
         fetchGames();
-    }, [gameType]);
+    }, [fetchGames, gameType]);
 
     const handleTabChange = (event, newValue) => {
         setGameType(newValue);

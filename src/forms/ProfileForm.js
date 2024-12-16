@@ -1,10 +1,9 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import '../styles/forms.css';
 import {
-    getUserById,
     updateCoachName,
     updateDiscordTag,
     updateEmail,
@@ -32,7 +31,7 @@ const ProfileForm = ( { user }) => {
         updateSuccess: false // State to track update success
     });
 
-    const navigate = useNavigate(); // Retrieve the history object
+    useNavigate(); // Retrieve the history object
 
     // Update specific validity state based on the field being changed
     const handleChange = (e) => {

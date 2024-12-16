@@ -1,4 +1,4 @@
-import {Box, Card, CardContent, Paper, Typography} from "@mui/material"; // Import necessary Material UI components
+import {Box, Paper, Typography} from "@mui/material"; // Import necessary Material UI components
 import { styled } from '@mui/system';
 
 const COLORS = {

@@ -1,5 +1,5 @@
 // ProfilePage.js
-import React, { useState, useEffect } from 'react';
+import React, { } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProfileContainer from "../layouts/ProfileContainer";
 import ProfileForm from "../forms/ProfileForm";

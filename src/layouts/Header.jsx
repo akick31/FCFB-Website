@@ -8,9 +8,6 @@ import {
     StyledToolbar,
     Logo,
     HeaderTitle,
-    NavButtons,
-    NavButton,
-    NavButtonActive,
     StyledTabs,
     StyledTab
 } from '../styles/HeaderStyles'; // Import styled components
