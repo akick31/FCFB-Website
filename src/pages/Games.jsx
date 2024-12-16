@@ -39,7 +39,7 @@ const Games = () => {
             setError(`Failed to load ${gameType} games`);
             setLoading(false);
         }
-    }, [gameType]); // Only depend on gameType
+    }, [gameType, scorebugs]); // Only depend on gameType
 
     useEffect(() => {
         fetchGames();
