@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'react-app'
-        CONTAINER_NAME = 'react-app-container'
+        IMAGE_NAME = 'fcfb-website-prd'
+        CONTAINER_NAME = 'fcfb-website-prd'
         DOCKERFILE = 'Dockerfile'
     }
 
@@ -50,7 +50,7 @@ pipeline {
                     echo 'Running the new container...'
                     sh """
                         docker run -d --name ${CONTAINER_NAME} \\
-                            -p 462:462 \\
+                            -p 462:80 \\
                             ${IMAGE_NAME}:latest
                     """
                 }
