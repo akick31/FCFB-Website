@@ -50,7 +50,7 @@ pipeline {
                     echo 'Running the new container...'
                     sh """
                         docker run -d --name ${CONTAINER_NAME} \\
-                            -p 80:80 \\
+                            -p 462:462 \\
                             ${IMAGE_NAME}:latest
                     """
                 }
