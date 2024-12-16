@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { getAllOngoingGames, getAllPastGames, getAllScrimmageGames, getAllPastScrimmageGames } from "../api/gameApi";
 import { getScorebugByGameId } from "../api/scorebugApi";
 import ScorebugGrid from "../components/ScorebugGrid";
@@ -7,7 +7,6 @@ import { PageContainer, Header, TabContainer, ScoreboardContainer } from "../sty
 
 // Styled Components
 
-
 const Games = () => {
     const [games, setGames] = useState([]);
     const [scorebugs, setScorebugs] = useState({});
@@ -15,7 +14,8 @@ const Games = () => {
     const [error, setError] = useState(null);
     const [gameType, setGameType] = useState("ongoing");
 
-    const fetchGames = async () => {
+    // Wrap fetchGames with useCallback
+    const fetchGames = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
@@ -42,11 +42,11 @@ const Games = () => {
             setError(`Failed to load ${gameType} games`);
             setLoading(false);
         }
-    };
+    }, [gameType, scorebugs]); // Dependencies: gameType, scorebugs
 
     useEffect(() => {
         fetchGames();
-    }, [fetchGames, gameType]);
+    }, [fetchGames]); // Only re-run if fetchGames changes (it will not change)
 
     const handleTabChange = (event, newValue) => {
         setGameType(newValue);
