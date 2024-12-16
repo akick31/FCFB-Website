@@ -35,7 +35,7 @@ const Header = ({ isAuthenticated, user, setIsAuthenticated, setUser }) => {
                 </Box>
                 <StyledTabs value={location.pathname} aria-label="navigation tabs">
                     <StyledTab label="Home" value="/" component={Link} to="/" />
-                    <StyledTab label="Ongoing Games" value="/ongoing-games" component={Link} to="/ongoing-games" />
+                    <StyledTab label="Games" value="/games" component={Link} to="/games" />
                     <StyledTab label="Standings" value="/standings" component={Link} to="/standings" />
                     <StyledTab label="Schedules" value="/schedules" component={Link} to="/schedules" />
                     <StyledTab label="Teams" value="/teams" component={Link} to="/teams" />

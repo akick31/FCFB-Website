@@ -4,7 +4,7 @@ import './styles/styles.css';
 import Header from './layouts/Header';
 import Home from './pages/Home';
 import GameDetails from "./pages/GameDetails";
-import OngoingGames from './pages/OngoingGames';
+import Games from './pages/Games';
 import Login from './pages/Login';
 import Registration from './pages/Registration';
 import Profile from './pages/ProfilePage';
@@ -65,7 +65,7 @@ const App = () => {
                         userId={new URLSearchParams(window.location.search).get('id')}
                         token={new URLSearchParams(window.location.search).get('token')} />} />
                     <Route path="/game-details/:gameId" element={<GameDetails />} />
-                    <Route path="/ongoing-games" element={<OngoingGames />} />
+                    <Route path="/games" element={<Games />} />
                     <Route path="/error" element={<ErrorPage />} />
                     <Route path="*" element={<NotFound />} />
                 </Routes>

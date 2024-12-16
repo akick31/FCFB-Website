@@ -1,0 +1,78 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'react-app'
+        CONTAINER_NAME = 'react-app-container'
+        DOCKERFILE = 'Dockerfile'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out the FCFB Website repository...'
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies & Build') {
+            steps {
+                echo 'Installing dependencies and building the FCFB Website...'
+                sh 'npm install'
+                sh 'npm run build'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image for FCFB Website...'
+                sh """
+                    docker build -t ${IMAGE_NAME}:latest .
+                """
+            }
+        }
+
+        stage('Stop and Remove Existing Container') {
+            steps {
+                script {
+                    echo 'Stopping and removing the existing container...'
+                    sh """
+                        docker stop ${CONTAINER_NAME} || echo "No running container found."
+                        docker rm ${CONTAINER_NAME} || echo "No container to remove."
+                    """
+                }
+            }
+        }
+
+        stage('Run New Container') {
+            steps {
+                script {
+                    echo 'Running the new container...'
+                    sh """
+                        docker run -d --name ${CONTAINER_NAME} \\
+                            -p 80:80 \\
+                            ${IMAGE_NAME}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Cleanup Docker System') {
+            steps {
+                script {
+                    echo 'Pruning unused Docker resources...'
+                    sh 'docker system prune -f'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'FCFB Website deployed successfully!'
+        }
+        failure {
+            echo 'FCFB Website deployment failed.'
+        }
+    }
+}

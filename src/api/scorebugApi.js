@@ -18,3 +18,13 @@ export const getScorebugByGameId = async (gameId) => {
         throw error; // Rethrow the error to be handled by the caller
     }
 };
+
+export const generateScorebugByGameId = async (gameId) => {
+    try {
+        // Request the scorebug image as a Blob (binary data)
+        await apiClient.post(`/arceus/scorebug/generate?gameId=${gameId}`);
+    } catch (error) {
+        console.error("Failed to genteera game scorebug:", error);
+        throw error; // Rethrow the error to be handled by the caller
+    }
+};
