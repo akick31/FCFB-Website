@@ -2,34 +2,45 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/forms.css';
 import { login } from "../api/authApi";
+import { getUserById } from "../api/userApi";
+import { checkIfUserIsAdmin } from "../utils/utils";
 
-const LoginForm = ({ setIsAuthenticated, setUser }) => {
+const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
     const [formData, setFormData] = useState({
         usernameOrEmail: '',
         password: '',
-        loginSuccess: false // State to track login success
+        loginSuccess: false
     });
 
     const navigate = useNavigate();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData(prevData => ({ ...prevData, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         const loginSuccess = await login(formData.usernameOrEmail, formData.password, setIsAuthenticated, setUser);
 
         if (loginSuccess) {
-            setFormData({ ...formData, loginSuccess: true });
+            setFormData(prevData => ({ ...prevData, loginSuccess: true }));
+            setIsAdmin(checkIfUserIsAdmin());
+
+            const userId = localStorage.getItem('userId');
+            try {
+                const userData = await getUserById(userId);
+                setUser(userData);
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                setIsAuthenticated(false);
+                setUser({});
+            }
         } else {
-            setFormData({ ...formData, errorMessage: 'Login failed. Please try again.' });
+            setFormData(prevData => ({ ...prevData, errorMessage: 'Login failed. Please try again.' }));
         }
     };
 
-    // Redirect to home page if registration is successful
     if (formData.loginSuccess) {
         navigate('/');
     }

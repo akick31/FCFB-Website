@@ -4,7 +4,7 @@ export const getUserById = async (userId) => {
     if (!userId) return {};
 
     try {
-        const response = await apiClient.get('/arceus/users/id', { params: { id: userId } });
+        const response = await apiClient.get('/arceus/user/id', { params: { id: userId } });
         return response.data;
     } catch (error) {
         console.error("Failed to fetch user by ID:", error);
@@ -16,7 +16,7 @@ export const updateUserDetails = async (userId, updates) => {
     if (!userId) throw new Error("User ID is required");
 
     try {
-        const response = await apiClient.put('/arceus/users/update', {
+        const response = await apiClient.put('/arceus/user/update', {
             id: userId,
             ...updates,
         });

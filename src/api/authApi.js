@@ -24,9 +24,12 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
         }
 
         const user = response.data;
+        // Store the token and user data in localStorage
         localStorage.setItem('token', user.token);
-        localStorage.setItem('userId', user.userId);
+        localStorage.setItem('userId', user.user_id);
+        localStorage.setItem('role', user.role);
 
+        // Optionally, store any additional user data if needed
         const userData = await getUserById(user.userId);
         setIsAuthenticated(true);
         setUser(userData);
@@ -38,16 +41,19 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
     }
 };
 
-export const logout = async (setIsAuthenticated, setUser) => {
+export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
     try {
         const response = await apiClient.post('/arceus/auth/logout', null, {
             params: { token: localStorage.getItem('token') },
         });
 
         if (response.status === 200) {
+            // Remove token and user info from localStorage
             localStorage.removeItem('token');
             localStorage.removeItem('userId');
+            localStorage.removeItem('role');
             setIsAuthenticated(false);
+            setIsAdmin(false);
             setUser({});
             alert("You have been logged out.");
             return true;
@@ -59,6 +65,7 @@ export const logout = async (setIsAuthenticated, setUser) => {
         return false;
     }
 };
+
 
 export const verifyEmail = async (token) => {
     if (!token) return;
@@ -82,6 +89,27 @@ export const resendVerificationEmail = async (userId) => {
         return response.data;
     } catch (error) {
         console.error("Failed to resend verification email:", error);
+        throw error;
+    }
+};
+
+// Helper function to add token to API requests
+export const apiWithAuth = async (endpoint, options = {}) => {
+    const token = localStorage.getItem('token');
+
+    if (token) {
+        // Include Authorization header with the JWT token
+        options.headers = {
+            ...options.headers,
+            Authorization: `Bearer ${token}`,
+        };
+    }
+
+    try {
+        const response = await apiClient(endpoint, options);
+        return response.data;
+    } catch (error) {
+        console.error("API request failed:", error);
         throw error;
     }
 };

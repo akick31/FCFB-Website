@@ -1,11 +1,9 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { getAllOngoingGames, getAllPastGames, getAllScrimmageGames, getAllPastScrimmageGames } from "../api/gameApi";
 import { getScorebugByGameId } from "../api/scorebugApi";
 import ScorebugGrid from "../components/ScorebugGrid";
 import { CircularProgress, Tab, Tabs, Typography } from "@mui/material";
 import { PageContainer, Header, TabContainer, ScoreboardContainer } from "../styles/GamesStyles";
-
-// Styled Components
 
 const Games = () => {
     const [games, setGames] = useState([]);
@@ -14,36 +12,48 @@ const Games = () => {
     const [error, setError] = useState(null);
     const [gameType, setGameType] = useState("ongoing");
 
-    // Wrap fetchGames with useCallback (only depend on gameType)
-    const fetchGames = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            let response;
-            if (gameType === "ongoing") response = await getAllOngoingGames();
-            else if (gameType === "past") response = await getAllPastGames();
-            else if (gameType === "scrimmage") response = await getAllScrimmageGames();
-            else if (gameType === "past-scrimmage") response = await getAllPastScrimmageGames();
+    useEffect(() => {
+        const fetchGames = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                let response;
+                switch (gameType) {
+                    case "ongoing": response = await getAllOngoingGames(); break;
+                    case "past": response = await getAllPastGames(); break;
+                    case "scrimmage": response = await getAllScrimmageGames(); break;
+                    case "past-scrimmage": response = await getAllPastScrimmageGames(); break;
+                    default: break;
+                }
+                setGames(response.data);
 
-            setGames(response.data);
+                setLoading(false);
+            } catch (error) {
+                setError(`Failed to load ${gameType} games`);
+                setLoading(false);
+            }
+        };
 
+        fetchGames();
+    }, [gameType]);
+
+    useEffect(() => {
+        if (games.length === 0) return;
+
+        const fetchScorebugs = async () => {
             const scorebugsData = {};
-            for (const game of response.data) {
+            for (const game of games) {
                 if (!scorebugs[game.game_id]) {
                     scorebugsData[game.game_id] = await getScorebugByGameId(game.game_id);
                 }
             }
-            setScorebugs(prevScorebugs => ({ ...prevScorebugs, ...scorebugsData }));
-            setLoading(false);
-        } catch (error) {
-            setError(`Failed to load ${gameType} games`);
-            setLoading(false);
-        }
-    }, [gameType, scorebugs]); // Only depend on gameType
+            if (Object.keys(scorebugsData).length > 0) {
+                setScorebugs(prevScorebugs => ({ ...prevScorebugs, ...scorebugsData }));
+            }
+        };
 
-    useEffect(() => {
-        fetchGames();
-    }, [fetchGames]); // Only re-run if fetchGames changes (which will only change if gameType changes)
+        fetchScorebugs();
+    }, [games, scorebugs]); // Fetch scorebugs only when `games` changes
 
     const handleTabChange = (event, newValue) => {
         setGameType(newValue);
@@ -73,9 +83,7 @@ const Games = () => {
                 {loading ? (
                     <CircularProgress />
                 ) : error ? (
-                    <Typography variant="h6" color="error">
-                        {error}
-                    </Typography>
+                    <Typography variant="h6" color="error">{error}</Typography>
                 ) : games.length ? (
                     <ScoreboardContainer>
                         <ScorebugGrid games={games} scorebugs={scorebugs} />

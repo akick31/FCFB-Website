@@ -13,37 +13,37 @@ import Verify from "./pages/Verify";
 import NotFound from './pages/NotFound';
 import ErrorPage from "./pages/ErrorPage";
 import { getUserById } from './api/userApi';
+import { checkIfUserIsAdmin } from "./utils/utils";
 
 const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState({}); // User object to store user data [username, role, etc.]
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [user, setUser] = useState({});
 
     useEffect(() => {
-        const fetchData = async () => {
-            // Check if authentication token exists in local storage
-            if (localStorage.getItem('token') === null) {
-                setIsAuthenticated(false);
-                setUser({});
-                return;
-            }
+        const initializeApp = async () => {
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
 
-            const authToken = localStorage.getItem('token');
-            const storedUserId = localStorage.getItem('userId');
-
-            const user = await getUserById(storedUserId);
-
-            if (authToken) {
-                // User is authenticated
+            if (token && userId) {
                 setIsAuthenticated(true);
-                setUser(user);
+                if (checkIfUserIsAdmin()) setIsAdmin(true);
+
+                try {
+                    const userData = await getUserById(userId);
+                    setUser(userData);
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                    setIsAuthenticated(false);
+                    setUser({});
+                }
             } else {
-                // User is not authenticated
                 setIsAuthenticated(false);
                 setUser({});
             }
-        }
+        };
 
-        fetchData();
+        initializeApp();
     }, []);
 
     return (
@@ -51,16 +51,18 @@ const App = () => {
             <div>
                 <Header
                     isAuthenticated={isAuthenticated}
+                    isAdmin={isAdmin}
                     user={user}
                     setIsAuthenticated={setIsAuthenticated}
                     setUser={setUser}
+                    setIsAdmin={setIsAdmin}
                 />
                 <Routes>
                     <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUser={setUser} />} />
+                    <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUser={setUser} setIsAdmin={setIsAdmin} />} />
                     <Route path="/register" element={<Registration />} />
-                    <Route path="/profile" element={<Profile user={user}/>} />
-                    <Route path="/admin" element={<AdminPage user={user}/>} />
+                    <Route path="/profile" element={<Profile user={user} />} />
+                    <Route path="/admin" element={<AdminPage user={user} />} />
                     <Route path="/verify" element={<Verify
                         userId={new URLSearchParams(window.location.search).get('id')}
                         token={new URLSearchParams(window.location.search).get('token')} />} />
@@ -72,6 +74,6 @@ const App = () => {
             </div>
         </Router>
     );
-}
+};
 
 export default App;
