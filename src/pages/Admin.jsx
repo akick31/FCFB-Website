@@ -1,6 +1,6 @@
-// Admin.jsx
 import React from 'react';
 import {useNavigate} from "react-router-dom";
+import PropTypes from 'prop-types';
 
 const Admin = ({user}) => {
     const navigate = useNavigate();
@@ -16,6 +16,10 @@ const Admin = ({user}) => {
             {/* Add entry form for starting games */}
         </div>
     );
+}
+
+Admin.propTypes = {
+    user: PropTypes.object,
 }
 
 export default Admin;

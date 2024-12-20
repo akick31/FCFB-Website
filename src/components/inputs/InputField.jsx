@@ -1,14 +1,8 @@
 import React from 'react';
 import { TextField, Button } from '@mui/material';
+import PropTypes from 'prop-types';
 
-const InputField = ({
-    label,
-    value,
-    onChange,
-    validationError,
-    onSubmit,
-    buttonLabel = 'Confirm',
-}) => {
+const InputField = ({label, value, onChange, validationError, onSubmit, buttonLabel = 'Confirm',}) => {
     return (
         <div>
             <TextField
@@ -38,5 +32,14 @@ const InputField = ({
         </div>
     );
 };
+
+InputField.propTypes = {
+    label: PropTypes.string.isRequired,
+    value: PropTypes.string.isRequired,
+    onChange: PropTypes.func.isRequired,
+    validationError: PropTypes.string,
+    onSubmit: PropTypes.func.isRequired,
+    buttonLabel: PropTypes.string,
+}
 
 export default InputField;

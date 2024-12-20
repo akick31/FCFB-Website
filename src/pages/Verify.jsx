@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { resendVerificationEmail, verifyEmail } from "../api/authApi";
 import { CircularProgress, Box, Typography, Button, Paper } from '@mui/material';
+import PropTypes from 'prop-types';
 
 const Verify = ({ userId, token }) => {
     const [loading, setLoading] = useState(true);
@@ -78,6 +79,11 @@ const Verify = ({ userId, token }) => {
             </Paper>
         </Box>
     );
+};
+
+Verify.propTypes = {
+    userId: PropTypes.string.isRequired,
+    token: PropTypes.string.isRequired,
 };
 
 export default Verify;

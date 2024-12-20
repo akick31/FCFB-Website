@@ -1,7 +1,8 @@
 import React from 'react';
 import { Box, Typography } from "@mui/material";
+import PropTypes from 'prop-types';
 
-const GameSummary = ({ game, plays }) => {
+const GameSummary = ({ plays }) => {
     const lastPlay = plays[plays.length - 1];
     const totalPlays = plays.length;
     const homeScore = lastPlay ? lastPlay.home_score : 0;
@@ -18,5 +19,9 @@ const GameSummary = ({ game, plays }) => {
         </Box>
     );
 };
+
+GameSummary.propTypes = {
+    plays: PropTypes.array.isRequired,
+}
 
 export default GameSummary;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { TableCell, TableRow } from '@mui/material';
 import { formatConference } from '../../utils/formatText';
+import PropTypes from 'prop-types';
 
 const TeamRow = ({ team, handleNullValue, handleArrayValue }) => (
     <TableRow key={team.id}>
@@ -20,5 +21,11 @@ const TeamRow = ({ team, handleNullValue, handleArrayValue }) => (
         <TableCell>{handleArrayValue(team.coach_discord_tags)}</TableCell>
     </TableRow>
 );
+
+TeamRow.propTypes = {
+    team: PropTypes.object.isRequired,
+    handleNullValue: PropTypes.func.isRequired,
+    handleArrayValue: PropTypes.func.isRequired,
+}
 
 export default TeamRow;

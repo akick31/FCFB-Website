@@ -1,6 +1,7 @@
 import React from "react";
 import { Tabs, Tab } from "@mui/material";
 import { Link } from "react-router-dom";
+import PropTypes from 'prop-types';
 
 const NavigationTabs = ({ location, navigationItems }) => (
     <Tabs
@@ -32,5 +33,10 @@ const NavigationTabs = ({ location, navigationItems }) => (
         ))}
     </Tabs>
 );
+
+NavigationTabs.propTypes = {
+    location: PropTypes.object.isRequired,
+    navigationItems: PropTypes.array.isRequired,
+}
 
 export default NavigationTabs;

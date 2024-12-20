@@ -5,18 +5,17 @@ import {
     updateDiscordTag,
     updateEmail,
     updatePassword,
-    updateRedditUsername,
     updateUsername,
 } from '../api/userApi';
 import InputField from '../components/inputs/InputField';
 import EmailInput from '../components/inputs/EmailInput';
 import PasswordInput from '../components/inputs/PasswordInput';
+import PropTypes from 'prop-types';
 
 const ProfileForm = ({ user }) => {
     const [formData, setFormData] = useState({
         username: user.username || '',
         coachName: user.coachName || '',
-        redditUsername: user.redditUsername || '',
         discordTag: user.discordTag || '',
         email: user.email || '',
         confirmEmail: '',
@@ -25,8 +24,8 @@ const ProfileForm = ({ user }) => {
         showPassword: false,
     });
 
-    const [validationErrors, setValidationErrors] = useState({});
-    const [updateMessages, setUpdateMessages] = useState({});
+    const [validationErrors] = useState({});
+    const [setUpdateMessages] = useState({});
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -45,6 +44,9 @@ const ProfileForm = ({ user }) => {
                     break;
                 case 'coachName':
                     await updateCoachName(user.id, formData.coachName);
+                    break;
+                case 'discordTag':
+                    await updateDiscordTag(user.id, formData.discordTag);
                     break;
                 case 'email':
                     await updateEmail(user.id, formData.email);
@@ -110,5 +112,10 @@ const ProfileForm = ({ user }) => {
         </Box>
     );
 };
+
+ProfileForm.propTypes = {
+    user: PropTypes.object.isRequired,
+}
+
 
 export default ProfileForm;

@@ -1,6 +1,7 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { StyledTabs, StyledTab } from "../../styles/HeaderStyles"; // Import the styled components
+import PropTypes from 'prop-types';
 
 const AuthTabs = ({ authItems }) => {
     return (
@@ -20,5 +21,9 @@ const AuthTabs = ({ authItems }) => {
         </Box>
     );
 };
+
+AuthTabs.propTypes = {
+    authItems: PropTypes.array.isRequired,
+}
 
 export default AuthTabs;

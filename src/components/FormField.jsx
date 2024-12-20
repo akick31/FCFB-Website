@@ -1,6 +1,7 @@
 import React from "react";
 import { TextField, InputAdornment, IconButton } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import PropTypes from 'prop-types';
 
 const FormField = ({ label, name, type = "text", value, error, helperText, onChange, showPassword, handleTogglePassword }) => {
     return (
@@ -31,5 +32,17 @@ const FormField = ({ label, name, type = "text", value, error, helperText, onCha
         />
     );
 };
+
+FormField.propTypes = {
+    label: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    type: PropTypes.string,
+    value: PropTypes.string.isRequired,
+    error: PropTypes.bool,
+    helperText: PropTypes.string,
+    onChange: PropTypes.func.isRequired,
+    showPassword: PropTypes.bool,
+    handleTogglePassword: PropTypes.func,
+}
 
 export default FormField;

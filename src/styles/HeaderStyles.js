@@ -1,5 +1,5 @@
 import { styled } from "@mui/system";
-import { AppBar, Toolbar, Tabs, Tab, Box, Divider } from "@mui/material";
+import { AppBar, Toolbar, Tabs, Tab } from "@mui/material";
 
 // Styled components for Header
 export const StyledAppBar = styled(AppBar)`

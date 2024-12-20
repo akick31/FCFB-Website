@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ProfileContainer from "../components/ProfileContainer";
 import ProfileForm from "../forms/ProfileForm";
 import { Box, Container } from '@mui/material';
+import PropTypes from 'prop-types';
 
 const Profile = ({ user }) => {
     const navigate = useNavigate();
@@ -21,5 +22,9 @@ const Profile = ({ user }) => {
         </Container>
     );
 };
+
+Profile.propTypes = {
+    user: PropTypes.object,
+}
 
 export default Profile;

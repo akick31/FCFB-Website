@@ -11,6 +11,7 @@ import {
     TableSortLabel
 } from '@mui/material';
 import TeamRow from './TeamRow';
+import PropTypes from 'prop-types';
 
 const TeamsTable = ({ teams, order, orderBy, handleRequestSort, page, rowsPerPage, handleChangePage, handleChangeRowsPerPage, handleNullValue, handleArrayValue }) => (
     <TableContainer component={Paper}>
@@ -50,5 +51,18 @@ const TeamsTable = ({ teams, order, orderBy, handleRequestSort, page, rowsPerPag
         />
     </TableContainer>
 );
+
+TeamsTable.propTypes = {
+    teams: PropTypes.array.isRequired,
+    order: PropTypes.oneOf(['asc', 'desc']).isRequired,
+    orderBy: PropTypes.string.isRequired,
+    handleRequestSort: PropTypes.func.isRequired,
+    page: PropTypes.number.isRequired,
+    rowsPerPage: PropTypes.number.isRequired,
+    handleChangePage: PropTypes.func.isRequired,
+    handleChangeRowsPerPage: PropTypes.func.isRequired,
+    handleNullValue: PropTypes.func.isRequired,
+    handleArrayValue: PropTypes.func.isRequired
+}
 
 export default TeamsTable;

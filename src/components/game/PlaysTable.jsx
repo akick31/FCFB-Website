@@ -1,6 +1,7 @@
 import React from 'react';
 import { Table, TableHead, TableRow, TableCell, TableSortLabel, TableBody, TableContainer, Paper } from '@mui/material';
 import TablePagination from '@mui/material/TablePagination';
+import PropTypes from 'prop-types';
 
 const PlaysTable = ({ plays, page, rowsPerPage, orderBy, order, handleRequestSort, handleChangePage, handleChangeRowsPerPage }) => {
     const headers = [
@@ -52,5 +53,16 @@ const PlaysTable = ({ plays, page, rowsPerPage, orderBy, order, handleRequestSor
         </TableContainer>
     );
 };
+
+PlaysTable.propTypes = {
+    plays: PropTypes.array.isRequired,
+    page: PropTypes.number.isRequired,
+    rowsPerPage: PropTypes.number.isRequired,
+    orderBy: PropTypes.string.isRequired,
+    order: PropTypes.oneOf(['asc', 'desc']).isRequired,
+    handleRequestSort: PropTypes.func.isRequired,
+    handleChangePage: PropTypes.func.isRequired,
+    handleChangeRowsPerPage: PropTypes.func.isRequired,
+}
 
 export default PlaysTable;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { formatConference } from '../../utils/formatText';
+import PropTypes from 'prop-types';
 
 const ConferenceFilter = ({ selectedConference, onConferenceChange }) => {
     const conferenceOptions = [
@@ -29,5 +30,10 @@ const ConferenceFilter = ({ selectedConference, onConferenceChange }) => {
         </FormControl>
     );
 };
+
+ConferenceFilter.propTypes = {
+    selectedConference: PropTypes.string,
+    onConferenceChange: PropTypes.func,
+}
 
 export default ConferenceFilter;

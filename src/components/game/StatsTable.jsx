@@ -1,5 +1,6 @@
 import React from 'react';
-import { Table, TableHead, TableRow, TableCell, TableBody, Paper, TableContainer } from '@mui/material';
+import { Table, TableHead, TableRow, TableCell, Paper, TableContainer } from '@mui/material';
+import PropTypes from 'prop-types';
 
 const StatsTable = ({ stats }) => (
     <>
@@ -24,5 +25,9 @@ const StatsTable = ({ stats }) => (
         }
     </>
 );
+
+StatsTable.propTypes = {
+    stats: PropTypes.object.isRequired,
+}
 
 export default StatsTable;

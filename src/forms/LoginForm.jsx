@@ -4,21 +4,22 @@ import { Box, Button, Typography, Alert, Card, CardHeader, CardContent } from "@
 import { login } from "../api/authApi";
 import { getUserById } from "../api/userApi";
 import { checkIfUserIsAdmin } from "../utils/utils";
-import FormField from "../components/FormField"; // Import FormField component
+import FormField from "../components/FormField";
+import PropTypes from 'prop-types';
 
 const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
     const [credentials, setCredentials] = useState({
         usernameOrEmail: "",
         password: "",
     });
-    const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setCredentials(prev => ({ ...prev, [name]: value }));
-        if (error) setError(null); // Clear error when user starts typing
+        if (error) setError(null);
     };
 
     const handleSubmit = async (e) => {
@@ -124,5 +125,11 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
         </Box>
     );
 };
+
+LoginForm.propTypes = {
+    setIsAuthenticated: PropTypes.func.isRequired,
+    setUser: PropTypes.func.isRequired,
+    setIsAdmin: PropTypes.func.isRequired
+}
 
 export default LoginForm;

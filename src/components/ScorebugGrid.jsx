@@ -1,8 +1,9 @@
 import React from 'react';
 import { useNavigate } from "react-router-dom";
-import { Box, Grid, Typography, Card, CardContent, CardMedia } from '@mui/material';
+import { Box, Grid, Typography, Card, CardMedia } from '@mui/material';
 import { byteArrayToBase64 } from "../utils/image";
 import { StyledPaper } from '../styles/GridStyles';
+import PropTypes from 'prop-types';
 
 const ScorebugGrid = ({ games, scorebugs }) => {
     const navigate = useNavigate();
@@ -54,5 +55,10 @@ const ScorebugGrid = ({ games, scorebugs }) => {
         </StyledPaper>
     );
 };
+
+ScorebugGrid.propTypes = {
+    games: PropTypes.array.isRequired,
+    scorebugs: PropTypes.object.isRequired,
+}
 
 export default ScorebugGrid;

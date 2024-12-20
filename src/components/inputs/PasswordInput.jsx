@@ -1,6 +1,7 @@
 import React from "react";
 import FormField from "../FormField";
 import { Button } from "@mui/material";
+import PropTypes from 'prop-types';
 
 const PasswordInput = ({ formData, handleChange, validationErrors, handleSubmit, handleTogglePassword }) => {
     return (
@@ -32,5 +33,13 @@ const PasswordInput = ({ formData, handleChange, validationErrors, handleSubmit,
         </form>
     );
 };
+
+PasswordInput.propTypes = {
+    formData: PropTypes.object.isRequired,
+    handleChange: PropTypes.func.isRequired,
+    validationErrors: PropTypes.object.isRequired,
+    handleSubmit: PropTypes.func.isRequired,
+    handleTogglePassword: PropTypes.func.isRequired,
+}
 
 export default PasswordInput;

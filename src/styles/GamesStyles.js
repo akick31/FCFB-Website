@@ -1,4 +1,4 @@
-import {Box, Container, Paper, Tab, Tabs, Typography} from "@mui/material"; // Import necessary Material UI components
+import {Box, Container, Tab, Tabs, Typography} from "@mui/material"; // Import necessary Material UI components
 import { styled } from '@mui/system';
 
 const COLORS = {
@@ -95,7 +95,7 @@ export const StyledTabs = styled(Tabs)(({ theme }) => ({
     },
 }));
 
-export const StyledTab = styled(Tab)(({ theme }) => ({
+export const StyledTab = styled(Tab)(() => ({
     color: '#004260',  // Default color for the tabs
     padding: '6px 16px',  // Adjust padding for tabs
     fontWeight: 500,

@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { CircularProgress, Box, Typography, TablePagination } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { getAllPlaysForGame } from "../api/playApi";
-import { getGameStatsForTeam } from "../api/gameStatsApi";
 import { getGameById } from "../api/gameApi";
 import GameSummary from "../components/game/GameSummary";
-import StatsTable from "../components/game/StatsTable";
 import PlaysTable from "../components/game/PlaysTable";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
@@ -15,7 +13,6 @@ const GameDetails = () => {
     const [plays, setPlays] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [stats, setStats] = useState(null);
     const [game, setGame] = useState(null);
 
     const [page, setPage] = useState(0);
@@ -57,24 +54,6 @@ const GameDetails = () => {
         fetchPlays();
     }, [game, gameId, orderBy, order]);
 
-    useEffect(() => {
-        if (game) {
-            const fetchStats = async (team) => {
-                try {
-                    const response = await getGameStatsForTeam(gameId, team);
-                    setStats((prevStats) => ({ ...prevStats, [team]: response.data }));
-                    setLoading(false);
-                } catch (error) {
-                    setError("Failed to load stats");
-                    setLoading(false);
-                }
-            };
-
-            fetchStats(game.home_team);
-            fetchStats(game.away_team);
-        }
-    }, [game, gameId]);
-
     const handleRequestSort = (property) => {
         const isAsc = orderBy === property && order === 'asc';
         setOrder(isAsc ? 'desc' : 'asc');
@@ -100,8 +79,6 @@ const GameDetails = () => {
             <Typography variant="h4" component="h1" sx={{ textAlign: 'center', fontWeight: 'bold' }}>Game Details</Typography>
 
             {game && <GameSummary game={game} plays={plays} />}
-
-            {/*{stats && <StatsTable stats={stats} />}*/}
 
             <PlaysTable plays={plays} page={page} rowsPerPage={rowsPerPage} orderBy={orderBy} order={order}
                         handleRequestSort={handleRequestSort} handleChangePage={handleChangePage} handleChangeRowsPerPage={handleChangeRowsPerPage} />

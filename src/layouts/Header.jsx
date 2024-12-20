@@ -5,6 +5,7 @@ import { logout } from "../api/authApi";
 import LogoAndTitle from "../components/LogoAndTitle";
 import AuthTabs from "../components/tabs/AuthTabs";
 import { StyledAppBar, StyledToolbar, StyledTabs, StyledTab } from "../styles/HeaderStyles";
+import PropTypes from 'prop-types';
 
 const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, setIsAdmin }) => {
     const location = useLocation();
@@ -55,5 +56,14 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
         </StyledAppBar>
     );
 };
+
+Header.propTypes = {
+    isAuthenticated: PropTypes.bool.isRequired,
+    isAdmin: PropTypes.bool.isRequired,
+    user: PropTypes.object.isRequired,
+    setIsAuthenticated: PropTypes.func.isRequired,
+    setUser: PropTypes.func.isRequired,
+    setIsAdmin: PropTypes.func.isRequired,
+}
 
 export default Header;

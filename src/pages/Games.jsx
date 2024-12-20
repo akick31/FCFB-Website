@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
     Box,
     Typography,
-    Tab,
     CircularProgress,
     Alert,
     useTheme,

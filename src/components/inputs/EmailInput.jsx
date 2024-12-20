@@ -1,6 +1,7 @@
 import React from "react";
 import FormField from "../FormField";
 import { Button } from "@mui/material";
+import PropTypes from 'prop-types';
 
 const EmailInput = ({ formData, handleChange, validationErrors, handleSubmit }) => {
     return (
@@ -29,5 +30,12 @@ const EmailInput = ({ formData, handleChange, validationErrors, handleSubmit }) 
         </form>
     );
 };
+
+EmailInput.propTypes = {
+    formData: PropTypes.object.isRequired,
+    handleChange: PropTypes.func.isRequired,
+    validationErrors: PropTypes.object.isRequired,
+    handleSubmit: PropTypes.func.isRequired,
+}
 
 export default EmailInput;
