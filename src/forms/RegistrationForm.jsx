@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Box, Button, Typography, Container, Select, MenuItem, FormControl, InputLabel, Alert, Paper } from "@mui/material";
 import { registerUser } from "../api/authApi";
 import { validateEmail, isStrongPassword, validateRedditUsername } from "../utils/validations";
-import FormField from "../components/FormField";  // Importing the form field component
+import FormField from "../components/FormField";
 
 const RegistrationForm = () => {
     const [formData, setFormData] = useState({
