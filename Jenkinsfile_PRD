@@ -19,7 +19,6 @@ pipeline {
             steps {
                 echo 'Installing dependencies and building the FCFB Website...'
                 sh 'npm install'
-                sh 'npm run build'
             }
         }
 
