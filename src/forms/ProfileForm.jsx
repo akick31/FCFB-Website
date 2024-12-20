@@ -92,6 +92,15 @@ const ProfileForm = ({ user }) => {
                     />
                 </Grid>
                 <Grid item xs={12}>
+                    <InputField
+                        label={'Change Discord Tag'}
+                        formData={formData}
+                        handleChange={handleChange}
+                        validationErrors={validationErrors}
+                        handleSubmit={handleSubmit}
+                    />
+                </Grid>
+                <Grid item xs={12}>
                     <EmailInput
                         formData={formData}
                         handleChange={handleChange}
