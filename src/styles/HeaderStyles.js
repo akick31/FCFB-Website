@@ -1,10 +1,11 @@
-import { styled } from '@mui/system';
-import { AppBar, Toolbar, Button, Typography, Box, Tab, Tabs } from '@mui/material';
+import { styled } from "@mui/system";
+import { AppBar, Toolbar, Tabs, Tab } from "@mui/material";
 
 // Styled components for Header
 export const StyledAppBar = styled(AppBar)`
     position: sticky;
-    background-color: #004260; /* Material UI primary color */
+    background-color: #004260; /* Custom blue color */
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 export const StyledToolbar = styled(Toolbar)`
@@ -13,60 +14,32 @@ export const StyledToolbar = styled(Toolbar)`
     align-items: center;
 `;
 
-export const Logo = styled('img')`
-    height: 40px;
-    margin-right: 16px;
-`;
-
-export const HeaderTitle = styled(Typography)`
-    font-weight: bold;
-    color: white;
-`;
-
-export const NavButtons = styled(Box)`
-    display: flex;
-    align-items: center;
-`;
-
-export const NavButton = styled(Button)`
-    color: white;
-    margin-left: 16px;
-    &:hover {
-        background-color: rgba(255, 255, 255, 0.1); /* Slight grey on hover */
-        transform: scale(1.05); /* Slight scaling effect on hover */
-    }
-`;
-
-export const NavButtonActive = styled(NavButton)`
-    font-weight: bold;
-    color: rgba(255, 255, 255, 0.1);
-`;
-
 export const StyledTabs = styled(Tabs)`
-  .MuiTabs-indicator {
-    background-color: transparent; /* Transparent for indicator */
-  }
+    .MuiTabs-indicator {
+        background-color: transparent; /* Make indicator transparent */
+    }
 `;
 
 export const StyledTab = styled(Tab)`
     color: white; /* Default color for tab text */
-    padding: 6px 16px; /* Adjusted padding to match button size */
-    border-radius: 12px; /* Slightly round the edges */
-    font-size: 14px; /* Adjust font size to make it consistent with buttons */
-    transition: background-color 0.3s; /* Smooth transition for hover effects */
-    margin: 0 4px; /* Add horizontal margin between tabs */
+    padding: 6px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin: 0 4px; /* Horizontal margin between tabs */
 
-    &.Mui-selected {
-        color: white; /* Active tab color */
-        font-weight: bold;
-        background-color: rgba(255, 255, 255, 0.1); /* Slight grey on active tab */
-        border-radius: 12px; /* Keep the rounded corners on active tab */
+    /* Hover effect for tab */
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.1); /* Slight grey background on hover */
+        transform: scale(1.05); /* Slight scale effect on hover */
     }
 
-    &:hover {
-        color: white; /* Hover color */
-        background-color: rgba(255, 255, 255, 0.1); /* Slight grey on hover */
-        transform: scale(1.05); /* Slight scaling effect on hover */
+    /* Selected tab appearance */
+    &.Mui-selected {
+        background-color: rgba(255, 255, 255, 0.1); /* Match hover background color */
+        color: white;
+        font-weight: bold;
+        border-radius: 12px;
     }
 `;
 

@@ -1,8 +1,8 @@
-// AdminPage.jsx
 import React from 'react';
 import {useNavigate} from "react-router-dom";
+import PropTypes from 'prop-types';
 
-const AdminPage = ({user}) => {
+const Admin = ({user}) => {
     const navigate = useNavigate();
 
     if (user.role !== "admin") {
@@ -18,4 +18,8 @@ const AdminPage = ({user}) => {
     );
 }
 
-export default AdminPage;
+Admin.propTypes = {
+    user: PropTypes.object,
+}
+
+export default Admin;
