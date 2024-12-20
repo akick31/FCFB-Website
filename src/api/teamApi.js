@@ -11,3 +11,13 @@ export const getTeamByName = async (teamName) => {
         throw error;
     }
 };
+
+export const getAllTeams = async () => {
+    try {
+        const response = await apiClient.get('/arceus/team');
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch all teams:", error);
+        throw error;
+    }
+}

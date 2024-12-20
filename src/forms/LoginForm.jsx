@@ -1,67 +1,135 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import '../styles/forms.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Box, Button, Typography, Alert, Card, CardHeader, CardContent } from "@mui/material";
 import { login } from "../api/authApi";
 import { getUserById } from "../api/userApi";
 import { checkIfUserIsAdmin } from "../utils/utils";
+import FormField from "../components/FormField";
+import PropTypes from 'prop-types';
 
 const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
-    const [formData, setFormData] = useState({
-        usernameOrEmail: '',
-        password: '',
-        loginSuccess: false
+    const [credentials, setCredentials] = useState({
+        usernameOrEmail: "",
+        password: "",
     });
-
+    const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prevData => ({ ...prevData, [name]: value }));
+        setCredentials(prev => ({ ...prev, [name]: value }));
+        if (error) setError(null);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const loginSuccess = await login(formData.usernameOrEmail, formData.password, setIsAuthenticated, setUser);
+        try {
+            const loginSuccess = await login(
+                credentials.usernameOrEmail,
+                credentials.password,
+                setIsAuthenticated,
+                setUser
+            );
 
-        if (loginSuccess) {
-            setFormData(prevData => ({ ...prevData, loginSuccess: true }));
-            setIsAdmin(checkIfUserIsAdmin());
-
-            const userId = localStorage.getItem('userId');
-            try {
+            if (loginSuccess) {
+                setIsAdmin(checkIfUserIsAdmin());
+                const userId = localStorage.getItem("userId");
                 const userData = await getUserById(userId);
                 setUser(userData);
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-                setIsAuthenticated(false);
-                setUser({});
+                navigate("/");
+            } else {
+                setError("Invalid username/email or password");
             }
-        } else {
-            setFormData(prevData => ({ ...prevData, errorMessage: 'Login failed. Please try again.' }));
+        } catch (error) {
+            console.error("Login error:", error);
+            setError(error.message || "An error occurred during login");
+            setIsAuthenticated(false);
+            setUser({});
         }
     };
 
-    if (formData.loginSuccess) {
-        navigate('/');
-    }
+    // Toggle password visibility
+    const handleTogglePassword = () => {
+        setShowPassword((prev) => !prev);
+    };
 
     return (
-        <div className="form-container">
-            <h2 className="form-title">Login</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label className="form-label">Username or Email</label>
-                    <input type="text" name="usernameOrEmail" value={formData.usernameOrEmail} onChange={handleChange} className="form-input" />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Password</label>
-                    <input type="password" name="password" value={formData.password} onChange={handleChange} className="form-input" />
-                </div>
-                <button type="submit" className="form-btn">Login</button>
-                {formData.errorMessage && <p className="error-message">{formData.errorMessage}</p>}
-            </form>
-        </div>
+        <Box
+            sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: "calc(100vh - 100px)",
+                padding: 3,
+            }}
+        >
+            <Card
+                elevation={3}
+                sx={{
+                    width: "100%",
+                    maxWidth: 400,
+                    borderRadius: 2,
+                }}
+            >
+                <CardHeader
+                    title={
+                        <Typography variant="h4" align="center" gutterBottom>
+                            Login
+                        </Typography>
+                    }
+                />
+                <CardContent>
+                    <form onSubmit={handleSubmit}>
+                        <FormField
+                            label="Username or Email"
+                            name="usernameOrEmail"
+                            value={credentials.usernameOrEmail}
+                            onChange={handleChange}
+                            required
+                            autoFocus
+                        />
+                        {/* Password field with visibility toggle */}
+                        <FormField
+                            label="Password"
+                            name="password"
+                            type="password"
+                            value={credentials.password}
+                            onChange={handleChange}
+                            required
+                            showPassword={showPassword}
+                            handleTogglePassword={handleTogglePassword}
+                        />
+                        {error && (
+                            <Alert severity="error" sx={{ mb: 2 }}>
+                                {error}
+                            </Alert>
+                        )}
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            fullWidth
+                            size="large"
+                            sx={{
+                                py: 1.5,
+                                fontWeight: 600,
+                                textTransform: "none",
+                            }}
+                        >
+                            Sign In
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        </Box>
     );
 };
+
+LoginForm.propTypes = {
+    setIsAuthenticated: PropTypes.func.isRequired,
+    setUser: PropTypes.func.isRequired,
+    setIsAdmin: PropTypes.func.isRequired
+}
 
 export default LoginForm;

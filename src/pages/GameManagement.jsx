@@ -1,7 +1,7 @@
-// AdminPage.jsx
+// Admin.jsx
 import React from 'react';
 
-const GameManagementPage = () => {
+const GameManagement = () => {
     return (
         <div>
             <h2>Start Games</h2>
@@ -10,4 +10,4 @@ const GameManagementPage = () => {
     );
 }
 
-export default GameManagementPage;
+export default GameManagement;
