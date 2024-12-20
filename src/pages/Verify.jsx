@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { resendVerificationEmail, verifyEmail } from "../api/authApi";
-import { FaSpinner } from 'react-icons/fa';
-import '../styles/verifyPage.css'; // Import the verifyPage.css file
+import { CircularProgress, Box, Typography, Button, Paper } from '@mui/material';
 
 const Verify = ({ userId, token }) => {
     const [loading, setLoading] = useState(true);
@@ -30,36 +29,54 @@ const Verify = ({ userId, token }) => {
 
     const handleResendVerification = async () => {
         try {
-            // Logic to resend verification email
             await resendVerificationEmail(userId);
-            // If successful, inform the user and let them know to check their email
             alert('Verification email has been resent. Please check your email.');
-            navigate('/')
+            navigate('/');
         } catch (error) {
-            // Handle any errors that occur during resending verification email
             console.error('Error resending verification email:', error);
-            // Inform the user about the error
             alert('Error resending verification email. Please try again later.');
         }
     };
 
     return (
-        <div className="verify-container"> {/* Use the verify container class */}
-            <h2 className="verify-title">Verifying Email...</h2> {/* Use the verify title class */}
-            {loading && <FaSpinner className="loading-spinner" />} {/* Use the loading spinner class */}
-            {!loading && verificationSuccess && (
-                <div>
-                    <p className="verify-message">Email verified successfully!</p> {/* Use the verify message class */}
-                    <button className="verify-btn" onClick={() => navigate('/login')}>Login</button> {/* Use the verify button class */}
-                </div>
-            )}
-            {!loading && !verificationSuccess && (
-                <div>
-                    <p className="verify-message">Failed to verify email.</p> {/* Use the verify message class */}
-                    <button className="verify-btn" onClick={handleResendVerification}>Resend Verification Email</button> {/* Use the verify button class */}
-                </div>
-            )}
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', p: 2 }}>
+            <Paper elevation={3} sx={{ maxWidth: 400, p: 4, textAlign: 'center' }}>
+                <Typography variant="h5" gutterBottom>
+                    Verifying Email...
+                </Typography>
+                {loading ? (
+                    <CircularProgress color="primary" />
+                ) : verificationSuccess ? (
+                    <>
+                        <Typography variant="body1" color="success.main" gutterBottom>
+                            Email verified successfully!
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => navigate('/login')}
+                            sx={{ mt: 2 }}
+                        >
+                            Login
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                        <Typography variant="body1" color="error.main" gutterBottom>
+                            Failed to verify email.
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            onClick={handleResendVerification}
+                            sx={{ mt: 2 }}
+                        >
+                            Resend Verification Email
+                        </Button>
+                    </>
+                )}
+            </Paper>
+        </Box>
     );
 };
 

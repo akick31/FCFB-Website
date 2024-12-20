@@ -1,192 +1,199 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-import '../styles/forms.css';
-import { registerUser } from '../api/authApi.js'
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Box, Button, Typography, Container, Select, MenuItem, FormControl, InputLabel, Alert, Paper } from "@mui/material";
+import { registerUser } from "../api/authApi";
+import { validateEmail, isStrongPassword, validateRedditUsername } from "../utils/validations";
+import FormField from "../components/FormField";  // Importing the form field component
 
 const RegistrationForm = () => {
     const [formData, setFormData] = useState({
-        username: '',
-        coachName: '',
-        redditUsername: '',
-        discordTag: '',
-        email: '',
-        confirmEmail: '',
-        password: '',
-        confirmPassword: '',
-        position: 'head coach', // Default position
-        showPassword: false, // State to toggle password visibility
-        emailValid: true, // State to track email validity
-        passwordValid: true, // State to track password validity
-        redditValid: true, // State to track reddit username validity
-        registrationSuccess: false // State to track registration success
+        username: "",
+        coachName: "",
+        redditUsername: "",
+        discordTag: "",
+        email: "",
+        confirmEmail: "",
+        password: "",
+        confirmPassword: "",
+        position: "head_coach",
+        showPassword: false,
     });
 
-    const navigate = useNavigate(); // Retrieve the history object
+    const [validation, setValidation] = useState({
+        emailValid: true,
+        passwordValid: true,
+        redditValid: true,
+        errorMessage: null,
+    });
 
-    // Update specific validity state based on the field being changed
+    const navigate = useNavigate();
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        let emailValid = formData.emailValid;
-        let passwordValid = formData.passwordValid;
-        let redditValid = formData.redditValid;
+        setFormData((prev) => ({ ...prev, [name]: value }));
 
-        // Update specific validity state based on the field being changed
-        if (name === 'email') {
-            emailValid = validateEmail(value);
-        } else if (name === 'password') {
-            passwordValid = isStrongPassword(value);
-        } else if (name === 'redditUsername') {
-            redditValid = validateRedditUsername(value);
+        if (name === "email") {
+            setValidation((prev) => ({ ...prev, emailValid: validateEmail(value) }));
+        } else if (name === "password") {
+            setValidation((prev) => ({ ...prev, passwordValid: isStrongPassword(value) }));
+        } else if (name === "redditUsername") {
+            setValidation((prev) => ({ ...prev, redditValid: validateRedditUsername(value) }));
         }
-
-        setFormData({
-            ...formData,
-            [name]: value,
-            emailValid: emailValid,
-            passwordValid: passwordValid,
-            redditValid: redditValid
-        });
     };
 
     const handleTogglePassword = () => {
-        setFormData({ ...formData, showPassword: !formData.showPassword });
+        setFormData((prev) => ({ ...prev, showPassword: !prev.showPassword }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const { email, confirmEmail, password, confirmPassword } = formData;
+        const { emailValid, passwordValid, redditValid } = validation;
 
-        if (formData.passwordValid === false) {
-            setFormData({ ...formData, errorMessage: 'Password is not strong enough' });
+        if (!emailValid || !passwordValid || !redditValid) {
+            setValidation((prev) => ({
+                ...prev,
+                errorMessage: "Please fix the highlighted errors.",
+            }));
             return;
         }
-        if (formData.emailValid === false) {
-            setFormData({ ...formData, errorMessage: 'Invalid email address' });
+
+        if (email !== confirmEmail) {
+            setValidation((prev) => ({
+                ...prev,
+                errorMessage: "Emails do not match.",
+            }));
             return;
         }
-        if (formData.redditValid === false) {
-            setFormData({ ...formData, errorMessage: 'Reddit username cannot contain /u/' });
-            return;
-        }
-        if (formData.email !== formData.confirmEmail) {
-            setFormData({ ...formData, errorMessage: 'Emails do not match' });
-            return;
-        }
-        if (formData.password !== formData.confirmPassword) {
-            setFormData({ ...formData, errorMessage: 'Passwords do not match. Please try again.' });
+
+        if (password !== confirmPassword) {
+            setValidation((prev) => ({
+                ...prev,
+                errorMessage: "Passwords do not match.",
+            }));
             return;
         }
 
         try {
             await registerUser(formData);
-            setFormData({ ...formData, registrationSuccess: true });
-            // Redirect to login page or handle success
+            navigate("/login");
         } catch (error) {
-            setFormData({ ...formData, errorMessage: 'Registration failed. Please try again.' });
+            setValidation((prev) => ({
+                ...prev,
+                errorMessage: "Registration failed. Please try again.",
+            }));
         }
-    };
-
-    // Redirect to login page if registration is successful
-    if (formData.registrationSuccess) {
-        navigate('/login');
-    }
-
-    // Custom validation function for Reddit Username field
-    const validateRedditUsername = (value) => {
-        // Check if value contains '/u/'
-        if (value.includes('/u/')) {
-            return false;
-        }
-        return true;
-    };
-
-    // Custom validation function for Email field
-    const validateEmail = (value) => {
-        // Regular expression for validating email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(value);
-    };
-
-    // Password strength validation function
-    const isStrongPassword = (password) => {
-        // Check if the password length is between 8 and 255 characters
-        if (password.length < 8 || password.length > 255) {
-            return false;
-        }
-        // Check if the password contains at least one special character
-        const specialCharacters = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/;
-        if (!specialCharacters.test(password)) {
-            return false;
-        }
-        // Return true if the password meets all criteria
-        return true;
     };
 
     return (
-        <div className="form-container">
-            <h2 className="form-title">Registration</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label className="form-label">Username</label>
-                    <input type="text" name="username" value={formData.username} onChange={handleChange} className="form-input" />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Coach Name</label>
-                    <input type="text" name="coachName" value={formData.coachName} onChange={handleChange} className="form-input" />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Reddit Username</label>
-                    <input type="text" name="redditUsername" value={formData.redditUsername} onChange={handleChange} className="form-input" />
-                    {formData.redditUsername && !formData.redditValid && <p className="error">Reddit Username cannot contain '/u/'</p>}
-                    {formData.redditUsername && formData.redditValid && <p className="success">Reddit Username is valid</p>}
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Discord Tag</label>
-                    <input type="text" name="discordTag" value={formData.discordTag} onChange={handleChange} className="form-input" />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Position</label>
-                    <select name="position" value={formData.position} onChange={handleChange} className="form-input">
-                        <option value="">Select Position</option>
-                        <option value="head coach">Head Coach</option>
-                        <option value="coordinator">Coordinator</option>
-                    </select>
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Email</label>
-                    <input type="email" name="email" value={formData.email} onChange={handleChange} className="form-input" />
-                    {formData.email && !formData.emailValid && <p className="error">Invalid email address</p>}
-                    {formData.email && formData.emailValid && <p className="success">Email is valid</p>}
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Confirm Email</label>
-                    <input type="email" name="confirmEmail" value={formData.confirmEmail} onChange={handleChange} className="form-input" />
-                    {formData.confirmEmail && formData.email !== formData.confirmEmail && <p className="error">Emails do not match</p>}
-                    {formData.confirmEmail && formData.email === formData.confirmEmail && <p className="success">Emails match</p>}
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Password</label>
-                    <div className="password-input-container">
-                        <input type={formData.showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} className="form-input" />
-                        <FontAwesomeIcon icon={formData.showPassword ? faEye : faEyeSlash} onClick={handleTogglePassword} className="toggle-password-icon" />
-                    </div>
-                    {formData.password && !formData.passwordValid && <p className="error">Password must be at least 8 characters long and contain 1 special character</p>}
-                    {formData.password && formData.passwordValid && <p className="success">Password is strong</p>}
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Confirm Password</label>
-                    <div className="password-input-container">
-                        <input type={formData.showPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className="form-input" />
-                        <FontAwesomeIcon icon={formData.showPassword ? faEye : faEyeSlash} onClick={handleTogglePassword} className="toggle-password-icon" />
-                    </div>
-                    {formData.confirmPassword && formData.password !== formData.confirmPassword && <p className="error">Passwords do not match</p>}
-                    {formData.confirmPassword && formData.password === formData.confirmPassword && <p className="success">Passwords match</p>}
-                </div>
-                <button type="submit" className="form-btn">Register</button>
-                {formData.errorMessage && <p className="error-message">{formData.errorMessage}</p>}
-            </form>
-        </div>
+        <Container maxWidth="sm" sx={{ py: 8 }}>
+            <Paper
+                elevation={3}
+                sx={{
+                    p: 4,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                }}
+            >
+                <Typography variant="h4" component="h1" align="center" gutterBottom>
+                    Registration
+                </Typography>
+
+                <form onSubmit={handleSubmit}>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <FormField label="Username" name="username" value={formData.username} onChange={handleChange} />
+                        <FormField label="Coach Name" name="coachName" value={formData.coachName} onChange={handleChange} />
+
+                        <FormField
+                            label="Reddit Username"
+                            name="redditUsername"
+                            value={formData.redditUsername}
+                            onChange={handleChange}
+                            error={!validation.redditValid}
+                            helperText={!validation.redditValid ? "Reddit username cannot contain '/u/'" : ""}
+                        />
+
+                        <FormField label="Discord Tag" name="discordTag" value={formData.discordTag} onChange={handleChange} />
+
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel id="position-label">Position</InputLabel>
+                            <Select
+                                labelId="position-label"
+                                name="position"
+                                value={formData.position}
+                                onChange={handleChange}
+                                label="Position"
+                            >
+                                <MenuItem value="head_coach">Head Coach</MenuItem>
+                                <MenuItem value="coordinator">Coordinator</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        <FormField
+                            label="Email"
+                            name="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            error={!validation.emailValid}
+                            helperText={!validation.emailValid ? "Invalid email address" : ""}
+                        />
+
+                        <FormField
+                            label="Confirm Email"
+                            name="confirmEmail"
+                            type="email"
+                            value={formData.confirmEmail}
+                            onChange={handleChange}
+                            error={formData.email !== formData.confirmEmail && formData.confirmEmail !== ""}
+                            helperText={formData.confirmEmail !== "" && formData.email !== formData.confirmEmail ? "Emails do not match" : ""}
+                        />
+
+                        <FormField
+                            label="Password"
+                            name="password"
+                            type="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            error={!validation.passwordValid}
+                            helperText={!validation.passwordValid ? "Password must be 8-255 characters with at least one special character" : ""}
+                            showPassword={formData.showPassword}
+                            handleTogglePassword={handleTogglePassword}
+                        />
+
+                        <FormField
+                            label="Confirm Password"
+                            name="confirmPassword"
+                            type="password"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            error={formData.password !== formData.confirmPassword && formData.confirmPassword !== ""}
+                            helperText={formData.confirmPassword !== "" && formData.password !== formData.confirmPassword ? "Passwords do not match" : ""}
+                            showPassword={formData.showPassword}
+                            handleTogglePassword={handleTogglePassword}
+                        />
+
+                        {validation.errorMessage && (
+                            <Alert severity="error" sx={{ mt: 2 }}>
+                                {validation.errorMessage}
+                            </Alert>
+                        )}
+
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            size="large"
+                            fullWidth
+                            sx={{ mt: 2 }}
+                        >
+                            Register
+                        </Button>
+                    </Box>
+                </form>
+            </Paper>
+        </Container>
     );
 };
 

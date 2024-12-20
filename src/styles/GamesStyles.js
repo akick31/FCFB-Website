@@ -1,4 +1,4 @@
-import {Box, Paper, Typography} from "@mui/material"; // Import necessary Material UI components
+import {Box, Container, Paper, Tab, Tabs, Typography} from "@mui/material"; // Import necessary Material UI components
 import { styled } from '@mui/system';
 
 const COLORS = {
@@ -8,7 +8,7 @@ const COLORS = {
         light: '#ffffff'
     },
     background: {
-        light: '#f5f5f5',
+        light: '#ffffff',
         white: '#ffffff'
     },
     error: {
@@ -40,108 +40,6 @@ export const InfoText = styled(Typography)`
     font-size: 18px;
 `;
 
-export const GamesContainer = styled(Box)`
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    padding: 20px;
-`;
-
-export const GameImage = styled('img')`
-    cursor: pointer;
-    width: 200px;
-    height: 100px;
-`;
-
-// Styled Components
-export const Header = styled("div")({
-    backgroundColor: "#0A74DA",
-    color: "white",
-    padding: "20px",
-    textAlign: "center",
-    marginBottom: "20px",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-});
-
-// Styled components
-
-export const ScoreboardContainer = styled("div")({
-    width: "100%",
-    maxWidth: "1400px", // Limit the max width if needed
-    margin: "0 auto",   // Ensure it's centered
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-    gap: "20px",
-    marginTop: "20px",
-    justifyItems: "center", // Center grid items
-});
-
-// Parent container for page content (already centered using flexbox)
-export const PageContainer = styled("div")({
-    maxWidth: "1400px",
-    margin: "0 auto",
-    padding: "20px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-});
-
-
-export const TabContainer = styled(Paper)({
-    width: "100%",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-    marginBottom: "20px",
-});
-
-export const GameSummaryContainer = styled(Box)`
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 24px;
-    gap: 16px;
-
-    @media (max-width: 600px) {
-        flex-direction: column;
-        align-items: center;
-    }
-`;
-
-export const SummaryStatCard = styled(Paper)`
-    flex: 1;
-    padding: 16px;
-    text-align: center;
-    transition: transform 0.3s ease;
-    background-color: ${COLORS.background.white};
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-
-    &:hover {
-        transform: scale(1.05);
-        box-shadow: 0 6px 8px rgba(0,0,0,0.15);
-    }
-
-    h3 {
-        color: ${COLORS.text.secondary};
-        margin-bottom: 8px;
-        font-weight: 500;
-    }
-
-    p {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: ${COLORS.text.primary};
-    }
-
-    @media (max-width: 600px) {
-        width: 100%;
-        max-width: 400px;
-    }
-`;
-
-export const StyledTableContainer = styled(Box)`
-    width: 100%;
-    overflow-x: auto;
-    margin-top: 16px;
-`;
-
 export const PlayHighlight = {
     touchdown: {
         backgroundColor: COLORS.success.light,
@@ -161,3 +59,57 @@ export const getPlayHighlightStyle = (play) => {
     if (play.result === 'Turnover') return PlayHighlight.turnover;
     return PlayHighlight.defaultPlay;
 };
+
+export const StyledContainer = styled(Container)(({ theme }) => ({
+    paddingTop: theme.spacing(4),
+    paddingBottom: theme.spacing(4),
+}));
+
+export const Header = styled(Box)(({ theme }) => ({
+    marginBottom: theme.spacing(4),
+    textAlign: 'center',
+}));
+
+export const LoadingContainer = styled(Box)({
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '200px',
+    width: '100%',
+});
+
+export const SearchFilterContainer = styled(Box)(({ theme }) => ({
+    display: 'flex',
+    gap: theme.spacing(2),
+    marginBottom: theme.spacing(3),
+    [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column',
+    },
+}));
+
+export const StyledTabs = styled(Tabs)(({ theme }) => ({
+    marginBottom: theme.spacing(4),
+    marginLeft: 'auto',
+    '& .MuiTabs-indicator': {
+        display: 'none'
+    },
+}));
+
+export const StyledTab = styled(Tab)(({ theme }) => ({
+    color: '#004260',  // Default color for the tabs
+    padding: '6px 16px',  // Adjust padding for tabs
+    fontWeight: 500,
+    margin: '0 8px',
+    '&.Mui-selected': {
+        color: '#004260',  // Change the text color of the selected tab to the blue (same as header)
+        backgroundColor: 'rgba(0, 66, 96, 0.1)',  // Slight transparent white background on active tab
+        fontWeight: 'bold',
+        borderRadius: '12px',
+
+    },
+    '&:hover': {
+        backgroundColor: 'rgba(0, 66, 96, 0.1)',  // Slight hover effect
+        transform: 'scale(1.05)',  // Slight scaling on hover
+        borderRadius: 12,
+    },
+}));

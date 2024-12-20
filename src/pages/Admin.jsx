@@ -1,8 +1,8 @@
-// AdminPage.jsx
+// Admin.jsx
 import React from 'react';
 import {useNavigate} from "react-router-dom";
 
-const AdminPage = ({user}) => {
+const Admin = ({user}) => {
     const navigate = useNavigate();
 
     if (user.role !== "admin") {
@@ -18,4 +18,4 @@ const AdminPage = ({user}) => {
     );
 }
 
-export default AdminPage;
+export default Admin;

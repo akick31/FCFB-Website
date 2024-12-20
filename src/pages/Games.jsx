@@ -1,100 +1,168 @@
-import React, { useEffect, useState } from "react";
-import { getAllOngoingGames, getAllPastGames, getAllScrimmageGames, getAllPastScrimmageGames } from "../api/gameApi";
-import { getScorebugByGameId } from "../api/scorebugApi";
-import ScorebugGrid from "../components/ScorebugGrid";
-import { CircularProgress, Tab, Tabs, Typography } from "@mui/material";
-import { PageContainer, Header, TabContainer, ScoreboardContainer } from "../styles/GamesStyles";
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+    Box,
+    Typography,
+    Tab,
+    CircularProgress,
+    Alert,
+    useTheme,
+    useMediaQuery,
+    Paper
+} from '@mui/material';
+import { gameTabConfigs } from '../constants/tabConfigs';
+import { getScorebugByGameId } from '../api/scorebugApi';
+import ScorebugGrid from '../components/ScorebugGrid';
+import {Header, LoadingContainer, StyledContainer, StyledTab, StyledTabs} from '../styles/GamesStyles';
+
 
 const Games = () => {
-    const [games, setGames] = useState([]);
-    const [scorebugs, setScorebugs] = useState({});
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [gameType, setGameType] = useState("ongoing");
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    const [state, setState] = useState({
+        games: [],
+        scorebugs: {},
+        loading: true,
+        error: null,
+        gameType: 'ongoing'
+    });
+
+    const { games, scorebugs, loading, error, gameType } = state;
+
+    const fetchGames = useCallback(async (type) => {
+        setState(prev => ({ ...prev, loading: true, error: null }));
+        try {
+            const fetchFn = gameTabConfigs.find(config => config.value === type).fetch;
+            const response = await fetchFn();
+            setState(prev => ({
+                ...prev,
+                games: response.data,
+                loading: false
+            }));
+        } catch (err) {
+            setState(prev => ({
+                ...prev,
+                error: `Failed to load ${type.replace('-', ' ')} games. ${err.message}`,
+                loading: false
+            }));
+        }
+    }, []);
+
+    const fetchScorebugs = useCallback(async (gamesData, currentScorebugs) => {
+        const newScorebugs = {};
+        const promises = gamesData
+            .filter(game => !currentScorebugs[game.game_id])
+            .map(async game => {
+                try {
+                    const scorebug = await getScorebugByGameId(game.game_id);
+                    newScorebugs[game.game_id] = scorebug;
+                } catch (err) {
+                    console.error(`Failed to fetch scorebug for game ${game.game_id}:`, err);
+                }
+            });
+
+        await Promise.all(promises);
+
+        if (Object.keys(newScorebugs).length > 0) {
+            setState(prev => ({
+                ...prev,
+                scorebugs: { ...prev.scorebugs, ...newScorebugs }
+            }));
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchGames = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                let response;
-                switch (gameType) {
-                    case "ongoing": response = await getAllOngoingGames(); break;
-                    case "past": response = await getAllPastGames(); break;
-                    case "scrimmage": response = await getAllScrimmageGames(); break;
-                    case "past-scrimmage": response = await getAllPastScrimmageGames(); break;
-                    default: break;
-                }
-                setGames(response.data);
-
-                setLoading(false);
-            } catch (error) {
-                setError(`Failed to load ${gameType} games`);
-                setLoading(false);
-            }
-        };
-
-        fetchGames();
-    }, [gameType]);
+        fetchGames(gameType);
+    }, [gameType, fetchGames]);
 
     useEffect(() => {
-        if (games.length === 0) return;
-
-        const fetchScorebugs = async () => {
-            const scorebugsData = {};
-            for (const game of games) {
-                if (!scorebugs[game.game_id]) {
-                    scorebugsData[game.game_id] = await getScorebugByGameId(game.game_id);
-                }
-            }
-            if (Object.keys(scorebugsData).length > 0) {
-                setScorebugs(prevScorebugs => ({ ...prevScorebugs, ...scorebugsData }));
-            }
-        };
-
-        fetchScorebugs();
-    }, [games, scorebugs]); // Fetch scorebugs only when `games` changes
+        if (games.length > 0) {
+            fetchScorebugs(games, scorebugs);
+        }
+    }, [games, scorebugs, fetchScorebugs]);
 
     const handleTabChange = (event, newValue) => {
-        setGameType(newValue);
+        setState(prev => ({ ...prev, gameType: newValue }));
     };
 
     return (
-        <div style={{ background: "#F7F9FC", minHeight: "100vh", padding: "20px 0" }}>
-            <PageContainer>
+        <Box sx={{
+            bgcolor: 'white',
+            minHeight: '100vh',
+            py: 3
+        }}>
+            <StyledContainer maxWidth="lg">
                 <Header>
-                    <Typography variant="h3" style={{ fontWeight: "bold" }}>Nationwide Scoreboard</Typography>
-                    <Typography variant="subtitle1">Follow live updates from games across the country</Typography>
+                    <Typography
+                        variant={isMobile ? "h4" : "h3"}
+                        component="h1"
+                        gutterBottom
+                        sx={{ fontWeight: 'bold' }}
+                    >
+                        Nationwide Scoreboard
+                    </Typography>
+                    <Typography
+                        variant="subtitle1"
+                        color="text.secondary"
+                        sx={{ mb: 4 }}
+                    >
+                        Follow live updates from games across the country
+                    </Typography>
                 </Header>
-                <TabContainer>
-                    <Tabs
+
+                <Paper elevation={0} sx={{ mb: 4, borderRadius: 2 }}>
+                    <StyledTabs
                         value={gameType}
                         onChange={handleTabChange}
                         indicatorColor="primary"
                         textColor="primary"
                         centered
+                        variant={isMobile ? "scrollable" : "standard"}
+                        scrollButtons={isMobile ? "auto" : false}
                     >
-                        <Tab label="Ongoing Games" value="ongoing" />
-                        <Tab label="Past Games" value="past" />
-                        <Tab label="Scrimmages" value="scrimmage" />
-                        <Tab label="Past Scrimmages" value="past-scrimmage" />
-                    </Tabs>
-                </TabContainer>
+                        {gameTabConfigs.map(({ label, value }) => (
+                            <StyledTab
+                                key={value}
+                                label={label}
+                                value={value}
+                                sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 500,
+                                    fontSize: '1rem'
+                                }}
+                            />
+                        ))}
+                    </StyledTabs>
+                </Paper>
+
                 {loading ? (
-                    <CircularProgress />
+                    <LoadingContainer>
+                        <CircularProgress size={40} />
+                    </LoadingContainer>
                 ) : error ? (
-                    <Typography variant="h6" color="error">{error}</Typography>
-                ) : games.length ? (
-                    <ScoreboardContainer>
-                        <ScorebugGrid games={games} scorebugs={scorebugs} />
-                    </ScoreboardContainer>
+                    <Alert
+                        severity="error"
+                        sx={{ mb: 2 }}
+                    >
+                        {error}
+                    </Alert>
+                ) : games.length === 0 ? (
+                    <Alert
+                        severity="info"
+                        sx={{ mb: 2 }}
+                    >
+                        No {gameType.replace('-', ' ')} games available at this time
+                    </Alert>
                 ) : (
-                    <Typography variant="h6" style={{ marginTop: "20px" }}>
-                        No {gameType.replace("-", " ")} games available
-                    </Typography>
+                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                        <ScorebugGrid
+                            games={games}
+                            scorebugs={scorebugs}
+                        />
+                    </Box>
                 )}
-            </PageContainer>
-        </div>
+            </StyledContainer>
+        </Box>
     );
 };
 
