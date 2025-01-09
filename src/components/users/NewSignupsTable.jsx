@@ -24,6 +24,7 @@ const NewSignupsTable = ({
                         handleChangePage,
                         handleChangeRowsPerPage
                     }) => {
+    const [selectedRole] = useState('');
     const navigate = useNavigate();
 
     const handleRowClick = (username) => {
