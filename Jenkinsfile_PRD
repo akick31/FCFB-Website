@@ -43,6 +43,7 @@ pipeline {
                     sh """
                         docker run -d --name ${CONTAINER_NAME} \
                             -p 462:80 \
+                            -p 443:443 \
                             --env-file .env \
                             ${IMAGE_NAME}:latest
                     """
