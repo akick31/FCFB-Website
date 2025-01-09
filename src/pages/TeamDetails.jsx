@@ -13,9 +13,6 @@ const TeamDetails = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-
     useEffect(() => {
         const fetchTeam = async () => {
             try {
@@ -29,12 +26,6 @@ const TeamDetails = ({ user }) => {
         };
         fetchTeam();
     }, [teamId]);
-
-    const handleChangePage = (event, newPage) => setPage(newPage);
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-    };
 
     if (loading) {
         return <LoadingSpinner />;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { useNavigate } from "react-router-dom";
 import PropTypes from 'prop-types';
 import { Box, Button, Typography, Paper } from '@mui/material';
@@ -6,9 +6,11 @@ import { Box, Button, Typography, Paper } from '@mui/material';
 const Admin = ({ user }) => {
     const navigate = useNavigate();
 
-    if (user.role === "USER") {
-        navigate('*'); // Redirect to the not-found page if the user is not an admin
-    }
+    useEffect(() => {
+        if (user.role === "USER") {
+            navigate('*');
+        }
+    }, [user.role, navigate]);
 
     const handleNavigateToUsers = () => {
         navigate('/users');

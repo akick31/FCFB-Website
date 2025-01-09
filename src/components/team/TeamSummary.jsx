@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Box, Typography, Avatar, List, ListItem, ListItemText, Divider, Grid, Paper } from "@mui/material";
+import { Box, Typography, Avatar, List, ListItem, ListItemText, Grid, Paper } from "@mui/material";
 import {formatConference, formatPlaybook} from "../../utils/formatText";
 
 const TeamSummary = ({ team }) => (

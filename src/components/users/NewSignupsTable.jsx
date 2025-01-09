@@ -9,10 +9,6 @@ import {
     Paper,
     TablePagination,
     TableSortLabel,
-    Select,
-    MenuItem,
-    InputLabel,
-    FormControl,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
@@ -33,10 +29,6 @@ const NewSignupsTable = ({
 
     const handleRowClick = (username) => {
         navigate(`/user-details/${username}`);
-    };
-
-    const handleRoleChange = (event) => {
-        setSelectedRole(event.target.value);
     };
 
     const filteredUsers = selectedRole

@@ -13,10 +13,11 @@ const NewSignupsPage = ({ user }) => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    if (user.role === "USER") {
-        // Redirect to the not found page if the user is not an admin
-        navigate('*');
-    }
+    useEffect(() => {
+        if (user.role === "USER") {
+            navigate('*');
+        }
+    }, [user.role, navigate]);
 
     useEffect(() => {
         // Fetch the list of users
