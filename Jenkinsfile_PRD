@@ -43,6 +43,10 @@ pipeline {
                     sh """
                         docker run -d --name ${CONTAINER_NAME} \
                             -p 443:443 \
+                            -p 80:80 \
+                            -v /etc/letsencrypt/live:/etc/letsencrypt/live \
+                            -v /etc/letsencrypt/archive:/etc/letsencrypt/archive \
+                            -v /etc/letsencrypt/renewal:/etc/letsencrypt/renewal \
                             --env-file .env \
                             ${IMAGE_NAME}:latest
                     """
