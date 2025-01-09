@@ -42,7 +42,7 @@ const ModifyTeam = ({ user }) => {
 
     return (
         <div>
-            <ModifyTeamForm team={team}/>
+            <ModifyTeamForm team={team} onSubmit={handleSubmit}/>
         </div>
     );
 }

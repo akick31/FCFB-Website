@@ -27,7 +27,7 @@ const NewSignupsPage = ({ user }) => {
                 setNewSignups(response);
                 setLoading(false);
             } catch (error) {
-                console.error("Failed to fetch users:", error);
+                setError('Failed to fetch users');
                 setLoading(false);
             }
         };
