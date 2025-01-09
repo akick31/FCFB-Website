@@ -26,3 +26,40 @@ export const formatConference = (conference) => {
 
     return conference
 };
+
+export const formatPlaybook = (playbook) => {
+    if (!playbook) return '-';
+
+    if (playbook === 'AIR_RAID') return 'Air Raid';
+    if (playbook === 'SPREAD') return 'Spread';
+    if (playbook === 'PRO') return 'Pro';
+    if (playbook === 'WEST_COAST') return 'West Coast';
+    if (playbook === 'FLEXBONE') return 'Flexbone';
+    if (playbook === 'THREE_FOUR') return '3-4';
+    if (playbook === 'FOUR_THREE') return '4-3';
+    if (playbook === 'FIVE_TWO') return '5-2';
+    if (playbook === 'FOUR_FOUR') return '4-4';
+    if (playbook === 'THREE_THREE_FIVE') return '3-3-5';
+
+    return playbook;
+}
+
+export const formatPosition = (position) => {
+    if (!position) return '-';
+
+    if (position === 'HEAD_COACH') return 'Head Coach';
+    if (position === 'OFFENSIVE_COORDINATOR') return 'Offensive Coordinator';
+    if (position === 'DEFENSIVE_COORDINATOR') return 'Defensive Coordinator';
+
+    return position;
+}
+
+export const formatRole = (role) => {
+    if (!role) return '-';
+
+    if (role === 'USER') return 'User';
+    if (role === 'CONFERENCE_COMMISSIONER') return 'Conference Commissioner';
+    if (role === 'ADMIN') return 'Admin';
+
+    return role;
+}

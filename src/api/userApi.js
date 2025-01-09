@@ -12,6 +12,26 @@ export const getUserById = async (userId) => {
     }
 };
 
+export const getAllUsers = async () => {
+    try {
+        const response = await apiClient.get('/arceus/user');
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch all users:", error);
+        throw error;
+    }
+}
+
+export const getNewSignups = async () => {
+    try {
+        const response = await apiClient.get('/arceus/user/new_signups');
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch new signups:", error);
+        throw error;
+    }
+}
+
 export const updateUserDetails = async (userId, updates) => {
     if (!userId) throw new Error("User ID is required");
 

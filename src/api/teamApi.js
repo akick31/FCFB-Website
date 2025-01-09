@@ -12,6 +12,18 @@ export const getTeamByName = async (teamName) => {
     }
 };
 
+export const getTeamById = async (id) => {
+    if (!id) return {};
+
+    try {
+        const response = await apiClient.get('/arceus/team/id', { params: { id: id } });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch team by id:", error);
+        throw error;
+    }
+};
+
 export const getAllTeams = async () => {
     try {
         const response = await apiClient.get('/arceus/team');
@@ -21,3 +33,13 @@ export const getAllTeams = async () => {
         throw error;
     }
 }
+
+export const updateTeam = async (team) => {
+    try {
+        const response = await apiClient.put('/arceus/team', team);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to update team:", error);
+        throw error;
+    }
+};
