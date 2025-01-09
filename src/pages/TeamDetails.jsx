@@ -46,7 +46,15 @@ const TeamDetails = ({ user }) => {
 
             {/* Admin Section */}
             {user.role !== "USER" && (
-                <Box sx={{ textAlign: 'center', marginTop: 4 }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 2,
+                        marginTop: 2,
+                    }}
+                >
                     <Button
                         variant="contained"
                         color="primary"
