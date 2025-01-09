@@ -5,17 +5,21 @@ import Home from './pages/Home';
 import GameDetails from "./pages/GameDetails";
 import Games from './pages/Games';
 import Teams from './pages/Teams';
+import TeamDetails from './pages/TeamDetails';
 import Login from './pages/Login';
+import ModifyTeam from './pages/ModifyTeam';
 import Registration from './pages/Registration';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import Verify from "./pages/Verify";
+import Users from './pages/Users';
 import NotFound from './pages/NotFound';
 import ErrorPage from "./pages/Error";
 import { getUserById } from './api/userApi';
 import { checkIfUserIsAdmin } from "./utils/utils";
 import { CssBaseline } from '@mui/material'; // MUI reset and normalization
-import { Box } from '@mui/system'; // Box component for layout control
+import { Box } from '@mui/system';
+import NewSignups from "./pages/NewSignups"; // Box component for layout control
 
 const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -88,8 +92,12 @@ const App = () => {
                             userId={new URLSearchParams(window.location.search).get('id')}
                             token={new URLSearchParams(window.location.search).get('token')} />} />
                         <Route path="/game-details/:gameId" element={<GameDetails />} />
+                        <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
+                        <Route path="/modify-team/:teamId" element={<ModifyTeam user={user} />} />
+                        <Route path="/new-signups" element={<NewSignups user={user} />} />
                         <Route path="/games" element={<Games />} />
                         <Route path="/teams" element={<Teams />} />
+                        <Route path="/users" element={<Users user={user}/>} />
                         <Route path="/error" element={<ErrorPage />} />
                         <Route path="*" element={<NotFound />} />
                     </Routes>
