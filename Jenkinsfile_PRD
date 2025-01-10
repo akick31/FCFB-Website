@@ -41,14 +41,14 @@ pipeline {
                 script {
                     echo 'Running the new container...'
                     sh """
-                        docker run -d --name ${CONTAINER_NAME} \
+                        docker run -d --name FCFB-Website-PRD \
                             -p 443:443 \
                             -p 80:80 \
                             -v /etc/letsencrypt/live:/etc/letsencrypt/live \
                             -v /etc/letsencrypt/archive:/etc/letsencrypt/archive \
                             -v /etc/letsencrypt/renewal:/etc/letsencrypt/renewal \
                             --env-file .env \
-                            ${IMAGE_NAME}:latest
+                            fcfb-website-prd:latest
                     """
                 }
             }
