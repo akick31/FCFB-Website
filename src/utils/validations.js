@@ -1,12 +1,3 @@
-// Custom validation function for Reddit Username field
-export const validateRedditUsername = (value) => {
-    // Check if value contains '/u/'
-    if (value.includes('/u/')) {
-        return false;
-    }
-    return true;
-};
-
 // Custom validation function for Email field
 export const validateEmail = (value) => {
     // Regular expression for validating email
