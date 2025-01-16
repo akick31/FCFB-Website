@@ -66,8 +66,5 @@ export const updateCoachName = async (userId, coachName) =>
 export const updateDiscordTag = async (userId, discordTag) =>
     updateUserDetails(userId, { newDiscordTag: discordTag });
 
-export const updateRedditUsername = async (userId, redditUsername) =>
-    updateUserDetails(userId, { newRedditUsername: redditUsername });
-
 export const updateTeam = async (userId, team) =>
     updateUserDetails(userId, { newTeam: team });
