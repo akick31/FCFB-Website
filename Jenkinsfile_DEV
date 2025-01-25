@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'fcfb-website-prd'
-        CONTAINER_NAME = 'FCFB-Website-PRD'
-        DOCKERFILE = 'Dockerfile_PRD'
+        IMAGE_NAME = 'fcfb-website-dev'
+        CONTAINER_NAME = 'FCFB-Website-DEV'
+        DOCKERFILE = 'Dockerfile_DEV'
     }
 
     stages {
