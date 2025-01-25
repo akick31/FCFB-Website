@@ -2,14 +2,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Button, Typography, Container, Select, MenuItem, FormControl, InputLabel, Alert, Paper } from "@mui/material";
 import { registerUser } from "../api/authApi";
-import { validateEmail, isStrongPassword, validateRedditUsername } from "../utils/validations";
+import { validateEmail, isStrongPassword } from "../utils/validations";
 import FormField from "../components/FormField";
 
 const RegistrationForm = () => {
     const [formData, setFormData] = useState({
         username: "",
         coachName: "",
-        redditUsername: "",
         discordTag: "",
         email: "",
         confirmEmail: "",
@@ -22,7 +21,6 @@ const RegistrationForm = () => {
     const [validation, setValidation] = useState({
         emailValid: true,
         passwordValid: true,
-        redditValid: true,
         errorMessage: null,
     });
 
@@ -36,8 +34,6 @@ const RegistrationForm = () => {
             setValidation((prev) => ({ ...prev, emailValid: validateEmail(value) }));
         } else if (name === "password") {
             setValidation((prev) => ({ ...prev, passwordValid: isStrongPassword(value) }));
-        } else if (name === "redditUsername") {
-            setValidation((prev) => ({ ...prev, redditValid: validateRedditUsername(value) }));
         }
     };
 
@@ -48,9 +44,9 @@ const RegistrationForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const { email, confirmEmail, password, confirmPassword } = formData;
-        const { emailValid, passwordValid, redditValid } = validation;
+        const { emailValid, passwordValid } = validation;
 
-        if (!emailValid || !passwordValid || !redditValid) {
+        if (!emailValid || !passwordValid) {
             setValidation((prev) => ({
                 ...prev,
                 errorMessage: "Please fix the highlighted errors.",
@@ -104,15 +100,6 @@ const RegistrationForm = () => {
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                         <FormField label="Username" name="username" value={formData.username} onChange={handleChange} />
                         <FormField label="Coach Name" name="coachName" value={formData.coachName} onChange={handleChange} />
-
-                        <FormField
-                            label="Reddit Username"
-                            name="redditUsername"
-                            value={formData.redditUsername}
-                            onChange={handleChange}
-                            error={!validation.redditValid}
-                            helperText={!validation.redditValid ? "Reddit username cannot contain '/u/'" : ""}
-                        />
 
                         <FormField label="Discord Tag" name="discordTag" value={formData.discordTag} onChange={handleChange} />
 

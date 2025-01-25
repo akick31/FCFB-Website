@@ -28,6 +28,7 @@ const ScorebugGrid = ({ games, scorebugs }) => {
                                     <CardMedia
                                         component="img"
                                         height="140"
+                                        width="260"
                                         image={byteArrayToBase64(scorebug)}
                                         alt={`${game.home_team} vs ${game.away_team}`}
                                         sx={{ objectFit: 'contain' }}

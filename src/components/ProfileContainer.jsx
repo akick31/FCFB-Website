@@ -72,11 +72,6 @@ const ProfileContainer = ({ user }) => {
                     </Grid>
                     <Grid item xs={12}>
                         <Typography variant="body1">
-                            <strong>Reddit Username:</strong> /u/{user.redditUsername}
-                        </Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                        <Typography variant="body1">
                             <strong>Email:</strong> {user.email}
                         </Typography>
                     </Grid>
