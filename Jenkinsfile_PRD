@@ -42,11 +42,7 @@ pipeline {
                     echo 'Running the new container...'
                     sh """
                         docker run -d --name ${CONTAINER_NAME} \
-                            -p 443:443 \
-                            -p 80:80 \
-                            -v /etc/letsencrypt/live:/etc/letsencrypt/live \
-                            -v /etc/letsencrypt/archive:/etc/letsencrypt/archive \
-                            -v /etc/letsencrypt/renewal:/etc/letsencrypt/renewal \
+                            -v /var/images:/app/images \
                             --env-file .env \
                             ${IMAGE_NAME}:latest
                     """
