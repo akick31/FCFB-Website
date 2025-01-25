@@ -43,6 +43,7 @@ pipeline {
                     sh """
                         docker run -d --name ${CONTAINER_NAME} \
                             -v /var/images:/app/images \
+                            -p 462:462 \
                             --env-file .env \
                             ${IMAGE_NAME}:latest
                     """
