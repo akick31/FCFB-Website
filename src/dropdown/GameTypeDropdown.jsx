@@ -9,7 +9,7 @@ const GameTypeDropdown = ({ selectedGameType, onChange }) => (
             onChange={onChange}
             label="Game Type"
             displayEmpty
-            inputlabelprops={{ shrink: true }}
+            InputLabelProps={{ shrink: true }}
         >
             <MenuItem value="">All</MenuItem>
             <MenuItem value="OUT_OF_CONFERENCE">Out of Conference</MenuItem>
