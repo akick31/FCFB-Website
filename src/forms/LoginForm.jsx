@@ -58,7 +58,7 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
         <Box
             sx={{
                 display: "flex",
-                justifycontent: "center",
+                justifyContent: "center",
                 alignItems: "center",
                 minHeight: "calc(100vh - 100px)",
                 padding: 3,

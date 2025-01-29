@@ -16,7 +16,8 @@ const NewSignupsPage = ({ user }) => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     useEffect(() => {
-        if (user.role === "USER") {
+        if (user.role !== "ADMIN" ||
+            user.role !== "CONFERENCE_COMMISSIONER") {
             navigate('*');
         }
     }, [user.role, navigate]);

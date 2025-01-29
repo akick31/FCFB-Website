@@ -7,7 +7,8 @@ const Admin = ({ user }) => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (user.role === "USER") {
+        if (user.role !== "ADMIN" ||
+            user.role !== "CONFERENCE_COMMISSIONER") {
             navigate('*');
         }
     }, [user.role, navigate]);

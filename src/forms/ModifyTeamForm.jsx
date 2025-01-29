@@ -89,7 +89,7 @@ const ModifyTeamForm = ({ team, onSubmit }) => {
                         {/* Color Picker for Primary Color */}
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                             <Typography variant="body1" align="left">Primary Color</Typography>
-                            <Box sx={{ display: 'flex', justifycontent: 'center', alignItems: 'center' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                 <ChromePicker
                                     color={formData.primary_color}
                                     onChangeComplete={(color) => handleColorChange(color, "primary_color")}
@@ -99,7 +99,7 @@ const ModifyTeamForm = ({ team, onSubmit }) => {
 
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                             <Typography variant="body1" align="left">Secondary Color</Typography>
-                            <Box sx={{ display: 'flex', justifycontent: 'center', alignItems: 'center' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                 <ChromePicker
                                     color={formData.secondary_color}
                                     onChangeComplete={(color) => handleColorChange(color, "secondary_color")}

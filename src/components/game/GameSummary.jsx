@@ -9,7 +9,7 @@ const GameSummary = ({ plays }) => {
     const awayScore = lastPlay ? lastPlay.away_score : 0;
 
     return (
-        <Box sx={{ display: 'flex', justifycontent: 'center', marginBottom: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom: 3 }}>
             <Typography variant="h6" sx={{ marginRight: 2 }}>
                 Total Plays: {totalPlays}
             </Typography>

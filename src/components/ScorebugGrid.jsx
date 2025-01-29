@@ -27,7 +27,7 @@ const ScorebugGrid = ({ games, scorebugs }) => {
                                     width: "125px",
                                     height: "140px",
                                     display: "flex",
-                                    justifycontent: "center",
+                                    justifyContent: "center",
                                     alignItems: "center",
                                     backgroundColor: "transparent",
                                     boxShadow: "none",
@@ -50,7 +50,7 @@ const ScorebugGrid = ({ games, scorebugs }) => {
                                     <Box
                                         sx={{
                                             display: 'flex',
-                                            justifycontent: 'center',
+                                            justifyContent: 'center',
                                             alignItems: 'center',
                                             height: 140,
                                             backgroundColor: 'grey.200',

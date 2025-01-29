@@ -45,7 +45,8 @@ const TeamDetails = ({ user }) => {
             {team && <TeamSummary team={team} />}
 
             {/* Admin Section */}
-            {user.role !== "USER" && (
+            {(user.role === "ADMIN" ||
+                user.role === "CONFERENCE_COMMISSIONER") && (
                 <Box
                     sx={{
                         display: 'flex',
