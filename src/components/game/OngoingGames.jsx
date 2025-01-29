@@ -80,7 +80,7 @@ const OngoingGames = ({ menuOpen, menuAnchor, onMenuToggle }) => {
         try {
             const fetchedGames = await fetchGames('ongoing') || [];
             const filteredGames = await GameFilter(fetchedGames, conference, top25Only, null, null, gameType);
-            console.log(filteredGames);
+            const sortedGames = sortGamesByTimeRemaining(filteredGames, sortOption);
             const sortedGames = sortGamesByTimeRemaining(filteredGames, sortOption);
             setGames(sortedGames);
 
