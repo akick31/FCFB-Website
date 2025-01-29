@@ -10,7 +10,7 @@ const HomePage = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
+                justifycontent: 'center',
                 minHeight: '100vh',
                 textAlign: 'center',
                 bgcolor: 'background.default',
@@ -21,7 +21,7 @@ const HomePage = () => {
                 sx={{
                     mb: 4,
                     display: 'flex',
-                    justifyContent: 'center',
+                    justifycontent: 'center',
                 }}
             >
                 <img

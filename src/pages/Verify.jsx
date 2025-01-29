@@ -40,7 +40,7 @@ const Verify = ({ userId, token }) => {
     };
 
     return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', p: 2 }}>
+        <Box sx={{ display: 'flex', justifycontent: 'center', alignItems: 'center', minHeight: '100vh', p: 2 }}>
             <Paper elevation={3} sx={{ maxWidth: 400, p: 4, textAlign: 'center' }}>
                 <Typography variant="h5" gutterBottom>
                     Verifying Email...

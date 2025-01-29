@@ -72,7 +72,7 @@ export const Header = styled(Box)(({ theme }) => ({
 
 export const LoadingContainer = styled(Box)({
     display: 'flex',
-    justifyContent: 'center',
+    justifycontent: 'center',
     alignItems: 'center',
     minHeight: '200px',
     width: '100%',

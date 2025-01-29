@@ -14,7 +14,8 @@ const UsersPage = ({ user }) => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     useEffect(() => {
-        if (user.role === "USER") {
+        if (user.role !== "ADMIN" &&
+            user.role !== "CONFERENCE_COMMISSIONER") {
             navigate('*');
         }
     }, [user.role, navigate]);
@@ -52,7 +53,7 @@ const UsersPage = ({ user }) => {
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <Box sx={{ display: 'flex', justifycontent: 'center', alignItems: 'center', height: '100vh' }}>
                 <CircularProgress />
             </Box>
         );

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { getAllTeams } from '../api/teamApi'; // assuming this is the API call for fetching teams
-import ConferenceFilter from '../components/filters/ConferenceFilter';
+import ConferenceDropdown from '../dropdown/ConferenceDropdown';
 import TeamsTable from '../components/team/TeamsTable';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -78,7 +78,7 @@ const Teams = () => {
             </Typography>
 
             {/* Conference filter */}
-            <ConferenceFilter selectedConference={selectedConference} onConferenceChange={handleConferenceChange} />
+            <ConferenceDropdown selectedConference={selectedConference} onConferenceChange={handleConferenceChange} />
 
             {loading ? (
                 <LoadingSpinner />

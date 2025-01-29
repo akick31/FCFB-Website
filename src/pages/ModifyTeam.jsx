@@ -13,7 +13,8 @@ const ModifyTeam = ({ user }) => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (user.role === "USER") {
+        if (user.role !== "ADMIN" &&
+            user.role !== "CONFERENCE_COMMISSIONER") {
             navigate('*');
         }
     }, [user.role, navigate]);
