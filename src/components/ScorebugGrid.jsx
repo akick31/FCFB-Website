@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from "react-router-dom";
-import { Box, Grid, Typography, Card, CardMedia } from '@mui/material';
+import { Box, Grid, Typography, CardMedia } from '@mui/material';
 import { byteArrayToBase64 } from "../utils/image";
 import { StyledPaper } from '../styles/GridStyles';
 import PropTypes from 'prop-types';
@@ -14,20 +14,34 @@ const ScorebugGrid = ({ games, scorebugs }) => {
 
     return (
         <StyledPaper>
-            <Grid container spacing={2} justifyContent="center">
+            <Grid container spacing={2} justifycontent="center">
                 {games.map((game) => {
                     const scorebug = scorebugs[game.game_id];
 
                     return (
-                        <Grid item xs={12} sm={6} md={4} key={game.game_id}>
-                            <Card
-                                sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
+                        <Grid item xs={12} sm={6} md={2.4} key={game.game_id}>
+                            <Box
                                 onClick={() => handleCardClick(game.game_id)}
+                                sx={{
+                                    cursor: 'pointer',
+                                    width: "125px",
+                                    height: "140px",
+                                    display: "flex",
+                                    justifycontent: "center",
+                                    alignItems: "center",
+                                    backgroundColor: "transparent",
+                                    boxShadow: "none",
+                                    border: "none",
+                                    margin: "auto",
+                                }}
                             >
                                 {scorebug ? (
                                     <CardMedia
+                                        display="flex"
+                                        justifycontent="center"
                                         component="img"
                                         height="140"
+                                        width="140"
                                         image={byteArrayToBase64(scorebug)}
                                         alt={`${game.home_team} vs ${game.away_team}`}
                                         sx={{ objectFit: 'contain' }}
@@ -36,7 +50,7 @@ const ScorebugGrid = ({ games, scorebugs }) => {
                                     <Box
                                         sx={{
                                             display: 'flex',
-                                            justifyContent: 'center',
+                                            justifycontent: 'center',
                                             alignItems: 'center',
                                             height: 140,
                                             backgroundColor: 'grey.200',
@@ -47,7 +61,7 @@ const ScorebugGrid = ({ games, scorebugs }) => {
                                         </Typography>
                                     </Box>
                                 )}
-                            </Card>
+                            </Box>
                         </Grid>
                     );
                 })}

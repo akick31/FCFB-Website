@@ -6,7 +6,7 @@ export const StyledPaper = styled(Paper)({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifycontent: 'center',
     width: '80%', // Full width of the container
 });
 

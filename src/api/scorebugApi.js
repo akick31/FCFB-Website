@@ -1,9 +1,9 @@
 import apiClient from './apiClient';
 
-export const getScorebugByGameId = async (gameId) => {
+export const getLatestScorebugByGameId = async (gameId) => {
     try {
         // Request the scorebug image as a Blob (binary data)
-        const response = await apiClient.get(`/arceus/scorebug`, {
+        const response = await apiClient.get(`/arceus/scorebug/latest`, {
             params: { gameId },
             responseType: 'blob', // Set response type to 'blob' to get the binary data
         });
