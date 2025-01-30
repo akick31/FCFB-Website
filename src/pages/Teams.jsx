@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { getAllTeams } from '../api/teamApi'; // assuming this is the API call for fetching teams
-import ConferenceDropdown from '../dropdown/ConferenceDropdown';
+import ConferenceDropdown from '../components/dropdown/ConferenceDropdown';
 import TeamsTable from '../components/team/TeamsTable';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';

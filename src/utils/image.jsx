@@ -3,3 +3,9 @@ export const byteArrayToBase64 = (byteArray) => {
         new Uint8Array(byteArray).reduce((data, byte) => data + String.fromCharCode(byte), '')
     )}`;
 };
+
+const byteArrayToImageUrl = (byteArray) => {
+    if (!byteArray) return null;
+    const blob = new Blob([byteArray], { type: 'image/png' });
+    return URL.createObjectURL(blob);
+};

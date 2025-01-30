@@ -1,6 +1,6 @@
 import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { formatConference } from '../utils/formatText';
+import { formatConference } from '../../utils/formatText';
 import PropTypes from 'prop-types';
 
 const ConferenceDropdown = ({ selectedConference, onChange }) => {
@@ -11,7 +11,7 @@ const ConferenceDropdown = ({ selectedConference, onChange }) => {
     ];
 
     return (
-        <FormControl fullWidth sx={{ marginBottom: 2 }}>
+        <FormControl fullWidth margin="normal">
             <InputLabel shrink>Conference</InputLabel>
             <Select
                 value={selectedConference}
