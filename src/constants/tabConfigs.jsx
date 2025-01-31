@@ -3,6 +3,6 @@ import {getAllOngoingGames, getAllPastGames, getAllPastScrimmageGames, getAllScr
 export const gameTabConfigs = [
     { label: 'Ongoing Games', value: 'ongoing', fetch: getAllOngoingGames },
     { label: 'Past Games', value: 'past', fetch: getAllPastGames },
-    { label: 'Scrimmages', value: 'scrimmage', fetch: getAllScrimmageGames },
-    { label: 'Past Scrimmages', value: 'past-scrimmage', fetch: getAllPastScrimmageGames }
+    { label: 'Scrimmages', value: 'scrimmages', fetch: getAllScrimmageGames },
+    { label: 'Past Scrimmages', value: 'past-scrimmages', fetch: getAllPastScrimmageGames }
 ];

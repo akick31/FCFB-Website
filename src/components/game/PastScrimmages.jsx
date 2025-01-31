@@ -1,49 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import {Box, CircularProgress, Alert, Menu, IconButton, Typography} from '@mui/material';
 import { getFilteredScorebugs } from '../../api/scorebugApi';
-import ScorebugGrid from './scorebugs/ScorebugGrid';
+import ScorebugGrid from './ScorebugGrid';
 import MenuIcon from "@mui/icons-material/Menu";
 import FilterMenu from '../menu/FilterMenu';
 
 const PastScrimmages = ({ menuOpen, menuAnchor, onMenuToggle }) => {
     const [games, setGames] = useState([]);
+    const [totalGames, setTotalGames] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({
-        filters: null,
+        filters: [],
         category: 'PAST_SCRIMMAGE',
         sort: 'CLOSEST_TO_END',
         conference: null,
         season: null,
         week: null,
         page: 0,
-        size: 20,
+        size: 10,
     });
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await getFilteredScorebugs(
-                    filters.filters,
-                    filters.category,
-                    filters.sort,
-                    filters.conference,
-                    filters.season,
-                    filters.week,
-                    filters.page,
-                    filters.size
-                );
+                const response = await getFilteredScorebugs({
+                    filters: filters.filter,
+                    week: filters.week,
+                    season: filters.season,
+                    conference: filters.conference,
+                    category: 'PAST_SCRIMMAGE',
+                    sort: filters.sort,
+                    page: filters.page,
+                    size: filters.size,
+                });
                 setGames(response.content);
+                setTotalGames(response["total_elements"]);
             } catch (err) {
                 setError(`Failed to fetch scorebugs: ${err.message}`);
             } finally {
                 setLoading(false);
             }
-        }
-
+        };
         fetchData();
     }, [filters]);
+
+    const handlePageChange = (newPage) => {
+        setFilters(prev => ({
+            ...prev,
+            page: newPage
+        }));
+    };
 
     return (
         <>
@@ -74,17 +82,20 @@ const PastScrimmages = ({ menuOpen, menuAnchor, onMenuToggle }) => {
                             onClose={onMenuToggle}
                         >
                             <FilterMenu
-                                filters={filters}
                                 onChange={setFilters}
-                                onApply={(updatedFilters) => {
-                                    setFilters(updatedFilters);
+                                onApply={() => {
                                     onMenuToggle();
                                 }}
                                 category="pastScrimmage"
                             />
                         </Menu>
                         {games.length >= 1 && (
-                            <ScorebugGrid games={games}/>
+                            <ScorebugGrid
+                                games={games}
+                                onPageChange={handlePageChange}
+                                totalGames={totalGames}
+                                currentPage={filters.page}
+                            />
                         )}
                     </>
                 )}

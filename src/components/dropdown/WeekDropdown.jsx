@@ -1,16 +1,16 @@
 import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
-const WeekDropdown = ({ week, onChange }) => (
+const WeekDropdown = ({ value, onChange }) => (
     <FormControl fullWidth margin="normal">
         <InputLabel shrink>Week</InputLabel>
         <Select
-            value={week}
+            value={value}
             label="Week"
             onChange={onChange}
             displayEmpty
-            inputlabelprops={{ shrink: true }}
         >
+            <MenuItem value="">All Weeks</MenuItem>
             {Array.from({ length: 12 }, (_, i) => (
                 <MenuItem key={i + 1} value={i + 1}>
                     Week {i + 1}

@@ -13,64 +13,40 @@ import GameTypeDropdown from "../dropdown/GameTypeDropdown";
 import GameStatusDropdown from "../dropdown/GameStatusDropdown";
 import WeekDropdown from "../dropdown/WeekDropdown";
 import SeasonDropdown from "../dropdown/SeasonDropdown";
-import { getCurrentWeek, getCurrentSeason } from '../../api/seasonApi';
 
-const FilterMenu = ({ filters, onChange, onApply, category }) => {
-    const [defaultValues, setDefaultValues] = useState({
-        season: null,
-        week: null
-    });
-
-    useEffect(() => {
-        const fetchDefaults = async () => {
-            const season = await getCurrentSeason();
-            const week = await getCurrentWeek();
-            setDefaultValues({ season, week });
-        };
-        fetchDefaults();
-    }, []);
-
-    const [pendingFilters, setPendingFilters] = useState({
-        season: defaultValues.season,
-        week: defaultValues.week,
-        conference: "",
-        gameType: "",
-        gameStatus: "",
-        filters: [],
-        sort: "CLOSEST_TO_END",
-        ...filters
-    });
-
+const FilterMenu = ({ onChange, onApply, category }) => {
     const availableFilters = {
-        ongoing: ['conference', 'gameType', 'gameStatus', 'rankedMatchup'],
-        past: ['conference', 'gameType', 'week', 'season', 'rankedMatchup'],
-        scrimmage: ['conference', 'gameStatus', 'rankedMatchup'],
+        ongoing: ['conference', 'gameType', 'gameStatus', 'rankedGame'],
+        past: ['conference', 'gameType', 'week', 'season', 'rankedGame'],
+        scrimmage: ['conference', 'gameStatus', 'rankedGame'],
         pastScrimmage: ['conference', 'gameType', 'week', 'season'],
     }[category] || [];
 
+    const [pendingFilters, setPendingFilters] = useState({
+        filters: [],
+        sort: 'CLOSEST_TO_END',
+        conference: null,
+        season: null,
+        week: null,
+        gameType: null,
+        gameStatus: null,
+        page: 0,
+        size: 20,
+    });
+
+    // Handle dropdown changes
     const handleChange = (field) => (event) => {
-        setPendingFilters((prev) => {
-            const updatedFilters = prev.filters ? [...prev.filters] : [];
-            if (event.target.checked) {
-                if (!updatedFilters.includes("RANKED_MATCHUP")) {
-                    updatedFilters.push("RANKED_MATCHUP");
-                }
-            } else {
-                if (!updatedFilters.includes(event.target.value)) {
-                    updatedFilters.push(event.target.value);
-                }
-            }
-            return {
-                ...prev,
-                filters: updatedFilters,
-            }
-        });
+        const newValue = event.target.value;
+        setPendingFilters(prev => ({
+            ...prev,
+            [field]: newValue,
+        }));
     };
 
+    // Handle checkbox changes
     const handleCheckboxChange = (value) => (event) => {
-        setPendingFilters((prev) => {
-            const updatedFilters = prev.filters ? [...prev.filters] : [];
-
+        setPendingFilters(prev => {
+            const updatedFilters = [...prev.filters];
             if (event.target.checked) {
                 if (!updatedFilters.includes(value)) {
                     updatedFilters.push(value);
@@ -81,16 +57,36 @@ const FilterMenu = ({ filters, onChange, onApply, category }) => {
                     updatedFilters.splice(index, 1);
                 }
             }
-
             return { ...prev, filters: updatedFilters };
         });
+    };
+
+    // Apply filters when button is clicked
+    const handleApply = () => {
+        let filters = pendingFilters.filters || [];
+        if (pendingFilters.gameType !== null) filters.push(pendingFilters.gameType)
+        if (pendingFilters.gameStatus !== null) filters.push(pendingFilters.gameStatus)
+        if (filters === []) filters = null
+        // Ensure filters is at least an empty array
+        const finalFilters = {
+            filters: pendingFilters.filters || null, // Ensure filters is always an array
+            week: pendingFilters.week,
+            season: pendingFilters.season,
+            conference: pendingFilters.conference,
+            sort: pendingFilters.sort,
+            page: 0, // Reset to first page when filters change
+            size: 10, // Default page size
+        };
+
+        onChange(finalFilters); // Send updated filters to parent
+        onApply(); // Close the menu
     };
 
     return (
         <div style={{ padding: '16px', minWidth: '250px' }}>
             {availableFilters.includes('season') && (
                 <SeasonDropdown
-                    value={pendingFilters.season ?? defaultValues.season}
+                    value={pendingFilters.season || ""}
                     onChange={handleChange('season')}
                     label="Season"
                 />
@@ -98,7 +94,7 @@ const FilterMenu = ({ filters, onChange, onApply, category }) => {
 
             {availableFilters.includes('week') && (
                 <WeekDropdown
-                    value={pendingFilters.week ?? defaultValues.week}
+                    value={pendingFilters.week || ""}
                     onChange={handleChange('week')}
                     label="Week"
                 />
@@ -106,7 +102,7 @@ const FilterMenu = ({ filters, onChange, onApply, category }) => {
 
             {availableFilters.includes('conference') && (
                 <ConferenceDropdown
-                    value={pendingFilters.conference ?? ""}
+                    value={pendingFilters.conference || ""}
                     onChange={handleChange('conference')}
                     label="Conference"
                 />
@@ -114,7 +110,7 @@ const FilterMenu = ({ filters, onChange, onApply, category }) => {
 
             {availableFilters.includes('gameType') && (
                 <GameTypeDropdown
-                    value={pendingFilters.gameType ?? ""}
+                    value={pendingFilters.gameType || ""}
                     onChange={handleChange('gameType')}
                     label="Game Type"
                 />
@@ -122,28 +118,28 @@ const FilterMenu = ({ filters, onChange, onApply, category }) => {
 
             {availableFilters.includes('gameStatus') && (
                 <GameStatusDropdown
-                    value={pendingFilters.gameStatus ?? ""}
+                    value={pendingFilters.gameStatus || ""}
                     onChange={handleChange('gameStatus')}
                     label="Game Status"
                 />
             )}
 
-            {availableFilters.includes('rankedMatchup') && (
+            {availableFilters.includes('rankedGame') && (
                 <FormControlLabel
                     control={
                         <Checkbox
-                            checked={pendingFilters.filters?.includes("RANKED_MATCHUP") || false}
-                            onChange={handleCheckboxChange("RANKED_MATCHUP")}
+                            checked={pendingFilters.filters?.includes("RANKED_GAME") || false}
+                            onChange={handleCheckboxChange("RANKED_GAME")}
                         />
                     }
-                    label="Ranked Matchups Only"
+                    label="Ranked Games Only"
                 />
             )}
 
             <FormControl fullWidth margin="normal">
                 <InputLabel>Sort By</InputLabel>
                 <Select
-                    value={pendingFilters.sort ?? "CLOSEST_TO_END"}
+                    value={pendingFilters.sort}
                     onChange={handleChange('sort')}
                     label="Sort By"
                 >
@@ -155,9 +151,9 @@ const FilterMenu = ({ filters, onChange, onApply, category }) => {
             <Button
                 variant="contained"
                 fullWidth
-                onClick={() => onApply(pendingFilters)}
+                onClick={handleApply}
                 sx={{
-                    width: '100%',
+                    mt: 2,
                     backgroundColor: '#004260',
                     color: 'white',
                     '&:hover': {

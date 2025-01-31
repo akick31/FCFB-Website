@@ -63,3 +63,16 @@ export const formatRole = (role) => {
 
     return role;
 }
+
+export const formatGameType = (gameType) => {
+    if (!gameType) return '-';
+
+    if (gameType === 'OUT_OF_CONFERENCE') return 'Out of Conference';
+    if (gameType === 'CONFERENCE_GAME') return 'Conference Game';
+    if (gameType === 'CONFERENCE_CHAMPIONSHIP') return 'Conference Championship';
+    if (gameType === 'PLAYOFFS') return 'Playoffs';
+    if (gameType === 'NATIONAL_CHAMPIONSHIP') return 'National Championship';
+    if (gameType === 'BOWL') return 'Bowl';
+
+    return gameType;
+}

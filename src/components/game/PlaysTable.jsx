@@ -12,7 +12,7 @@ const PlaysTable = ({ plays, page, rowsPerPage, orderBy, order, handleRequestSor
     ];
 
     return (
-        <TableContainer component={Paper} sx={{ marginBottom: 3 }}>
+        <TableContainer component={Paper} sx={{ marginBottom: 3, boxShadow: 5 }}>
             <Table>
                 <TableHead sx={{ backgroundColor: '#f0f0f0' }}>
                     <TableRow>

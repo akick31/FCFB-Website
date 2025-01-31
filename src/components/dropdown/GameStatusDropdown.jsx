@@ -1,15 +1,14 @@
 import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
-const GameStatusDropdown = ({ selectedGameStatus, onChange }) => (
+const GameStatusDropdown = ({ value, onChange }) => (
     <FormControl fullWidth sx={{ marginBottom: 2 }}>
         <InputLabel shrink>Game Status</InputLabel>
         <Select
-            value={selectedGameStatus}
+            value={value}
             onChange={onChange}
             label="Game Status"
             displayEmpty
-            inputlabelprops={{ shrink: true }}
         >
             <MenuItem value="">All</MenuItem>
             <MenuItem value="PREGAME">Pregame</MenuItem>
