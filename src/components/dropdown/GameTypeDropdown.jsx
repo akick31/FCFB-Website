@@ -1,15 +1,14 @@
 import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
-const GameTypeDropdown = ({ selectedGameType, onChange }) => (
-    <FormControl fullWidth sx={{ marginBottom: 2 }}>
+const GameTypeDropdown = ({ value, onChange }) => (
+    <FormControl fullWidth margin="normal">
         <InputLabel shrink>Game Type</InputLabel>
         <Select
-            value={selectedGameType}
+            value={value}
             onChange={onChange}
             label="Game Type"
             displayEmpty
-            InputLabelProps={{ shrink: true }}
         >
             <MenuItem value="">All</MenuItem>
             <MenuItem value="OUT_OF_CONFERENCE">Out of Conference</MenuItem>

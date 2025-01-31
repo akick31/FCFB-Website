@@ -40,7 +40,7 @@ const Games = () => {
     };
 
     return (
-        <Box sx={{ bgcolor: 'white', minHeight: '100vh', py: 3 }}>
+        <Box sx={{ bgcolor: 'white', minHeight: '100vh', py: 0 }}>
             <StyledContainer maxWidth="lg">
                 <Header>
                     <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>

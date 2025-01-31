@@ -1,95 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import {
-    Box,
-    CircularProgress,
-    Alert,
-    FormControlLabel,
-    Checkbox,
-    Button,
-    Menu,
-    IconButton,
-    Typography
-} from '@mui/material';
-import ConferenceDropdown from '../../dropdown/ConferenceDropdown';
-import { GameFilter } from '../../filters/GameFilter';
-import { sortGamesByTimeRemaining } from "../../sorting/sortGames";
-import { fetchGames } from "./FetchGames";
-import { fetchScorebugs } from "./FetchScorebugs";
-import ScorebugGrid from '../ScorebugGrid';
+import {Box, CircularProgress, Alert, Menu, IconButton, Typography} from '@mui/material';
+import { getFilteredScorebugs } from '../../api/scorebugApi';
+import ScorebugGrid from './ScorebugGrid';
 import MenuIcon from "@mui/icons-material/Menu";
+import FilterMenu from '../menu/FilterMenu';
 
 const Scrimmages = ({ menuOpen, menuAnchor, onMenuToggle }) => {
     const [games, setGames] = useState([]);
-    const [scorebugs, setScorebugs] = useState({});
+    const [totalGames, setTotalGames] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [conference, setConference] = useState('');
-    const [sortOption, setSortOption] = useState('least-time');
-    const [gameType, setGameType] = useState('');
+    const [filters, setFilters] = useState({
+        filters: [],
+        category: 'SCRIMMAGE',
+        sort: 'CLOSEST_TO_END',
+        conference: null,
+        season: null,
+        week: null,
+        page: 0,
+        size: 10,
+    });
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const fetchedGames = await fetchGames('scrimmage') || [];
-                const filteredGames = await GameFilter(fetchedGames, 'All', null, null, null, "");
-                const sortedGames = sortGamesByTimeRemaining(filteredGames, sortOption);
-                setGames(sortedGames);
-
-                try {
-                    if (sortedGames.length > 0) {
-                        setScorebugs(await fetchScorebugs(sortedGames));
-                    }
-                } catch (err) {
-                    setError(`Failed to fetch scorebugs: ${err.message}`);
-                }
+                const response = await getFilteredScorebugs({
+                    filters: filters.filters,
+                    week: filters.week,
+                    season: filters.season,
+                    conference: filters.conference,
+                    category: 'SCRIMMAGE',
+                    sort: filters.sort,
+                    page: filters.page,
+                    size: filters.size,
+                });
+                setGames(response.content);
+                setTotalGames(response["total_elements"]);
             } catch (err) {
-                setError(`Failed to fetch games: ${err.message}`);
+                setError(`Failed to fetch scorebugs: ${err.message}`);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchData();
-    }, [sortOption]);
+    }, [filters]);
 
-    const handleFilterChange = (filterType, value) => {
-        switch (filterType) {
-            case 'conference':
-                setConference(value);
-                break;
-            case 'sortOption':
-                setSortOption(value);
-                break;
-            case 'gameType':
-                setGameType(value);
-                break;
-            default:
-                break;
-        }
-    };
-
-    const handleApplyFilters = async () => {
-        setLoading(true);
-        try {
-            const fetchedGames = await fetchGames('scrimmage') || [];
-            const filteredGames = await GameFilter(fetchedGames, conference, null, null, null, gameType);
-            const sortedGames = sortGamesByTimeRemaining(filteredGames, sortOption);
-            setGames(sortedGames);
-
-            try {
-                if (sortedGames.length > 0) {
-                    setScorebugs(await fetchScorebugs(sortedGames));
-                }
-            } catch (err) {
-                setError(`Failed to fetch scorebugs: ${err.message}`);
-            }
-        } catch (err) {
-            setError(`Failed to fetch games: ${err.message}`);
-        } finally {
-            onMenuToggle();
-            setLoading(false);
-        }
+    const handlePageChange = (newPage) => {
+        setFilters(prev => ({
+            ...prev,
+            page: newPage
+        }));
     };
 
     return (
@@ -119,41 +80,22 @@ const Scrimmages = ({ menuOpen, menuAnchor, onMenuToggle }) => {
                             anchorEl={menuAnchor}
                             open={menuOpen}
                             onClose={onMenuToggle}
-                            sx={{
-                                '& .MuiMenu-paper': {
-                                    padding: 2, // Add padding around the menu content
-                                    minWidth: 250, // Set a minimum width for better layout
-                                    borderRadius: 2, // Rounded corners for a more modern look
-                                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)', // Subtle shadow for depth
-                                }
-                            }}
                         >
-                            <ConferenceDropdown selectedConference={conference} onChange={(e) => handleFilterChange('conference', e.target.value)} />
-                            <FormControlLabel
-                                control={<Checkbox checked={sortOption === 'least-time'} onChange={() => handleFilterChange('sortOption', 'least-time')} />}
-                                label="Sort by Least Time Remaining"
-                            />
-                            <FormControlLabel
-                                control={<Checkbox checked={sortOption === 'most-time'} onChange={() => handleFilterChange('sortOption', 'most-time')} />}
-                                label="Sort by Most Time Remaining"
-                            />
-                            <Button
-                                variant="contained"
-                                onClick={handleApplyFilters}
-                                sx={{
-                                    width: '100%',
-                                    backgroundColor: '#004260',
-                                    color: 'white',
-                                    '&:hover': {
-                                        backgroundColor: '#00354d'
-                                    }
+                            <FilterMenu
+                                onChange={setFilters}
+                                onApply={() => {
+                                    onMenuToggle();
                                 }}
-                            >
-                                Apply Filters
-                            </Button>
+                                category="scrimmage"
+                            />
                         </Menu>
                         {games.length >= 1 && (
-                            <ScorebugGrid games={games} scorebugs={scorebugs} />
+                            <ScorebugGrid
+                                games={games}
+                                onPageChange={handlePageChange}
+                                totalGames={totalGames}
+                                currentPage={filters.page}
+                            />
                         )}
                     </>
                 )}
