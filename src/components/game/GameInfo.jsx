@@ -34,7 +34,7 @@ const GameInfo = ({ game }) => {
     // Helper functions
     const formatRecord = (wins, losses) => `${wins}-${losses}`;
     const formatRank = (rank) => rank === 0 ? "Unranked" : `#${rank}`;
-    const formatCoinTossWinner = (winner) => winner === "HOME" ? game.home_team : game.away_team;
+    const formatCoinTossWinner = (winner) => winner ? (winner === 'HOME' ? game.home_team : game.away_team) : 'N/A';
     const formatWaitingOn = (waitingOn) => waitingOn === "HOME" ? game.home_team : game.away_team;
 
     return (
