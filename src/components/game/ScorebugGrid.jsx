@@ -12,7 +12,7 @@ const ScorebugGrid = ({ games, onPageChange, totalGames, currentPage }) => {
     };
 
     // Calculate the total number of pages
-    const totalPages = Math.ceil(totalGames / 20); // Assuming 20 items per page
+    const totalPages = Math.ceil(totalGames / 10); // Assuming 10 items per page
 
     const handlePaginationChange = (event, page) => {
         onPageChange(page - 1); // Page is 1-based, but your `filters.page` is 0-based
