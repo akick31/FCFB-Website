@@ -3,7 +3,7 @@ import { CircularProgress, Box } from '@mui/material';
 import NewSignupsTable from '../components/users/NewSignupsTable'; // Import the table component
 import {getNewSignups} from '../api/userApi';
 import {useNavigate} from "react-router-dom";
-import ErrorMessage from "../components/ErrorMessage"; // Assuming you have userApi for fetching users
+import ErrorMessage from "../components/message/ErrorMessage"; // Assuming you have userApi for fetching users
 
 const NewSignupsPage = ({ user }) => {
     const navigate = useNavigate();

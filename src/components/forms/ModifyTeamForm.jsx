@@ -2,11 +2,25 @@ import React, { useState } from "react";
 import { conferences } from "../constants/conferences";
 import { offensivePlaybooks } from "../constants/offensivePlaybooks";
 import { defensivePlaybooks } from "../constants/defensivePlaybooks";
-import { Box, Button, Typography, Container, FormControl, InputLabel, MenuItem, Select, TextField, Alert, Paper } from "@mui/material";
+import {
+    Box,
+    Button,
+    Card,
+    Typography,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Select,
+    TextField,
+    Alert,
+    useTheme,
+} from "@mui/material";
 import { ChromePicker } from 'react-color';
-import { updateTeam } from '../api/teamApi'; // Assuming the updateTeam function is in the 'teamApi.js' file.
+import { updateTeam } from '../../api/teamApi';
+import {Header} from "../../styles/GamesStyles"; // Assuming the updateTeam function is in the 'teamApi.js' file.
 
 const ModifyTeamForm = ({ team, onSubmit }) => {
+    const theme = useTheme();
     const [validation, setValidation] = useState({ errorMessage: null });
     const [formData, setFormData] = useState({
         ...team,
@@ -52,19 +66,13 @@ const ModifyTeamForm = ({ team, onSubmit }) => {
     };
 
     return (
-        <Container maxWidth="sm" sx={{ py: 8 }}>
-            <Paper
-                elevation={3}
-                sx={{
-                    p: 4,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 2,
-                }}
-            >
-                <Typography variant="h4" component="h1" align="center" gutterBottom>
-                    Modify Team
-                </Typography>
+        <Box sx={theme.root}>
+            <Card sx={theme.standardCard}>
+                <Header>
+                    <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                        Modify Team
+                    </Typography>
+                </Header>
 
                 <form onSubmit={handleSubmit}>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -179,8 +187,8 @@ const ModifyTeamForm = ({ team, onSubmit }) => {
                         </Button>
                     </Box>
                 </form>
-            </Paper>
-        </Container>
+            </Card>
+        </Box>
     );
 };
 

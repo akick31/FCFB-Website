@@ -6,10 +6,10 @@ import {
     updateEmail,
     updatePassword,
     updateUsername,
-} from '../api/userApi';
-import InputField from '../components/inputs/InputField';
-import EmailInput from '../components/inputs/EmailInput';
-import PasswordInput from '../components/inputs/PasswordInput';
+} from '../../api/userApi';
+import InputField from '../inputs/InputField';
+import EmailInput from '../inputs/EmailInput';
+import PasswordInput from '../inputs/PasswordInput';
 import PropTypes from 'prop-types';
 
 const ProfileForm = ({ user }) => {

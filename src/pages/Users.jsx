@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { CircularProgress, Box } from '@mui/material';
+import {CircularProgress, Box, useTheme, Card, Typography} from '@mui/material';
 import UsersTable from '../components/users/UsersTable'; // Import the table component
 import {getAllUsers} from '../api/userApi';
-import {useNavigate} from "react-router-dom"; // Assuming you have userApi for fetching users
+import {useNavigate} from "react-router-dom";
+import {Header} from "../styles/GamesStyles"; // Assuming you have userApi for fetching users
 
 const UsersPage = ({ user }) => {
+    const theme = useTheme();
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -14,11 +16,19 @@ const UsersPage = ({ user }) => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     useEffect(() => {
-        if (user.role !== "ADMIN" &&
-            user.role !== "CONFERENCE_COMMISSIONER") {
-            navigate('*');
+        // If user is not loaded yet, just return (we're loading)
+        if (!user || !user.role) {
+            setLoading(true);
+            return;
         }
-    }, [user.role, navigate]);
+
+        // Once the user is loaded, check the role
+        if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
+            navigate('*');
+        } else {
+            setLoading(false);
+        }
+    }, [user, navigate]);
 
     useEffect(() => {
         // Fetch the list of users
@@ -53,26 +63,32 @@ const UsersPage = ({ user }) => {
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifycontent: 'center', alignItems: 'center', height: '100vh' }}>
+            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <CircularProgress />
             </Box>
         );
     }
 
     return (
-        <div>
-            <h2>Current Users</h2>
-            <UsersTable
-                users={users}
-                order={order}
-                orderBy={orderBy}
-                handleRequestSort={handleRequestSort}
-                page={page}
-                rowsPerPage={rowsPerPage}
-                handleChangePage={handleChangePage}
-                handleChangeRowsPerPage={handleChangeRowsPerPage}
-            />
-        </div>
+        <Box sx={theme.root}>
+            <Card sx={theme.standardCard}>
+                <Header>
+                    <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                        Users
+                    </Typography>
+                </Header>
+                <UsersTable
+                    users={users}
+                    order={order}
+                    orderBy={orderBy}
+                    handleRequestSort={handleRequestSort}
+                    page={page}
+                    rowsPerPage={rowsPerPage}
+                    handleChangePage={handleChangePage}
+                    handleChangeRowsPerPage={handleChangeRowsPerPage}
+                />
+            </Card>
+        </Box>
     );
 };
 

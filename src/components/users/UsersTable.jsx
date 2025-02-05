@@ -89,6 +89,7 @@ const UsersTable = ({
                             <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>National Championship Wins</TableCell>
                             <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Offensive Playbook</TableCell>
                             <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Defensive Playbook</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Average Response Time</TableCell>
                         </TableRow>
                     </TableHead>
 
@@ -120,6 +121,7 @@ const UsersTable = ({
                                 <TableCell>{user.national_championship_wins}</TableCell>
                                 <TableCell>{formatPlaybook(user.offensive_playbook)}</TableCell>
                                 <TableCell>{formatPlaybook(user.defensive_playbook)}</TableCell>
+                                <TableCell>{user.average_response_time}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

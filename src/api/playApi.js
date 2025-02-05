@@ -2,7 +2,7 @@ import apiClient from './apiClient';
 
 export const getAllPlaysForGame = async (gameId) => {
     try {
-        return await apiClient.get(`/arceus/play/all`, {
+        return await apiClient.get(`/play/all`, {
             params: {gameId},
         });
     } catch (error) {

@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Box, Typography, Paper, CardMedia, Container } from "@mui/material";
+import {Box, Typography, CardMedia, useTheme, Card} from "@mui/material";
 import { getAllPlaysForGame } from "../api/playApi";
 import { getGameById } from "../api/gameApi";
 import { getLatestScorebugByGameId } from "../api/scorebugApi";
 import PlaysTable from "../components/game/PlaysTable";
-import LoadingSpinner from "../components/LoadingSpinner";
-import ErrorMessage from "../components/ErrorMessage";
+import LoadingSpinner from "../components/icons/LoadingSpinner";
+import ErrorMessage from "../components/message/ErrorMessage";
 import GameInfo from "../components/game/GameInfo";
+import {Header} from "../styles/GamesStyles";
 
 const GameDetails = () => {
+    const theme = useTheme();
     const { gameId } = useParams();
     const [plays, setPlays] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -83,24 +85,31 @@ const GameDetails = () => {
     }
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
+        <Box sx={theme.root}>
+            <Card sx={theme.standardCard}>
                 {/* Header Section */}
-                <Box sx={{ textAlign: 'center', mb: 4 }}>
+                <Header>
                     <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: '#004260' }}>
                         Game Details
                     </Typography>
-
+                </Header>
+                <Box sx={{
+                    textAlign: 'center',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    mt: 4,
+                    width: '100%',
+                }}>
                     {scorebug && (
                         <CardMedia
-                            display="flex"
-                            justifycontent="center"
                             component="img"
-                            height="180"
-                            width="180"
                             image={scorebug}
                             alt={`${game["home_team"]} vs ${game["away_team"]}`}
-                            sx={{ objectFit: 'contain', mt: 4}}
+                            sx={{
+                                width: 160,
+                                boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                            }}
                         />
                     )}
                 </Box>
@@ -128,8 +137,8 @@ const GameDetails = () => {
                         handleChangeRowsPerPage={handleChangeRowsPerPage}
                     />
                 </Box>
-            </Paper>
-        </Container>
+            </Card>
+        </Box>
     );
 };
 

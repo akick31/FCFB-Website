@@ -75,7 +75,7 @@ const TeamsTable = ({ teams, order, orderBy, handleRequestSort, page, rowsPerPag
 
             {/* Table Pagination */}
             <TablePagination
-                rowsPerPageOptions={[10, 25, 50, { label: 'All', value: -1 }]}
+                rowsPerPageOptions={[5, 10, 25, 50, { label: 'All', value: -1 }]}
                 component="div"
                 count={teams.length}
                 rowsPerPage={rowsPerPage === -1 ? teams.length : rowsPerPage}

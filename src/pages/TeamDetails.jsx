@@ -1,17 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Box, Typography, Button } from "@mui/material";
+import {Box, CircularProgress} from "@mui/material";
 import { getTeamById } from "../api/teamApi";
-import LoadingSpinner from "../components/LoadingSpinner";
-import ErrorMessage from "../components/ErrorMessage";
-import TeamSummary from "../components/team/TeamSummary";
+import ErrorMessage from "../components/message/ErrorMessage";
+import TeamInfo from "../components/team/TeamInfo";
 
 const TeamDetails = ({ user }) => {
-    const { teamId } = useParams();
     const navigate = useNavigate();
+    const { teamId } = useParams();
     const [team, setTeam] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    useEffect(() => {
+        // If user is not loaded yet, just return (we're loading)
+        if (!user || !user.role || !team) {
+            setLoading(true);
+            return;
+        }
+
+        // Once the user is loaded, check the role
+        if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
+            navigate('*');
+        } else {
+            setLoading(false);
+        }
+    }, [user, team, navigate]);
 
     useEffect(() => {
         const fetchTeam = async () => {
@@ -28,7 +42,11 @@ const TeamDetails = ({ user }) => {
     }, [teamId]);
 
     if (loading) {
-        return <LoadingSpinner />;
+        return (
+            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <CircularProgress />
+            </Box>
+        );
     }
 
     if (error) {
@@ -36,36 +54,10 @@ const TeamDetails = ({ user }) => {
     }
 
     return (
-        <Box sx={{ width: '100%', padding: 2 }}>
-            <Typography variant="h4" component="h1" sx={{ textAlign: 'center', fontWeight: 'bold' }}>
-                Team Details
-            </Typography>
-
-            {/* Team Summary Section */}
-            {team && <TeamSummary team={team} />}
-
-            {/* Admin Section */}
-            {(user.role === "ADMIN" ||
-                user.role === "CONFERENCE_COMMISSIONER") && (
-                <Box
-                    sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 2,
-                        marginTop: 2,
-                    }}
-                >
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => navigate(`/modify-team/${teamId}`)}
-                    >
-                        Modify Team
-                    </Button>
-                </Box>
-            )}
-        </Box>
+        <TeamInfo
+            team={team}
+            user={user}
+        />
     );
 };
 

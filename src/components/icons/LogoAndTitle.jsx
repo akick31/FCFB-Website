@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import logo from "../assets/graphics/trophy.png";
+import logo from "../../assets/graphics/trophy.png";
 
 const LogoAndTitle = () => (
     <Box display="flex" alignItems="center" gap={2}>

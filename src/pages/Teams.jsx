@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import {Box, Card, Typography, useTheme} from '@mui/material';
 import { getAllTeams } from '../api/teamApi'; // assuming this is the API call for fetching teams
 import ConferenceDropdown from '../components/dropdown/ConferenceDropdown';
 import TeamsTable from '../components/team/TeamsTable';
-import LoadingSpinner from '../components/LoadingSpinner';
-import ErrorMessage from '../components/ErrorMessage';
+import LoadingSpinner from '../components/icons/LoadingSpinner';
+import ErrorMessage from '../components/message/ErrorMessage';
+import {Header} from "../styles/GamesStyles";
 
 const Teams = () => {
+    const theme = useTheme()
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
     const [order, setOrder] = useState('asc');
     const [orderBy, setOrderBy] = useState('name'); // Default sorting by name
     const [selectedConference, setSelectedConference] = useState(''); // State for selected conference
@@ -72,32 +74,39 @@ const Teams = () => {
     };
 
     return (
-        <Box sx={{ padding: 3 }}>
-            <Typography variant="h4" gutterBottom>
-                Teams
-            </Typography>
+        <Box sx={theme.root}>
+            <Card sx={theme.standardCard}>
+                <Header>
+                    <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                        Teams
+                    </Typography>
+                </Header>
 
-            {/* Conference filter */}
-            <ConferenceDropdown selectedConference={selectedConference} onConferenceChange={handleConferenceChange} />
-
-            {loading ? (
-                <LoadingSpinner />
-            ) : error ? (
-                <ErrorMessage message={error} />
-            ) : (
-                <TeamsTable
-                    teams={sortedTeams}
-                    order={order}
-                    orderBy={orderBy}
-                    handleRequestSort={handleRequestSort}
-                    page={page}
-                    rowsPerPage={rowsPerPage}
-                    handleChangePage={handleChangePage}
-                    handleChangeRowsPerPage={handleChangeRowsPerPage}
-                    handleNullValue={handleNullValue}
-                    handleArrayValue={handleArrayValue}
+                {/* Conference filter */}
+                <ConferenceDropdown
+                    value={selectedConference || ""}
+                    onChange={handleConferenceChange}
                 />
-            )}
+
+                {loading ? (
+                    <LoadingSpinner />
+                ) : error ? (
+                    <ErrorMessage message={error} />
+                ) : (
+                    <TeamsTable
+                        teams={sortedTeams}
+                        order={order}
+                        orderBy={orderBy}
+                        handleRequestSort={handleRequestSort}
+                        page={page}
+                        rowsPerPage={rowsPerPage}
+                        handleChangePage={handleChangePage}
+                        handleChangeRowsPerPage={handleChangeRowsPerPage}
+                        handleNullValue={handleNullValue}
+                        handleArrayValue={handleArrayValue}
+                    />
+                )}
+            </Card>
         </Box>
     );
 };

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { Box, Button, Divider, Grid, Paper, Typography } from '@mui/material';
-import { getTeamByName } from '../api/teamApi';
-import { resendVerificationEmail } from "../api/authApi";
+import { getTeamByName } from '../../api/teamApi';
+import { resendVerificationEmail } from "../../api/authApi";
 import PropTypes from 'prop-types';
 
 const ProfileContainer = ({ user }) => {
