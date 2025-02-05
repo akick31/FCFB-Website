@@ -55,7 +55,7 @@ const HomePage = () => {
                         fontSize: '1.2rem',
                         mb: 4,
                     }}
-                    href="/get-started" // Adjust this link as per your routes
+                    href="/register"
                 >
                     Get Started
                 </Button>
