@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import ProfileContainer from "../components/ProfileContainer";
-import ProfileForm from "../forms/ProfileForm";
+import ProfileContainer from "../components/users/ProfileContainer";
+import ProfileForm from "../components/forms/ProfileForm";
 import { Box, Container } from '@mui/material';
 import PropTypes from 'prop-types';
 

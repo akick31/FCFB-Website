@@ -35,7 +35,14 @@ const GameInfo = ({ game }) => {
     const formatRecord = (wins, losses) => `${wins}-${losses}`;
     const formatRank = (rank) => rank === 0 ? "Unranked" : `#${rank}`;
     const formatCoinTossWinner = (winner) => winner ? (winner === 'HOME' ? game.home_team : game.away_team) : 'N/A';
-    const formatWaitingOn = (waitingOn) => waitingOn === "HOME" ? game.home_team : game.away_team;
+    let formatWaitingOn = (waitingOn) => waitingOn === "HOME" ? game.home_team : game.away_team;
+    if (game.game_status === "FINAL") {
+        formatWaitingOn = () => "N/A";
+    }
+    let formatGameTimer = (gameTimer) => gameTimer ? gameTimer + " EST" : "N/A";
+    if (game.game_status === "FINAL") {
+        formatGameTimer = () => "N/A";
+    }
 
     return (
         <Paper elevation={3} sx={{ p: 3, borderRadius: 2, mb: 4 }}>
@@ -140,7 +147,7 @@ const GameInfo = ({ game }) => {
                     </Grid>
                     <Grid item xs={12} sm={6} md={4}>
                         <Typography variant="body2">
-                            <strong>Game Timer:</strong> {game.game_timer || "N/A"}
+                            <strong>Game Timer:</strong> {formatGameTimer(game.game_timer)}
                         </Typography>
                     </Grid>
                     <Grid item xs={12} sm={6} md={4}>

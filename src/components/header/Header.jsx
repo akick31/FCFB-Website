@@ -1,10 +1,10 @@
 import React from "react";
 import { Box, Divider } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
-import { logout } from "../api/authApi";
-import LogoAndTitle from "../components/LogoAndTitle";
-import AuthTabs from "../components/tabs/AuthTabs";
-import { StyledAppBar, StyledToolbar, StyledTabs, StyledTab } from "../styles/HeaderStyles";
+import { logout } from "../../api/authApi";
+import LogoAndTitle from "../icons/LogoAndTitle";
+import AuthTabs from "../tabs/AuthTabs";
+import { StyledAppBar, StyledToolbar, StyledTabs, StyledTab } from "../../styles/HeaderStyles";
 import PropTypes from 'prop-types';
 
 const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, setIsAdmin }) => {
@@ -18,7 +18,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
 
     const navigationItems = [
         { label: "Home", path: "/" },
-        { label: "Games", path: "/games" },
+        { label: "Scoreboard", path: "/scoreboard" },
         { label: "Standings", path: "/standings" },
         { label: "Schedules", path: "/schedules" },
         { label: "Teams", path: "/teams" },

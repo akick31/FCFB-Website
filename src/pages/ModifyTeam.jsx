@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react';
-import ModifyTeamForm from '../forms/ModifyTeamForm';
+import ModifyTeamForm from '../components/forms/ModifyTeamForm';
 import {useNavigate, useParams} from "react-router-dom";
 import {getTeamById} from "../api/teamApi";
-import LoadingSpinner from "../components/LoadingSpinner";
-import ErrorMessage from "../components/ErrorMessage";
+import LoadingSpinner from "../components/icons/LoadingSpinner";
+import ErrorMessage from "../components/message/ErrorMessage";
 
 const ModifyTeam = ({ user }) => {
     const { teamId } = useParams();
@@ -42,9 +42,7 @@ const ModifyTeam = ({ user }) => {
     }
 
     return (
-        <div>
-            <ModifyTeamForm team={team}/>
-        </div>
+        <ModifyTeamForm team={team}/>
     );
 }
 

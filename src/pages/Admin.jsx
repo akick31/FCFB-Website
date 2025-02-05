@@ -1,17 +1,26 @@
-import React, {useEffect} from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import PropTypes from 'prop-types';
-import { Box, Button, Typography, Paper } from '@mui/material';
+import { Box, Button, Typography, Paper, CircularProgress } from '@mui/material';
 
 const Admin = ({ user }) => {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user.role !== "ADMIN" &&
-            user.role !== "CONFERENCE_COMMISSIONER") {
-            navigate('*');
+        // If user is not loaded yet, just return (we're loading)
+        if (!user || !user.role) {
+            setLoading(true);
+            return;
         }
-    }, [user.role, navigate]);
+
+        // Once the user is loaded, check the role
+        if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
+            navigate('*');
+        } else {
+            setLoading(false);
+        }
+    }, [user, navigate]);
 
     const handleNavigateToUsers = () => {
         navigate('/users');
@@ -25,6 +34,13 @@ const Admin = ({ user }) => {
         navigate('*');
     };
 
+    if (loading) {
+        return (
+            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     return (
         <Box

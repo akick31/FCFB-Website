@@ -187,7 +187,7 @@ const FilterMenu = ({ onChange, onApply, category }) => {
                             onChange={handleCheckboxChange("RANKED_GAME")}
                         />
                     }
-                    label="Ranked Games Only"
+                    label="Ranked Scoreboard Only"
                 />
             )}
 

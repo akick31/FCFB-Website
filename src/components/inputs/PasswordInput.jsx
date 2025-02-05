@@ -1,5 +1,5 @@
 import React from "react";
-import FormField from "../FormField";
+import FormField from "../forms/FormField";
 import { Button } from "@mui/material";
 import PropTypes from 'prop-types';
 

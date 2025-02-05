@@ -4,7 +4,7 @@ export const getUserById = async (userId) => {
     if (!userId) return {};
 
     try {
-        const response = await apiClient.get('/arceus/user/id', { params: { id: userId } });
+        const response = await apiClient.get('/user/id', { params: { id: userId } });
         return response.data;
     } catch (error) {
         console.error("Failed to fetch user by ID:", error);
@@ -14,7 +14,7 @@ export const getUserById = async (userId) => {
 
 export const getAllUsers = async () => {
     try {
-        const response = await apiClient.get('/arceus/user');
+        const response = await apiClient.get('/user');
         return response.data;
     } catch (error) {
         console.error("Failed to fetch all users:", error);
@@ -24,7 +24,7 @@ export const getAllUsers = async () => {
 
 export const getNewSignups = async () => {
     try {
-        const response = await apiClient.get('/arceus/user/new_signups');
+        const response = await apiClient.get('/user/new_signups');
         return response.data;
     } catch (error) {
         console.error("Failed to fetch new signups:", error);
@@ -36,7 +36,7 @@ export const updateUserDetails = async (userId, updates) => {
     if (!userId) throw new Error("User ID is required");
 
     try {
-        const response = await apiClient.put('/arceus/user/update', {
+        const response = await apiClient.put('/user/update', {
             id: userId,
             ...updates,
         });

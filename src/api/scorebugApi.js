@@ -22,7 +22,7 @@ export const getFilteredScorebugs = async (params) => {
         searchParams.append('size', params.size);
 
         // Use the URLSearchParams object for params
-        const response = await apiClient.get('/arceus/scorebug/filtered', {
+        const response = await apiClient.get('/scorebug/filtered', {
             params: searchParams,
             responseType: 'json',
         });
@@ -37,7 +37,7 @@ export const getFilteredScorebugs = async (params) => {
 export const getLatestScorebugByGameId = async (gameId) => {
     try {
         // Request the scorebug image as a Blob (binary data)
-        const response = await apiClient.get(`/arceus/scorebug/latest`, {
+        const response = await apiClient.get(`/scorebug/latest`, {
             params: { gameId },
             responseType: 'blob', // Set response type to 'blob' to get the binary data
         });

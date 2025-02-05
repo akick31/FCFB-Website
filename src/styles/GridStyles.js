@@ -8,6 +8,7 @@ export const StyledPaper = styled(Paper)({
     alignItems: 'center',
     justifycontent: 'center',
     width: '80%', // Full width of the container
+    backgroundColor: 'transparent'
 });
 
 export const GameImage = styled('img')`

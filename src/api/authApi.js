@@ -3,7 +3,7 @@ import { getUserById } from './userApi';
 
 export const registerUser = async (formData) => {
     try {
-        const response = await apiClient.post('/arceus/auth/register', formData);
+        const response = await apiClient.post('/auth/register', formData);
         return response.data;
     } catch (error) {
         console.error("Failed to register user:", error);
@@ -13,7 +13,7 @@ export const registerUser = async (formData) => {
 
 export const login = async (usernameOrEmail, password, setIsAuthenticated, setUser) => {
     try {
-        const response = await apiClient.post('/arceus/auth/login', null, {
+        const response = await apiClient.post('/auth/login', null, {
             params: { usernameOrEmail, password },
         });
 
@@ -43,7 +43,7 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
 
 export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
     try {
-        const response = await apiClient.post('/arceus/auth/logout', null, {
+        const response = await apiClient.post('/auth/logout', null, {
             params: { token: localStorage.getItem('token') },
         });
 
@@ -66,12 +66,32 @@ export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
     }
 };
 
+export const forgotPassword = async (email) => {
+    const response = await apiClient.post('/auth/forgot-password', null, {
+        params: {
+            email: email
+        }
+    });
+    return response.data;
+};
+
+export const resetPassword = async (userId, token, newPassword) => {
+    const response = await apiClient.post('/auth/reset-password', null, {
+        params: {
+            userId: userId,
+            token: token,
+            newPassword: newPassword
+        }
+    });
+    return response.data;
+};
+
 
 export const verifyEmail = async (token) => {
     if (!token) return;
 
     try {
-        const response = await apiClient.get('/arceus/auth/verify', { params: { token } });
+        const response = await apiClient.get('/auth/verify', { params: { token } });
         return response.data;
     } catch (error) {
         console.error("Email verification failed:", error);
@@ -83,7 +103,7 @@ export const resendVerificationEmail = async (userId) => {
     if (!userId) return;
 
     try {
-        const response = await apiClient.put('/arceus/auth/resend-verification-email', null, {
+        const response = await apiClient.put('/auth/resend-verification-email', null, {
             params: { id: userId },
         });
         return response.data;

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Header from './layouts/Header';
+import Header from './components/header/Header';
 import Home from './pages/Home';
 import GameDetails from "./pages/GameDetails";
-import Games from './pages/Games';
+import Scoreboard from './pages/Scoreboard';
 import Teams from './pages/Teams';
 import TeamDetails from './pages/TeamDetails';
 import Login from './pages/Login';
@@ -17,9 +17,12 @@ import NotFound from './pages/NotFound';
 import ErrorPage from "./pages/Error";
 import { getUserById } from './api/userApi';
 import { checkIfUserIsAdmin } from "./utils/utils";
-import { CssBaseline } from '@mui/material'; // MUI reset and normalization
+import { CssBaseline } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
 import { Box } from '@mui/system';
-import NewSignups from "./pages/NewSignups"; // Box component for layout control
+import NewSignups from "./pages/NewSignups";
+import Theme from "./styles/Theme";
+import ResetPassword from "./pages/ResetPassword"; // Box component for layout control
 
 const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -53,57 +56,59 @@ const App = () => {
     }, []);
 
     return (
-        <Router>
-            <CssBaseline /> {/* Normalize and reset browser styles */}
-            <Box
-                sx={{
-                    minHeight: '100vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    margin: 0, // Remove margin from the entire body
-                    padding: 0, // Remove padding
-                    backgroundColor: '#f5f5f5', // Set the background color of the whole page to light gray
-                }}
-            >
-                <Header
-                    isAuthenticated={isAuthenticated}
-                    isAdmin={isAdmin}
-                    user={user}
-                    setIsAuthenticated={setIsAuthenticated}
-                    setUser={setUser}
-                    setIsAdmin={setIsAdmin}
-                />
+        <ThemeProvider theme={Theme}>
+            <Router>
+                <CssBaseline /> {/* Normalize and reset browser styles */}
                 <Box
-                    component="main"
                     sx={{
-                        flexGrow: 1,
-                        paddingTop: 8,
-                        paddingX: 2,
-                        backgroundColor: '#ffffff',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: '100vh', // Ensures full viewport height
+                        overflow: 'hidden', // Prevents scrolling
                     }}
                 >
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUser={setUser} setIsAdmin={setIsAdmin} />} />
-                        <Route path="/register" element={<Registration />} />
-                        <Route path="/profile" element={<Profile user={user} />} />
-                        <Route path="/admin" element={<Admin user={user} />} />
-                        <Route path="/verify" element={<Verify
-                            userId={new URLSearchParams(window.location.search).get('id')}
-                            token={new URLSearchParams(window.location.search).get('token')} />} />
-                        <Route path="/game-details/:gameId" element={<GameDetails />} />
-                        <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
-                        <Route path="/modify-team/:teamId" element={<ModifyTeam user={user} />} />
-                        <Route path="/new-signups" element={<NewSignups user={user} />} />
-                        <Route path="/games" element={<Games />} />
-                        <Route path="/teams" element={<Teams />} />
-                        <Route path="/users" element={<Users user={user}/>} />
-                        <Route path="/error" element={<ErrorPage />} />
-                        <Route path="*" element={<NotFound />} />
-                    </Routes>
+                    <Header
+                        isAuthenticated={isAuthenticated}
+                        isAdmin={isAdmin}
+                        user={user}
+                        setIsAuthenticated={setIsAuthenticated}
+                        setUser={setUser}
+                        setIsAdmin={setIsAdmin}
+                    />
+                    <Box
+                        component="main"
+                        sx={{
+                            flexGrow: 1,
+                            overflowY: 'auto',
+                            paddingTop: 8,
+                            paddingX: 2,
+                            backgroundColor: '#ffffff',
+                        }}
+                    >
+                        <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUser={setUser} setIsAdmin={setIsAdmin} />} />
+                            <Route path="/register" element={<Registration />} />
+                            <Route path="/profile" element={<Profile user={user} />} />
+                            <Route path="/admin" element={<Admin user={user} />} />
+                            <Route path="/verify" element={<Verify
+                                userId={new URLSearchParams(window.location.search).get('id')}
+                                token={new URLSearchParams(window.location.search).get('token')} />} />
+                            <Route path="/game-details/:gameId" element={<GameDetails />} />
+                            <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
+                            <Route path="/modify-team/:teamId" element={<ModifyTeam user={user} />} />
+                            <Route path="/new-signups" element={<NewSignups user={user} />} />
+                            <Route path="/scoreboard" element={<Scoreboard />} />
+                            <Route path="/teams" element={<Teams />} />
+                            <Route path="/users" element={<Users user={user}/>} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
+                            <Route path="/error" element={<ErrorPage />} />
+                            <Route path="*" element={<NotFound />} />
+                        </Routes>
+                    </Box>
                 </Box>
-            </Box>
-        </Router>
+            </Router>
+        </ThemeProvider>
     );
 };
 
