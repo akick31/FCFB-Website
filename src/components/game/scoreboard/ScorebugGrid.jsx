@@ -58,8 +58,16 @@ const ScorebugGrid = ({
                 ) : (
                     <>
                         {/* Filter Menu */}
-                        <Menu anchorEl={menuAnchor} open={menuOpen} onClose={onMenuToggle}>
-                            <FilterMenu onChange={setFilters} onApply={onMenuToggle} category={category} />
+                        <Menu
+                            anchorEl={menuAnchor}
+                            open={menuOpen}
+                            onClose={onMenuToggle}
+                        >
+                            <FilterMenu
+                                onChange={setFilters}
+                                onApply={onMenuToggle}
+                                category={category}
+                            />
                         </Menu>
 
                         {/* No Scoreboard Message */}
