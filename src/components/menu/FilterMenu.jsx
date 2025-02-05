@@ -16,10 +16,10 @@ import SeasonDropdown from "../dropdown/SeasonDropdown";
 
 const FilterMenu = ({ onChange, onApply, category }) => {
     const availableFilters = {
-        ongoing: ['conference', 'gameType', 'gameStatus', 'rankedGame'],
-        past: ['conference', 'gameType', 'week', 'season', 'rankedGame'],
-        scrimmage: ['conference', 'gameStatus', 'rankedGame'],
-        pastScrimmage: ['conference', 'gameType', 'week', 'season'],
+        ONGOING: ['conference', 'gameType', 'gameStatus', 'rankedGame'],
+        PAST: ['conference', 'gameType', 'week', 'season', 'rankedGame'],
+        SCRIMMAGE: ['conference', 'gameStatus', 'rankedGame'],
+        PAST_SCRIMMAGE: ['conference', 'gameType', 'week', 'season'],
     }[category] || [];
 
     const getSavedFilters = () => {
