@@ -22,16 +22,6 @@ export const getAllUsers = async () => {
     }
 }
 
-export const getNewSignups = async () => {
-    try {
-        const response = await apiClient.get('/user/new_signups');
-        return response.data;
-    } catch (error) {
-        console.error("Failed to fetch new signups:", error);
-        throw error;
-    }
-}
-
 export const updateUserDetails = async (userId, updates) => {
     if (!userId) throw new Error("User ID is required");
 

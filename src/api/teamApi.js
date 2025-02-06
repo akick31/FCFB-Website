@@ -34,6 +34,16 @@ export const getAllTeams = async () => {
     }
 }
 
+export const getOpenTeams = async () => {
+    try {
+        const response = await apiClient.get('/team/open');
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch open teams:", error);
+        throw error;
+    }
+}
+
 export const updateTeam = async (team) => {
     try {
         const response = await apiClient.put('/team', team);
