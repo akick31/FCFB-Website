@@ -22,16 +22,6 @@ export const getAllUsers = async () => {
     }
 }
 
-export const getNewSignups = async () => {
-    try {
-        const response = await apiClient.get('/user/new_signups');
-        return response.data;
-    } catch (error) {
-        console.error("Failed to fetch new signups:", error);
-        throw error;
-    }
-}
-
 export const updateUserDetails = async (userId, updates) => {
     if (!userId) throw new Error("User ID is required");
 
@@ -46,6 +36,22 @@ export const updateUserDetails = async (userId, updates) => {
         throw error;
     }
 };
+
+export const validateUser = async (formData) => {
+    try {
+        const response = await apiClient.post("/user/validate", {
+            discord_id: formData.discord_id,
+            discord_tag: formData.discord_tag,
+            username: formData.username,
+            email: formData.email,
+        });
+        console.log("User validation response:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error validating user fields:", error);
+        throw error;
+    }
+}
 
 // For specific updates like username or email
 export const updateUsername = async (userId, username) =>

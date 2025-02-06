@@ -9,7 +9,7 @@ const PastGames = ({menuOpen, menuAnchor, onMenuToggle}) => {
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({
         filters: [],
-        category: 'PAST',
+        category: 'past',
         sort: 'CLOSEST_TO_END',
         conference: null,
         season: null,

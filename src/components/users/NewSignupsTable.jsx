@@ -12,23 +12,23 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { formatPlaybook, formatRole, formatPosition } from "../../utils/formatText";
+import { formatPlaybook, formatPosition } from "../../utils/formatText";
 
 const NewSignupsTable = ({
-                        users,
-                        order,
-                        orderBy,
-                        handleRequestSort,
-                        page,
-                        rowsPerPage,
-                        handleChangePage,
-                        handleChangeRowsPerPage
-                    }) => {
+    users,
+    order,
+    orderBy,
+    handleRequestSort,
+    page,
+    rowsPerPage,
+    handleChangePage,
+    handleChangeRowsPerPage
+}) => {
     const [selectedRole] = useState('');
     const navigate = useNavigate();
 
-    const handleRowClick = (username) => {
-        navigate(`/user-details/${username}`);
+    const handleRowClick = (id) => {
+        navigate(`/new-signup-details/${id}`);
     };
 
     const filteredUsers = selectedRole
@@ -52,12 +52,15 @@ const NewSignupsTable = ({
                                     Coach Name
                                 </TableSortLabel>
                             </TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Role</TableCell>
                             <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Discord Tag</TableCell>
                             <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Discord ID</TableCell>
                             <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Position</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Team Choice #1</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Team Choice #2</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Team Choice #3</TableCell>
                             <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Offensive Playbook</TableCell>
                             <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Defensive Playbook</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Verified</TableCell>
                         </TableRow>
                     </TableHead>
 
@@ -66,7 +69,7 @@ const NewSignupsTable = ({
                         {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => (
                             <TableRow
                                 key={user.username}
-                                onClick={() => handleRowClick(user.username)}
+                                onClick={() => handleRowClick(user.id)}
                                 style={{ cursor: 'pointer' }}
                                 sx={{
                                     backgroundColor: index % 2 === 0 ? '#fafafa' : '#ffffff',
@@ -77,12 +80,15 @@ const NewSignupsTable = ({
                             >
                                 <TableCell>{user.username}</TableCell>
                                 <TableCell>{user.coach_name}</TableCell>
-                                <TableCell>{formatRole(user.role)}</TableCell>
                                 <TableCell>{user.discord_tag}</TableCell>
                                 <TableCell>{user.discord_id}</TableCell>
                                 <TableCell>{formatPosition(user.position)}</TableCell>
+                                <TableCell>{user.team_choice_one}</TableCell>
+                                <TableCell>{user.team_choice_two}</TableCell>
+                                <TableCell>{user.team_choice_three}</TableCell>
                                 <TableCell>{formatPlaybook(user.offensive_playbook)}</TableCell>
                                 <TableCell>{formatPlaybook(user.defensive_playbook)}</TableCell>
+                                <TableCell>{user.approved ? 'Yes' : 'No'}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

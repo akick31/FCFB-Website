@@ -1,11 +1,10 @@
-// Registration.jsx
 import React from 'react';
-import RegistrationForm from '../components/forms/RegistrationForm';
+import RegisterWithDiscordForm from "../components/forms/RegisterWithDiscordForm";
 
 const Registration = () => {
     return (
         <div>
-            <RegistrationForm/>
+            <RegisterWithDiscordForm/>
         </div>
     );
 }

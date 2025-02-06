@@ -16,13 +16,14 @@ import SeasonDropdown from "../dropdown/SeasonDropdown";
 
 const FilterMenu = ({ onChange, onApply, category }) => {
     const availableFilters = {
-        ONGOING: ['conference', 'gameType', 'gameStatus', 'rankedGame'],
-        PAST: ['conference', 'gameType', 'week', 'season', 'rankedGame'],
-        SCRIMMAGE: ['conference', 'gameStatus', 'rankedGame'],
-        PAST_SCRIMMAGE: ['conference', 'gameType', 'week', 'season'],
+        ongoing: ['conference', 'gameType', 'gameStatus', 'rankedGame'],
+        past: ['conference', 'gameType', 'week', 'season', 'rankedGame'],
+        scrimmage: ['conference', 'gameStatus', 'rankedGame'],
+        pastScrimmage: ['conference', 'gameType', 'week', 'season'],
     }[category] || [];
 
     const getSavedFilters = () => {
+        console.log(category);
         const saved = sessionStorage.getItem(`filters_${category}`);
         if (!saved) {
             return {
@@ -114,6 +115,7 @@ const FilterMenu = ({ onChange, onApply, category }) => {
             season: pendingFilters.season || null,
             conference: pendingFilters.conference || null,
             sort: pendingFilters.sort,
+            category: category,
             page: 0,
             size: 10,
         };

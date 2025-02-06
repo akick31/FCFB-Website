@@ -22,7 +22,8 @@ import { ThemeProvider } from '@mui/material/styles';
 import { Box } from '@mui/system';
 import NewSignups from "./pages/NewSignups";
 import Theme from "./styles/Theme";
-import ResetPassword from "./pages/ResetPassword"; // Box component for layout control
+import ResetPassword from "./pages/ResetPassword";
+import FinishRegistration from "./pages/FinishRegistration"; // Box component for layout control
 
 const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -89,11 +90,11 @@ const App = () => {
                             <Route path="/" element={<Home />} />
                             <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUser={setUser} setIsAdmin={setIsAdmin} />} />
                             <Route path="/register" element={<Registration />} />
+                            <Route path="/finish-registration" element={<FinishRegistration />} />
                             <Route path="/profile" element={<Profile user={user} />} />
                             <Route path="/admin" element={<Admin user={user} />} />
                             <Route path="/verify" element={<Verify
-                                userId={new URLSearchParams(window.location.search).get('id')}
-                                token={new URLSearchParams(window.location.search).get('token')} />} />
+                                userId={new URLSearchParams(window.location.search).get('id')}/>} />
                             <Route path="/game-details/:gameId" element={<GameDetails />} />
                             <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
                             <Route path="/modify-team/:teamId" element={<ModifyTeam user={user} />} />

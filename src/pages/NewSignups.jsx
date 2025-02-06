@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { CircularProgress, Box } from '@mui/material';
 import NewSignupsTable from '../components/users/NewSignupsTable'; // Import the table component
-import {getNewSignups} from '../api/userApi';
 import {useNavigate} from "react-router-dom";
-import ErrorMessage from "../components/message/ErrorMessage"; // Assuming you have userApi for fetching users
+import ErrorMessage from "../components/message/ErrorMessage";
+import {getNewSignups} from "../api/newSignupsApi"; // Assuming you have userApi for fetching users
 
 const NewSignupsPage = ({ user }) => {
     const navigate = useNavigate();
@@ -16,11 +16,19 @@ const NewSignupsPage = ({ user }) => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     useEffect(() => {
-        if (user.role !== "ADMIN" &&
-            user.role !== "CONFERENCE_COMMISSIONER") {
-            navigate('*');
+        // If user is not loaded yet, just return (we're loading)
+        if (!user || !user.role) {
+            setLoading(true);
+            return;
         }
-    }, [user.role, navigate]);
+
+        // Once the user is loaded, check the role
+        if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
+            navigate('*');
+        } else {
+            setLoading(false);
+        }
+    }, [user, navigate]);
 
     useEffect(() => {
         // Fetch the list of users
@@ -55,7 +63,7 @@ const NewSignupsPage = ({ user }) => {
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifycontent: 'center', alignItems: 'center', height: '100vh' }}>
+            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <CircularProgress />
             </Box>
         );
