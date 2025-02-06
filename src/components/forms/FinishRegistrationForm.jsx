@@ -20,6 +20,7 @@ import { registerUser } from "../../api/authApi";
 import { validateEmail, isStrongPassword } from "../../utils/validations";
 import FormField from "./FormField";
 import {getOpenTeams} from "../../api/teamApi";
+import {validateUser} from "../../api/userApi";
 
 const FinishRegistrationForm = () => {
     const theme = useTheme();
@@ -122,6 +123,40 @@ const FinishRegistrationForm = () => {
         setIsSubmitting(true); // Start loading
 
         try {
+            const validationResponse = await validateUser(formData);
+
+            if (validationResponse.discord_id_exists) {
+                setValidation((prev) => ({
+                    ...prev,
+                    errorMessage: "Discord ID already exists.",
+                }));
+                return;
+            }
+
+            if (validationResponse.discord_username_exists) {
+                setValidation((prev) => ({
+                    ...prev,
+                    errorMessage: "Discord Username already exists.",
+                }));
+                return;
+            }
+
+            if (validationResponse.username_exists) {
+                setValidation((prev) => ({
+                    ...prev,
+                    errorMessage: "Username already exists.",
+                }));
+                return;
+            }
+
+            if (validationResponse.email_exists) {
+                setValidation((prev) => ({
+                    ...prev,
+                    errorMessage: "Email already exists.",
+                }));
+                return;
+            }
+
             await registerUser({ ...formData });
             navigate("/login");
         } catch (error) {

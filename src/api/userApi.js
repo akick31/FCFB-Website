@@ -37,6 +37,22 @@ export const updateUserDetails = async (userId, updates) => {
     }
 };
 
+export const validateUser = async (formData) => {
+    try {
+        const response = await apiClient.post("/user/validate", {
+            discord_id: formData.discord_id,
+            discord_tag: formData.discord_tag,
+            username: formData.username,
+            email: formData.email,
+        });
+        console.log("User validation response:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error validating user fields:", error);
+        throw error;
+    }
+}
+
 // For specific updates like username or email
 export const updateUsername = async (userId, username) =>
     updateUserDetails(userId, { newUsername: username });
