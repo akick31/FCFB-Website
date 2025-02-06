@@ -94,8 +94,7 @@ const App = () => {
                             <Route path="/profile" element={<Profile user={user} />} />
                             <Route path="/admin" element={<Admin user={user} />} />
                             <Route path="/verify" element={<Verify
-                                userId={new URLSearchParams(window.location.search).get('id')}
-                                token={new URLSearchParams(window.location.search).get('token')} />} />
+                                userId={new URLSearchParams(window.location.search).get('id')}/>} />
                             <Route path="/game-details/:gameId" element={<GameDetails />} />
                             <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
                             <Route path="/modify-team/:teamId" element={<ModifyTeam user={user} />} />
