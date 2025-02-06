@@ -41,7 +41,7 @@ const Verify = ({ userId }) => {
         };
 
         fetchData();
-    }, []);
+    }, [location]);
 
     const handleResendVerification = async () => {
         try {
