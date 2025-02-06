@@ -9,7 +9,7 @@ const PastScrimmages = ({ menuOpen, menuAnchor, onMenuToggle }) => {
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({
         filters: [],
-        category: 'PAST_SCRIMMAGE',
+        category: 'pastScrimmage',
         sort: 'CLOSEST_TO_END',
         conference: null,
         season: null,
