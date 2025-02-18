@@ -5,6 +5,7 @@ import ScorebugGrid from './ScorebugGrid';
 const OngoingGames = ({ menuOpen, menuAnchor, onMenuToggle }) => {
     const [games, setGames] = useState([]);
     const [totalGames, setTotalGames] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({
@@ -33,6 +34,7 @@ const OngoingGames = ({ menuOpen, menuAnchor, onMenuToggle }) => {
                     size: filters.size,
                 });
                 setGames(response.content);
+                setTotalPages(response["total_pages"]);
                 setTotalGames(response["total_elements"]);
             } catch (err) {
                 setError(`Failed to fetch scorebugs: ${err.message}`);
@@ -56,7 +58,9 @@ const OngoingGames = ({ menuOpen, menuAnchor, onMenuToggle }) => {
             onPageChange={handlePageChange}
             totalGames={totalGames}
             currentPage={filters.page}
+            totalPages={totalPages}
             category={filters.category}
+            filters={filters}
             setFilters={setFilters}
             onMenuToggle={onMenuToggle}
             menuOpen={menuOpen}
