@@ -77,7 +77,7 @@ const ScorebugGrid = ({
                             <>
                                 {/* Scorebug Grid - Ensures 6 per row on large screens, responsive for others */}
                                 <Grid container spacing={2} justifyContent="center" pl={3}>
-                                    {games.slice(0, 12).map((game) => ( // Limit to 12 per page
+                                    {games.slice((currentPage) * 12, (currentPage + 1) * 12).map((game) => (
                                         <Grid item xs={6} sm={3} md={2} key={game["game_id"]}>
                                             <Box
                                                 onClick={() => handleCardClick(game["game_id"])}
