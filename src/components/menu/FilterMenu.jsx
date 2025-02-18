@@ -117,7 +117,7 @@ const FilterMenu = ({ onChange, onApply, category }) => {
             sort: pendingFilters.sort,
             category: category,
             page: 0,
-            size: 10,
+            size: 12,
         };
 
         sessionStorage.setItem(`filters_${category}`, JSON.stringify(finalFilters));

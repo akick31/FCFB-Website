@@ -21,7 +21,9 @@ const ScorebugGrid = ({
     onPageChange,
     totalGames,
     currentPage,
+    totalPages,
     category,
+    filters,
     setFilters,
     onMenuToggle,
     menuOpen,
@@ -31,7 +33,6 @@ const ScorebugGrid = ({
     }) => {
     const theme = useTheme();
     const navigate = useNavigate();
-    const totalPages = Math.ceil(totalGames / 12); // 12 per page
 
     const handleCardClick = (gameId) => {
         navigate(`/game-details/${gameId}`);
@@ -77,7 +78,7 @@ const ScorebugGrid = ({
                             <>
                                 {/* Scorebug Grid - Ensures 6 per row on large screens, responsive for others */}
                                 <Grid container spacing={2} justifyContent="center" pl={3}>
-                                    {games.slice((currentPage) * 12, (currentPage + 1) * 12).map((game) => (
+                                    {games.map((game) => (
                                         <Grid item xs={6} sm={3} md={2} key={game["game_id"]}>
                                             <Box
                                                 onClick={() => handleCardClick(game["game_id"])}
