@@ -153,7 +153,7 @@ export const fireCoach = async ({ team = null, processedBy }) => {
     } catch (error) {
         console.error("Failed to fire coach:", error);
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fired coach");
+            throw new Error(error.response.data.error || "Failed to fire coach");
         }
         throw new Error("An unexpected error occurred while firing coach");
     }
