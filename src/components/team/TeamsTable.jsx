@@ -11,16 +11,21 @@ import {
     TableSortLabel
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
 import TeamRow from "./TeamRow";
 
-const TeamsTable = ({ teams, order, orderBy, handleRequestSort, page, rowsPerPage, handleChangePage, handleChangeRowsPerPage, handleNullValue, handleArrayValue }) => {
-    const navigate = useNavigate();
-
-    const handleRowClick = (teamId) => {
-        navigate(`/team-details/${teamId}`);
-    };
-
+const TeamsTable = ({
+    teams,
+    order,
+    orderBy,
+    handleRequestSort,
+    page,
+    rowsPerPage,
+    handleChangePage,
+    handleChangeRowsPerPage,
+    handleNullValue,
+    handleArrayValue,
+    handleRowClick
+}) => {
     return (
         <TableContainer component={Paper} sx={{ marginTop: 2 }}>
             <Table>
@@ -57,7 +62,7 @@ const TeamsTable = ({ teams, order, orderBy, handleRequestSort, page, rowsPerPag
                     {teams.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((team, index) => (
                         <TeamRow
                             key={team.id}
-                            onClick={() => handleRowClick(team.id)}
+                            onClick={(event) => handleRowClick(event, team.user, team.name, team.id)}
                             style={{ cursor: 'pointer' }}
                             team={team}
                             handleNullValue={handleNullValue}

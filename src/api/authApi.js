@@ -7,7 +7,10 @@ export const registerUser = async (formData) => {
         return response.data;
     } catch (error) {
         console.error("Failed to register user:", error);
-        throw error;
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to register user");
+        }
+        throw new Error("An unexpected error occurred during registration");
     }
 };
 
@@ -24,12 +27,10 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
         }
 
         const user = response.data;
-        // Store the token and user data in localStorage
         localStorage.setItem('token', user.token);
         localStorage.setItem('userId', user.user_id);
         localStorage.setItem('role', user.role);
 
-        // Optionally, store any additional user data if needed
         const userData = await getUserById(user.userId);
         setIsAuthenticated(true);
         setUser(userData);
@@ -37,7 +38,10 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
         return true;
     } catch (error) {
         console.error("Login failed:", error);
-        return false;
+        if (error.response) {
+            throw new Error(error.response.data.error || "Login failed");
+        }
+        throw new Error("An unexpected error occurred during login");
     }
 };
 
@@ -48,7 +52,6 @@ export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
         });
 
         if (response.status === 200) {
-            // Remove token and user info from localStorage
             localStorage.removeItem('token');
             localStorage.removeItem('userId');
             localStorage.removeItem('role');
@@ -62,30 +65,42 @@ export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
         return false;
     } catch (error) {
         console.error("Logout failed:", error);
-        return false;
+        if (error.response) {
+            throw new Error(error.response.data.error || "Logout failed");
+        }
+        throw new Error("An unexpected error occurred during logout");
     }
 };
 
 export const forgotPassword = async (email) => {
-    const response = await apiClient.post('/auth/forgot-password', null, {
-        params: {
-            email: email
+    try {
+        const response = await apiClient.post('/auth/forgot-password', null, {
+            params: { email: email }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to send forgot password request:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to send forgot password request");
         }
-    });
-    return response.data;
+        throw new Error("An unexpected error occurred while sending forgot password request");
+    }
 };
 
 export const resetPassword = async (userId, token, newPassword) => {
-    const response = await apiClient.post('/auth/reset-password', null, {
-        params: {
-            userId: userId,
-            token: token,
-            newPassword: newPassword
+    try {
+        const response = await apiClient.post('/auth/reset-password', null, {
+            params: { userId, token, newPassword }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to reset password:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to reset password");
         }
-    });
-    return response.data;
+        throw new Error("An unexpected error occurred while resetting password");
+    }
 };
-
 
 export const verifyEmail = async (token) => {
     if (!token) return;
@@ -95,7 +110,10 @@ export const verifyEmail = async (token) => {
         return response.data;
     } catch (error) {
         console.error("Email verification failed:", error);
-        throw error;
+        if (error.response) {
+            throw new Error(error.response.data.error || "Email verification failed");
+        }
+        throw new Error("An unexpected error occurred during email verification");
     }
 };
 
@@ -109,16 +127,17 @@ export const resendVerificationEmail = async (userId) => {
         return response.data;
     } catch (error) {
         console.error("Failed to resend verification email:", error);
-        throw error;
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to resend verification email");
+        }
+        throw new Error("An unexpected error occurred while resending verification email");
     }
 };
 
-// Helper function to add token to API requests
 export const apiWithAuth = async (endpoint, options = {}) => {
     const token = localStorage.getItem('token');
 
     if (token) {
-        // Include Authorization header with the JWT token
         options.headers = {
             ...options.headers,
             Authorization: `Bearer ${token}`,
@@ -130,6 +149,9 @@ export const apiWithAuth = async (endpoint, options = {}) => {
         return response.data;
     } catch (error) {
         console.error("API request failed:", error);
-        throw error;
+        if (error.response) {
+            throw new Error(error.response.data.error || "API request failed");
+        }
+        throw new Error("An unexpected error occurred during the API request");
     }
 };

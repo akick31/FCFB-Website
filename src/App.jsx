@@ -23,7 +23,8 @@ import { Box } from '@mui/system';
 import NewSignups from "./pages/NewSignups";
 import Theme from "./styles/Theme";
 import ResetPassword from "./pages/ResetPassword";
-import FinishRegistration from "./pages/FinishRegistration"; // Box component for layout control
+import FinishRegistration from "./pages/FinishRegistration";
+import OpenTeams from "./pages/OpenTeams"; // Box component for layout control
 
 const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -99,6 +100,7 @@ const App = () => {
                             <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
                             <Route path="/modify-team/:teamId" element={<ModifyTeam user={user} />} />
                             <Route path="/new-signups" element={<NewSignups user={user} />} />
+                            <Route path="/open-teams" element={<OpenTeams user={user} />} />
                             <Route path="/scoreboard" element={<Scoreboard />} />
                             <Route path="/teams" element={<Teams />} />
                             <Route path="/users" element={<Users user={user}/>} />

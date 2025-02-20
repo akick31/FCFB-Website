@@ -1,46 +1,139 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import PropTypes from "prop-types";
 import {
     Box,
     Typography,
-    Avatar,
     List,
     ListItem,
     ListItemText,
     Grid,
     Button,
     Card,
-    useTheme
+    useTheme, Alert, CircularProgress
 } from "@mui/material";
 import { formatConference, formatPlaybook } from "../../utils/formatText";
 import { useNavigate } from "react-router-dom";
+import {fireCoach, hireInterimCoach} from "../../api/teamApi";
+import {HireInterimCoachByUserMenu} from "../menu/HireCoachMenu";
+import {getAllUsers} from "../../api/userApi";
+import ErrorMessage from "../message/ErrorMessage";
 
 const TeamInfo = ({ team, user }) => {
     const theme = useTheme();
     const navigate = useNavigate();
+    const [success, setSuccess] = useState(null);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [coaches, setCoaches] = useState([]);
+    const [contextMenu, setContextMenu] = useState(null);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [hiringInProgress, setHiringInProgress] = useState(false);
+    const [contextError, setContextError] = useState(null);
     const formatRank = (rank) => rank === 0 ? "Unranked" : `#${rank}`;
+
+    useEffect(() => {
+        const fetchCoaches = async () => {
+            try {
+                setLoading(true);
+                const response = await getAllUsers();
+                setCoaches(response);
+                console.log(response)
+                setLoading(false);
+            } catch (error) {
+                setLoading(false);
+                setError(error.message);
+            }
+        };
+
+        fetchCoaches();
+    }, []);
+
+    const handleCloseMenu = () => {
+        setContextMenu(null);
+        setContextError(null);
+    };
+
+    const handleHireInterimCoach = async () => {
+        setHiringInProgress(true);
+        try {
+            await hireInterimCoach({
+                team: team.name,
+                discordId: selectedUser.discord_id,
+                processedBy: user.username
+            });
+            setSuccess('Coach has been hired as interim.');
+            handleCloseMenu();
+            window.location.reload();
+        } catch (error) {
+            console.error('Failed to hire coach', error);
+            setContextError(error.message);
+        } finally {
+            setHiringInProgress(false);
+        }
+    }
+
+    const handleFireCoach = async () => {
+        try {
+            await fireCoach({
+                    team: team.name,
+                    processedBy: user.username
+                }
+            );
+            setSuccess('Coaches have been fired.');
+            window.location.reload();
+        } catch (error) {
+            console.error('Failed to fire coach', error);
+            setError(error.message);
+        }
+    };
+
+    if (loading) {
+        return (
+            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    if (error) {
+        return <ErrorMessage message={error} />;
+    }
 
     return (
         <Box elevation={3} sx={theme.root}>
             <Card sx={theme.standardCard}>
-                {/* Team Header */}
                 <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                    <Avatar
-                        src={team.logo}
-                        alt={team.name}
-                        sx={{ width: 120, height: 120, mr: 3 }}
-                    />
+                    <Box
+                        sx={{
+                            width: 120,
+                            height: 120,
+                            overflow: 'hidden',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            mb: 1,
+                        }}
+                    >
+                        <img
+                            src={team.logo}
+                            alt={team.name}
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                            }}
+                        />
+                    </Box>
                     <Box>
-                        <Typography variant="h4" component="h2" fontWeight="bold" gutterBottom>
+                        <Typography variant="h4" component="h2" fontWeight="bold" ml={2}>
                             {team.name}
                         </Typography>
-                        <Typography variant="h6" color="text.secondary" gutterBottom>
+                        <Typography variant="h6" color="text.secondary" ml={2}>
                             {formatConference(team.conference) || "No conference"}
                         </Typography>
                     </Box>
                 </Box>
 
-                {/* Coaches */}
                 <Box sx={theme.subCard}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                         Coaches
@@ -60,7 +153,6 @@ const TeamInfo = ({ team, user }) => {
                     </List>
                 </Box>
 
-                {/* Team Record */}
                 <Box sx={theme.subCard}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                         Team Record
@@ -70,7 +162,6 @@ const TeamInfo = ({ team, user }) => {
                     </Typography>
                 </Box>
 
-                {/* Ranking Summary */}
                 <Box sx={theme.subCard}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                         Ranking
@@ -85,7 +176,6 @@ const TeamInfo = ({ team, user }) => {
                     </Grid>
                 </Box>
 
-                {/* Team Stats */}
                 <Box sx={theme.subCard}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                         Team Stats
@@ -106,7 +196,6 @@ const TeamInfo = ({ team, user }) => {
                     </Grid>
                 </Box>
 
-                {/* Playoff Stats */}
                 <Box sx={theme.subCard}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                         Playoff Stats
@@ -123,7 +212,6 @@ const TeamInfo = ({ team, user }) => {
                     </Grid>
                 </Box>
 
-                {/* Playbook Information */}
                 <Box sx={theme.subCard}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                         Playbook Information
@@ -138,17 +226,61 @@ const TeamInfo = ({ team, user }) => {
                     </Grid>
                 </Box>
 
-                {/* Admin Section */}
                 {(user.role === "ADMIN" || user.role === "CONFERENCE_COMMISSIONER") && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => navigate(`/modify-team/${team.id}`)}
-                        >
-                            Modify Team
-                        </Button>
-                    </Box>
+                    <Grid container spacing={2} justifyContent="center" sx={{ pb: 3 }}>
+                        <Grid item>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={() => navigate(`/modify-team/${team.id}`)}
+                                fullWidth
+                            >
+                                Modify Team
+                            </Button>
+                        </Grid>
+                        <Grid item>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={(e) => setContextMenu({ mouseX: e.clientX, mouseY: e.clientY })}
+                                fullWidth
+                            >
+                                Hire Interim Coach
+                            </Button>
+                        </Grid>
+                        <Grid item>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleFireCoach}
+                                fullWidth
+                            >
+                                Fire Coach
+                            </Button>
+                        </Grid>
+                        {contextMenu && (
+                            <HireInterimCoachByUserMenu
+                                contextMenu={contextMenu}
+                                handleCloseMenu={() => setContextMenu(null)}
+                                coaches={coaches}
+                                handleHireCoach={handleHireInterimCoach}
+                                contextError={contextError}
+                                hiringInProgress={hiringInProgress}
+                                selectedUser={selectedUser}
+                                setSelectedUser={setSelectedUser}
+                            />
+                        )}
+                    </Grid>
+                )}
+                {success && (
+                    <Alert severity="success" sx={{ mb: 2 }}>
+                        {success}
+                    </Alert>
+                )}
+                {error && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {error}
+                    </Alert>
                 )}
             </Card>
         </Box>

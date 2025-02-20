@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import {Box, Typography, CardMedia, useTheme, Card} from "@mui/material";
+import {Box, Typography, CardMedia, useTheme, Card, CircularProgress} from "@mui/material";
 import { getAllPlaysForGame } from "../api/playApi";
 import { getGameById } from "../api/gameApi";
 import { getLatestScorebugByGameId } from "../api/scorebugApi";
-import PlaysTable from "../components/game/PlaysTable";
-import LoadingSpinner from "../components/icons/LoadingSpinner";
+import PlaysTable from "../components/game/plays/PlaysTable";
 import ErrorMessage from "../components/message/ErrorMessage";
 import GameInfo from "../components/game/GameInfo";
 import {Header} from "../styles/GamesStyles";
+import {getGameStatsByIdAndTeam} from "../api/gameStatsApi";
+import GameStats from "../components/game/stats/GameStats";
+import {getTeamByName} from "../api/teamApi";
 
 const GameDetails = () => {
     const theme = useTheme();
@@ -17,6 +19,9 @@ const GameDetails = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [game, setGame] = useState(null);
+    const [gameStats, setGameStats] = useState({ home: null, away: null });
+    const [homeTeam, setHomeTeam] = useState(null);
+    const [awayTeam, setAwayTeam] = useState(null);
     const [scorebug, setScorebug] = useState(null);
 
     const [page, setPage] = useState(0);
@@ -24,7 +29,6 @@ const GameDetails = () => {
     const [orderBy, setOrderBy] = useState('play_number');
     const [order, setOrder] = useState('asc');
 
-    // Fetch game details and scorebug
     useEffect(() => {
         const fetchGame = async () => {
             try {
@@ -34,9 +38,23 @@ const GameDetails = () => {
                 const scorebugResponse = await getLatestScorebugByGameId(gameId);
                 setScorebug(scorebugResponse);
 
+                const homeTeamResponse = await getTeamByName(gameResponse.data.home_team);
+                const awayTeamResponse = await getTeamByName(gameResponse.data.away_team);
+                setHomeTeam(homeTeamResponse);
+                setAwayTeam(awayTeamResponse);
+
+                const [homeStats, awayStats] = await Promise.all([
+                    getGameStatsByIdAndTeam(gameId, gameResponse.data.home_team),
+                    getGameStatsByIdAndTeam(gameId, gameResponse.data.away_team)
+                ]);
+                setGameStats({
+                    home: homeStats.data,
+                    away: awayStats.data
+                });
+
                 setLoading(false);
             } catch (error) {
-                setError("Failed to load game");
+                setError(error.message);
                 setLoading(false);
             }
         };
@@ -77,7 +95,11 @@ const GameDetails = () => {
     };
 
     if (loading) {
-        return <LoadingSpinner />;
+        return (
+            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <CircularProgress />
+            </Box>
+        );
     }
 
     if (error) {
@@ -115,9 +137,25 @@ const GameDetails = () => {
                 </Box>
 
                 {/* Game Info Section */}
-                {game && (
+                {game && homeTeam && awayTeam && (
                     <Box sx={{ mb: 4, mt: 4 }}>
-                        <GameInfo game={game} />
+                        <GameInfo
+                            game={game}
+                            homeTeam={homeTeam}
+                            awayTeam={awayTeam}
+                        />
+                    </Box>
+                )}
+
+                {/* Game Stats Section */}
+                {gameStats.home && gameStats.away && homeTeam && awayTeam && (
+                    <Box sx={{ mb: 4, mt: 4 }}>
+                        <GameStats
+                            homeTeam={homeTeam}
+                            awayTeam={awayTeam}
+                            homeStats={gameStats.home}
+                            awayStats={gameStats.away}
+                        />
                     </Box>
                 )}
 
