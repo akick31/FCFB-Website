@@ -13,13 +13,11 @@ const TeamDetails = ({ user }) => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        // If user is not loaded yet, just return (we're loading)
         if (!user || !user.role || !team) {
             setLoading(true);
             return;
         }
 
-        // Once the user is loaded, check the role
         if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
             navigate('*');
         } else {

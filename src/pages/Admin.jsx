@@ -26,6 +26,10 @@ const Admin = ({ user }) => {
         navigate('/users');
     };
 
+    const handleNavigateToOpenTeams = () => {
+        navigate('/open-teams');
+    }
+
     const handleNavigateToSignups = () => {
         navigate('/new-signups');
     };
@@ -83,6 +87,14 @@ const Admin = ({ user }) => {
                     fullWidth
                 >
                     View Current Users
+                </Button>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleNavigateToOpenTeams}
+                    fullWidth
+                >
+                    View Open Teams
                 </Button>
                 <Button
                     variant="contained"

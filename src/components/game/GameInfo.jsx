@@ -1,41 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { Box, Typography, Grid, Paper, Avatar } from "@mui/material";
+import { Box, Typography, Grid, Paper } from "@mui/material";
 import PropTypes from 'prop-types';
-import { getTeamByName } from "../../api/teamApi";
 import { formatConference, formatGameType, formatPlaybook } from '../../utils/formatText';
 
-const GameInfo = ({ game }) => {
-    const [homeTeam, setHomeTeam] = useState(null);
-    const [awayTeam, setAwayTeam] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    // Fetch team details
-    useEffect(() => {
-        const fetchTeams = async () => {
-            setLoading(true);
-            if (game) {
-                try {
-                    const homeTeamResponse = await getTeamByName(game.home_team);
-                    const awayTeamResponse = await getTeamByName(game.away_team);
-                    setHomeTeam(homeTeamResponse);
-                    setAwayTeam(awayTeamResponse);
-                } catch (error) {
-                    console.error("Failed to fetch team details:", error);
-                } finally {
-                    setLoading(false);
-                }
-            }
-        };
-        fetchTeams();
-    }, [game]);
-
-    if (!game || loading) return null;
+const GameInfo = ({ game, homeTeam, awayTeam }) => {
 
     // Helper functions
     const formatRecord = (wins, losses) => `${wins}-${losses}`;
     const formatRank = (rank) => rank === 0 ? "Unranked" : `#${rank}`;
-    const formatCoinTossWinner = (winner) => winner ? (winner === 'HOME' ? game.home_team : game.away_team) : 'N/A';
-    let formatWaitingOn = (waitingOn) => waitingOn === "HOME" ? game.home_team : game.away_team;
+    const formatCoinTossWinner = (winner) => winner ? (winner === 'HOME' ? homeTeam.name : awayTeam.name) : 'N/A';
+    let formatWaitingOn = (waitingOn) => waitingOn === "HOME" ? homeTeam.name : awayTeam.name;
     if (game.game_status === "FINAL") {
         formatWaitingOn = () => "N/A";
     }
@@ -52,7 +25,28 @@ const GameInfo = ({ game }) => {
                 <Grid item xs={12} md={6}>
                     <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Avatar src={homeTeam?.logo} alt={game.home_team} sx={{ width: 40, height: 40, mr: 2 }} />
+                            <Box
+                                sx={{
+                                    width: 40,
+                                    height: 40,
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    mb: 1,
+                                    mr: 1,
+                                }}
+                            >
+                                <img
+                                    src={homeTeam?.logo}
+                                    alt={homeTeam?.name}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'contain',
+                                    }}
+                                />
+                            </Box>
                             <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                                 {game.home_team}
                             </Typography>
@@ -82,8 +76,28 @@ const GameInfo = ({ game }) => {
                 <Grid item xs={12} md={6}>
                     <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Avatar src={awayTeam?.logo} alt={game.away_team} sx={{ width: 40, height: 40, mr: 2 }} />
-                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                            <Box
+                                sx={{
+                                    width: 40,
+                                    height: 40,
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    mb: 1,
+                                    mr: 1,
+                                }}
+                            >
+                                <img
+                                    src={awayTeam?.logo}
+                                    alt={awayTeam?.name}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'contain',
+                                    }}
+                                />
+                            </Box><Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                                 {game.away_team}
                             </Typography>
                         </Box>

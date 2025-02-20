@@ -1,10 +1,13 @@
 import apiClient from './apiClient';
 
-export const getGameStatsForTeam = async (gameId, team) => {
+export const getGameStatsByIdAndTeam = async (gameId, team) => {
     try {
         return await apiClient.get(`/game_stats?gameId=${gameId}&team=${team}`);
     } catch (error) {
         console.error("Failed to fetch stats for game:", error);
-        throw error; // Rethrow to let the caller handle it
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to fetch stats for game");
+        }
+        throw new Error("An unexpected error occurred while fetching stats for game");
     }
 };

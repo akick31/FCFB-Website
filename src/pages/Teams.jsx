@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import {Box, Card, Typography, useTheme} from '@mui/material';
-import { getAllTeams } from '../api/teamApi'; // assuming this is the API call for fetching teams
+import { getAllTeams } from '../api/teamApi';
 import ConferenceDropdown from '../components/dropdown/ConferenceDropdown';
 import TeamsTable from '../components/team/TeamsTable';
 import LoadingSpinner from '../components/icons/LoadingSpinner';
 import ErrorMessage from '../components/message/ErrorMessage';
 import {Header} from "../styles/GamesStyles";
+import {useNavigate} from "react-router-dom";
 
 const Teams = () => {
     const theme = useTheme()
+    const navigate = useNavigate();
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -50,6 +52,10 @@ const Teams = () => {
     const handleConferenceChange = (event) => {
         setSelectedConference(event.target.value);
         setPage(0); // Reset to the first page when filter changes
+    };
+
+    const handleTeamRowClick = (event, user, teamName, teamId) => {
+        navigate(`/team-details/${teamId}`);
     };
 
     // Filtered teams based on the selected conference
@@ -104,6 +110,7 @@ const Teams = () => {
                         handleChangeRowsPerPage={handleChangeRowsPerPage}
                         handleNullValue={handleNullValue}
                         handleArrayValue={handleArrayValue}
+                        handleRowClick={handleTeamRowClick}
                     />
                 )}
             </Card>

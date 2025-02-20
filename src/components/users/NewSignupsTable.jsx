@@ -11,7 +11,6 @@ import {
     TableSortLabel,
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
 import { formatPlaybook, formatPosition } from "../../utils/formatText";
 
 const NewSignupsTable = ({
@@ -22,14 +21,10 @@ const NewSignupsTable = ({
     page,
     rowsPerPage,
     handleChangePage,
-    handleChangeRowsPerPage
+    handleChangeRowsPerPage,
+    onRowClick
 }) => {
     const [selectedRole] = useState('');
-    const navigate = useNavigate();
-
-    const handleRowClick = (id) => {
-        navigate(`/new-signup-details/${id}`);
-    };
 
     const filteredUsers = selectedRole
         ? users.filter((user) => user.role === selectedRole)
@@ -69,7 +64,7 @@ const NewSignupsTable = ({
                         {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => (
                             <TableRow
                                 key={user.username}
-                                onClick={() => handleRowClick(user.id)}
+                                onClick={(event) => onRowClick(event, user)}
                                 style={{ cursor: 'pointer' }}
                                 sx={{
                                     backgroundColor: index % 2 === 0 ? '#fafafa' : '#ffffff',
