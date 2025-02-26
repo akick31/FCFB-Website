@@ -136,7 +136,6 @@ const StatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
             label: 'First Downs',
             home: homeStats.first_downs,
             away: awayStats.first_downs,
-            isHeader: true,
         },
         {
             label: '3rd Down Efficiency',
@@ -220,7 +219,7 @@ const StatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         },
         {
             label: 'Average Difference',
-            home: homeStats.average_diff,
+            home: homeStats.average_diff.toFixed(2),
         },
         {
             label: 'Average Offensive Difference',
