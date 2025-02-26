@@ -17,8 +17,8 @@ const StatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         },
         {
             label: 'Yard per Play',
-            home: homeStats.average_yards_per_play,
-            away: awayStats.average_yards_per_play,
+            home: homeStats.average_yards_per_play.toFixed(2),
+            away: awayStats.average_yards_per_play.toFixed(2),
         },
         {
             label: 'Passing',
@@ -35,6 +35,11 @@ const StatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
             label: 'Yards per Pass',
             home: (homeStats.pass_attempts === 0 ? 0.0 : (homeStats.pass_yards / homeStats.pass_attempts).toFixed(2)),
             away: (awayStats.pass_attempts === 0 ? 0.0 : (awayStats.pass_yards / awayStats.pass_attempts).toFixed(2)),
+        },
+        {
+            label: 'Longest Pass',
+            home: homeStats.longest_pass,
+            away: awayStats.longest_pass,
         },
         {
             label: 'Pass Successes',
@@ -71,6 +76,11 @@ const StatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
             label: 'Yards per Rush',
             home: (homeStats.rush_attempts === 0 ? 0.0 : (homeStats.rush_yards / homeStats.rush_attempts).toFixed(2)),
             away: (awayStats.rush_attempts === 0 ? 0.0 : (awayStats.rush_yards / awayStats.rush_attempts).toFixed(2)),
+        },
+        {
+            label: 'Longest Run',
+            home: homeStats.longest_run,
+            away: awayStats.longest_run,
         },
         {
             label: 'Rush Successes',
@@ -120,6 +130,10 @@ const StatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         },
         {
             label: 'Efficiency',
+            isHeader: true,
+        },
+        {
+            label: 'First Downs',
             home: homeStats.first_downs,
             away: awayStats.first_downs,
             isHeader: true,
@@ -170,8 +184,8 @@ const StatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         },
         {
             label: 'Average Punt',
-            home: homeStats.average_punt_length,
-            away: awayStats.average_punt_length,
+            home: homeStats.average_punt_length.toFixed(2),
+            away: awayStats.average_punt_length.toFixed(2),
         },
         {
             label: 'Punts Blocked',
@@ -210,28 +224,28 @@ const StatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         },
         {
             label: 'Average Offensive Difference',
-            home: homeStats.average_offensive_diff,
-            away: awayStats.average_offensive_diff,
+            home: homeStats.average_offensive_diff.toFixed(2),
+            away: awayStats.average_offensive_diff.toFixed(2),
         },
         {
             label: 'Average Defensive Difference',
-            home: homeStats.average_defensive_diff,
-            away: awayStats.average_defensive_diff,
+            home: homeStats.average_defensive_diff.toFixed(2),
+            away: awayStats.average_defensive_diff.toFixed(2),
         },
         {
             label: 'Average Off. Special Teams Difference',
-            home: homeStats.average_offensive_special_teams_diff,
-            away: awayStats.average_offensive_special_teams_diff,
+            home: homeStats.average_offensive_special_teams_diff.toFixed(2),
+            away: awayStats.average_offensive_special_teams_diff.toFixed(2),
         },
         {
             label: 'Average Def. Special Teams Difference',
-            home: homeStats.average_defensive_special_teams_diff,
-            away: awayStats.average_defensive_special_teams_diff,
+            home: homeStats.average_defensive_special_teams_diff.toFixed(2),
+            away: awayStats.average_defensive_special_teams_diff.toFixed(2),
         },
         {
             label: 'Average Response Time',
-            home: formatTime(homeStats.average_response_speed),
-            away: formatTime(awayStats.average_response_speed),
+            home: formatTime(Number(homeStats.average_response_speed.toFixed(0))),
+            away: formatTime(Number(awayStats.average_response_speed.toFixed(0))),
         },
     ];
 
