@@ -244,8 +244,8 @@ const StatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         },
         {
             label: 'Average Response Time',
-            home: formatTime(homeStats.average_response_speed.toFixed(0)),
-            away: formatTime(awayStats.average_response_speed.toFixed(0)),
+            home: formatTime(Number(homeStats.average_response_speed.toFixed(0))),
+            away: formatTime(Number(awayStats.average_response_speed.toFixed(0))),
         },
     ];
 
