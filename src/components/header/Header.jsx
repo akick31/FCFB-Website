@@ -13,6 +13,13 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
 
     const handleLogout = () => {
         logout(setIsAuthenticated, setUser, setIsAdmin);
+        localStorage.removeItem("role");
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+
+        setIsAuthenticated(false);
+        setUser(null);
+        setIsAdmin(false);
         navigate("/");
     };
 

@@ -31,15 +31,13 @@ const NewSignupsPage = ({ user }) => {
     const [contextError, setContextError] = useState(null);
 
     useEffect(() => {
-        if (!user || !user.role) {
-            setLoading(true);
-            return;
-        }
-
-        if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
+        if (!user || (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER")) {
             navigate('*');
         } else {
             setLoading(false);
+        }
+        if (!user || !user.role) {
+            setLoading(true);
         }
     }, [user, navigate]);
 
