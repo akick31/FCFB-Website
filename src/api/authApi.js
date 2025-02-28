@@ -58,7 +58,6 @@ export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
             setIsAuthenticated(false);
             setIsAdmin(false);
             setUser({});
-            alert("You have been logged out.");
             return true;
         }
 
