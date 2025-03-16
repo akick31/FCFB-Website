@@ -91,10 +91,10 @@ const NewSignupsPage = ({ user }) => {
             return;
         }
 
-        setHiringInProgress(true);  // Set loading state to true when hiring starts
+        setHiringInProgress(true);
         try {
             await hireCoach({
-                team: selectedTeam.name,
+                team: selectedTeam,
                 discordId: selectedUser.discord_id,
                 coachPosition: selectedPosition,
                 processedBy: user.username
