@@ -2,7 +2,8 @@ import apiClient from './apiClient';
 
 export const getGameStatsByIdAndTeam = async (gameId, team) => {
     try {
-        return await apiClient.get(`/game_stats?gameId=${gameId}&team=${team}`);
+        const encodedTeam = encodeURIComponent(team);
+        return await apiClient.get(`/game_stats?gameId=${gameId}&team=${encodedTeam}`);
     } catch (error) {
         console.error("Failed to fetch stats for game:", error);
         if (error.response) {
