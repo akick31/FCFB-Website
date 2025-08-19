@@ -3,7 +3,7 @@ import { getUserById } from './userApi';
 
 export const registerUser = async (formData) => {
     try {
-        const response = await apiClient.post('/auth/register', formData);
+        const response = await apiClient.post('/users', formData);
         return response.data;
     } catch (error) {
         console.error("Failed to register user:", error);
@@ -16,7 +16,7 @@ export const registerUser = async (formData) => {
 
 export const login = async (usernameOrEmail, password, setIsAuthenticated, setUser) => {
     try {
-        const response = await apiClient.post('/auth/login', null, {
+        const response = await apiClient.post('/users/sessions', null, {
             params: { usernameOrEmail, password },
         });
 
@@ -47,9 +47,7 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
 
 export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
     try {
-        const response = await apiClient.post('/auth/logout', null, {
-            params: { token: localStorage.getItem('token') },
-        });
+        const response = await apiClient.delete(`/users/sessions/${localStorage.getItem('token')}`);
 
         if (response.status === 200) {
             localStorage.removeItem('token');
@@ -73,7 +71,7 @@ export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
 
 export const forgotPassword = async (email) => {
     try {
-        const response = await apiClient.post('/auth/forgot-password', null, {
+        const response = await apiClient.post('/users/password-reset', null, {
             params: { email: email }
         });
         return response.data;
@@ -88,8 +86,8 @@ export const forgotPassword = async (email) => {
 
 export const resetPassword = async (userId, token, newPassword) => {
     try {
-        const response = await apiClient.post('/auth/reset-password', null, {
-            params: { userId, token, newPassword }
+        const response = await apiClient.put(`/users/${userId}/password`, null, {
+            params: { token, newPassword }
         });
         return response.data;
     } catch (error) {
@@ -105,7 +103,7 @@ export const verifyEmail = async (token) => {
     if (!token) return;
 
     try {
-        const response = await apiClient.get('/auth/verify', { params: { token } });
+        const response = await apiClient.get('/users/verify-email', { params: { token } });
         return response.data;
     } catch (error) {
         console.error("Email verification failed:", error);
@@ -120,9 +118,7 @@ export const resendVerificationEmail = async (userId) => {
     if (!userId) return;
 
     try {
-        const response = await apiClient.put('/auth/resend-verification-email', null, {
-            params: { id: userId },
-        });
+        const response = await apiClient.put(`/users/${userId}/verification-email`);
         return response.data;
     } catch (error) {
         console.error("Failed to resend verification email:", error);
