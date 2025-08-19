@@ -25,8 +25,8 @@ pipeline {
                         cat <<EOF > .env
                         REACT_APP_CLIENT_ID=${CLIENT_ID}
                         REACT_APP_CLIENT_SECRET=${CLIENT_SECRET}
-                        REACT_APP_BASE_URL=https://dev.api.fakecollegefootball.com/arceus/discord/redirect
-                        REACT_APP_API_BASE_URL=https://dev.api.fakecollegefootball.com/arceus
+                        REACT_APP_BASE_URL=https://dev.api.fakecollegefootball.com/api/v1/arceus/discord/redirect
+                        REACT_APP_API_BASE_URL=https://dev.api.fakecollegefootball.com/api/v1/arceus
                         EOF
                     """
                 }
