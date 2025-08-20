@@ -1,24 +1,28 @@
 import apiClient from './apiClient';
 import { getUserById } from './userApi';
 
-export const registerUser = async (formData) => {
+const toPlainObject = (maybeFormData) =>
+    maybeFormData instanceof FormData
+        ? Object.fromEntries(maybeFormData.entries())
+        : maybeFormData;
+
+export const registerUser = async (formOrObj) => {
     try {
-        const response = await apiClient.post('/auth/register', formData);
+        const body = toPlainObject(formOrObj);
+        const response = await apiClient.post('/auth/register', body);
         return response.data;
     } catch (error) {
-        console.error("Failed to register user:", error);
+        console.error('Failed to register user:', error);
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to register user");
+            throw new Error(error.response.data.error || 'Failed to register user');
         }
-        throw new Error("An unexpected error occurred during registration");
+        throw new Error('An unexpected error occurred during registration');
     }
 };
 
 export const login = async (usernameOrEmail, password, setIsAuthenticated, setUser) => {
     try {
-        const response = await apiClient.post('/auth/login', null, {
-            params: { usernameOrEmail, password },
-        });
+        const response = await apiClient.post('/auth/login', { usernameOrEmail, password });
 
         if (response.status !== 200) {
             setIsAuthenticated(false);
@@ -26,29 +30,43 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
             return false;
         }
 
-        const user = response.data;
-        localStorage.setItem('token', user.token);
-        localStorage.setItem('userId', user.user_id);
-        localStorage.setItem('role', user.role);
+        const auth = response.data;
 
-        const userData = await getUserById(user.userId);
+        // Be defensive about field names
+        const token =
+            auth?.token ?? auth?.session?.token ?? auth?.accessToken ?? auth?.jwt ?? null;
+        const userId =
+            auth?.userId ?? auth?.user?.id ?? auth?.user_id ?? auth?.id ?? null;
+        const role =
+            auth?.role ?? auth?.user?.role ?? null;
+
+        if (!token || !userId) {
+            throw new Error('Login response missing token or userId');
+        }
+
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', String(userId));
+        if (role != null) localStorage.setItem('role', String(role));
+
+        const userData = await getUserById(userId);
         setIsAuthenticated(true);
         setUser(userData);
 
         return true;
     } catch (error) {
-        console.error("Login failed:", error);
+        console.error('Login failed:', error);
         if (error.response) {
-            throw new Error(error.response.data.error || "Login failed");
+            throw new Error(error.response.data.error || 'Login failed');
         }
-        throw new Error("An unexpected error occurred during login");
+        throw new Error('An unexpected error occurred during login');
     }
 };
 
 export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
     try {
+        const token = localStorage.getItem('token');
         const response = await apiClient.post('/auth/logout', null, {
-            params: { token: localStorage.getItem('token') },
+            headers: { Authorization: `Bearer ${token}` },
         });
 
         if (response.status === 200) {
@@ -56,101 +74,96 @@ export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
             localStorage.removeItem('userId');
             localStorage.removeItem('role');
             setIsAuthenticated(false);
-            setIsAdmin(false);
+            if (typeof setIsAdmin === 'function') setIsAdmin(false);
             setUser({});
             return true;
         }
 
         return false;
     } catch (error) {
-        console.error("Logout failed:", error);
+        console.error('Logout failed:', error);
         if (error.response) {
-            throw new Error(error.response.data.error || "Logout failed");
+            throw new Error(error.response.data.error || 'Logout failed');
         }
-        throw new Error("An unexpected error occurred during logout");
+        throw new Error('An unexpected error occurred during logout');
     }
 };
 
 export const forgotPassword = async (email) => {
     try {
-        const response = await apiClient.post('/auth/forgot-password', null, {
-            params: { email: email }
-        });
+        const response = await apiClient.post('/auth/forgot-password', { email });
         return response.data;
     } catch (error) {
-        console.error("Failed to send forgot password request:", error);
+        console.error('Failed to send forgot password request:', error);
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to send forgot password request");
+            throw new Error(error.response.data.error || 'Failed to send forgot password request');
         }
-        throw new Error("An unexpected error occurred while sending forgot password request");
+        throw new Error('An unexpected error occurred while sending forgot password request');
     }
 };
 
-export const resetPassword = async (userId, token, newPassword) => {
+export const resetPassword = async (token, newPassword) => {
     try {
-        const response = await apiClient.post('/auth/reset-password', null, {
-            params: { userId, token, newPassword }
-        });
+        const response = await apiClient.post('/auth/reset-password', { token, newPassword });
         return response.data;
     } catch (error) {
-        console.error("Failed to reset password:", error);
+        console.error('Failed to reset password:', error);
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to reset password");
+            throw new Error(error.response.data.error || 'Failed to reset password');
         }
-        throw new Error("An unexpected error occurred while resetting password");
+        throw new Error('An unexpected error occurred while resetting password');
     }
 };
 
 export const verifyEmail = async (token) => {
     if (!token) return;
-
     try {
-        const response = await apiClient.get('/auth/verify', { params: { token } });
+        const response = await apiClient.get('/auth/verify-email', { params: { token } });
         return response.data;
     } catch (error) {
-        console.error("Email verification failed:", error);
+        console.error('Email verification failed:', error);
         if (error.response) {
-            throw new Error(error.response.data.error || "Email verification failed");
+            throw new Error(error.response.data.error || 'Email verification failed');
         }
-        throw new Error("An unexpected error occurred during email verification");
+        throw new Error('An unexpected error occurred during email verification');
     }
 };
 
 export const resendVerificationEmail = async (userId) => {
     if (!userId) return;
-
     try {
-        const response = await apiClient.put('/auth/resend-verification-email', null, {
-            params: { id: userId },
-        });
+        const response = await apiClient.post(`/auth/${userId}/verification-email/resend`);
         return response.data;
     } catch (error) {
-        console.error("Failed to resend verification email:", error);
+        console.error('Failed to resend verification email:', error);
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to resend verification email");
+            throw new Error(error.response.data.error || 'Failed to resend verification email');
         }
-        throw new Error("An unexpected error occurred while resending verification email");
+        throw new Error('An unexpected error occurred while resending verification email');
     }
 };
 
 export const apiWithAuth = async (endpoint, options = {}) => {
     const token = localStorage.getItem('token');
 
-    if (token) {
-        options.headers = {
-            ...options.headers,
-            Authorization: `Bearer ${token}`,
-        };
-    }
+    const config = {
+        url: endpoint,
+        method: options.method || 'get',
+        ...options,
+        headers: {
+            ...(options.headers || {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    };
 
     try {
-        const response = await apiClient(endpoint, options);
+        const response = await apiClient.request(config);
         return response.data;
     } catch (error) {
-        console.error("API request failed:", error);
+        console.error('API request failed:', error);
         if (error.response) {
-            throw new Error(error.response.data.error || "API request failed");
+            throw new Error(error.response.data.error || 'API request failed');
         }
-        throw new Error("An unexpected error occurred during the API request");
+        throw new Error('An unexpected error occurred during the API request');
     }
 };
