@@ -1,20 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import {Box, Typography, CardMedia, useTheme, Card, CircularProgress} from "@mui/material";
+import { useParams, useNavigate } from "react-router-dom";
+import {Box, Typography, Card, CardContent, CircularProgress, Chip, useTheme, useMediaQuery, IconButton, Grid} from "@mui/material";
+import { ArrowBack } from "@mui/icons-material";
 import { getAllPlaysForGame } from "../api/playApi";
 import { getGameById } from "../api/gameApi";
 import { getLatestScorebugByGameId } from "../api/scorebugApi";
 import PlaysTable from "../components/game/plays/PlaysTable";
 import ErrorMessage from "../components/message/ErrorMessage";
 import GameInfo from "../components/game/GameInfo";
-import {Header} from "../styles/GamesStyles";
 import {getGameStatsByIdAndTeam} from "../api/gameStatsApi";
-import GameStats from "../components/game/stats/GameStats";
+import GameStatsTable from "../components/game/stats/GameStatsTable";
 import {getTeamByName} from "../api/teamApi";
+import CustomScorebug from "../components/game/CustomScorebug";
+import { formatGameType } from "../utils/gameUtils";
+import PageLayout from "../components/layout/PageLayout";
+import LoadingSpinner from "../components/icons/LoadingSpinner";
 
 const GameDetails = () => {
     const theme = useTheme();
+    const navigate = useNavigate();
     const { gameId } = useParams();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    
     const [plays, setPlays] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -72,10 +79,8 @@ const GameDetails = () => {
                             a[orderBy] < b[orderBy] ? (order === 'asc' ? -1 : 1) : 0
                     );
                     setPlays(sortedPlays);
-                    setLoading(false);
                 } catch (error) {
-                    setError("Failed to load plays");
-                    setLoading(false);
+                    console.error("Failed to load plays:", error);
                 }
             }
         };
@@ -96,87 +101,202 @@ const GameDetails = () => {
 
     if (loading) {
         return (
-            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <CircularProgress />
-            </Box>
+            <PageLayout
+                title="Game Details"
+                subtitle="Loading game information..."
+            >
+                <LoadingSpinner />
+            </PageLayout>
         );
     }
 
-    if (error) {
-        return <ErrorMessage message={error} />;
+    if (error || !game) {
+        return (
+            <PageLayout
+                title="Game Details"
+                subtitle="Error loading game"
+            >
+                <ErrorMessage message={error || 'Game not found'} />
+            </PageLayout>
+        );
     }
 
     return (
-        <Box sx={theme.root}>
-            <Card sx={theme.standardCard}>
-                {/* Header Section */}
-                <Header>
-                    <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: '#004260' }}>
-                        Game Details
-                    </Typography>
-                </Header>
-                <Box sx={{
-                    textAlign: 'center',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    mt: 4,
-                    width: '100%',
+        <PageLayout
+            title=""
+            subtitle=""
+        >
+            {/* Back Button */}
+            <Box sx={{ mb: 3 }}>
+                <IconButton
+                    onClick={() => navigate('/scoreboard')}
+                    sx={{
+                        color: theme.palette.primary.main,
+                        '&:hover': { backgroundColor: theme.palette.primary.light + '20' }
+                    }}
+                >
+                    <ArrowBack />
+                </IconButton>
+                <Typography variant="body2" component="span" sx={{ ml: 1, color: 'text.secondary' }}>
+                    Back to Scoreboard
+                </Typography>
+            </Box>
+
+            {/* Game Header with Scorebug */}
+            <Box sx={{
+                mb: 4,
+                p: { xs: 2, md: 4 },
+                backgroundColor: 'background.paper',
+                borderRadius: 3,
+                border: `1px solid ${theme.palette.divider}`,
+                boxShadow: theme.shadows[2],
+                textAlign: 'center'
+            }}>
+                <Typography variant="h3" sx={{
+                    fontWeight: 700,
+                    mb: 1,
+                    fontSize: { xs: '1.75rem', md: '2.5rem' },
+                    color: theme.palette.primary.main
                 }}>
-                    {scorebug && (
-                        <CardMedia
-                            component="img"
-                            image={scorebug}
-                            alt={`${game["home_team"]} vs ${game["away_team"]}`}
-                            sx={{
-                                width: 160,
-                                boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                            }}
+                    {awayTeam?.name || game.away_team} vs {homeTeam?.name || game.home_team}
+                </Typography>
+
+                {/* Season, Week, and Game Type Chips */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mb: 1, flexWrap: 'wrap' }}>
+                    {game.season && (
+                        <Chip
+                            label={`Season ${game.season}`}
+                            variant="outlined"
+                            sx={{ fontWeight: 600, borderColor: theme.palette.primary.main, color: theme.palette.primary.main }}
+                        />
+                    )}
+                    {game.week && (
+                        <Chip
+                            label={`Week ${game.week}`}
+                            variant="outlined"
+                            sx={{ fontWeight: 600, borderColor: theme.palette.primary.main, color: theme.palette.primary.main }}
+                        />
+                    )}
+                    {game.game_type && (
+                        <Chip
+                            label={formatGameType(game.game_type)}
+                            variant="outlined"
+                            sx={{ fontWeight: 600, borderColor: theme.palette.primary.main, color: theme.palette.primary.main }}
                         />
                     )}
                 </Box>
 
-                {/* Game Info Section */}
-                {game && homeTeam && awayTeam && (
-                    <Box sx={{ mb: 4, mt: 4 }}>
-                        <GameInfo
+                {/* Game ID and Number of Plays */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    gap: 2, 
+                    mb: 2,
+                    flexWrap: 'wrap'
+                }}>
+                    <Typography variant="body2" sx={{ 
+                        color: 'text.secondary',
+                        fontSize: '0.875rem'
+                    }}>
+                        Game ID: {game?.game_id || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" sx={{ 
+                        color: 'text.secondary',
+                        fontSize: '0.875rem'
+                    }}>
+                        |
+                    </Typography>
+                    <Typography variant="body2" sx={{ 
+                        color: 'text.secondary',
+                        fontSize: '0.875rem'
+                    }}>
+                        Plays: {game?.num_plays || 'N/A'}
+                    </Typography>
+                </Box>
+
+                {scorebug && (
+                    <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        mt: 1
+                    }}>
+                        <CustomScorebug
                             game={game}
                             homeTeam={homeTeam}
                             awayTeam={awayTeam}
+                            scorebug={scorebug}
                         />
                     </Box>
                 )}
+            </Box>
 
-                {/* Game Stats Section */}
-                {gameStats.home && gameStats.away && homeTeam && awayTeam && (
-                    <Box sx={{ mb: 4, mt: 4 }}>
-                        <GameStats
-                            homeTeam={homeTeam}
-                            awayTeam={awayTeam}
-                            homeStats={gameStats.home}
-                            awayStats={gameStats.away}
-                        />
-                    </Box>
-                )}
+            {/* Game Info and Stats */}
+            <Box sx={{ mb: 4 }}>
+                <Grid container spacing={4}>
+                    <Grid item xs={12} md={6}>
+                        <Card sx={{ p: 0, borderRadius: 3, boxShadow: theme.shadows[2], height: '100%' }}>
+                            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                                <Typography variant="h5" sx={{
+                                    fontWeight: 700,
+                                    mb: 3,
+                                    textAlign: 'center',
+                                    color: theme.palette.primary.main
+                                }}>
+                                    Game Information
+                                </Typography>
+                                <GameInfo game={game} homeTeam={homeTeam} awayTeam={awayTeam} />
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <Card sx={{ p: 0, borderRadius: 3, boxShadow: theme.shadows[2], height: '100%' }}>
+                            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                                <Typography variant="h5" sx={{
+                                    fontWeight: 700,
+                                    mb: 3,
+                                    textAlign: 'center',
+                                    color: theme.palette.primary.main
+                                }}>
+                                    Game Statistics
+                                </Typography>
+                                <GameStatsTable
+                                    homeTeam={homeTeam}
+                                    awayTeam={awayTeam}
+                                    homeStats={gameStats.home}
+                                    awayStats={gameStats.away}
+                                />
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                </Grid>
+            </Box>
 
-                {/* Plays Table Section */}
-                <Box sx={{ mt: 4 }}>
-                    <Typography variant="h6" component="h2" sx={{ fontWeight: 'bold', mb: 2 }}>
-                        Play-by-Play
+            {/* Plays Table */}
+            <Card sx={{ p: 0, borderRadius: 3, boxShadow: theme.shadows[2], overflow: 'hidden' }}>
+                <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                    <Typography variant="h5" sx={{
+                        fontWeight: 700,
+                        mb: 3,
+                        textAlign: 'center',
+                        color: theme.palette.primary.main
+                    }}>
+                        Game Plays
                     </Typography>
                     <PlaysTable
                         plays={plays}
                         page={page}
                         rowsPerPage={rowsPerPage}
+                        handleChangePage={handleChangePage}
+                        handleChangeRowsPerPage={handleChangeRowsPerPage}
                         orderBy={orderBy}
                         order={order}
                         handleRequestSort={handleRequestSort}
-                        handleChangePage={handleChangePage}
-                        handleChangeRowsPerPage={handleChangeRowsPerPage}
                     />
-                </Box>
+                </CardContent>
             </Card>
-        </Box>
+        </PageLayout>
     );
 };
 

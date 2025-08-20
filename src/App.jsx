@@ -24,7 +24,7 @@ import NewSignups from "./pages/NewSignups";
 import Theme from "./styles/Theme";
 import ResetPassword from "./pages/ResetPassword";
 import FinishRegistration from "./pages/FinishRegistration";
-import OpenTeams from "./pages/OpenTeams"; // Box component for layout control
+import OpenTeams from "./pages/OpenTeams";
 
 const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -60,13 +60,13 @@ const App = () => {
     return (
         <ThemeProvider theme={Theme}>
             <Router>
-                <CssBaseline /> {/* Normalize and reset browser styles */}
+                <CssBaseline />
                 <Box
                     sx={{
                         display: 'flex',
                         flexDirection: 'column',
-                        height: '100vh', // Ensures full viewport height
-                        overflow: 'hidden', // Prevents scrolling
+                        minHeight: '100vh',
+                        background: 'background.default',
                     }}
                 >
                     <Header
@@ -81,10 +81,8 @@ const App = () => {
                         component="main"
                         sx={{
                             flexGrow: 1,
-                            overflowY: 'auto',
-                            paddingTop: 8,
-                            paddingX: 2,
-                            backgroundColor: '#ffffff',
+                            display: 'flex',
+                            flexDirection: 'column',
                         }}
                     >
                         <Routes>
@@ -97,6 +95,7 @@ const App = () => {
                             <Route path="/verify" element={<Verify
                                 userId={new URLSearchParams(window.location.search).get('id')}/>} />
                             <Route path="/game-details/:gameId" element={<GameDetails />} />
+                            <Route path="/team/:teamId" element={<TeamDetails />} />
                             <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
                             <Route path="/modify-team/:teamId" element={<ModifyTeam user={user} />} />
                             <Route path="/new-signups" element={<NewSignups user={user} />} />

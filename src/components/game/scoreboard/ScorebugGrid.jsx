@@ -35,7 +35,21 @@ const ScorebugGrid = ({
     const navigate = useNavigate();
 
     const handleCardClick = (gameId) => {
-        navigate(`/game-details/${gameId}`);
+        // Ensure we have a valid game ID
+        if (!gameId || gameId === 'id' || gameId === 'undefined') {
+            console.error('Invalid game ID:', gameId);
+            return;
+        }
+        
+        // Convert to string if it's a number, or ensure it's a valid string
+        const validGameId = String(gameId).replace(/[^0-9]/g, '');
+        
+        if (!validGameId) {
+            console.error('Invalid game ID format:', gameId);
+            return;
+        }
+        
+        navigate(`/game-details/${validGameId}`);
     };
 
     return (

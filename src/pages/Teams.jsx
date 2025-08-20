@@ -1,30 +1,41 @@
-import React, { useEffect, useState } from 'react';
-import {Box, Card, Typography, useTheme} from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { 
+    Box, 
+    Typography, 
+    TablePagination,
+    useTheme
+} from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { getAllTeams } from '../api/teamApi';
-import ConferenceDropdown from '../components/dropdown/ConferenceDropdown';
-import TeamsTable from '../components/team/TeamsTable';
+import { formatConferenceName } from '../utils/conferenceUtils';
+import { DEFAULT_TEAMS_PER_PAGE, TEAMS_PER_PAGE_OPTIONS, TEAM_STATUS } from '../constants/teamConstants';
+import PageLayout from '../components/layout/PageLayout';
+import StyledTable from '../components/ui/StyledTable';
+import { TeamsFilters, getTeamsTableColumns } from '../components/team';
 import LoadingSpinner from '../components/icons/LoadingSpinner';
 import ErrorMessage from '../components/message/ErrorMessage';
-import {Header} from "../styles/GamesStyles";
-import {useNavigate} from "react-router-dom";
 
 const Teams = () => {
-    const theme = useTheme()
+    const theme = useTheme();
     const navigate = useNavigate();
+    const [searchTerm, setSearchTerm] = useState('');
     const [teams, setTeams] = useState([]);
+    const [filteredTeams, setFilteredTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [selectedConference, setSelectedConference] = useState('');
+    const [selectedAvailability, setSelectedAvailability] = useState('');
+    
+    // Pagination state
     const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
-    const [order, setOrder] = useState('asc');
-    const [orderBy, setOrderBy] = useState('name'); // Default sorting by name
-    const [selectedConference, setSelectedConference] = useState(''); // State for selected conference
+    const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_TEAMS_PER_PAGE);
 
     useEffect(() => {
         const fetchTeams = async () => {
             try {
                 const data = await getAllTeams();
                 setTeams(data);
+                setFilteredTeams(data);
                 setLoading(false);
             } catch (error) {
                 setError('Failed to load teams');
@@ -34,10 +45,35 @@ const Teams = () => {
         fetchTeams();
     }, []);
 
-    const handleRequestSort = (property) => {
-        const isAsc = orderBy === property && order === 'asc';
-        setOrder(isAsc ? 'desc' : 'asc');
-        setOrderBy(property);
+    useEffect(() => {
+        let filtered = teams;
+
+        // Filter by search term
+        if (searchTerm.trim() !== '') {
+            filtered = filtered.filter(team =>
+                team.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                formatConferenceName(team.conference).toLowerCase().includes(searchTerm.toLowerCase()) ||
+                team.abbreviation?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        // Filter by conference
+        if (selectedConference !== '') {
+            filtered = filtered.filter(team => team.conference === selectedConference);
+        }
+
+        // Filter by availability
+        if (selectedAvailability !== '') {
+            const isTaken = selectedAvailability === TEAM_STATUS.TAKEN;
+            filtered = filtered.filter(team => team.is_taken === isTaken);
+        }
+
+        setFilteredTeams(filtered);
+        setPage(0); // Reset to first page when filters change
+    }, [searchTerm, selectedConference, selectedAvailability, teams]);
+
+    const handleTeamClick = (team) => {
+        navigate(`/team/${team.id}`);
     };
 
     const handleChangePage = (event, newPage) => {
@@ -49,72 +85,108 @@ const Teams = () => {
         setPage(0);
     };
 
-    const handleConferenceChange = (event) => {
-        setSelectedConference(event.target.value);
-        setPage(0); // Reset to the first page when filter changes
-    };
+    // Get current page data
+    const startIndex = page * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const currentPageTeams = filteredTeams.slice(startIndex, endIndex);
 
-    const handleTeamRowClick = (event, user, teamName, teamId) => {
-        navigate(`/team-details/${teamId}`);
-    };
+    // Get table columns
+    const columns = getTeamsTableColumns(theme);
 
-    // Filtered teams based on the selected conference
-    const filteredTeams = selectedConference
-        ? teams.filter(team => team.conference === selectedConference)
-        : teams;
+    if (loading) {
+        return (
+            <PageLayout
+                title="College Football Teams"
+                subtitle="Explore all teams across the FCFB league"
+            >
+                <LoadingSpinner />
+            </PageLayout>
+        );
+    }
 
-    // Sorted teams
-    const sortedTeams = filteredTeams.sort((a, b) => {
-        if (a[orderBy] < b[orderBy]) return order === 'asc' ? -1 : 1;
-        if (a[orderBy] > b[orderBy]) return order === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    // Function to handle null values
-    const handleNullValue = (value, fallback = '-') => {
-        return value ? value : fallback;
-    };
-
-    const handleArrayValue = (array, fallback = '-') => {
-        return array && array.length > 0 ? array.join(', ') : fallback;
-    };
+    if (error) {
+        return (
+            <PageLayout
+                title="College Football Teams"
+                subtitle="Explore all teams across the FCFB league"
+            >
+                <ErrorMessage message={error} />
+            </PageLayout>
+        );
+    }
 
     return (
-        <Box sx={theme.root}>
-            <Card sx={theme.standardCard}>
-                <Header>
-                    <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-                        Teams
+        <PageLayout
+            title="College Football Teams"
+            subtitle="Explore all teams across the FCFB league"
+        >
+            {/* Filters Section */}
+            <TeamsFilters
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                selectedConference={selectedConference}
+                setSelectedConference={setSelectedConference}
+                selectedAvailability={selectedAvailability}
+                setSelectedAvailability={setSelectedAvailability}
+                teams={teams}
+                filteredTeams={filteredTeams}
+                theme={theme}
+            />
+
+            {/* Teams Table */}
+            <Box sx={{ 
+                backgroundColor: 'transparent',
+                borderRadius: 0,
+                border: `1px solid ${theme.palette.divider}`,
+                boxShadow: theme.shadows[1],
+                overflow: 'hidden'
+            }}>
+                <Box sx={{ 
+                    p: 3, 
+                    borderBottom: `1px solid ${theme.palette.divider}`,
+                    backgroundColor: theme.palette.grey[50]
+                }}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+                        Team Directory
                     </Typography>
-                </Header>
-
-                {/* Conference filter */}
-                <ConferenceDropdown
-                    value={selectedConference || ""}
-                    onChange={handleConferenceChange}
+                </Box>
+                
+                <StyledTable
+                    columns={columns}
+                    data={currentPageTeams}
+                    onRowClick={handleTeamClick}
+                    sx={{ 
+                        '& .MuiTableContainer-root': {
+                            borderRadius: 0,
+                            boxShadow: 'none',
+                            backgroundColor: 'transparent'
+                        },
+                        '& .MuiTable-root': {
+                            backgroundColor: 'transparent'
+                        }
+                    }}
                 />
-
-                {loading ? (
-                    <LoadingSpinner />
-                ) : error ? (
-                    <ErrorMessage message={error} />
-                ) : (
-                    <TeamsTable
-                        teams={sortedTeams}
-                        order={order}
-                        orderBy={orderBy}
-                        handleRequestSort={handleRequestSort}
-                        page={page}
-                        rowsPerPage={rowsPerPage}
-                        handleChangePage={handleChangePage}
-                        handleChangeRowsPerPage={handleChangeRowsPerPage}
-                        handleNullValue={handleNullValue}
-                        handleArrayValue={handleArrayValue}
-                        handleRowClick={handleTeamRowClick}
-                    />
-                )}
-            </Card>
-        </Box>
+                
+                {/* Pagination */}
+                <TablePagination
+                    component="div"
+                    count={filteredTeams.length}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    rowsPerPage={rowsPerPage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                    rowsPerPageOptions={TEAMS_PER_PAGE_OPTIONS}
+                    labelRowsPerPage="Teams per page:"
+                    labelDisplayedRows={({ from, to, count }) => 
+                        `${from}-${to} of ${count !== -1 ? count : `more than ${to}`}`
+                    }
+                    sx={{
+                        borderTop: `1px solid ${theme.palette.divider}`,
+                        backgroundColor: theme.palette.grey[50]
+                    }}
+                />
+            </Box>
+        </PageLayout>
     );
 };
 

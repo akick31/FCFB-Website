@@ -2,7 +2,8 @@ import apiClient from './apiClient';
 
 export const getGameById = async (gameId) => {
     try {
-        return await apiClient.get(`/game/id?id=${gameId}`);
+        // Use path parameter instead of query parameter to avoid backend parsing issues
+        return await apiClient.get(`/game/${gameId}`);
     } catch (error) {
         console.error("Failed to fetch game by id:", error);
         if (error.response) {

@@ -4,48 +4,69 @@ import { AppBar, Toolbar, Tabs, Tab } from "@mui/material";
 // Styled components for Header
 export const StyledAppBar = styled(AppBar)`
     position: sticky;
-    background-color: #004260; /* Custom blue color */
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #004260 0%, #1e5a7a 100%);
+    box-shadow: 0 4px 20px rgba(0, 66, 96, 0.3);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0;
 `;
 
 export const StyledToolbar = styled(Toolbar)`
     display: flex;
     justify-content: space-between;
     align-items: center;
+    min-height: 80px;
+    padding: 0 24px;
+    
+    @media (max-width: 768px) {
+        padding: 0 16px;
+        min-height: 70px;
+    }
 `;
 
 export const StyledTabs = styled(Tabs)`
     .MuiTabs-indicator {
-        background-color: transparent; /* Make indicator transparent */
+        background-color: #ffffff;
+        height: 3px;
+        border-radius: 2px;
+    }
+    
+    @media (max-width: 768px) {
+        display: none;
     }
 `;
 
 export const StyledTab = styled(Tab)`
-    color: white; /* Default color for tab text */
-    padding: 6px 16px;
-    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    padding: 12px 20px;
+    border-radius: 8px;
     font-size: 14px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    margin: 0 4px; /* Horizontal margin between tabs */
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin: 0 4px;
+    text-transform: none;
+    min-height: 48px;
 
     /* Hover effect for tab */
     &:hover {
-        background-color: rgba(255, 255, 255, 0.1); /* Slight grey background on hover */
-        transform: scale(1.05); /* Slight scale effect on hover */
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        transform: translateY(-1px);
     }
 
     /* Selected tab appearance */
     &.Mui-selected {
-        background-color: rgba(255, 255, 255, 0.1); /* Match hover background color */
-        color: white;
-        font-weight: bold;
-        border-radius: 12px;
+        background-color: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        font-weight: 600;
+        border-radius: 8px;
     }
 `;
 
 export const Footer = styled('footer')`
     text-align: center;
-    padding: 16px;
-    background-color: #004260;
+    padding: 24px;
+    background: linear-gradient(135deg, #004260 0%, #1e5a7a 100%);
     color: white;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 `;
