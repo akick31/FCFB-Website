@@ -28,7 +28,7 @@ export const formatGameTime = (time) => {
 };
 
 /**
- * Formats quarter information
+ * Formats quarter information for general display
  * @param {string|number} quarter - Quarter information
  * @returns {string} - Formatted quarter
  */
@@ -42,4 +42,19 @@ export const formatQuarter = (quarter) => {
     if (quarter === 'OT') return 'OT';
     
     return quarter;
+};
+
+/**
+ * Converts seconds to mm:ss format for response times and other durations
+ * @param {number|string} seconds - Time in seconds
+ * @returns {string} - Formatted time in mm:ss format
+ */
+export const formatResponseTime = (seconds) => {
+    if (!seconds || seconds === 0) return '0:00';
+    
+    const totalSeconds = parseInt(seconds, 10);
+    const minutes = Math.floor(totalSeconds / 60);
+    const remainingSeconds = totalSeconds % 60;
+    
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }; 

@@ -27,16 +27,41 @@ export const formatConference = (conference) => {
     return conference
 };
 
+export const formatOffensivePlaybook = (playbook) => {
+    if (!playbook) return '-';
+
+    if (playbook === 'FLEXBONE') return 'Flexbone';
+    if (playbook === 'AIR_RAID') return 'Air Raid';
+    if (playbook === 'PRO') return 'Pro';
+    if (playbook === 'SPREAD') return 'Spread';
+    if (playbook === 'WEST_COAST') return 'West Coast';
+
+    return playbook;
+}
+
+export const formatDefensivePlaybook = (playbook) => {
+    if (!playbook) return '-';
+
+    if (playbook === 'FOUR_THREE') return '4-3';
+    if (playbook === 'THREE_FOUR') return '3-4';
+    if (playbook === 'FIVE_TWO') return '5-2';
+    if (playbook === 'FOUR_FOUR') return '4-4';
+    if (playbook === 'THREE_THREE_FIVE') return '3-3-5';
+
+    return playbook;
+}
+
+// Keep the old function for backward compatibility, but mark as deprecated
 export const formatPlaybook = (playbook) => {
     if (!playbook) return '-';
 
-    if (playbook === 'AIR_RAID') return 'Air Raid';
-    if (playbook === 'SPREAD') return 'Spread';
-    if (playbook === 'PRO') return 'Pro';
-    if (playbook === 'WEST_COAST') return 'West Coast';
     if (playbook === 'FLEXBONE') return 'Flexbone';
-    if (playbook === 'THREE_FOUR') return '3-4';
+    if (playbook === 'AIR_RAID') return 'Air Raid';
+    if (playbook === 'PRO') return 'Pro';
+    if (playbook === 'SPREAD') return 'Spread';
+    if (playbook === 'WEST_COAST') return 'West Coast';
     if (playbook === 'FOUR_THREE') return '4-3';
+    if (playbook === 'THREE_FOUR') return '3-4';
     if (playbook === 'FIVE_TWO') return '5-2';
     if (playbook === 'FOUR_FOUR') return '4-4';
     if (playbook === 'THREE_THREE_FIVE') return '3-3-5';

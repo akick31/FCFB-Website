@@ -1,65 +1,72 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-    Box, Button, Typography, Alert, Card, CardHeader, CardContent,
-    Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
-    InputAdornment, useTheme
+    Box, Grid, Typography, Alert, TextField, useTheme, useMediaQuery
 } from "@mui/material";
-import { Lock, Email, Visibility, VisibilityOff } from "@mui/icons-material";
+import { 
+    SportsFootball, Email, Lock, Visibility, VisibilityOff 
+} from "@mui/icons-material";
 import { login, forgotPassword } from "../../api/authApi";
 import { getUserById } from "../../api/userApi";
 import { checkIfUserIsAdmin } from "../../utils/utils";
-import FormField from "./FormField";
+import StyledCard from "../ui/StyledCard";
+import StyledButton from "../ui/StyledButton";
 import PropTypes from "prop-types";
 
 const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
     const theme = useTheme();
-    const [openForgotPassword, setOpenForgotPassword] = useState(false);
-    const [resetEmail, setResetEmail] = useState("");
-    const [credentials, setCredentials] = useState({
-        usernameOrEmail: "",
-        password: "",
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const navigate = useNavigate();
+    
+    const [formData, setFormData] = useState({
+        email: '',
+        password: ''
     });
     const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState(null);
-    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [openForgotPassword, setOpenForgotPassword] = useState(false);
+    const [resetEmail, setResetEmail] = useState("");
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setCredentials(prev => ({ ...prev, [name]: value }));
-        if (error) setError(null);
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+        // Clear error when user starts typing
+        if (error) setError('');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError('');
+
         try {
             const loginSuccess = await login(
-                credentials.usernameOrEmail,
-                credentials.password,
+                formData.email,
+                formData.password,
                 setIsAuthenticated,
                 setUser
             );
 
             if (loginSuccess) {
                 setIsAdmin(checkIfUserIsAdmin());
-                const userId = localStorage.getItem("userId");
-                const userData = await getUserById(userId);
-                setUser(userData);
                 navigate("/");
             } else {
                 setError("Invalid username/email or password");
             }
-        } catch (error) {
-            console.error("Login error:", error);
-            setError(error.message || "An error occurred during login");
-            setIsAuthenticated(false);
-            setUser({});
+        } catch (err) {
+            setError('An error occurred during login. Please try again.');
+            console.error('Login error:', err);
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Toggle password visibility
-    const handleTogglePassword = () => {
-        setShowPassword((prev) => !prev);
+    const handleTogglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
     };
 
     const handleForgotPassword = async () => {
@@ -74,155 +81,190 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
     };
 
     return (
-        <Box sx={theme.root}>
-            <Card sx={theme.formCard}>
-                <CardHeader
-                    title={
-                        <Box sx={{ textAlign: 'center', py: 2 }}>
-                            <Lock fontSize="large" sx={{
-                                fontSize: 48,
-                                color: 'primary.main',
-                                mb: 2
-                            }} />
-                            <Typography variant="h4" sx={{
-                                fontWeight: 700,
-                                color: 'text.primary',
-                                mb: 1
-                            }}>
-                                Welcome Back
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                                Please sign in to continue
-                            </Typography>
+        <Grid container spacing={4} alignItems="center" justifyContent="center" sx={{ 
+            minHeight: '80vh',
+            pt: { xs: 8, md: 10 } // Add top padding to account for the fixed header
+        }}>
+            <Grid item xs={12} md={6} lg={5}>
+                <StyledCard
+                    elevation={8}
+                    hover={false}
+                    sx={{
+                        p: { xs: 3, md: 4 },
+                        textAlign: 'center',
+                        position: 'relative',
+                        overflow: 'visible',
+                    }}
+                >
+                    <Box sx={{ 
+                        mb: 4,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}>
+                        <Box sx={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: '50%',
+                            background: theme.palette.primary.main,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: theme.shadows[4],
+                            mb: 2
+                        }}>
+                            <SportsFootball 
+                                sx={{ 
+                                    fontSize: 40, 
+                                    color: 'white'
+                                }} 
+                            />
                         </Box>
-                    }
-                />
-                <CardContent>
-                    <form onSubmit={handleSubmit}>
-                        <FormField
-                            label="Username or Email"
-                            name="usernameOrEmail"
-                            value={credentials.usernameOrEmail}
+                    </Box>
+
+                    <Typography variant="h4" sx={{ mb: 1, fontWeight: 700 }}>
+                        Sign In
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
+                        Access your FCFB dashboard and manage your team
+                    </Typography>
+
+                    {error && (
+                        <Alert severity="error" sx={{ mb: 3, textAlign: 'left' }}>
+                            {error}
+                        </Alert>
+                    )}
+
+                    <Box component="form" onSubmit={handleSubmit} sx={{ textAlign: 'left' }}>
+                        <TextField
+                            fullWidth
+                            label="Email Address"
+                            name="email"
+                            type="email"
+                            value={formData.email}
                             onChange={handleChange}
                             required
-                            autoFocus
                             InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <Email sx={{ color: 'action.active' }} />
-                                    </InputAdornment>
-                                ),
+                                startAdornment: <Email sx={{ mr: 1, color: 'text.secondary' }} />,
                             }}
+                            sx={{ mb: 3 }}
                         />
-                        <FormField
+
+                        <TextField
+                            fullWidth
                             label="Password"
                             name="password"
                             type={showPassword ? 'text' : 'password'}
-                            value={credentials.password}
+                            value={formData.password}
                             onChange={handleChange}
                             required
                             InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <Lock sx={{ color: 'action.active' }} />
-                                    </InputAdornment>
-                                ),
+                                startAdornment: <Lock sx={{ mr: 1, color: 'text.secondary' }} />,
                                 endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton
-                                            onClick={handleTogglePassword}
-                                            edge="end"
-                                        >
-                                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                                        </IconButton>
-                                    </InputAdornment>
+                                    <Box
+                                        component="span"
+                                        onClick={handleTogglePasswordVisibility}
+                                        sx={{
+                                            cursor: 'pointer',
+                                            color: 'text.secondary',
+                                            '&:hover': { color: 'text.primary' },
+                                        }}
+                                    >
+                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    </Box>
                                 ),
                             }}
+                            sx={{ mb: 4 }}
                         />
-                        {error && (
-                            <Alert severity="error" sx={{ mb: 2 }}>
-                                {error}
-                            </Alert>
-                        )}
-                        <Button
+
+                        <StyledButton
                             type="submit"
-                            variant="contained"
                             fullWidth
                             size="large"
-                            sx={{
-                                mt: 2,
-                                py: 1.5,
-                                borderRadius: 2,
-                                fontWeight: 700,
-                                textTransform: 'none',
-                                fontSize: 16
-                            }}
+                            disabled={loading}
+                            sx={{ mb: 3 }}
                         >
-                            Sign In
-                        </Button>
-                        <Box sx={{ textAlign: 'center', mt: 2 }}>
-                            <Button
-                                component={Link}
-                                to="/register"
-                                color="primary"
-                                sx={{ fontWeight: 600 }}
-                            >
-                                Create Account
-                            </Button>
-                            <Button
-                                onClick={() => setOpenForgotPassword(true)}
-                                color="primary"
-                                sx={{ ml: 1, fontWeight: 600 }}
-                            >
-                                Forgot Password?
-                            </Button>
-                        </Box>
-                    </form>
-                </CardContent>
-            </Card>
+                            {loading ? 'Signing In...' : 'Sign In'}
+                        </StyledButton>
 
-            {/* Forgot Password Dialog */}
-            <Dialog open={openForgotPassword}
-                    onClose={() => setOpenForgotPassword(false)}
-            >
-                <DialogTitle sx={{ textAlign: 'center', fontWeight: 700 }}>
-                    Reset Password
-                </DialogTitle>
-                <DialogContent>
-                    <FormField
-                        label="Email"
-                        value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        fullWidth
-                        sx={{ mt: 2 }}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <Email />
-                                </InputAdornment>
-                            ),
+                        <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="body2" sx={{ mb: 2 }}>
+                                Don't have an account?{' '}
+                                <Link to="/registration" style={{ color: theme.palette.primary.main }}>
+                                    Sign up here
+                                </Link>
+                            </Typography>
+                            
+                            <Link
+                                to="/reset-password"
+                                style={{
+                                    color: theme.palette.text.secondary,
+                                    textDecoration: 'none',
+                                    fontSize: '0.875rem',
+                                }}
+                                onMouseEnter={(e) => e.target.style.color = theme.palette.primary.main}
+                                onMouseLeave={(e) => e.target.style.color = theme.palette.text.secondary}
+                            >
+                                Forgot your password?
+                            </Link>
+                        </Box>
+                    </Box>
+                </StyledCard>
+            </Grid>
+
+            {/* Right side content for larger screens */}
+            <Grid item xs={12} md={6} lg={5} sx={{ display: { xs: 'none', md: 'block' } }}>
+                <Box sx={{ textAlign: 'center', p: 4 }}>
+                    <Typography
+                        variant="h3"
+                        sx={{
+                            fontWeight: 800,
+                            mb: 3,
+                            color: theme.palette.primary.main,
                         }}
-                    />
-                    {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-                </DialogContent>
-                <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
-                    <Button
-                        onClick={handleForgotPassword}
-                        variant="contained"
-                        sx={{ borderRadius: 2, fontWeight: 600, textTransform: 'none' }}
                     >
-                        Send Password Reset
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
+                        Join the FCFB Community
+                    </Typography>
+                    <Typography
+                        variant="h6"
+                        sx={{
+                            color: 'text.secondary',
+                            mb: 4,
+                            lineHeight: 1.6,
+                        }}
+                    >
+                        Experience the thrill of college football simulation with the FCFB community. 
+                        Build your dynasty, compete for championships, and be part of something special.
+                    </Typography>
+                    
+                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <StyledButton
+                            variant="outlined"
+                            size="large"
+                            component={Link}
+                            to="/registration"
+                        >
+                            Create Account
+                        </StyledButton>
+                        <StyledButton
+                            variant="contained"
+                            size="large"
+                            component={Link}
+                            to="/scoreboard"
+                        >
+                            View Games
+                        </StyledButton>
+                    </Box>
+                </Box>
+            </Grid>
+        </Grid>
     );
 };
 
 LoginForm.propTypes = {
     setIsAuthenticated: PropTypes.func.isRequired,
     setUser: PropTypes.func.isRequired,
-    setIsAdmin: PropTypes.func.isRequired
-}
+    setIsAdmin: PropTypes.func.isRequired,
+};
 
 export default LoginForm;

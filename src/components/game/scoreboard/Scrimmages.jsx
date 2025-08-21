@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getFilteredScorebugs } from '../../../api/scorebugApi';
-import ScorebugGrid from './ScorebugGrid';
+import { getFilteredGames } from '../../../api/gameApi';
+import ScoreboardList from './ScoreboardList';
 
-const Scrimmages = ({ menuOpen, menuAnchor, onMenuToggle }) => {
+const Scrimmages = () => {
     const [games, setGames] = useState([]);
     const [totalGames, setTotalGames] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -10,34 +10,51 @@ const Scrimmages = ({ menuOpen, menuAnchor, onMenuToggle }) => {
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({
         filters: [],
-        category: 'scrimmage',
-        sort: 'CLOSEST_TO_END',
+        category: 'scrimmages',
+        sort: 'MOST_TIME_REMAINING',
         conference: null,
         season: null,
         week: null,
+        gameType: null,
+        gameStatus: null,
+        rankedGame: null,
         page: 0,
-        size: 12,
+        size: 10,
     });
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await getFilteredScorebugs({
+                const response = await getFilteredGames({
                     filters: filters.filters,
                     week: filters.week,
                     season: filters.season,
                     conference: filters.conference,
+                    gameType: filters.gameType,
+                    gameStatus: filters.gameStatus,
+                    rankedGame: filters.rankedGame,
                     category: 'SCRIMMAGE',
                     sort: filters.sort,
                     page: filters.page,
                     size: filters.size,
                 });
-                setGames(response.content);
+                
+                // Filter for ongoing scrimmages only (not completed ones)
+                const ongoingScrimmages = response.content.filter(game => {
+                    const gameStatus = game.gameStatus || game.status;
+                    return gameStatus === 'IN_PROGRESS' || 
+                           gameStatus === 'HALFTIME' || 
+                           gameStatus === 'OVERTIME' ||
+                           gameStatus === 'OPENING_KICKOFF' ||
+                           gameStatus === 'PREGAME';
+                });
+                
+                setGames(ongoingScrimmages);
                 setTotalPages(response["total_pages"]);
-                setTotalGames(response["total_elements"]);
+                setTotalGames(ongoingScrimmages.length);
             } catch (err) {
-                setError(`Failed to fetch scorebugs: ${err.message}`);
+                setError(`Failed to fetch games: ${err.message}`);
             } finally {
                 setLoading(false);
             }
@@ -53,20 +70,17 @@ const Scrimmages = ({ menuOpen, menuAnchor, onMenuToggle }) => {
     };
 
     return (
-        <ScorebugGrid
+        <ScoreboardList
             games={games}
             onPageChange={handlePageChange}
             totalGames={totalGames}
             currentPage={filters.page}
             totalPages={totalPages}
-            category={filters.category}
-            filters={filters}
-            setFilters={setFilters}
-            onMenuToggle={onMenuToggle}
-            menuOpen={menuOpen}
-            menuAnchor={menuAnchor}
             loading={loading}
             error={error}
+            title="Scrimmages"
+            filters={filters}
+            setFilters={setFilters}
         />
     );
 };

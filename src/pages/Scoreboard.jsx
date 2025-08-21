@@ -16,7 +16,7 @@ import PageLayout from '../components/layout/PageLayout';
 import StyledCard from '../components/ui/StyledCard';
 import OngoingGames from '../components/game/scoreboard/OngoingGames';
 import PastGames from '../components/game/scoreboard/PastGames';
-import PastScrimmages from '../components/game/scoreboard/PastScrimmages';
+import Scrimmages from '../components/game/scoreboard/Scrimmages';
 
 const Scoreboard = () => {
     const theme = useTheme();
@@ -26,7 +26,7 @@ const Scoreboard = () => {
     const tabs = [
         { label: 'Live Games', icon: <SportsFootball />, component: <OngoingGames /> },
         { label: 'Past Games', icon: <History />, component: <PastGames /> },
-        { label: 'Scrimmages', icon: <Schedule />, component: <PastScrimmages /> }
+        { label: 'Scrimmages', icon: <Schedule />, component: <Scrimmages /> }
     ];
 
     const handleTabChange = (event, newValue) => {
@@ -39,7 +39,6 @@ const Scoreboard = () => {
             subtitle="Follow all the action in real-time across the FCFB league"
             fullWidth
         >
-            {/* Main Content Tabs */}
             <StyledCard sx={{ 
                 p: 0, 
                 overflow: 'hidden'

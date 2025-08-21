@@ -60,3 +60,36 @@ export const getAllScrimmageGames = async () => {
         throw new Error("An unexpected error occurred while fetching ongoing scrimmage games");
     }
 };
+
+export const getFilteredGames = async (params) => {
+    try {
+        const searchParams = new URLSearchParams();
+
+        if (params.filters) {
+            params.filters.forEach(filter => {
+                if (filter !== null && filter !== '') searchParams.append('filters', filter);
+            });
+        }
+
+        if (params.week) searchParams.append('week', params.week);
+        if (params.season) searchParams.append('season', params.season);
+        if (params.conference) searchParams.append('conference', params.conference);
+        searchParams.append('category', params.category);
+        searchParams.append('sort', params.sort);
+        searchParams.append('page', params.page);
+        searchParams.append('size', params.size);
+
+        const response = await apiClient.get('/game', {
+            params: searchParams,
+            responseType: 'json',
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch filtered games:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to fetch filtered games");
+        }
+        throw new Error("An unexpected error occurred while fetching filtered games");
+    }
+};

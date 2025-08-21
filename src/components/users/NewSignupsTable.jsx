@@ -11,7 +11,7 @@ import {
     TableSortLabel,
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { formatPlaybook, formatPosition } from "../../utils/formatText";
+import { formatOffensivePlaybook, formatDefensivePlaybook, formatPosition } from "../../utils/formatText";
 
 const NewSignupsTable = ({
     users,
@@ -81,8 +81,8 @@ const NewSignupsTable = ({
                                 <TableCell>{user.team_choice_one}</TableCell>
                                 <TableCell>{user.team_choice_two}</TableCell>
                                 <TableCell>{user.team_choice_three}</TableCell>
-                                <TableCell>{formatPlaybook(user.offensive_playbook)}</TableCell>
-                                <TableCell>{formatPlaybook(user.defensive_playbook)}</TableCell>
+                                <TableCell>{formatOffensivePlaybook(user.offensive_playbook)}</TableCell>
+                                <TableCell>{formatDefensivePlaybook(user.defensive_playbook)}</TableCell>
                                 <TableCell>{user.approved ? 'Yes' : 'No'}</TableCell>
                             </TableRow>
                         ))}

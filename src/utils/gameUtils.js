@@ -24,7 +24,7 @@ export const formatGameType = (gameType) => {
 };
 
 /**
- * Formats game status enum to human-readable description
+ * Formats game status enum to human-readable description for scoreboard display
  * @param {string} gameStatus - Game status enum value
  * @returns {string} - Formatted game status description
  */
@@ -42,6 +42,118 @@ export const formatGameStatus = (gameStatus) => {
     };
     
     return gameStatusMappings[gameStatus] || gameStatus;
+};
+
+/**
+ * Formats game status for scoreboard display (simplified)
+ * @param {string} gameStatus - Game status enum value
+ * @returns {string} - Simplified status for scoreboard
+ */
+export const formatScoreboardStatus = (gameStatus) => {
+    if (!gameStatus) return 'Unknown';
+    
+    const statusMappings = {
+        'PREGAME': 'Pregame',
+        'OPENING_KICKOFF': 'Kickoff',
+        'IN_PROGRESS': 'Live',
+        'HALFTIME': 'Halftime',
+        'OVERTIME': 'OT',
+        'FINAL': 'Final',
+        'END_OF_REGULATION': 'Final'
+    };
+    
+    return statusMappings[gameStatus] || gameStatus;
+};
+
+/**
+ * Gets status color for scoreboard display
+ * @param {string} status - Game status
+ * @returns {string} - Hex color for status
+ */
+export const getStatusColor = (status) => {
+    if (!status) return '#757575';
+    
+    const statusColors = {
+        'IN_PROGRESS': '#FF5722',        // Gold for live games
+        'HALFTIME': '#FF9800',           // Orange for halftime
+        'OVERTIME': '#FFD700',           // Red for overtime
+        'OPENING_KICKOFF': '#9C27B0',    // Purple for kickoff
+        'PREGAME': '#2196F3',            // Blue for scheduled
+        'FINAL': '#4CAF50',              // Green for completed
+        'END_OF_REGULATION': '#4CAF50'   // Green for completed
+    };
+    
+    return statusColors[status] || '#757575'; // Gray for unknown
+};
+
+/**
+ * Formats quarter information for scoreboard display
+ * @param {number} quarter - Quarter number
+ * @returns {string} - Formatted quarter
+ */
+export const formatScoreboardQuarter = (quarter) => {
+    if (!quarter) return 'Unknown';
+    
+    if (quarter >= 6) return `${quarter - 4} OT`;
+    if (quarter === 5) return 'OT';
+    if (quarter === 4) return '4th';
+    if (quarter === 3) return '3rd';
+    if (quarter === 2) return '2nd';
+    if (quarter === 1) return '1st';
+    return 'Unknown';
+};
+
+/**
+ * Formats down and distance for scoreboard display
+ * @param {number} down - Down number
+ * @param {number} yardsToGo - Yards to go
+ * @returns {string} - Formatted down and distance
+ */
+export const formatDownAndDistance = (down, yardsToGo) => {
+    if (!down || !yardsToGo) return '--';
+    
+    const downSuffix = down === 1 ? 'st' : down === 2 ? 'nd' : down === 3 ? 'rd' : 'th';
+    return `${down}${downSuffix} & ${yardsToGo}`;
+};
+
+/**
+ * Formats possession for scoreboard display
+ * @param {string} possession - Possession ('HOME' or 'AWAY')
+ * @returns {string} - Formatted possession
+ */
+export const formatPossession = (possession) => {
+    if (!possession) return '--';
+    
+    if (possession === 'AWAY') return 'Away';
+    if (possession === 'HOME') return 'Home';
+    
+    return possession;
+};
+
+/**
+ * Formats ball location for scoreboard display
+ * @param {string} ballLocation - Ball location
+ * @returns {string} - Formatted ball location or '--'
+ */
+export const formatBallLocation = (ballLocation) => {
+    if (!ballLocation) return '--';
+    return ballLocation;
+};
+
+/**
+ * Formats waiting on information for scoreboard display
+ * @param {string} waitingOn - Who the game is waiting on
+ * @param {string} homeTeam - Home team name
+ * @param {string} awayTeam - Away team name
+ * @returns {string} - Formatted waiting on or '--'
+ */
+export const formatWaitingOn = (waitingOn, homeTeam, awayTeam) => {
+    if (!waitingOn) return '--';
+    
+    if (waitingOn === 'HOME') return homeTeam || 'Home';
+    if (waitingOn === 'AWAY') return awayTeam || 'Away';
+    
+    return waitingOn;
 };
 
 /**
@@ -97,7 +209,7 @@ export const formatCoinTossWinner = (coinTossWinner, homeTeam, awayTeam) => {
  * @param {string} gameStatus - Current game status
  * @returns {string} - Team name or 'N/A' if game is final
  */
-export const formatWaitingOn = (waitingOn, homeTeam, awayTeam, gameStatus) => {
+export const formatWaitingOnDetailed = (waitingOn, homeTeam, awayTeam, gameStatus) => {
     if (gameStatus === 'FINAL') return 'N/A';
     
     if (waitingOn === 'HOME') return homeTeam;

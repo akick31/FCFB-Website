@@ -16,8 +16,9 @@ export const registerUser = async (formData) => {
 
 export const login = async (usernameOrEmail, password, setIsAuthenticated, setUser) => {
     try {
-        const response = await apiClient.post('/auth/login', null, {
-            params: { usernameOrEmail, password },
+        const response = await apiClient.post('/auth/login', {
+            usernameOrEmail,
+            password
         });
 
         if (response.status !== 200) {
@@ -31,7 +32,7 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
         localStorage.setItem('userId', user.user_id);
         localStorage.setItem('role', user.role);
 
-        const userData = await getUserById(user.userId);
+        const userData = await getUserById(user.user_id);
         setIsAuthenticated(true);
         setUser(userData);
 
@@ -47,8 +48,8 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
 
 export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
     try {
-        const response = await apiClient.post('/auth/logout', null, {
-            params: { token: localStorage.getItem('token') },
+        const response = await apiClient.post('/auth/logout', {
+            token: localStorage.getItem('token')
         });
 
         if (response.status === 200) {
@@ -73,8 +74,8 @@ export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
 
 export const forgotPassword = async (email) => {
     try {
-        const response = await apiClient.post('/auth/forgot-password', null, {
-            params: { email: email }
+        const response = await apiClient.post('/auth/forgot-password', {
+            email: email
         });
         return response.data;
     } catch (error) {
@@ -88,8 +89,8 @@ export const forgotPassword = async (email) => {
 
 export const resetPassword = async (userId, token, newPassword) => {
     try {
-        const response = await apiClient.post('/auth/reset-password', null, {
-            params: { userId, token, newPassword }
+        const response = await apiClient.post('/auth/reset-password', {
+            userId, token, newPassword
         });
         return response.data;
     } catch (error) {

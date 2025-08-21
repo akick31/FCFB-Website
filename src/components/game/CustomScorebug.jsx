@@ -11,18 +11,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, scorebug, sx = {} }) => {
 
     if (!game) return null;
 
-    // Debug logging for ranks
-    console.log('Scorebug Debug - Away Team Rank:', {
-        gameRank: game.away_team_rank,
-        teamRank: awayTeam?.rank,
-        finalRank: game.away_team_rank || awayTeam?.rank
-    });
-    console.log('Scorebug Debug - Home Team Rank:', {
-        gameRank: game.home_team_rank,
-        teamRank: homeTeam?.rank,
-        finalRank: game.home_team_rank || homeTeam?.rank
-    });
-
     const formatQuarter = (quarter) => {
         if (quarter >= 6) return `${quarter - 4} OT`;
         if (quarter === 5) return 'OT';
@@ -111,11 +99,11 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, scorebug, sx = {} }) => {
     return (
         <Box sx={{
             width: 320,
-            backgroundColor: 'rgba(0, 0, 0, 0.85)', // Black with transparency
+            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%)',
             borderRadius: 1.5,
             border: '1px solid rgba(255, 255, 255, 0.2)',
             overflow: 'hidden',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
+            boxShadow: '0 4px 20px rgba(15, 23, 42, 0.4)',
             position: 'relative',
             ...sx
         }}>

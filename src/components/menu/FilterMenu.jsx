@@ -6,7 +6,11 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem
+    MenuItem,
+    Box,
+    Typography,
+    Divider,
+    Chip
 } from '@mui/material';
 import ConferenceDropdown from "../dropdown/ConferenceDropdown";
 import GameTypeDropdown from "../dropdown/GameTypeDropdown";
@@ -15,12 +19,13 @@ import WeekDropdown from "../dropdown/WeekDropdown";
 import SeasonDropdown from "../dropdown/SeasonDropdown";
 
 const FilterMenu = ({ onChange, onApply, category }) => {
+    console.log('FilterMenu category:', category);
     const availableFilters = {
-        ongoing: ['conference', 'gameType', 'gameStatus', 'rankedGame'],
-        past: ['conference', 'gameType', 'week', 'season', 'rankedGame'],
-        scrimmage: ['conference', 'gameStatus', 'rankedGame'],
-        pastScrimmage: ['conference', 'gameType', 'week', 'season'],
+        livegames: ['conference', 'gameType', 'gameStatus', 'rankedGame', 'sort'],
+        pastgames: ['conference', 'gameType', 'week', 'season', 'rankedGame', 'sort'],
+        scrimmages: ['conference', 'gameStatus', 'rankedGame', 'sort'],
     }[category] || [];
+    console.log('Available filters:', availableFilters);
 
     const getSavedFilters = () => {
         console.log(category);
@@ -34,6 +39,7 @@ const FilterMenu = ({ onChange, onApply, category }) => {
                 week: null,
                 gameType: null,
                 gameStatus: null,
+                rankedGame: null,
                 page: 0,
                 size: 10,
             };
@@ -100,127 +106,171 @@ const FilterMenu = ({ onChange, onApply, category }) => {
         });
     };
 
-    // Apply filters when button is clicked
     const handleApply = () => {
-        let filters = [...pendingFilters.filters];
+        console.log('Applying filters:', pendingFilters);
+        onApply(pendingFilters);
+    };
 
-        if (pendingFilters.gameType) filters.push(pendingFilters.gameType);
-        if (pendingFilters.gameStatus) filters.push(pendingFilters.gameStatus);
-
-        filters = [...new Set(filters)].filter(Boolean); // Remove duplicates and filter out null/undefined
-
-        const finalFilters = {
-            filters: filters.length > 0 ? filters : [],
-            week: pendingFilters.week || null,
-            season: pendingFilters.season || null,
-            conference: pendingFilters.conference || null,
-            sort: pendingFilters.sort,
-            category: category,
+    const handleReset = () => {
+        const resetFilters = {
+            filters: [],
+            sort: 'CLOSEST_TO_END',
+            conference: null,
+            season: null,
+            week: null,
+            gameType: null,
+            gameStatus: null,
+            rankedGame: null,
             page: 0,
-            size: 12,
+            size: 10,
         };
+        setPendingFilters(resetFilters);
+        onApply(resetFilters);
+    };
 
-        sessionStorage.setItem(`filters_${category}`, JSON.stringify(finalFilters));
-        onChange(finalFilters);
-        onApply();
+    const getActiveFiltersCount = () => {
+        let count = 0;
+        if (pendingFilters.conference) count++;
+        if (pendingFilters.gameType) count++;
+        if (pendingFilters.gameStatus) count++;
+        if (pendingFilters.rankedGame) count++;
+        if (pendingFilters.season) count++;
+        if (pendingFilters.week) count++;
+        if (pendingFilters.filters.length > 0) count++;
+        return count;
     };
 
     return (
-        <div style={{ padding: '16px', minWidth: '250px' }}>
-            {availableFilters.includes('season') && (
-                <SeasonDropdown
-                    value={pendingFilters.season || ""}
-                    onChange={handleChange('season')}
-                    label="Season"
+        <Box sx={{ p: 3, minWidth: 320 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Filter Games
+                </Typography>
+                <Chip 
+                    label={`${getActiveFiltersCount()} active`} 
+                    size="small" 
+                    color="primary" 
+                    variant="outlined"
                 />
-            )}
+            </Box>
 
-            {availableFilters.includes('week') && (
-                <WeekDropdown
-                    value={pendingFilters.week || ""}
-                    onChange={handleChange('week')}
-                    label="Week"
-                />
-            )}
+            <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: 'text.secondary' }}>
+                    Sort Options
+                </Typography>
+                <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                    <InputLabel>Sort By</InputLabel>
+                    <Select
+                        value={pendingFilters.sort || 'CLOSEST_TO_END'}
+                        label="Sort By"
+                        onChange={handleChange('sort')}
+                    >
+                        <MenuItem value="CLOSEST_TO_END">Closest to End</MenuItem>
+                        <MenuItem value="MOST_TIME_REMAINING">Most Time Remaining</MenuItem>
+                    </Select>
+                </FormControl>
+            </Box>
 
-            {availableFilters.includes('conference') && (
-                <ConferenceDropdown
-                    value={pendingFilters.conference || ""}
-                    onChange={handleChange('conference')}
-                    label="Conference"
-                />
-            )}
+            <Divider sx={{ my: 2 }} />
 
-            {availableFilters.includes('gameType') && (
-                <GameTypeDropdown
-                    value={pendingFilters.gameType || ""}
-                    onChange={handleChange('gameType')}
-                    label="Game Type"
-                >
-                    <MenuItem value="">All</MenuItem>
-                    <MenuItem value="OUT_OF_CONFERENCE">Out of Conference</MenuItem>
-                    <MenuItem value="CONFERENCE_GAME">Conference Game</MenuItem>
-                    <MenuItem value="CONFERENCE_CHAMPIONSHIP">Conference Championship</MenuItem>
-                    <MenuItem value="PLAYOFFS">Playoffs</MenuItem>
-                    <MenuItem value="NATIONAL_CHAMPIONSHIP">National Championship</MenuItem>
-                    <MenuItem value="BOWL">Bowl</MenuItem>
-                </GameTypeDropdown>
-            )}
-
-            {availableFilters.includes('gameStatus') && (
-                <GameStatusDropdown
-                    value={pendingFilters.gameStatus || ""}
-                    onChange={handleChange('gameStatus')}
-                    label="Game Status"
-                >
-                    <MenuItem value="">All</MenuItem>
-                    <MenuItem value="PREGAME">Pregame</MenuItem>
-                    <MenuItem value="OPENING_KICKOFF">Opening Kickoff</MenuItem>
-                    <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
-                    <MenuItem value="OVERTIME">Overtime</MenuItem>
-                </GameStatusDropdown>
-            )}
-
-            {availableFilters.includes('rankedGame') && (
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            checked={pendingFilters.filters?.includes("RANKED_GAME") || false}
-                            onChange={handleCheckboxChange("RANKED_GAME")}
+            <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: 'text.secondary' }}>
+                    Game Filters
+                </Typography>
+                
+                {/* Conference Filter */}
+                {availableFilters.includes('conference') && (
+                    <Box sx={{ mb: 2 }}>
+                        <ConferenceDropdown
+                            value={pendingFilters.conference}
+                            onChange={handleChange('conference')}
+                            label="Conference"
                         />
-                    }
-                    label="Ranked Scoreboard Only"
-                />
-            )}
+                    </Box>
+                )}
 
-            <FormControl fullWidth margin="normal">
-                <InputLabel>Sort By</InputLabel>
-                <Select
-                    value={pendingFilters.sort}
-                    onChange={handleChange('sort')}
-                    label="Sort By"
+                {/* Game Type Filter */}
+                {availableFilters.includes('gameType') && (
+                    <Box sx={{ mb: 2 }}>
+                        <GameTypeDropdown
+                            value={pendingFilters.gameType}
+                            onChange={handleChange('gameType')}
+                            label="Game Type"
+                        />
+                    </Box>
+                )}
+
+                {/* Game Status Filter */}
+                {availableFilters.includes('gameStatus') && (
+                    <Box sx={{ mb: 2 }}>
+                        <GameStatusDropdown
+                            value={pendingFilters.gameStatus}
+                            onChange={handleChange('gameStatus')}
+                            label="Game Status"
+                        />
+                    </Box>
+                )}
+
+                {/* Ranked Games Filter */}
+                {availableFilters.includes('rankedGame') && (
+                    <Box sx={{ mb: 2 }}>
+                        <FormControl fullWidth size="small">
+                            <InputLabel>Ranked Games</InputLabel>
+                            <Select
+                                value={pendingFilters.rankedGame || ''}
+                                label="Ranked Games"
+                                onChange={handleChange('rankedGame')}
+                            >
+                                <MenuItem value="">All Games</MenuItem>
+                                <MenuItem value="ranked">Ranked Games Only</MenuItem>
+                                <MenuItem value="unranked">Unranked Games Only</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
+                )}
+
+                {/* Season Filter */}
+                {availableFilters.includes('season') && (
+                    <Box sx={{ mb: 2 }}>
+                        <SeasonDropdown
+                            value={pendingFilters.season}
+                            onChange={handleChange('season')}
+                            label="Season"
+                        />
+                    </Box>
+                )}
+
+                {/* Week Filter */}
+                {availableFilters.includes('week') && (
+                    <Box sx={{ mb: 2 }}>
+                        <WeekDropdown
+                            value={pendingFilters.week}
+                            onChange={handleChange('week')}
+                            label="Week"
+                        />
+                    </Box>
+                )}
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between' }}>
+                <Button
+                    variant="outlined"
+                    onClick={handleReset}
+                    size="small"
                 >
-                    <MenuItem value="CLOSEST_TO_END">Least Time Remaining</MenuItem>
-                    <MenuItem value="MOST_TIME_REMAINING">Most Time Remaining</MenuItem>
-                </Select>
-            </FormControl>
-
-            <Button
-                variant="contained"
-                fullWidth
-                onClick={handleApply}
-                sx={{
-                    mt: 2,
-                    backgroundColor: '#004260',
-                    color: 'white',
-                    '&:hover': {
-                        backgroundColor: '#00354d'
-                    }
-                }}
-            >
-                Apply Filters
-            </Button>
-        </div>
+                    Reset
+                </Button>
+                <Button
+                    variant="contained"
+                    onClick={handleApply}
+                    size="small"
+                >
+                    Apply Filters
+                </Button>
+            </Box>
+        </Box>
     );
 };
 

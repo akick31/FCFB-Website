@@ -4,11 +4,10 @@ const axios = require("axios");
 const app = express();
 const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
 const CLIENT_SECRET = process.env.REACT_APP_CLIENT_SECRET;
-const REDIRECT_URI = process.env.REACT_APP_EXPRESS_BASE_URL + "/finish-registration";
+const REDIRECT_URI = process.env.REACT_APP_EXPRESS_BASE_URL + "/register/complete";
 
 app.get("/discord/redirect", async (req, res) => {
     const { code } = req.query;
-    console.log(code);
     if (!code) return res.status(400).send("No code provided");
 
     try {
@@ -17,7 +16,7 @@ app.get("/discord/redirect", async (req, res) => {
                 client_id: CLIENT_ID,
                 client_secret: CLIENT_SECRET,
                 code,
-                grant_type: "authorization_code",
+                grant_type: "client_credentials",
                 redirect_uri: REDIRECT_URI,
                 scope: "identify",
             },

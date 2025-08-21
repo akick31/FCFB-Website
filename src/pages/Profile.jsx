@@ -1,30 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Box, 
     Grid, 
     Typography, 
     Avatar, 
-    TextField, 
-    Button,
+    Chip,
     Divider,
+    TextField,
+    Button,
     useTheme,
     useMediaQuery
 } from '@mui/material';
 import { 
     SportsFootball,
     Person, 
-    Email, 
-    Phone, 
-    LocationOn, 
+    School,
+    EmojiEvents,
+    TrendingUp,
+    MilitaryTech,
+    Group,
+    Flag,
     Edit,
     Save,
-    Cancel,
-    EmojiEvents,
-    TrendingUp
+    Cancel
 } from '@mui/icons-material';
 import PageLayout from '../components/layout/PageLayout';
 import StyledCard from '../components/ui/StyledCard';
 import StatsCard from '../components/ui/StatsCard';
+import { formatOffensivePlaybook, formatDefensivePlaybook, formatPosition } from '../utils/formatText';
+import { formatResponseTime } from '../utils/timeUtils';
+import { getTeamByName } from '../api/teamApi';
 
 const Profile = ({ user }) => {
     const theme = useTheme();
@@ -33,43 +38,31 @@ const Profile = ({ user }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         username: user?.username || '',
-        email: user?.email || '',
-        firstName: user?.firstName || '',
-        lastName: user?.lastName || '',
-        bio: user?.bio || 'Passionate college football fan and FCFB member.'
+        email: '', // Email field for editing
+        password: '',
+        confirmPassword: ''
     });
+    const [teamData, setTeamData] = useState(null);
+    const [isLoadingTeam, setIsLoadingTeam] = useState(false);
 
-    // Mock data for demonstration - replace with actual API calls
-    const userStats = [
-        {
-            title: 'Games Played',
-            value: '156',
-            subtitle: 'This season',
-            icon: <SportsFootball />,
-            color: 'primary'
-        },
-        {
-            title: 'Wins',
-            value: '89',
-            subtitle: 'Total victories',
-            icon: <EmojiEvents />,
-            color: 'success'
-        },
-        {
-            title: 'Win Rate',
-            value: '57%',
-            subtitle: 'Current season',
-            icon: <TrendingUp />,
-            color: 'secondary'
-        },
-        {
-            title: 'Team',
-            value: user?.teamName || 'Unassigned',
-            subtitle: 'Current team',
-            icon: <LocationOn />,
-            color: 'info'
-        }
-    ];
+    // Fetch team data when user changes
+    useEffect(() => {
+        const fetchTeamData = async () => {
+            if (user?.team) {
+                setIsLoadingTeam(true);
+                try {
+                    const team = await getTeamByName(user.team);
+                    setTeamData(team);
+                } catch (error) {
+                    console.error('Error fetching team data:', error);
+                } finally {
+                    setIsLoadingTeam(false);
+                }
+            }
+        };
+
+        fetchTeamData();
+    }, [user?.team]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -81,10 +74,9 @@ const Profile = ({ user }) => {
 
     const handleSave = async () => {
         try {
-            // Mock API call - replace with actual update logic
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // TODO: Implement actual API call to update user data
+            console.log('Saving user data:', formData);
             setIsEditing(false);
-            // Update user data here
         } catch (error) {
             console.error('Error updating profile:', error);
         }
@@ -93,82 +85,393 @@ const Profile = ({ user }) => {
     const handleCancel = () => {
         setFormData({
             username: user?.username || '',
-            email: user?.email || '',
-            firstName: user?.firstName || '',
-            lastName: user?.lastName || '',
-            bio: user?.bio || 'Passionate college football fan and FCFB member.'
+            email: '', // Reset email field
+            password: '',
+            confirmPassword: ''
         });
         setIsEditing(false);
     };
 
+    // Calculate win percentage
+    const winPercentage = user?.win_percentage ? (user.win_percentage * 100).toFixed(1) : '0.0';
+
+    // Main stats cards
+    const mainStats = [
+        {
+            title: 'Total Games',
+            value: (user?.wins || 0) + (user?.losses || 0),
+            subtitle: 'Career games coached',
+            icon: <SportsFootball />,
+            color: 'primary'
+        },
+        {
+            title: 'Win Rate',
+            value: `${winPercentage}%`,
+            subtitle: 'Career win percentage',
+            icon: <TrendingUp />,
+            color: 'success'
+        },
+        {
+            title: 'Team',
+            value: user?.team || 'Unassigned',
+            subtitle: 'Current team',
+            icon: <School />,
+            color: 'info'
+        },
+        {
+            title: 'Position',
+            value: formatPosition(user?.position),
+            subtitle: 'Coaching role',
+            icon: <Person />,
+            color: 'secondary'
+        }
+    ];
+
+    // Record stats (centered)
+    const recordStats = [
+        {
+            title: 'Overall Record',
+            value: `${user?.wins || 0}-${user?.losses || 0}`,
+            subtitle: 'Career record',
+            icon: <EmojiEvents />,
+            color: 'primary'
+        },
+        {
+            title: 'Bowl Record',
+            value: `${user?.bowl_wins || 0}-${user?.bowl_losses || 0}`,
+            subtitle: 'Bowl games',
+            icon: <MilitaryTech />,
+            color: 'warning'
+        },
+        {
+            title: 'Playoff Record',
+            value: `${user?.playoff_wins || 0}-${user?.playoff_losses || 0}`,
+            subtitle: 'Playoff games',
+            icon: <Flag />,
+            color: 'success'
+        }
+    ];
+
+    // Championship stats
+    const championshipStats = [
+        {
+            title: 'Conference Championships',
+            value: `${user?.conference_championship_wins || 0}-${user?.conference_championship_losses || 0}`,
+            subtitle: 'Conference titles',
+            icon: <EmojiEvents />,
+            color: 'primary'
+        },
+        {
+            title: 'National Championships',
+            value: `${user?.national_championship_wins || 0}-${user?.national_championship_losses || 0}`,
+            subtitle: 'National titles',
+            icon: <MilitaryTech />,
+            color: 'warning'
+        }
+    ];
+
     return (
         <PageLayout
             title="My Profile"
-            subtitle="Manage your account and view your FCFB statistics"
+            subtitle="View your FCFB coaching statistics and profile information"
         >
             <Grid container spacing={4}>
-                {/* Profile Header */}
-                <Grid item xs={12}>
+                {/* Profile Header with Account Details and Playbooks */}
+                <Grid item xs={12} lg={8}>
                     <StyledCard>
-                        <Box sx={{ p: 4, textAlign: 'center' }}>
-                            <Avatar
-                                sx={{
-                                    width: 120,
-                                    height: 120,
-                                    mx: 'auto',
-                                    mb: 3,
-                                    background: theme.custom?.gradients?.primary,
-                                    fontSize: '3rem',
-                                    fontWeight: 700,
-                                }}
-                            >
-                                {user?.username?.charAt(0)?.toUpperCase() || 'U'}
-                            </Avatar>
-                            
-                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                                {user?.username || 'Username'}
-                            </Typography>
-                            
-                            <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3 }}>
-                                {user?.email || 'user@example.com'}
-                            </Typography>
+                        <Box sx={{ p: 4 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+                                {/* Team Logo or Default Avatar */}
+                                {user?.team && isLoadingTeam ? (
+                                    <Box sx={{ mr: 3 }}>
+                                        <Avatar
+                                            sx={{
+                                                width: 80,
+                                                height: 80,
+                                                background: theme.custom?.gradients?.primary,
+                                                fontSize: '2rem',
+                                                fontWeight: 700,
+                                            }}
+                                        >
+                                            <SportsFootball />
+                                        </Avatar>
+                                    </Box>
+                                ) : user?.team && teamData ? (
+                                    <Box sx={{ mr: 3 }}>
+                                        <img 
+                                            src={teamData.logo} 
+                                            alt={`${user.team} Logo`}
+                                            style={{ 
+                                                width: 80, 
+                                                height: 80,
+                                                objectFit: 'contain'
+                                            }}
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                                e.target.nextSibling.style.display = 'block';
+                                            }}
+                                        />
+                                        <Avatar
+                                            sx={{
+                                                width: 80,
+                                                height: 80,
+                                                background: theme.custom?.gradients?.primary,
+                                                fontSize: '2rem',
+                                                fontWeight: 700,
+                                                display: 'none'
+                                            }}
+                                        >
+                                            {user.team.charAt(0).toUpperCase()}
+                                        </Avatar>
+                                    </Box>
+                                ) : (
+                                    <Avatar
+                                        sx={{
+                                            width: 80,
+                                            height: 80,
+                                            mr: 3,
+                                            background: theme.custom?.gradients?.primary,
+                                            fontSize: '2rem',
+                                            fontWeight: 700,
+                                        }}
+                                    >
+                                        {user?.username?.charAt(0)?.toUpperCase() || 'U'}
+                                    </Avatar>
+                                )}
+                                
+                                <Box sx={{ flex: 1 }}>
+                                    <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+                                        {user?.coach_name || user?.username || 'Coach'}
+                                    </Typography>
+                                    
+                                    <Typography variant="h6" sx={{ color: 'text.secondary', mb: 2 }}>
+                                        {formatPosition(user?.position)} • {user?.team || 'Unassigned'}
+                                    </Typography>
 
-                            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+
+                                </Box>
+                            </Box>
+
+                            {/* Playbooks Section */}
+                            <Box sx={{ mb: 4 }}>
+                                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                                    Coaching Strategy
+                                </Typography>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} sm={6}>
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                                Offensive Playbook
+                                            </Typography>
+                                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                {formatOffensivePlaybook(user?.offensive_playbook) || 'Not Set'}
+                                            </Typography>
+                                        </Box>
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                                Defensive Playbook
+                                            </Typography>
+                                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                {formatDefensivePlaybook(user?.defensive_playbook) || 'Not Set'}
+                                            </Typography>
+                                        </Box>
+                                    </Grid>
+                                </Grid>
+                            </Box>
+
+                            {/* Performance Metrics */}
+                            <Box>
+                                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                                    Performance Metrics
+                                </Typography>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} sm={6}>
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                                Average Response Time
+                                            </Typography>
+                                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                {user?.average_response_time ? formatResponseTime(user.average_response_time) : 'N/A'}
+                                            </Typography>
+                                        </Box>
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                                Delay of Game Instances
+                                            </Typography>
+                                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                {user?.delay_of_game_instances || 0}
+                                            </Typography>
+                                        </Box>
+                                    </Grid>
+                                </Grid>
+                            </Box>
+                        </Box>
+                    </StyledCard>
+                </Grid>
+
+                {/* Account Details Sidebar */}
+                <Grid item xs={12} lg={4}>
+                    <StyledCard>
+                        <Box sx={{ p: 3 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                                    Account Details
+                                </Typography>
                                 {!isEditing ? (
                                     <Button
-                                        variant="contained"
+                                        size="small"
                                         startIcon={<Edit />}
                                         onClick={() => setIsEditing(true)}
                                     >
-                                        Edit Profile
+                                        Edit
                                     </Button>
                                 ) : (
-                                    <>
+                                    <Box sx={{ display: 'flex', gap: 1 }}>
                                         <Button
+                                            size="small"
                                             variant="contained"
                                             startIcon={<Save />}
                                             onClick={handleSave}
                                         >
-                                            Save Changes
+                                            Save
                                         </Button>
                                         <Button
+                                            size="small"
                                             variant="outlined"
                                             startIcon={<Cancel />}
                                             onClick={handleCancel}
                                         >
                                             Cancel
                                         </Button>
-                                    </>
+                                    </Box>
                                 )}
+                            </Box>
+                            
+                            <Box sx={{ mb: 3 }}>
+                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                    Username
+                                </Typography>
+                                {isEditing ? (
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        name="username"
+                                        value={formData.username}
+                                        onChange={handleChange}
+                                        sx={{ mb: 2 }}
+                                    />
+                                ) : (
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        {user?.username || 'Not Set'}
+                                    </Typography>
+                                )}
+                            </Box>
+                            
+                            <Divider sx={{ my: 2 }} />
+                            
+                            {isEditing && (
+                                <>
+                                    <Box sx={{ mb: 3 }}>
+                                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                            Email
+                                        </Typography>
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            name="email"
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            placeholder="Enter new email"
+                                            sx={{ mb: 2 }}
+                                        />
+                                    </Box>
+                                    <Divider sx={{ my: 2 }} />
+                                </>
+                            )}
+                            
+                            {isEditing && (
+                                <>
+                                    <Divider sx={{ my: 2 }} />
+                                    
+                                    <Box sx={{ mb: 3 }}>
+                                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                            New Password
+                                        </Typography>
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            name="password"
+                                            type="password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            sx={{ mb: 2 }}
+                                        />
+                                    </Box>
+                                    
+                                    <Box sx={{ mb: 3 }}>
+                                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                            Confirm Password
+                                        </Typography>
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            name="confirmPassword"
+                                            type="password"
+                                            value={formData.confirmPassword}
+                                            onChange={handleChange}
+                                        />
+                                    </Box>
+                                </>
+                            )}
+                            
+                            <Divider sx={{ my: 2 }} />
+                            
+                            <Box sx={{ mb: 3 }}>
+                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                    Role
+                                </Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 500, color: 'success.main' }}>
+                                    {user?.role || 'Member'}
+                                </Typography>
+                            </Box>
+                            
+                            <Divider sx={{ my: 2 }} />
+                            
+                            <Box sx={{ mb: 3 }}>
+                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                    Discord Tag
+                                </Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    {user?.discord_tag || 'Not Set'}
+                                </Typography>
+                            </Box>
+                            
+                            <Divider sx={{ my: 2 }} />
+                            
+                            <Box>
+                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                    Delay of Game Warning Opt-out
+                                </Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    {user?.delay_of_game_warning_opt_out ? 'Yes' : 'No'}
+                                </Typography>
                             </Box>
                         </Box>
                     </StyledCard>
                 </Grid>
 
-                {/* Stats Overview */}
+                {/* Main Stats Overview */}
                 <Grid item xs={12}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
+                        Career Overview
+                    </Typography>
                     <Grid container spacing={3}>
-                        {userStats.map((stat, index) => (
+                        {mainStats.map((stat, index) => (
                             <Grid item xs={12} sm={6} md={3} key={index}>
                                 <StatsCard
                                     title={stat.title}
@@ -183,129 +486,46 @@ const Profile = ({ user }) => {
                     </Grid>
                 </Grid>
 
-                {/* Profile Details */}
-                <Grid item xs={12} lg={8}>
-                    <StyledCard>
-                        <Box sx={{ p: 3 }}>
-                            <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-                                Profile Information
-                            </Typography>
-                            
-                            <Grid container spacing={3}>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Username"
-                                        name="username"
-                                        value={formData.username}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
-                                        sx={{ mb: 2 }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Email"
-                                        name="email"
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
-                                        sx={{ mb: 2 }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="First Name"
-                                        name="firstName"
-                                        value={formData.firstName}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
-                                        sx={{ mb: 2 }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Last Name"
-                                        name="lastName"
-                                        value={formData.lastName}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
-                                        sx={{ mb: 2 }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <TextField
-                                        fullWidth
-                                        label="Bio"
-                                        name="bio"
-                                        value={formData.bio}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
-                                        multiline
-                                        rows={4}
-                                        sx={{ mb: 2 }}
-                                    />
-                                </Grid>
+                {/* Record Stats (Centered) */}
+                <Grid item xs={12}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, textAlign: 'center' }}>
+                        Coaching Records
+                    </Typography>
+                    <Grid container spacing={3} justifyContent="center">
+                        {recordStats.map((stat, index) => (
+                            <Grid item xs={12} sm={6} md={4} key={index}>
+                                <StatsCard
+                                    title={stat.title}
+                                    value={stat.value}
+                                    subtitle={stat.subtitle}
+                                    icon={stat.icon}
+                                    color={stat.color}
+                                    size="medium"
+                                />
                             </Grid>
-                        </Box>
-                    </StyledCard>
+                        ))}
+                    </Grid>
                 </Grid>
 
-                {/* Account Info */}
-                <Grid item xs={12} lg={4}>
-                    <StyledCard>
-                        <Box sx={{ p: 3 }}>
-                            <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-                                Account Details
-                            </Typography>
-                            
-                            <Box sx={{ mb: 3 }}>
-                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Member Since
-                                </Typography>
-                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                    {user?.joinDate || 'January 2024'}
-                                </Typography>
-                            </Box>
-                            
-                            <Divider sx={{ my: 2 }} />
-                            
-                            <Box sx={{ mb: 3 }}>
-                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Account Status
-                                </Typography>
-                                <Typography variant="body1" sx={{ fontWeight: 500, color: 'success.main' }}>
-                                    Active
-                                </Typography>
-                            </Box>
-                            
-                            <Divider sx={{ my: 2 }} />
-                            
-                            <Box sx={{ mb: 3 }}>
-                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Role
-                                </Typography>
-                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                    {user?.role || 'Member'}
-                                </Typography>
-                            </Box>
-                            
-                            <Divider sx={{ my: 2 }} />
-                            
-                            <Box>
-                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Last Login
-                                </Typography>
-                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                    {user?.lastLogin || 'Today'}
-                                </Typography>
-                            </Box>
-                        </Box>
-                    </StyledCard>
+                {/* Championship Stats */}
+                <Grid item xs={12}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
+                        Championships
+                    </Typography>
+                    <Grid container spacing={3}>
+                        {championshipStats.map((stat, index) => (
+                            <Grid item xs={12} sm={6} key={index}>
+                                <StatsCard
+                                    title={stat.title}
+                                    value={stat.value}
+                                    subtitle={stat.subtitle}
+                                    icon={stat.icon}
+                                    color={stat.color}
+                                    size="medium"
+                                />
+                            </Grid>
+                        ))}
+                    </Grid>
                 </Grid>
             </Grid>
         </PageLayout>
