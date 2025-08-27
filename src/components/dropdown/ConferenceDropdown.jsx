@@ -1,14 +1,9 @@
 import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { formatConference } from '../../utils/formatText';
+import { conferences } from '../constants/conferences';
 import PropTypes from 'prop-types';
 
 const ConferenceDropdown = ({ value, onChange }) => {
-    const conferenceOptions = [
-        'ACC', 'AMERICAN', 'BIG_12', 'BIG_TEN', 'CUSA', 'FBS_INDEPENDENT', 'MAC', 'MOUNTAIN_WEST', 'PAC_12', 'SEC', 'SUN_BELT',
-        'ATLANTIC_SUN', 'BIG_SKY', 'CAROLINA_FOOTBALL_CONFERENCE', 'MISSOURI_VALLEY', 'COLONIAL', 'NEC', 'IVY_LEAGUE', 'MID_ATLANTIC',
-        'SOUTHLAND', 'OHIO_VALLEY', 'SWAC'
-    ];
 
     return (
         <FormControl fullWidth margin="normal">
@@ -20,9 +15,9 @@ const ConferenceDropdown = ({ value, onChange }) => {
                 displayEmpty
             >
                 <MenuItem value="">All Conferences</MenuItem>
-                {conferenceOptions.map((conference) => (
-                    <MenuItem key={conference} value={conference}>
-                        {formatConference(conference)}
+                {conferences.map((conference) => (
+                    <MenuItem key={conference.value} value={conference.value}>
+                        {conference.label}
                     </MenuItem>
                 ))}
             </Select>
