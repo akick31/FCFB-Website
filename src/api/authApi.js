@@ -129,10 +129,14 @@ export const verifyEmail = async (token) => {
     }
 };
 
-export const resendVerificationEmail = async (userId) => {
-    if (!userId) return;
+export const resendVerificationEmail = async (newSignupId) => {
+    if (!newSignupId) return;
     try {
-        const response = await apiClient.post(`/auth/${userId}/verification-email/resend`);
+        const response = await apiClient.post(
+            '/auth/verification-email/resend',
+            null,
+            { params: { newSignupId } }
+        );
         return response.data;
     } catch (error) {
         console.error('Failed to resend verification email:', error);
