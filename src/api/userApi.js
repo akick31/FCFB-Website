@@ -4,7 +4,7 @@ export const getUserById = async (userId) => {
     if (!userId) return {};
 
     try {
-        const response = await apiClient.get('/user/id', { params: { id: userId } });
+        const response = await apiClient.get(`/user?userId=${userId}`);
         return response.data;
     } catch (error) {
         console.error("Failed to fetch user by ID:", error);
