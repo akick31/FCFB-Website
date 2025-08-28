@@ -14,9 +14,9 @@ import {
     CheckCircle
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
-import PageLayout from '../components/layout/PageLayout';
-import StyledCard from '../components/ui/StyledCard';
-import StyledButton from '../components/ui/StyledButton';
+import PageLayout from '../../components/layout/PageLayout';
+import StyledCard from '../../components/ui/StyledCard';
+import StyledButton from '../../components/ui/StyledButton';
 
 const Registration = () => {
     const theme = useTheme();

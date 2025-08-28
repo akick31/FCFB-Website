@@ -230,7 +230,19 @@ const GameList = ({
                 borderRadius: 2,
                 border: '1px solid #e9ecef',
                 overflow: 'hidden',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                overflowX: 'auto', // Enable horizontal scrolling
+                '&::-webkit-scrollbar': { 
+                    height: '8px',
+                    backgroundColor: '#f1f1f1'
+                },
+                '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: '#c1c1c1',
+                    borderRadius: '4px'
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                    backgroundColor: '#a8a8a8'
+                }
             }}>
                 {/* Header Row */}
                 <Box sx={{
@@ -239,7 +251,8 @@ const GameList = ({
                     gap: 1,
                     p: 1.5,
                     backgroundColor: theme.palette.primary.main,
-                    color: 'white'
+                    color: 'white',
+                    minWidth: isPastGames ? '400px' : '800px' // Match the minimum width of game rows
                 }}>
                     <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>Team Matchup</Typography>
                     <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, textAlign: 'center' }}>Score</Typography>
@@ -283,6 +296,7 @@ const GameList = ({
                                 cursor: 'pointer',
                                 transition: 'background-color 0.2s',
                                 backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa',
+                                minWidth: isPastGames ? '400px' : '800px', // Minimum width to prevent squishing
                                 '&:hover': {
                                     backgroundColor: theme.palette.primary.light + '20'
                                 }

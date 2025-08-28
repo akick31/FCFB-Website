@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {useNavigate, useLocation} from 'react-router-dom';
-import { resetPassword } from '../api/authApi';
+import { resetPassword } from '../../api/authApi';
 import {
     Box,
     Button,
@@ -14,8 +14,8 @@ import {
     useTheme
 } from "@mui/material";
 import { Lock, Visibility, VisibilityOff } from "@mui/icons-material";
-import FormField from "../components/forms/FormField";
-import { isStrongPassword } from "../utils/validations";
+import FormField from "../../components/forms/FormField";
+import { isStrongPassword } from "../../utils/validations";
 
 const useQuery = () => {
     return new URLSearchParams(useLocation().search);

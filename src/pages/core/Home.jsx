@@ -16,7 +16,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDiscord, faPatreon } from '@fortawesome/free-brands-svg-icons';
 import { Coffee } from '@mui/icons-material';
-import logo from '../assets/graphics/main_logo.png';
+import logo from '../../assets/graphics/main_logo.png';
 
 const HomePage = () => {
     const theme = useTheme();
@@ -27,7 +27,7 @@ const HomePage = () => {
             {/* Hero Section */}
             <Box
                 sx={{
-                    background: `linear-gradient(135deg, rgba(0, 66, 96, 0.95) 0%, rgba(30, 90, 122, 0.95) 100%), url(${require('../assets/images/background.jpg')})`,
+                    background: `linear-gradient(135deg, rgba(0, 66, 96, 0.95) 0%, rgba(30, 90, 122, 0.95) 100%), url(${require('../../assets/images/background.jpg')})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     backgroundAttachment: 'fixed',

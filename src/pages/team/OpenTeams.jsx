@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { CircularProgress, Box, Typography, Card, useTheme } from '@mui/material';
-import NewSignupsTable from '../components/users/NewSignupsTable';
 import { useNavigate } from "react-router-dom";
-import ErrorMessage from "../components/message/ErrorMessage";
-import { getNewSignups } from "../api/newSignupsApi";
-import { Header } from "../styles/GamesStyles";
-import LoadingSpinner from "../components/icons/LoadingSpinner";
-import TeamsTable from "../components/team/TeamsTable";
-import { getOpenTeams, getTeamByName, hireCoach } from "../api/teamApi";
-import { HireCoachByTeamMenu } from "../components/menu/HireCoachMenu";
+import ErrorMessage from "../../components/message/ErrorMessage";
+import { Header } from "../../styles/GamesStyles";
+import LoadingSpinner from "../../components/icons/LoadingSpinner";
+import TeamsTable from "../../components/team/TeamsTable";
+import { getOpenTeams, getTeamByName, hireCoach } from "../../api/teamApi";
+import { getFreeAgents } from "../../api/userApi";
+import { HireCoachByUserMenu } from "../../components/menu/HireCoachMenu";
 
-const NewSignupsPage = ({ user }) => {
+const OpenTeamsPage = ({ user }) => {
     const theme = useTheme();
     const navigate = useNavigate();
     const [teams, setTeams] = useState([]);
-    const [users, setNewSignups] = useState([]);
+    const [freeAgentCoaches, setFreeAgentCoaches] = useState([]);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [hiringInProgress, setHiringInProgress] = useState(false); // New state for hire process
+    const [hiringInProgress, setHiringInProgress] = useState(false);
 
     const [order, setOrder] = useState('asc');
     const [orderBy, setOrderBy] = useState('username');
@@ -31,29 +30,31 @@ const NewSignupsPage = ({ user }) => {
     const [contextError, setContextError] = useState(null);
 
     useEffect(() => {
-        if (!user || (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER")) {
+        if (!user || !user.role) {
+            setLoading(true);
+            return;
+        }
+
+        if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
             navigate('*');
         } else {
             setLoading(false);
-        }
-        if (!user || !user.role) {
-            setLoading(true);
         }
     }, [user, navigate]);
 
     const fetchData = async () => {
         try {
-            const [signupsResponse, teamsResponse] = await Promise.all([
-                getNewSignups(),
-                getOpenTeams()
+            const [teamsResponse, freeAgentsResponse] = await Promise.all([
+                getOpenTeams(),
+                getFreeAgents()
             ]);
 
             const teamsData = await Promise.all(
                 teamsResponse.map(team => getTeamByName(team))
             );
 
-            setNewSignups(signupsResponse);
             setTeams(teamsData);
+            setFreeAgentCoaches(freeAgentsResponse);
             setLoading(false);
         } catch (error) {
             setError('Failed to load data');
@@ -65,17 +66,14 @@ const NewSignupsPage = ({ user }) => {
         fetchData();
     }, []);
 
-    const handleRowClick = (event, user) => {
+    const handleRowClick = (event, user, teamName) => {
         event.preventDefault();
         setSelectedUser(user);
+        setSelectedTeam(teams.find(t => t.name === teamName));
         setContextMenu({
             mouseX: event.clientX - 2,
             mouseY: event.clientY - 4,
         });
-    };
-
-    const handleTeamRowClick = (event, user, teamName, teamId) => {
-        navigate(`/team-details/${teamId}`);
     };
 
     const handleCloseMenu = () => {
@@ -86,12 +84,12 @@ const NewSignupsPage = ({ user }) => {
     };
 
     const handleHireCoach = async () => {
-        if (!selectedUser || !selectedTeam || !selectedPosition) {
+        if (!selectedTeam || !selectedPosition) {
             setContextError('Please select both a team and position');
             return;
         }
 
-        setHiringInProgress(true);  // Set loading state to true when hiring starts
+        setHiringInProgress(true);
         try {
             await hireCoach({
                 team: selectedTeam.name,
@@ -105,7 +103,7 @@ const NewSignupsPage = ({ user }) => {
         } catch (error) {
             setContextError(error.message);
         } finally {
-            setHiringInProgress(false);  // Set loading state back to false
+            setHiringInProgress(false);
         }
     };
 
@@ -114,21 +112,6 @@ const NewSignupsPage = ({ user }) => {
         if (a[orderBy] > b[orderBy]) return order === 'asc' ? 1 : -1;
         return 0;
     });
-
-    const handleRequestSort = (property) => {
-        const isAsc = orderBy === property && order === 'asc';
-        setOrder(isAsc ? 'desc' : 'asc');
-        setOrderBy(property);
-    };
-
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
-
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-    };
 
     const handleTeamRequestSort = (property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -170,35 +153,6 @@ const NewSignupsPage = ({ user }) => {
             <Card sx={theme.standardCard}>
                 <Header>
                     <Typography variant="h4" component="h1" gutterBottom sx={{fontWeight: 'bold'}}>
-                        New Signups
-                    </Typography>
-                </Header>
-                <NewSignupsTable
-                    users={users}
-                    order={order}
-                    orderBy={orderBy}
-                    handleRequestSort={handleRequestSort}
-                    page={page}
-                    rowsPerPage={rowsPerPage}
-                    handleChangePage={handleChangePage}
-                    handleChangeRowsPerPage={handleChangeRowsPerPage}
-                    onRowClick={handleRowClick}
-                />
-                <HireCoachByTeamMenu
-                    contextMenu={contextMenu}
-                    handleCloseMenu={handleCloseMenu}
-                    teams={teams}
-                    selectedTeam={selectedTeam}
-                    setSelectedTeam={setSelectedTeam}
-                    selectedPosition={selectedPosition}
-                    setSelectedPosition={setSelectedPosition}
-                    handleHireCoach={handleHireCoach}
-                    contextError={contextError}
-                    hiringInProgress={hiringInProgress}
-                />
-                <br/><br/>
-                <Header>
-                    <Typography variant="h4" component="h1" gutterBottom sx={{fontWeight: 'bold'}}>
                         Open Teams
                     </Typography>
                 </Header>
@@ -218,7 +172,22 @@ const NewSignupsPage = ({ user }) => {
                         handleChangeRowsPerPage={handleTeamChangeRowsPerPage}
                         handleNullValue={handleNullValue}
                         handleArrayValue={handleArrayValue}
-                        handleRowClick={handleTeamRowClick}
+                        handleRowClick={handleRowClick}
+                    />
+                )}
+                {selectedTeam && (
+                    <HireCoachByUserMenu
+                        contextMenu={contextMenu}
+                        handleCloseMenu={handleCloseMenu}
+                        coaches={freeAgentCoaches}
+                        selectedTeam={selectedTeam}
+                        selectedPosition={selectedPosition}
+                        setSelectedPosition={setSelectedPosition}
+                        handleHireCoach={handleHireCoach}
+                        contextError={contextError}
+                        hiringInProgress={hiringInProgress}
+                        selectedUser={selectedUser}
+                        setSelectedUser={setSelectedUser}
                     />
                 )}
             </Card>
@@ -226,4 +195,4 @@ const NewSignupsPage = ({ user }) => {
     );
 };
 
-export default NewSignupsPage;
+export default OpenTeamsPage;

@@ -21,20 +21,20 @@ import {
     TrendingUp
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getAllTeams } from '../api/teamApi';
-import { formatConferenceName } from '../utils/conferenceUtils';
+import { getAllTeams } from '../../api/teamApi';
+import { formatConferenceName } from '../../utils/conferenceUtils';
 import { 
     formatTeamStats, 
     getTeamCoaches, 
     getTeamPlaybooks, 
     getTeamRankings,
     getTeamColors
-} from '../utils/teamDataUtils';
-import PageLayout from '../components/layout/PageLayout';
-import LoadingSpinner from '../components/icons/LoadingSpinner';
-import ErrorMessage from '../components/message/ErrorMessage';
-import CoachesSection from '../components/team/CoachesSection';
-import PlaybooksSection from '../components/team/PlaybooksSection';
+} from '../../utils/teamDataUtils';
+import PageLayout from '../../components/layout/PageLayout';
+import LoadingSpinner from '../../components/icons/LoadingSpinner';
+import ErrorMessage from '../../components/message/ErrorMessage';
+import CoachesSection from '../../components/team/CoachesSection';
+import PlaybooksSection from '../../components/team/PlaybooksSection';
 
 const TeamDetails = () => {
     const theme = useTheme();

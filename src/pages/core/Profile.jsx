@@ -24,12 +24,12 @@ import {
     Save,
     Cancel
 } from '@mui/icons-material';
-import PageLayout from '../components/layout/PageLayout';
-import StyledCard from '../components/ui/StyledCard';
-import StatsCard from '../components/ui/StatsCard';
-import { formatOffensivePlaybook, formatDefensivePlaybook, formatPosition } from '../utils/formatText';
-import { formatResponseTime } from '../utils/timeUtils';
-import { getTeamByName } from '../api/teamApi';
+import PageLayout from '../../components/layout/PageLayout';
+import StyledCard from '../../components/ui/StyledCard';
+import StatsCard from '../../components/ui/StatsCard';
+import { formatOffensivePlaybook, formatDefensivePlaybook, formatPosition } from '../../utils/formatText';
+import { formatResponseTime } from '../../utils/timeUtils';
+import { getTeamByName } from '../../api/teamApi';
 
 const Profile = ({ user }) => {
     const theme = useTheme();

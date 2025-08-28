@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {CircularProgress, Box, useTheme, Card, Typography} from '@mui/material';
-import UsersTable from '../components/users/UsersTable'; // Import the table component
-import {getAllUsers} from '../api/userApi';
+import UsersTable from '../../components/users/UsersTable'; // Import the table component
+import {getAllUsers} from '../../api/userApi';
 import {useNavigate} from "react-router-dom";
-import {Header} from "../styles/GamesStyles"; // Assuming you have userApi for fetching users
+import {Header} from "../../styles/GamesStyles"; // Assuming you have userApi for fetching users
 
 const UsersPage = ({ user }) => {
     const theme = useTheme();

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
-import { resendVerificationEmail, verifyEmail } from "../api/authApi";
+import { resendVerificationEmail, verifyEmail } from "../../api/authApi";
 import {
     CircularProgress,
     Box,

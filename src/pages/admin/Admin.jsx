@@ -13,9 +13,9 @@ import {
     EmojiEvents,
     Settings
 } from '@mui/icons-material';
-import DashboardLayout from '../components/layout/DashboardLayout';
-import StyledCard from '../components/ui/StyledCard';
-import StyledTable from '../components/ui/StyledTable';
+import DashboardLayout from '../../components/layout/DashboardLayout';
+import StyledCard from '../../components/ui/StyledCard';
+import StyledTable from '../../components/ui/StyledTable';
 
 const Admin = ({ user }) => {
     const theme = useTheme();

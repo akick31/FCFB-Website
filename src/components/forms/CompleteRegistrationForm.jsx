@@ -196,7 +196,7 @@ const CompleteRegistrationForm = () => {
             }
 
             await registerUser({ ...formData });
-            navigate("/login");
+            navigate("/register/success");
         } catch (error) {
             setValidation((prev) => ({
                 ...prev,

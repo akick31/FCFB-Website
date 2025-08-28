@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import logo from "../../assets/graphics/trophy.png";
+import logo from "../../assets/graphics/wordmark.png";
 
 const LogoAndTitle = () => (
     <Box display="flex" alignItems="center" gap={2}>
@@ -10,18 +10,9 @@ const LogoAndTitle = () => (
             style={{
                 height: 40,
                 width: "auto",
+                marginBottom: 1.8,
             }}
         />
-        <Typography
-            variant="h6"
-            sx={{
-                fontWeight: 600,
-                color: "white", // Text color white
-                display: { xs: "none", sm: "block" }
-            }}
-        >
-            Fake College Football
-        </Typography>
     </Box>
 );
 

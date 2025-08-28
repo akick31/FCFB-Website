@@ -6,14 +6,14 @@ import {
     useTheme
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { getAllTeams } from '../api/teamApi';
-import { formatConferenceName } from '../utils/conferenceUtils';
-import { DEFAULT_TEAMS_PER_PAGE, TEAMS_PER_PAGE_OPTIONS, TEAM_STATUS } from '../constants/teamConstants';
-import PageLayout from '../components/layout/PageLayout';
-import StyledTable from '../components/ui/StyledTable';
-import { TeamsFilters, getTeamsTableColumns } from '../components/team';
-import LoadingSpinner from '../components/icons/LoadingSpinner';
-import ErrorMessage from '../components/message/ErrorMessage';
+import { getAllTeams } from '../../api/teamApi';
+import { formatConferenceName } from '../../utils/conferenceUtils';
+import { DEFAULT_TEAMS_PER_PAGE, TEAMS_PER_PAGE_OPTIONS, TEAM_STATUS } from '../../constants/teamConstants';
+import PageLayout from '../../components/layout/PageLayout';
+import StyledTable from '../../components/ui/StyledTable';
+import { TeamsFilters, getTeamsTableColumns } from '../../components/team';
+import LoadingSpinner from '../../components/icons/LoadingSpinner';
+import ErrorMessage from '../../components/message/ErrorMessage';
 
 const Teams = () => {
     const theme = useTheme();
@@ -144,9 +144,9 @@ const Teams = () => {
                 <Box sx={{ 
                     p: 3, 
                     borderBottom: `1px solid ${theme.palette.divider}`,
-                    backgroundColor: theme.palette.grey[50]
+                    backgroundColor: 'primary.main'
                 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: 'white' }}>
                         Team Directory
                     </Typography>
                 </Box>

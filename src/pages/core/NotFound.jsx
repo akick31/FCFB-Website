@@ -1,5 +1,5 @@
 import React from 'react';
-import flagIcon from '../assets/images/flag.png';
+import flagIcon from '../../assets/images/flag.png';
 
 const NotFound = () => {
     return (

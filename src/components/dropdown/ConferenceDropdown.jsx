@@ -3,18 +3,17 @@ import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { conferences } from '../constants/conferences';
 import PropTypes from 'prop-types';
 
-const ConferenceDropdown = ({ value, onChange }) => {
+const ConferenceDropdown = ({ value, onChange, sx = {} }) => {
 
     return (
-        <FormControl fullWidth margin="normal">
+        <FormControl fullWidth margin="normal" sx={sx}>
             <InputLabel shrink>Conference</InputLabel>
             <Select
                 value={value}
                 label="Conference"
-                onChange={onChange}
+                onChange={(e) => onChange(e.target.value)}
                 displayEmpty
             >
-                <MenuItem value="">All Conferences</MenuItem>
                 {conferences.map((conference) => (
                     <MenuItem key={conference.value} value={conference.value}>
                         {conference.label}
@@ -26,8 +25,9 @@ const ConferenceDropdown = ({ value, onChange }) => {
 };
 
 ConferenceDropdown.propTypes = {
-    selectedConference: PropTypes.string,
+    value: PropTypes.string,
     onChange: PropTypes.func,
+    sx: PropTypes.object
 }
 
 export default ConferenceDropdown;
