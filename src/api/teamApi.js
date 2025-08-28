@@ -19,7 +19,7 @@ export const getTeamById = async (id) => {
     if (!id) return {};
 
     try {
-        const response = await apiClient.get('/team/id', { params: { id: id } });
+        const response = await apiClient.get(`/team/${id}`);
         return response.data;
     } catch (error) {
         console.error("Failed to fetch team by id:", error);
