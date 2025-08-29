@@ -35,8 +35,6 @@ const GameInfo = ({ game, homeTeam, awayTeam }) => {
                 <Grid item xs={12}>
                     <GameDetailsCard
                         game={game}
-                        homeTeam={homeTeam}
-                        awayTeam={awayTeam}
                     />
                 </Grid>
             </Grid>

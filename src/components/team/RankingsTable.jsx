@@ -93,7 +93,7 @@ const RankingsTable = ({ teams, rankingType }) => {
 
                     {/* Table Body */}
                     <TableBody>
-                        {teams.map((team, index) => {
+                        {teams.map((team) => {
                             const ranking = getRankingValue(team, rankingType);
                             const overallWins = team.current_wins || 0;
                             const overallLosses = team.current_losses || 0;

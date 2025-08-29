@@ -2,7 +2,6 @@ import React from 'react';
 import {
     Box,
     Typography,
-    Chip,
     useTheme
 } from '@mui/material';
 import {
@@ -20,7 +19,7 @@ import {
     formatGameTimer 
 } from '../../utils/gameUtils';
 
-const GameDetailsCard = ({ game, homeTeam, awayTeam, sx = {} }) => {
+const GameDetailsCard = ({ game, sx = {} }) => {
     const theme = useTheme();
 
     if (!game) return null;

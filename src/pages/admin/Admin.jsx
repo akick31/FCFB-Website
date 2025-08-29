@@ -3,15 +3,12 @@ import {
     Chip,
     Box, 
     Grid, 
-    Typography, 
-    useTheme,
-    useMediaQuery,
+    Typography
 } from '@mui/material';
 import {
     People,
     SportsFootball,
     EmojiEvents,
-    Settings,
     CheckCircle,
     Cancel,
     Headset
@@ -26,8 +23,6 @@ import { formatPosition, formatConference, formatOffensivePlaybook, formatDefens
 import { adminNavigationItems } from '../../config/adminNavigation';
 
 const Admin = ({ user }) => {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const navigate = useNavigate();
     const [newSignups, setNewSignups] = useState([]);
     const [loading, setLoading] = useState(true);

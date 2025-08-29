@@ -5,16 +5,13 @@ import {
     Typography, 
     Chip, 
     Avatar,
-    Divider,
     Card,
     CardContent,
     useTheme,
-    useMediaQuery,
     IconButton
 } from '@mui/material';
 import { 
     ArrowBack,
-    SportsFootball,
     Person,
     Message,
     EmojiEvents,
@@ -25,22 +22,18 @@ import { getAllTeams } from '../../api/teamApi';
 import { formatConferenceName } from '../../utils/conferenceUtils';
 import { 
     formatTeamStats, 
-    getTeamCoaches, 
-    getTeamPlaybooks, 
+    getTeamCoaches,
     getTeamRankings,
-    getTeamColors
 } from '../../utils/teamDataUtils';
 import PageLayout from '../../components/layout/PageLayout';
 import LoadingSpinner from '../../components/icons/LoadingSpinner';
 import ErrorMessage from '../../components/message/ErrorMessage';
-import CoachesSection from '../../components/team/CoachesSection';
 import PlaybooksSection from '../../components/team/PlaybooksSection';
 
 const TeamDetails = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const { teamId } = useParams();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [team, setTeam] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -88,9 +81,7 @@ const TeamDetails = () => {
 
     const stats = formatTeamStats(team);
     const coaches = getTeamCoaches(team);
-    const playbooks = getTeamPlaybooks(team);
     const rankings = getTeamRankings(team);
-    const colors = getTeamColors(team);
 
     return (
         <PageLayout

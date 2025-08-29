@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Container, CircularProgress, Alert, FormControl, Select, MenuItem } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import RankingsTable from '../../components/team/RankingsTable';
 import { getAllTeams } from '../../api/teamApi';
 
 const Rankings = () => {
-    const theme = useTheme();
     const [teams, setTeams] = useState([]);
     const [filteredTeams, setFilteredTeams] = useState([]);
     const [selectedRanking, setSelectedRanking] = useState('');

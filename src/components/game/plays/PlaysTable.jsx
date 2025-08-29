@@ -7,9 +7,7 @@ import {
     TableCell, 
     TableSortLabel, 
     TableBody, 
-    TableContainer, 
-    Paper,
-    Typography,
+    TableContainer,
     useTheme
 } from '@mui/material';
 import TablePagination from '@mui/material/TablePagination';
@@ -31,10 +29,6 @@ const PlaysTable = ({ plays, page, rowsPerPage, orderBy, order, handleRequestSor
         'offensive_submitter', 'play_call', 'result', 'actual_result', 'yards', 'play_time', 'runoff_time',
         'win_probability', 'win_probability_added', 'offensive_response_speed', 'defensive_response_speed'
     ];
-
-    const formatHeader = (header) => {
-        return header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    };
 
     const getResultColor = (result) => {
         if (result === 'Touchdown') return theme.palette.success.light + '20';

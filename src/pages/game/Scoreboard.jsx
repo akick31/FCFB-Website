@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { 
-    Box, 
-    Typography, 
+    Box,
     Tabs, 
     Tab, 
     useTheme,
@@ -21,7 +20,6 @@ import Scrimmages from '../../components/game/scoreboard/Scrimmages';
 const Scoreboard = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
     const [activeTab, setActiveTab] = useState(0);
 
     const tabs = [

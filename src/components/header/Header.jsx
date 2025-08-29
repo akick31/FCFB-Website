@@ -17,7 +17,6 @@ import {
     Menu,
     MenuItem,
     useTheme,
-    useMediaQuery,
     Container,
 } from "@mui/material";
 import {

@@ -19,7 +19,6 @@ import {
 import { Edit, Search } from '@mui/icons-material';
 import { CONFERENCES } from '../../constants/teamEnums';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { People, SportsFootball, EmojiEvents, Settings } from '@mui/icons-material';
 import { getAllTeams } from '../../api/teamApi';
 import { useNavigate } from 'react-router-dom';
 import StyledTable from '../../components/ui/StyledTable';

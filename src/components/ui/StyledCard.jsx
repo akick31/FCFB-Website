@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Box, useTheme } from '@mui/material';
+import { Card, CardContent, useTheme } from '@mui/material';
 import PropTypes from 'prop-types';
 
 const StyledCard = ({ 

@@ -6,7 +6,6 @@ import {
     Typography,
     Alert,
     TextField,
-    Button,
     FormControl,
     InputLabel,
     Select,
@@ -14,8 +13,7 @@ import {
     CircularProgress,
     InputAdornment,
     IconButton,
-    useTheme,
-    useMediaQuery
+    useTheme
 } from "@mui/material";
 import { 
     Email, 
@@ -35,7 +33,6 @@ import StyledButton from "../ui/StyledButton";
 
 const CompleteRegistrationForm = () => {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const navigate = useNavigate();
     const location = useLocation();
 

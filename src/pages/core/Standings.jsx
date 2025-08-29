@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Container, CircularProgress, Alert } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import ConferenceDropdown from '../../components/dropdown/ConferenceDropdown';
 import StandingsTable from '../../components/team/StandingsTable';
 import { getAllTeams } from '../../api/teamApi';
 import { formatTeamStats } from '../../utils/teamDataUtils';
 
 const Standings = () => {
-    const theme = useTheme();
     const [teams, setTeams] = useState([]);
     const [filteredTeams, setFilteredTeams] = useState([]);
     const [selectedConference, setSelectedConference] = useState('ACC');

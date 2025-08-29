@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
+import { Box, useTheme, useMediaQuery } from '@mui/material';
 import logo from "../../assets/graphics/wordmark.png";
 
 const LogoAndTitle = () => {

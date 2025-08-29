@@ -6,7 +6,6 @@ import {
     Alert,
     Link as MuiLink,
     useTheme,
-    useMediaQuery,
     Button
 } from '@mui/material';
 import { 
@@ -20,11 +19,9 @@ import StyledButton from '../../components/ui/StyledButton';
 
 const Registration = () => {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
 
     const handleDiscordOAuth = () => {
         setLoading(true);
@@ -108,12 +105,6 @@ const Registration = () => {
                         {error && (
                             <Alert severity="error" sx={{ mb: 3, textAlign: 'left' }}>
                                 {error}
-                            </Alert>
-                        )}
-
-                        {success && (
-                            <Alert severity="success" sx={{ mb: 3, textAlign: 'left' }}>
-                                {success}
                             </Alert>
                         )}
 

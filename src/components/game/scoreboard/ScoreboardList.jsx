@@ -54,7 +54,7 @@ const ScoreboardList = ({
     
     // Use custom hooks for better organization
     const { teamsData, loading: teamsLoading } = useTeamData(games);
-    const { filterMenuOpen, handleFilterChange, handleFilterApply, openFilterMenu, closeFilterMenu } = useGameFilters(filters, setFilters);
+    const { filterMenuOpen, handleFilterApply, openFilterMenu, closeFilterMenu } = useGameFilters(filters, setFilters);
     const { rowsPerPage, handleRowsPerPageChange } = useGamePagination(SCOREBOARD_CONSTANTS.DEFAULT_ROWS_PER_PAGE);
 
     // Check if this is showing past games
@@ -686,7 +686,6 @@ const ScoreboardList = ({
                     </Box>
                 </Box>
                 <FilterMenu
-                    onChange={handleFilterChange}
                     onApply={handleFilterApply}
                     category={title.toLowerCase().replace(' ', '')}
                 />

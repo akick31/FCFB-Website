@@ -2,7 +2,6 @@ import React from 'react';
 import {
     Box,
     Typography,
-    Avatar,
     Chip,
     useTheme
 } from '@mui/material';

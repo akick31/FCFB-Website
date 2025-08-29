@@ -19,7 +19,7 @@ import { ChromePicker } from 'react-color';
 import { updateTeam } from '../../api/teamApi';
 import {Header} from "../../styles/GamesStyles"; // Assuming the updateTeam function is in the 'teamApi.js' file.
 
-const ModifyTeamForm = ({ team, onSubmit }) => {
+const ModifyTeamForm = ({ team }) => {
     const theme = useTheme();
     const [validation, setValidation] = useState({ errorMessage: null });
     const [formData, setFormData] = useState({

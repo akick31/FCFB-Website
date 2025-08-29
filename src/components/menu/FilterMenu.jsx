@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-    FormControlLabel,
-    Checkbox,
     Button,
     FormControl,
     InputLabel,
@@ -18,7 +16,7 @@ import GameStatusDropdown from "../dropdown/GameStatusDropdown";
 import WeekDropdown from "../dropdown/WeekDropdown";
 import SeasonDropdown from "../dropdown/SeasonDropdown";
 
-const FilterMenu = ({ onChange, onApply, category }) => {
+const FilterMenu = ({ onApply, category }) => {
     console.log('FilterMenu category:', category);
     const availableFilters = {
         livegames: ['conference', 'gameType', 'gameStatus', 'rankedGame', 'sort'],
@@ -91,19 +89,6 @@ const FilterMenu = ({ onChange, onApply, category }) => {
             ...prev,
             [field]: newValue,
         }));
-    };
-
-    // Handle checkbox changes
-    const handleCheckboxChange = (value) => (event) => {
-        setPendingFilters(prev => {
-            let updatedFilters = prev.filters.filter(f => f !== value);
-
-            if (event.target.checked) {
-                updatedFilters.push(value);
-            }
-
-            return { ...prev, filters: updatedFilters };
-        });
     };
 
     const handleApply = () => {

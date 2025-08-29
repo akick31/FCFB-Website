@@ -1,12 +1,6 @@
 import { 
     formatScoreboardStatus, 
-    getStatusColor, 
-    formatScoreboardQuarter, 
-    formatDownAndDistance, 
-    formatPossession, 
-    formatBallLocation, 
-    formatWaitingOn,
-    formatGameType
+    getStatusColor,
 } from '../../../../utils/gameUtils';
 
 export const formatBallLocationWithTeam = (ballLocation, possession, homeTeam, awayTeam, homeTeamData, awayTeamData) => {

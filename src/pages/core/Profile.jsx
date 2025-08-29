@@ -3,13 +3,11 @@ import {
     Box, 
     Grid, 
     Typography, 
-    Avatar, 
-    Chip,
+    Avatar,
     Divider,
     TextField,
     Button,
     useTheme,
-    useMediaQuery
 } from '@mui/material';
 import { 
     SportsFootball,
@@ -18,7 +16,6 @@ import {
     EmojiEvents,
     TrendingUp,
     MilitaryTech,
-    Group,
     Flag,
     Edit,
     Save,
@@ -33,7 +30,6 @@ import { getTeamByName } from '../../api/teamApi';
 
 const Profile = ({ user }) => {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({

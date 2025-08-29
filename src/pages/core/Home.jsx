@@ -6,8 +6,7 @@ import {
     Typography, 
     Grid, 
     Link, 
-    useTheme,
-    useMediaQuery
+    useTheme
 } from '@mui/material';
 import { 
     ArrowForward,
@@ -20,7 +19,6 @@ import logo from '../../assets/graphics/main_logo.png';
 
 const HomePage = () => {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
     return (
         <Box sx={{ minHeight: '100vh', background: theme.palette.background.default }}>

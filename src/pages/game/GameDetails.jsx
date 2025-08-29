@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {Box, Typography, Card, CardContent, CircularProgress, Chip, useTheme, useMediaQuery, IconButton, Grid} from "@mui/material";
+import {Box, Typography, Card, CardContent, Chip, useTheme, IconButton, Grid} from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import { getAllPlaysForGame } from "../../api/playApi";
 import { getGameById } from "../../api/gameApi";
@@ -20,7 +20,6 @@ const GameDetails = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const { gameId } = useParams();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     
     const [plays, setPlays] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -226,7 +225,6 @@ const GameDetails = () => {
                             game={game}
                             homeTeam={homeTeam}
                             awayTeam={awayTeam}
-                            scorebug={scorebug}
                         />
                     </Box>
                 )}

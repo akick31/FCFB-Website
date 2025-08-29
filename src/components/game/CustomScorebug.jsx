@@ -2,13 +2,10 @@ import React from 'react';
 import {
     Box,
     Typography,
-    useTheme
 } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const CustomScorebug = ({ game, homeTeam, awayTeam, scorebug, sx = {} }) => {
-    const theme = useTheme();
-
+const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
     if (!game) return null;
 
     const formatQuarter = (quarter) => {

@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-    Box, Grid, Typography, Alert, TextField, useTheme, useMediaQuery
+    Box, Grid, Typography, Alert, TextField, useTheme
 } from "@mui/material";
 import { 
     SportsFootball, Email, Lock, Visibility, VisibilityOff 
 } from "@mui/icons-material";
-import { login, forgotPassword } from "../../api/authApi";
-import { getUserById } from "../../api/userApi";
+import { login } from "../../api/authApi";
 import { checkIfUserIsAdmin } from "../../utils/utils";
 import StyledCard from "../ui/StyledCard";
 import StyledButton from "../ui/StyledButton";
@@ -15,7 +14,6 @@ import PropTypes from "prop-types";
 
 const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const navigate = useNavigate();
     
     const [formData, setFormData] = useState({
@@ -25,8 +23,6 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [openForgotPassword, setOpenForgotPassword] = useState(false);
-    const [resetEmail, setResetEmail] = useState("");
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -67,17 +63,6 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
 
     const handleTogglePasswordVisibility = () => {
         setShowPassword(!showPassword);
-    };
-
-    const handleForgotPassword = async () => {
-        try {
-            await forgotPassword(resetEmail);
-            setOpenForgotPassword(false);
-            setError(null);
-            alert('Password reset instructions sent to your email');
-        } catch (error) {
-            setError(error.message || 'Error sending reset email');
-        }
     };
 
     return (
