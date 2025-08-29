@@ -316,10 +316,10 @@ const ScoreboardList = ({
                                         {/* Home Team Ranking */}
                                         {homeTeamData?.coaches_poll_ranking && homeTeamData.coaches_poll_ranking > 0 && (
                                             <Typography sx={{
-                                                color: 'warning.main',
                                                 fontSize: '0.7rem',
                                                 fontWeight: 700,
                                                 backgroundColor: 'warning.light',
+                                                color: 'warning.contrastText',
                                                 px: 0.5,
                                                 py: 0.1,
                                                 borderRadius: 1,
@@ -377,10 +377,10 @@ const ScoreboardList = ({
                                         {/* Away Team Ranking */}
                                         {awayTeamData?.coaches_poll_ranking && awayTeamData.coaches_poll_ranking > 0 && (
                                             <Typography sx={{
-                                                color: 'warning.main',
                                                 fontSize: '0.7rem',
                                                 fontWeight: 700,
                                                 backgroundColor: 'warning.light',
+                                                color: 'warning.contrastText',
                                                 px: 0.5,
                                                 py: 0.1,
                                                 borderRadius: 1,
