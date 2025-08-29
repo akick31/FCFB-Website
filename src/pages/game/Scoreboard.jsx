@@ -21,6 +21,7 @@ import Scrimmages from '../../components/game/scoreboard/Scrimmages';
 const Scoreboard = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
     const [activeTab, setActiveTab] = useState(0);
 
     const tabs = [
@@ -50,10 +51,10 @@ const Scoreboard = () => {
                         variant={isMobile ? 'scrollable' : 'fullWidth'}
                         scrollButtons={isMobile ? 'auto' : false}
                         sx={{
-                            px: 2,
+                            px: { xs: 1, sm: 2 },
                             '& .MuiTab-root': {
-                                minHeight: 64,
-                                fontSize: '1rem',
+                                minHeight: { xs: 48, sm: 64 },
+                                fontSize: { xs: '0.85rem', sm: '1rem' },
                                 fontWeight: 600,
                                 textTransform: 'none',
                                 color: 'text.secondary',
@@ -73,12 +74,17 @@ const Scoreboard = () => {
                                 label={tab.label}
                                 icon={tab.icon}
                                 iconPosition="start"
+                                sx={{
+                                    '& .MuiTab-iconWrapper': {
+                                        fontSize: { xs: '1.1rem', sm: '1.2rem' }
+                                    }
+                                }}
                             />
                         ))}
                     </Tabs>
                 </Box>
 
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: { xs: 2, sm: 3 } }}>
                     {tabs[activeTab].component}
                 </Box>
             </StyledCard>

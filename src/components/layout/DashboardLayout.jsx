@@ -16,13 +16,11 @@ import {
     useMediaQuery
 } from '@mui/material';
 import { 
-    Dashboard, 
-    People, 
+    Dashboard,
     SportsFootball,
     EmojiEvents, 
     Settings, 
     Menu as MenuIcon,
-    ChevronLeft,
     Home,
     Group,
     Person
@@ -36,6 +34,8 @@ const DashboardLayout = ({
     title = 'Dashboard',
     navigationItems = [],
     onNavigationChange,
+    hideHeader = false,
+    textColor = 'text.primary',
     sx = {}
 }) => {
     const theme = useTheme();
@@ -43,13 +43,13 @@ const DashboardLayout = ({
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const defaultNavigationItems = [
-        { label: 'Home', icon: <Home />, path: '/' },
         { label: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
         { label: 'Games', icon: <SportsFootball />, path: '/scoreboard' },
-        { label: 'Teams', icon: <EmojiEvents />, path: '/teams' },
-        { label: 'Users', icon: <Group />, path: '/users' },
+        { label: 'Teams', icon: <EmojiEvents />, path: '/team-management' },
+        { label: 'Users', icon: <Group />, path: '/user-management' },
         { label: 'Profile', icon: <Person />, path: '/profile' },
         { label: 'Settings', icon: <Settings />, path: '/settings' },
+        { label: 'Home', icon: <Home />, path: '/' },
     ];
 
     const items = navigationItems.length > 0 ? navigationItems : defaultNavigationItems;
@@ -118,38 +118,101 @@ const DashboardLayout = ({
                         </ListItemButton>
                     </ListItem>
                 ))}
+                {/* Back to Home option for admin pages */}
+                {hideHeader && (
+                    <ListItem disablePadding>
+                        <ListItemButton
+                            onClick={() => window.location.href = '/'}
+                            sx={{
+                                mx: 2,
+                                mb: 1,
+                                borderRadius: 2,
+                                '&:hover': {
+                                    backgroundColor: `${theme.palette.primary.main}15`,
+                                },
+                            }}
+                        >
+                            <ListItemIcon sx={{ 
+                                color: 'primary.main',
+                                minWidth: 40 
+                            }}>
+                                <Home />
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary="Back to Home" 
+                                sx={{ 
+                                    '& .MuiTypography-root': {
+                                        fontWeight: 500,
+                                    }
+                                }}
+                            />
+                        </ListItemButton>
+                    </ListItem>
+                )}
             </List>
         </Box>
     );
 
     return (
         <Box sx={{ display: 'flex', ...sx }}>
-            <AppBar
-                position="fixed"
-                sx={{
-                    width: { md: `calc(100% - ${drawerWidth}px)` },
-                    ml: { md: `${drawerWidth}px` },
-                    background: 'background.paper',
-                    color: 'text.primary',
-                    boxShadow: theme.shadows[1],
-                    borderBottom: `1px solid ${theme.palette.divider}`,
-                }}
-            >
-                <Toolbar>
-                    <IconButton
-                        color="inherit"
-                        aria-label="open drawer"
-                        edge="start"
-                        onClick={handleDrawerToggle}
-                        sx={{ mr: 2, display: { md: 'none' } }}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        {title}
-                    </Typography>
-                </Toolbar>
-            </AppBar>
+            {/* Mobile AppBar with hamburger menu */}
+            {isMobile && (
+                <AppBar
+                    position="fixed"
+                    sx={{
+                        width: { md: `calc(100% - ${drawerWidth}px)` },
+                        ml: { md: `${drawerWidth}px` },
+                        display: { xs: 'block', md: 'none' },
+                        background: theme.custom?.gradients?.primary,
+                        boxShadow: 'none',
+                    }}
+                >
+                    <Toolbar>
+                        <IconButton
+                            color="inherit"
+                            aria-label="open drawer"
+                            edge="start"
+                            onClick={handleDrawerToggle}
+                            sx={{ mr: 2 }}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+                        <Typography variant="h6" noWrap component="div" sx={{ color: 'white' }}>
+                            {title}
+                        </Typography>
+                    </Toolbar>
+                </AppBar>
+            )}
+
+            {/* Desktop AppBar */}
+            {!hideHeader && !isMobile && (
+                <AppBar
+                    position="fixed"
+                    sx={{
+                        width: { md: `calc(100% - ${drawerWidth}px)` },
+                        ml: { md: `${drawerWidth}px` },
+                        background: 'background.paper',
+                        color: textColor,
+                        boxShadow: theme.shadows[1],
+                        borderBottom: `1px solid ${theme.palette.divider}`,
+                    }}
+                >
+                    <Toolbar>
+                        <IconButton
+                            color="inherit"
+                            aria-label="open drawer"
+                            edge="start"
+                            onClick={handleDrawerToggle}
+                            sx={{ mr: 2, display: { md: 'none' } }}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            {title}
+                        </Typography>
+                    </Toolbar>
+                </AppBar>
+            )}
 
             <Box
                 component="nav"
@@ -199,7 +262,7 @@ const DashboardLayout = ({
                     flexGrow: 1,
                     p: 3,
                     width: { md: `calc(100% - ${drawerWidth}px)` },
-                    mt: 10,
+                    mt: hideHeader ? 0 : 10,
                 }}
             >
                 {children}
@@ -219,6 +282,8 @@ DashboardLayout.propTypes = {
         })
     ),
     onNavigationChange: PropTypes.func,
+    hideHeader: PropTypes.bool,
+    textColor: PropTypes.string,
     sx: PropTypes.object,
 };
 

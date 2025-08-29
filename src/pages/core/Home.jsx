@@ -31,7 +31,7 @@ const HomePage = () => {
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     backgroundAttachment: 'fixed',
-                    minHeight: '80vh',
+                    minHeight: '70vh',
                     display: 'flex',
                     alignItems: 'center',
                     position: 'relative',

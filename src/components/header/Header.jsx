@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     AppBar,
     Toolbar,
@@ -19,30 +19,51 @@ import {
     useTheme,
     useMediaQuery,
     Container,
-    Menu as MuiMenu
 } from "@mui/material";
 import {
     Menu as MenuIcon,
-    KeyboardArrowDown,
+
     Person,
     Logout,
     Login,
-    PersonAdd
+    PersonAdd,
+    SportsFootball
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../../api/authApi";
+import { getTeamByName } from "../../api/teamApi";
 import LogoAndTitle from "../icons/LogoAndTitle";
 import PropTypes from 'prop-types';
 
 const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, setIsAdmin }) => {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const location = useLocation();
     const navigate = useNavigate();
     
     const [mobileOpen, setMobileOpen] = useState(false);
     const [userMenuAnchor, setUserMenuAnchor] = useState(null);
-    const [adminMenuAnchor, setAdminMenuAnchor] = useState(null);
+
+    const [teamData, setTeamData] = useState(null);
+    const [isLoadingTeam, setIsLoadingTeam] = useState(false);
+
+    // Fetch team data when user changes
+    useEffect(() => {
+        const fetchTeamData = async () => {
+            if (user?.team) {
+                setIsLoadingTeam(true);
+                try {
+                    const team = await getTeamByName(user.team);
+                    setTeamData(team);
+                } catch (error) {
+                    console.error('Error fetching team data:', error);
+                } finally {
+                    setIsLoadingTeam(false);
+                }
+            }
+        };
+
+        fetchTeamData();
+    }, [user?.team]);
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -56,13 +77,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
         setUserMenuAnchor(null);
     };
 
-    const handleAdminMenuOpen = (event) => {
-        setAdminMenuAnchor(event.currentTarget);
-    };
 
-    const handleAdminMenuClose = () => {
-        setAdminMenuAnchor(null);
-    };
 
     const handleLogout = () => {
         logout(setIsAuthenticated, setUser, setIsAdmin);
@@ -85,12 +100,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
         { label: "Teams", path: "/teams" },
     ];
 
-    const adminMenuItems = [
-        { label: "Admin Panel", path: "/admin" },
-        { label: "Users", path: "/users" },
-        { label: "New Signups", path: "/new-signups" },
-        { label: "Game Management", path: "/game-management" },
-    ];
+
 
     const authItems = !isAuthenticated
         ? [
@@ -109,19 +119,32 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
             navigate(path);
         }
         setMobileOpen(false);
-        setAdminMenuAnchor(null);
+
     };
 
     const isActiveRoute = (path) => location.pathname === path;
 
     // Mobile Drawer
     const drawer = (
-        <Box sx={{ width: 280 }}>
-            <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                <LogoAndTitle />
+        <Box sx={{ 
+            width: 280, 
+            backgroundColor: 'primary.main',
+            color: 'white',
+            height: '100%'
+        }}>
+            <Box sx={{ 
+                p: 2, 
+                borderBottom: `1px solid rgba(255, 255, 255, 0.2)`,
+                backgroundColor: 'primary.main',
+                display: 'flex',
+                justifyContent: 'center'
+            }}>
+                <Box sx={{ transform: 'scale(1.2)' }}>
+                    <LogoAndTitle />
+                </Box>
             </Box>
             
-            <List sx={{ pt: 1 }}>
+            <List sx={{ pt: 1, backgroundColor: 'primary.main' }}>
                 {navigationItems.map(({ label, path }) => (
                     <ListItem key={path} disablePadding>
                         <ListItemButton
@@ -131,11 +154,15 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                 borderRadius: 1,
                                 mx: 1,
                                 mb: 0.5,
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                },
                                 '&.Mui-selected': {
-                                    backgroundColor: 'primary.main',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
                                     color: 'white',
                                     '&:hover': {
-                                        backgroundColor: 'primary.dark',
+                                        backgroundColor: 'rgba(255, 255, 255, 0.3)',
                                     },
                                 },
                             }}
@@ -149,34 +176,41 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 {isAdmin && (
                     <ListItem disablePadding>
                         <ListItemButton
-                            onClick={handleAdminMenuOpen}
+                            onClick={() => handleNavigation('/admin')}
                             sx={{
                                 borderRadius: 1,
                                 mx: 1,
                                 mb: 0.5,
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                },
                             }}
                         >
                             <ListItemText primary="Admin" />
-                            <KeyboardArrowDown />
                         </ListItemButton>
                     </ListItem>
                 )}
             </List>
 
-            <Divider sx={{ my: 2 }} />
+            <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.2)' }} />
             
-            <List>
+            <List sx={{ backgroundColor: 'primary.main' }}>
                 {authItems.map(({ label, path, onClick, icon }) => (
-                    <ListItem key={label} disablePadding>
+                    <ListItem key={path} disablePadding>
                         <ListItemButton
                             onClick={() => handleNavigation(path, onClick)}
                             sx={{
                                 borderRadius: 1,
                                 mx: 1,
                                 mb: 0.5,
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                },
                             }}
                         >
-                            <ListItemIcon sx={{ minWidth: 40 }}>
+                            <ListItemIcon sx={{ minWidth: 40, color: 'white' }}>
                                 {icon}
                             </ListItemIcon>
                             <ListItemText primary={label} />
@@ -188,11 +222,11 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
     );
 
     return (
-        <Box sx={{ backgroundColor: 'primary.main' }}>
+        <Box sx={{ backgroundColor: 'primary.main', overflow: 'hidden' }}>
             {/* Logo Section with Enhanced Rectangle Design */}
             <Container maxWidth="xl">
                 <Box sx={{ 
-                    py: 0.2, // Even shorter header
+                    py: 0.2,
                     px: { xs: 2, sm: 3 },
                     position: 'relative',
                     overflow: 'hidden'
@@ -201,7 +235,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     <Box sx={{
                         position: 'absolute',
                         top: 0,
-                        width: '235px',
+                        width: { xs: '180px', sm: '200px', md: '235px' },
                         height: '100%',
                         backgroundColor: '#dc2626',
                         transform: 'skew(-8deg)',
@@ -212,9 +246,9 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     <Box sx={{
                         position: 'absolute',
                         top: 0,
-                        width: '27px', // 15% of 220px
+                        width: { xs: '20px', sm: '22px', md: '27px' },
                         height: '100%',
-                        backgroundColor: '#a0a0a0', // Darker gray
+                        backgroundColor: '#a0a0a0',
                         transform: 'skew(-8deg)',
                         zIndex: 3
                     }} />
@@ -223,19 +257,20 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     <Box sx={{
                         position: 'absolute',
                         top: 0,
-                        left: '235px',
-                        width: '28px', // 15% of 240px
+                        left: { xs: '180px', sm: '200px', md: '235px' },
+                        width: { xs: '20px', sm: '22px', md: '28px' },
                         height: '100%',
-                        backgroundColor: '#a0a0a0', // Darker gray
+                        backgroundColor: '#a0a0a0',
                         transform: 'skew(-8deg)',
                         zIndex: 3
                     }} />
                     
-                    {/* Logo positioned above the enhanced background */}
+                    {/* Logo positioned above the enhanced background - Always same relative position */}
                     <Box sx={{ 
                         position: 'relative', 
-                        left: '2.8%',
-                        zIndex: 4 }}>
+                        left: '2.8%', // Fixed percentage for consistent positioning
+                        zIndex: 4 
+                    }}>
                         <LogoAndTitle />
                     </Box>
                 </Box>
@@ -247,31 +282,32 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 top={0}
                 elevation={0}
                 sx={{
-                    height: 54,
-                    backgroundColor: 'primary.main', // Blue background for contrast
-                    borderRadius: 0, // No rounded edges on main background
-                    boxShadow: '0 3px 10px rgba(0, 0, 0, 0.7)', // More prominent drop shadow
-                    zIndex: 2, // Lower than skewed rectangle to allow shadow to show
+                    height: { xs: 48, sm: 54 },
+                    backgroundColor: 'primary.main',
+                    borderRadius: 0,
+                    boxShadow: '0 3px 10px rgba(0, 0, 0, 0.7)',
+                    zIndex: 2,
+                    overflow: 'hidden',
                 }}
             >
-                <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
+                <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 2 } }}>
                     <Toolbar sx={{ 
                         px: { xs: 1, sm: 2 }, 
-                        justifyContent: 'space-between',
-                        borderRadius: 0, // No rounded edges on main background
-                        fontFamily: 'Exo, sans-serif', // Ensure Exo font is used
-                        minHeight: 'auto', // Allow natural height
+                        justifyContent: { xs: 'space-between', md: 'space-between' },
+                        borderRadius: 0,
+                        fontFamily: 'Exo, sans-serif',
+                        minHeight: 'auto',
+                        width: '100%',
+                        overflow: 'visible',
+                        flexWrap: 'nowrap',
                     }}>
-                        {/* Left Navigation */}
+                        {/* Left Navigation - Hidden on small screens, only show on medium and up */}
                         <Box sx={{ 
-                            display: 'flex', 
+                            display: { xs: 'none', md: 'flex' }, 
                             alignItems: 'center', 
                             gap: 1, 
                             pb: 1.2,
-                            overflowX: 'auto', // Enable horizontal scrolling on small screens
-                            '&::-webkit-scrollbar': { display: 'none' }, // Hide scrollbar on webkit browsers
-                            msOverflowStyle: 'none', // Hide scrollbar on IE/Edge
-                            scrollbarWidth: 'none', // Hide scrollbar on Firefox
+                            flex: 1,
                         }}>
                             {navigationItems.map(({ label, path }) => (
                                 <Button
@@ -281,20 +317,23 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                     sx={{
                                         color: 'white',
                                         textTransform: 'none',
-                                        px: { xs: 1.5, sm: 2 }, // Responsive padding
-                                        py: 0, // No vertical padding
+                                        px: 2,
+                                        py: 0.75, // Reduced padding for smaller highlights
                                         fontWeight: isActiveRoute(path) ? 600 : 400,
-                                        fontSize: { xs: '0.9rem', sm: '0.98rem' }, // Responsive font size
-                                        borderRadius: 2, // Rounded hover/active states
-                                        fontFamily: 'Exo, sans-serif', // Ensure Exo font is used
-                                        whiteSpace: 'nowrap', // Prevent text wrapping
+                                        fontSize: '0.95rem',
+                                        borderRadius: 2,
+                                        fontFamily: 'Exo, sans-serif',
+                                        whiteSpace: 'nowrap',
+                                        minHeight: 32, // Reduced height for smaller highlights
+                                        minWidth: 'auto',
                                         '&:hover': {
                                             backgroundColor: 'rgba(255, 255, 255, 0.1)',
                                         },
                                         '&.MuiButton-contained': {
-                                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                            backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                                            color: 'white',
                                             '&:hover': {
-                                                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.35)',
                                             },
                                         },
                                     }}
@@ -303,20 +342,20 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                 </Button>
                             ))}
 
-                            {/* Admin Dropdown */}
+                            {/* Admin Button */}
                             {isAdmin && (
                                 <Button
-                                    onClick={handleAdminMenuOpen}
-                                    endIcon={<KeyboardArrowDown />}
+                                    onClick={() => navigate('/admin')}
                                     sx={{
                                         color: 'white',
                                         textTransform: 'none',
                                         px: 2,
-                                        py: 0, // No vertical padding
+                                        py: 0.75, // Reduced padding for smaller highlights
                                         fontWeight: 400,
-                                        fontSize: '0.95rem', // Larger font size
-                                        borderRadius: 2, // Rounded hover/active states
-                                        fontFamily: 'Exo, sans-serif', // Ensure Exo font is used
+                                        fontSize: '0.95rem',
+                                        borderRadius: 2,
+                                        fontFamily: 'Exo, sans-serif',
+                                        minHeight: 32, // Reduced height for smaller highlights
                                         '&:hover': {
                                             backgroundColor: 'rgba(255, 255, 255, 0.1)',
                                         },
@@ -327,19 +366,43 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                             )}
                         </Box>
 
-                        {/* Right Auth Section */}
+                        {/* Mobile Menu Button - Moved more to the right */}
                         <Box sx={{ 
-                            display: 'flex', 
+                            display: { xs: 'flex', md: 'none' },
+                            position: 'relative',
+                            zIndex: 10,
+                            flexShrink: 0,
+                            mt: 0.5,
+                            ml: 3,
+                        }}>
+                            <IconButton
+                                color="inherit"
+                                aria-label="open drawer"
+                                edge="start"
+                                onClick={handleDrawerToggle}
+                                sx={{ 
+                                    color: 'white',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                    }
+                                }}
+                            >
+                                <MenuIcon />
+                            </IconButton>
+                        </Box>
+
+                        {/* Right Auth Section - Hidden on small screens, only show on medium and up */}
+                        <Box sx={{ 
+                            display: { xs: 'none', md: 'flex' }, 
                             alignItems: 'center', 
                             gap: 1, 
                             pb: 1.2,
-                            overflowX: 'auto', // Enable horizontal scrolling on small screens
-                            '&::-webkit-scrollbar': { display: 'none' }, // Hide scrollbar on webkit browsers
-                            msOverflowStyle: 'none', // Hide scrollbar on IE/Edge
-                            scrollbarWidth: 'none', // Hide scrollbar on Firefox
+                            flexShrink: 0,
+                            minWidth: 'fit-content',
+                            ml: 'auto',
                         }}>
                             {!isAuthenticated ? (
-                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap' }}>
                                     <Button
                                         variant="outlined"
                                         onClick={() => navigate('/login')}
@@ -347,12 +410,13 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                             color: 'white',
                                             borderColor: 'rgba(255, 255, 255, 0.5)',
                                             textTransform: 'none',
-                                            px: { xs: 1.5, sm: 2 }, // Responsive padding
-                                            py: 0, // No vertical padding
-                                            fontSize: { xs: '0.85rem', sm: '0.95rem' }, // Responsive font size
-                                            borderRadius: 2, // Rounded hover/active states
-                                            fontFamily: 'Exo, sans-serif', // Ensure Exo font is used
-                                            whiteSpace: 'nowrap', // Prevent text wrapping
+                                            px: { xs: 1.5, sm: 2 },
+                                            py: 1,
+                                            fontSize: { xs: '0.8rem', sm: '0.9rem' },
+                                            borderRadius: 2,
+                                            fontFamily: 'Exo, sans-serif',
+                                            whiteSpace: 'nowrap',
+                                            minHeight: 36,
                                             '&:hover': {
                                                 borderColor: 'white',
                                                 backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -366,15 +430,16 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                         onClick={() => navigate('/register')}
                                         sx={{
                                             backgroundColor: 'white',
-                                            color: 'primary.main', // Red text to match background
+                                            color: 'primary.main',
                                             textTransform: 'none',
-                                            px: { xs: 1.5, sm: 2 }, // Responsive padding
-                                            py: 0, // No vertical padding
-                                            fontSize: { xs: '0.85rem', sm: '0.95rem' }, // Responsive font size
+                                            px: { xs: 1.5, sm: 2 },
+                                            py: 1,
+                                            fontSize: { xs: '0.8rem', sm: '0.9rem' },
                                             fontWeight: 600,
-                                            borderRadius: 2, // Rounded hover/active states
-                                            fontFamily: 'Exo, sans-serif', // Ensure Exo font is used
-                                            whiteSpace: 'nowrap', // Prevent text wrapping
+                                            borderRadius: 2,
+                                            fontFamily: 'Exo, sans-serif',
+                                            whiteSpace: 'nowrap',
+                                            minHeight: 36,
                                             '&:hover': {
                                                 backgroundColor: 'rgba(255, 255, 255, 0.9)',
                                             },
@@ -388,48 +453,66 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                     <Typography variant="body2" sx={{ 
                                         color: 'white', 
                                         opacity: 0.9, 
-                                        fontSize: { xs: '0.85rem', sm: '0.95rem' }, // Responsive font size
-                                        fontFamily: 'Exo, sans-serif', // Ensure Exo font is used
-                                        whiteSpace: 'nowrap', // Prevent text wrapping
+                                        fontSize: { xs: '0.8rem', sm: '0.9rem' },
+                                        fontFamily: 'Exo, sans-serif',
+                                        whiteSpace: 'nowrap',
+                                        display: { xs: 'none', sm: 'block' }
                                     }}>
                                         {user.username}
                                     </Typography>
                                     <Avatar
                                         onClick={handleUserMenuOpen}
                                         sx={{
-                                            width: 12, // Extremely small for very thin height
-                                            height: 12, // Extremely small for very thin height
+                                            width: 32,
+                                            height: 32,
                                             cursor: 'pointer',
                                             backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                                            borderRadius: 2, // Rounded avatar
+                                            borderRadius: 2,
                                             '&:hover': {
                                                 backgroundColor: 'rgba(255, 255, 255, 0.3)',
                                             },
                                         }}
                                     >
-                                        {user.username?.charAt(0)?.toUpperCase() || 'U'}
+                                        {user?.team && isLoadingTeam ? (
+                                            <SportsFootball sx={{ fontSize: '1rem' }} />
+                                        ) : user?.team && teamData ? (
+                                            <img 
+                                                src={teamData.logo} 
+                                                alt={`${user.team} Logo`}
+                                                style={{ 
+                                                    width: '100%', 
+                                                    height: '100%',
+                                                    objectFit: 'contain',
+                                                    borderRadius: '4px'
+                                                }}
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                    e.target.nextSibling.style.display = 'block';
+                                                }}
+                                            />
+                                        ) : (
+                                            user?.username?.charAt(0)?.toUpperCase() || 'U'
+                                        )}
+                                        {user?.team && teamData && (
+                                            <Avatar
+                                                sx={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                                    fontSize: '0.8rem',
+                                                    display: 'none'
+                                                }}
+                                            >
+                                                {user.team.charAt(0).toUpperCase()}
+                                            </Avatar>
+                                        )}
                                     </Avatar>
                                 </Box>
-                            )}
-
-                            {/* Mobile Menu Button */}
-                            {isMobile && (
-                                <IconButton
-                                    color="inherit"
-                                    aria-label="open drawer"
-                                    edge="start"
-                                    onClick={handleDrawerToggle}
-                                    sx={{ ml: 1 }}
-                                >
-                                    <MenuIcon />
-                                </IconButton>
                             )}
                         </Box>
                     </Toolbar>
                 </Container>
             </AppBar>
-
-
 
             {/* Mobile Drawer */}
             <Drawer
@@ -444,48 +527,15 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     '& .MuiDrawer-paper': {
                         boxSizing: 'border-box',
                         width: 280,
+                        backgroundColor: 'primary.main',
+                        color: 'white',
                     },
                 }}
             >
                 {drawer}
             </Drawer>
 
-            {/* Admin Dropdown Menu */}
-            <MuiMenu
-                anchorEl={adminMenuAnchor}
-                open={Boolean(adminMenuAnchor)}
-                onClose={handleAdminMenuClose}
-                anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'left',
-                }}
-                transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'left',
-                }}
-                PaperProps={{
-                    sx: {
-                        mt: 1,
-                        minWidth: 200,
-                        boxShadow: theme.shadows[8],
-                        borderRadius: 0, // No rounded edges
-                    },
-                }}
-            >
-                {adminMenuItems.map(({ label, path }) => (
-                    <MenuItem
-                        key={label}
-                        onClick={() => handleNavigation(path)}
-                        sx={{
-                            py: 1.5,
-                            px: 2,
-                            borderRadius: 0, // No rounded edges
-                        }}
-                    >
-                        {label}
-                    </MenuItem>
-                ))}
-            </MuiMenu>
+
 
             {/* User Menu */}
             <Menu
@@ -505,7 +555,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                         mt: 1,
                         minWidth: 180,
                         boxShadow: theme.shadows[8],
-                        borderRadius: 0, // No rounded edges
+                        borderRadius: 0,
                     },
                 }}
             >
@@ -523,7 +573,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                         sx={{
                             py: 1.5,
                             px: 2,
-                            borderRadius: 0, // No rounded edges
+                            borderRadius: 0,
                         }}
                     >
                         <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>

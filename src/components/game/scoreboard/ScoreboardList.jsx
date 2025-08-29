@@ -49,6 +49,7 @@ const ScoreboardList = ({
 }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
     const navigate = useNavigate();
     
     // Use custom hooks for better organization
@@ -58,6 +59,23 @@ const ScoreboardList = ({
 
     // Check if this is showing past games
     const isPastGames = title === "Past Games" || title === "Scrimmages";
+
+    // Get responsive column definitions
+    const getGridColumns = () => {
+        const size = isSmallScreen ? 'small' : 'large';
+        return isPastGames 
+            ? SCOREBOARD_CONSTANTS.GRID_COLUMNS.PAST_GAMES[size]
+            : SCOREBOARD_CONSTANTS.GRID_COLUMNS.LIVE_GAMES[size];
+    };
+
+    // Get responsive minimum widths
+    const getMinWidth = () => {
+        if (isPastGames) {
+            return isSmallScreen ? '450px' : '1500px';
+        } else {
+            return isSmallScreen ? '630px' : '1500px';
+        }
+    };
 
     if (loading) {
         return (
@@ -179,6 +197,7 @@ const ScoreboardList = ({
                 overflow: 'hidden',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                 overflowX: 'auto', // Enable horizontal scrolling
+                position: 'relative', // For sticky header positioning
                 '&::-webkit-scrollbar': { 
                     height: '8px',
                     backgroundColor: '#f1f1f1'
@@ -194,15 +213,31 @@ const ScoreboardList = ({
                 {/* Header Row */}
                 <Box sx={{
                     display: 'grid',
-                    gridTemplateColumns: isPastGames ? SCOREBOARD_CONSTANTS.GRID_COLUMNS.PAST_GAMES : SCOREBOARD_CONSTANTS.GRID_COLUMNS.LIVE_GAMES,
+                    gridTemplateColumns: getGridColumns(),
                     gap: 1,
                     p: 1.5,
                     backgroundColor: theme.palette.primary.main,
                     color: 'white',
-                    minWidth: isPastGames ? '400px' : '800px' // Match the minimum width of game rows
+                    minWidth: getMinWidth(),
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 1,
+                    width: 'max-content', // Force header to cover full content width
+                    '& > *': {
+                        backgroundColor: theme.palette.primary.main, // Ensure each header cell is blue
+                    }
                 }}>
                     {SCOREBOARD_CONSTANTS.COLUMN_HEADERS[isPastGames ? 'PAST_GAMES' : 'LIVE_GAMES'].map((header, index) => (
-                        <Typography key={index} sx={{ fontSize: '0.875rem', fontWeight: 600, textAlign: 'center' }}>
+                        <Typography key={index} sx={{ 
+                            fontSize: '0.875rem', 
+                            fontWeight: 600, 
+                            textAlign: 'center',
+                            backgroundColor: theme.palette.primary.main, // Ensure each header cell is blue
+                            minHeight: '100%', // Full height coverage
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
                             {header}
                         </Typography>
                     ))}
@@ -222,14 +257,14 @@ const ScoreboardList = ({
                             key={game.gameId || game.id}
                             sx={{
                                 display: 'grid',
-                                gridTemplateColumns: isPastGames ? SCOREBOARD_CONSTANTS.GRID_COLUMNS.PAST_GAMES : SCOREBOARD_CONSTANTS.GRID_COLUMNS.LIVE_GAMES,
+                                gridTemplateColumns: getGridColumns(),
                                 gap: 1,
                                 p: 1.5,
                                 borderBottom: index < games.length - 1 ? '1px solid #e9ecef' : 'none',
                                 cursor: 'pointer',
                                 transition: 'background-color 0.2s',
                                 backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa',
-                                minWidth: isPastGames ? '400px' : '800px', // Minimum width to prevent squishing
+                                minWidth: getMinWidth(), // Minimum width to prevent squishing
                                 '&:hover': {
                                     backgroundColor: theme.palette.primary.light + '20'
                                 }
@@ -241,8 +276,8 @@ const ScoreboardList = ({
                                 {/* Home Team */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                     <Box sx={{
-                                        width: 24,
-                                        height: 24,
+                                        width: { xs: 18, sm: 24 },
+                                        height: { xs: 18, sm: 24 },
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -267,13 +302,16 @@ const ScoreboardList = ({
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                         <Typography sx={{
                                             color: 'text.primary',
-                                            fontSize: '0.875rem',
+                                            fontSize: { xs: '0.7rem', sm: '1rem' },
                                             fontWeight: 600,
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap'
                                         }}>
-                                            {homeTeamName}
+                                            {isSmallScreen 
+                                                ? (homeTeamData?.short_name || homeTeamData?.abbreviation || '')
+                                                : homeTeamName
+                                            }
                                         </Typography>
                                         {/* Home Team Ranking */}
                                         {homeTeamData?.coaches_poll_ranking && homeTeamData.coaches_poll_ranking > 0 && (
@@ -282,7 +320,6 @@ const ScoreboardList = ({
                                                 fontSize: '0.7rem',
                                                 fontWeight: 700,
                                                 backgroundColor: 'warning.light',
-                                                color: 'warning.contrastText',
                                                 px: 0.5,
                                                 py: 0.1,
                                                 borderRadius: 1,
@@ -300,8 +337,8 @@ const ScoreboardList = ({
                                 {/* Away Team */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                     <Box sx={{
-                                        width: 24,
-                                        height: 24,
+                                        width: { xs: 18, sm: 24 },
+                                        height: { xs: 18, sm: 24 },
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -326,13 +363,16 @@ const ScoreboardList = ({
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                         <Typography sx={{
                                             color: 'text.primary',
-                                            fontSize: '0.875rem',
+                                            fontSize: { xs: '0.7rem', sm: '1rem' },
                                             fontWeight: 600,
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap'
                                         }}>
-                                            {awayTeamName}
+                                            {isSmallScreen 
+                                                ? (awayTeamData?.short_name || awayTeamData?.abbreviation || '')
+                                                : awayTeamName
+                                            }
                                         </Typography>
                                         {/* Away Team Ranking */}
                                         {awayTeamData?.coaches_poll_ranking && awayTeamData.coaches_poll_ranking > 0 && (
@@ -341,7 +381,6 @@ const ScoreboardList = ({
                                                 fontSize: '0.7rem',
                                                 fontWeight: 700,
                                                 backgroundColor: 'warning.light',
-                                                color: 'warning.contrastText',
                                                 px: 0.5,
                                                 py: 0.1,
                                                 borderRadius: 1,

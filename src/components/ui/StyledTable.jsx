@@ -5,8 +5,7 @@ import {
     TableCell, 
     TableContainer, 
     TableHead, 
-    TableRow, 
-    Paper, 
+    TableRow,
     Typography,
     Box,
     useTheme,
@@ -24,6 +23,9 @@ const StyledTable = ({
     showHeader = true,
     onRowClick,
     sx = {},
+    compact = false,
+    headerBackground = 'transparent',
+    headerTextColor = 'text.primary',
     ...props 
 }) => {
     const theme = useTheme();
@@ -71,14 +73,15 @@ const StyledTable = ({
                     borderRadius: 0,
                     border: 'none',
                     boxShadow: 'none',
-                    overflow: 'visible',
+                    overflow: 'auto',
                     backgroundColor: 'transparent',
+                    maxHeight: maxHeight,
                 }}
             >
                 <Table
                     stickyHeader={stickyHeader}
                     sx={{
-                        minWidth: 650,
+                        minWidth: compact ? 800 : 650,
                         '& .MuiTableCell-root': {
                             borderBottom: `1px solid ${theme.palette.divider}`,
                         },
@@ -93,14 +96,14 @@ const StyledTable = ({
                                         key={column.id}
                                         align={column.align || 'left'}
                                         sx={{
-                                            backgroundColor: theme.palette.background.paper,
+                                            backgroundColor: headerBackground,
                                             fontWeight: 700,
-                                            color: 'text.primary',
-                                            fontSize: '0.875rem',
+                                            color: headerTextColor,
+                                            fontSize: compact ? '0.75rem' : '0.875rem',
                                             textTransform: 'uppercase',
                                             letterSpacing: '0.5px',
-                                            py: 2,
-                                            px: 3,
+                                            py: compact ? 1 : 2,
+                                            px: compact ? 2 : 3,
                                             borderBottom: `2px solid ${theme.palette.primary.main}`,
                                         }}
                                     >
@@ -134,9 +137,9 @@ const StyledTable = ({
                                         key={column.id}
                                         align={column.align || 'left'}
                                         sx={{
-                                            py: 2,
-                                            px: 3,
-                                            fontSize: '0.875rem',
+                                            py: compact ? 1 : 2,
+                                            px: compact ? 2 : 3,
+                                            fontSize: compact ? '0.75rem' : '0.875rem',
                                             color: 'text.primary',
                                             fontWeight: column.id === 'name' || column.id === 'team' ? 600 : 400,
                                         }}
@@ -170,6 +173,9 @@ StyledTable.propTypes = {
     showHeader: PropTypes.bool,
     onRowClick: PropTypes.func,
     sx: PropTypes.object,
+    compact: PropTypes.bool,
+    headerBackground: PropTypes.string,
+    headerTextColor: PropTypes.string,
 };
 
 export default StyledTable; 

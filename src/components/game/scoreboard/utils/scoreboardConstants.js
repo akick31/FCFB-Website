@@ -2,8 +2,14 @@ export const SCOREBOARD_CONSTANTS = {
     DEFAULT_ROWS_PER_PAGE: 10,
     ROWS_PER_PAGE_OPTIONS: [5, 10, 25, 50],
     GRID_COLUMNS: {
-        LIVE_GAMES: '2.5fr 1fr 0.8fr 0.8fr 1.2fr 0.8fr 1fr 1fr 1fr',
-        PAST_GAMES: '2.5fr 1fr 1fr'
+        LIVE_GAMES: {
+            small: '200px 80px 70px 70px 80px 70px 80px 80px 80px',
+            large: '350px 140px 100px 100px 160px 100px 120px 120px 120px'
+        },
+        PAST_GAMES: {
+            small: '200px 125px 125px',
+            large: '400px 550px 550px'
+        }
     },
     COLUMN_HEADERS: {
         LIVE_GAMES: [
