@@ -39,19 +39,20 @@ const GameDetails = () => {
         const fetchGame = async () => {
             try {
                 const gameResponse = await getGameById(gameId);
-                setGame(gameResponse.data);
+                console.log(gameResponse);
+                setGame(gameResponse);
 
                 const scorebugResponse = await getLatestScorebugByGameId(gameId);
                 setScorebug(scorebugResponse);
 
-                const homeTeamResponse = await getTeamByName(gameResponse.data.home_team);
-                const awayTeamResponse = await getTeamByName(gameResponse.data.away_team);
+                const homeTeamResponse = await getTeamByName(gameResponse.home_team);
+                const awayTeamResponse = await getTeamByName(gameResponse.away_team);
                 setHomeTeam(homeTeamResponse);
                 setAwayTeam(awayTeamResponse);
 
                 const [homeStats, awayStats] = await Promise.all([
-                    getGameStatsByIdAndTeam(gameId, gameResponse.data.home_team),
-                    getGameStatsByIdAndTeam(gameId, gameResponse.data.away_team)
+                    getGameStatsByIdAndTeam(gameId, gameResponse.home_team),
+                    getGameStatsByIdAndTeam(gameId, gameResponse.away_team)
                 ]);
                 setGameStats({
                     home: homeStats.data,
@@ -73,7 +74,7 @@ const GameDetails = () => {
             if (game) {
                 try {
                     const response = await getAllPlaysByGameId(gameId);
-                    const sortedPlays = response.data.sort((a, b) =>
+                    const sortedPlays = response.sort((a, b) =>
                         a[orderBy] > b[orderBy] ? (order === 'asc' ? 1 : -1) :
                             a[orderBy] < b[orderBy] ? (order === 'asc' ? -1 : 1) : 0
                     );
