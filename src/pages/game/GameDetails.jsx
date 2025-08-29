@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {Box, Typography, Card, CardContent, Chip, useTheme, IconButton, Grid} from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
-import { getAllPlaysForGame } from "../../api/playApi";
+import { getAllPlaysByGameId } from "../../api/playApi";
 import { getGameById } from "../../api/gameApi";
 import { getLatestScorebugByGameId } from "../../api/scorebugApi";
 import PlaysTable from "../../components/game/plays/PlaysTable";
@@ -72,7 +72,7 @@ const GameDetails = () => {
         const fetchPlays = async () => {
             if (game) {
                 try {
-                    const response = await getAllPlaysForGame(gameId);
+                    const response = await getAllPlaysByGameId(gameId);
                     const sortedPlays = response.data.sort((a, b) =>
                         a[orderBy] > b[orderBy] ? (order === 'asc' ? 1 : -1) :
                             a[orderBy] < b[orderBy] ? (order === 'asc' ? -1 : 1) : 0

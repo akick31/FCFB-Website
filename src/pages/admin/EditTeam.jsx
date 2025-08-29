@@ -25,7 +25,7 @@ import { adminNavigationItems } from '../../config/adminNavigation';
 import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS, CONFERENCES, SUBDIVISIONS } from '../../constants/teamEnums';
 import { formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 
-const TeamEdit = () => {
+const EditTeam = () => {
     const { teamId } = useParams();
     const navigate = useNavigate();
     const [team, setTeam] = useState(null);
@@ -75,7 +75,7 @@ const TeamEdit = () => {
             await updateTeam(team);
             setSuccess(true);
             setTimeout(() => {
-                navigate('/admin/teams');
+                navigate('/admin/team-management');
             }, 1500);
         } catch (error) {
             console.error('Failed to update team:', error);
@@ -117,7 +117,7 @@ const TeamEdit = () => {
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                     <IconButton
-                        onClick={() => navigate('/admin/teams')}
+                        onClick={() => navigate('/admin/team-management')}
                         sx={{ color: 'primary.main', mr: 2 }}
                     >
                         <ArrowBack />
@@ -727,5 +727,5 @@ const TeamEdit = () => {
     );
 };
 
-export default TeamEdit;
+export default EditTeam;
 

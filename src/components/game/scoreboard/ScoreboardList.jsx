@@ -42,10 +42,13 @@ const ScoreboardList = ({
     error, 
     currentPage, 
     totalPages, 
+    totalGames,
     onPageChange,
     title = "Games",
     filters,
-    setFilters
+    setFilters,
+    seasonFilter,
+    weekFilter
 }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -103,15 +106,7 @@ const ScoreboardList = ({
         );
     }
 
-    if (!games || games.length === 0) {
-        return (
-            <Box sx={{ textAlign: 'center', p: 4 }}>
-                <Typography variant="h6" color="text.secondary">
-                    No games found
-                </Typography>
-            </Box>
-        );
-    }
+    // Note: We don't return early here anymore - we'll show the header with filters even when no games are found
 
 
 
@@ -142,27 +137,41 @@ const ScoreboardList = ({
 
     return (
         <Box>
-            {/* Header with Filter Button and Rows Per Page */}
+            {/* Header with Title, Games Count, Season/Week Filters, and Controls */}
             <Box sx={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
-                alignItems: 'center', 
+                alignItems: 'flex-start', 
                 mb: 3 
             }}>
-                <Box>
-                    <Typography variant="h5" sx={{ 
-                        fontWeight: 600, 
-                        color: theme.palette.primary.main,
-                        mb: 1
-                    }}>
-                        {title}
-                    </Typography>
+                <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, flexWrap: 'wrap' }}>
+                        <Typography variant="h5" sx={{ 
+                            fontWeight: 600, 
+                            color: theme.palette.primary.main
+                        }}>
+                            {title}
+                        </Typography>
+                        
+                        {/* Season and Week Filters - only show if provided */}
+                        {seasonFilter && (
+                            <Box sx={{ minWidth: 150 }}>
+                                {seasonFilter}
+                            </Box>
+                        )}
+                        {weekFilter && (
+                            <Box sx={{ minWidth: 150 }}>
+                                {weekFilter}
+                            </Box>
+                        )}
+                    </Box>
+                    
                     <Typography variant="body2" color="text.secondary">
-                        {games.length} game{games.length !== 1 ? 's' : ''} found
+                        {totalGames} game{totalGames !== 1 ? 's' : ''} found
                     </Typography>
                 </Box>
                 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
                     {/* Rows Per Page Selector */}
                     <FormControl size="small" sx={{ minWidth: 120 }}>
                         <InputLabel>Rows</InputLabel>
@@ -189,27 +198,40 @@ const ScoreboardList = ({
                 </Box>
             </Box>
 
-            {/* Compact Games List */}
-            <Box sx={{ 
-                backgroundColor: '#f8f9fa',
-                borderRadius: 2,
-                border: '1px solid #e9ecef',
-                overflow: 'hidden',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                overflowX: 'auto', // Enable horizontal scrolling
-                position: 'relative', // For sticky header positioning
-                '&::-webkit-scrollbar': { 
-                    height: '8px',
-                    backgroundColor: '#f1f1f1'
-                },
-                '&::-webkit-scrollbar-thumb': {
-                    backgroundColor: '#c1c1c1',
-                    borderRadius: '4px'
-                },
-                '&::-webkit-scrollbar-thumb:hover': {
-                    backgroundColor: '#a8a8a8'
-                }
-            }}>
+            {/* Games List or No Games Message */}
+            {(!games || games.length === 0) ? (
+                <Box sx={{ 
+                    textAlign: 'center', 
+                    p: 4,
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: 2,
+                    border: '1px solid #e9ecef'
+                }}>
+                    <Typography variant="h6" color="text.secondary">
+                        No games found
+                    </Typography>
+                </Box>
+            ) : (
+                <Box sx={{ 
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: 2,
+                    border: '1px solid #e9ecef',
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    overflowX: 'auto', // Enable horizontal scrolling
+                    position: 'relative', // For sticky header positioning
+                    '&::-webkit-scrollbar': { 
+                        height: '8px',
+                        backgroundColor: '#f1f1f1'
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                        backgroundColor: '#c1c1c1',
+                        borderRadius: '4px'
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                        backgroundColor: '#a8a8a8'
+                    }
+                }}>
                 {/* Header Row */}
                 <Box sx={{
                     display: 'grid',
@@ -653,10 +675,11 @@ const ScoreboardList = ({
                         </Box>
                     );
                 })}
-            </Box>
+                </Box>
+            )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
+            {/* Pagination - only show when there are games and multiple pages */}
+            {games && games.length > 0 && totalPages > 1 && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                     <Pagination
                         count={totalPages}
@@ -700,10 +723,13 @@ ScoreboardList.propTypes = {
     error: PropTypes.string,
     currentPage: PropTypes.number.isRequired,
     totalPages: PropTypes.number.isRequired,
+    totalGames: PropTypes.number.isRequired,
     onPageChange: PropTypes.func.isRequired,
     title: PropTypes.string,
     filters: PropTypes.object,
-    setFilters: PropTypes.func
+    setFilters: PropTypes.func,
+    seasonFilter: PropTypes.node,
+    weekFilter: PropTypes.node
 };
 
 export default ScoreboardList; 

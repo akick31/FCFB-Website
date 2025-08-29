@@ -13,14 +13,13 @@ import {
 import ConferenceDropdown from "../dropdown/ConferenceDropdown";
 import GameTypeDropdown from "../dropdown/GameTypeDropdown";
 import GameStatusDropdown from "../dropdown/GameStatusDropdown";
-import WeekDropdown from "../dropdown/WeekDropdown";
-import SeasonDropdown from "../dropdown/SeasonDropdown";
+
 
 const FilterMenu = ({ onApply, category }) => {
     console.log('FilterMenu category:', category);
     const availableFilters = {
         livegames: ['conference', 'gameType', 'gameStatus', 'rankedGame', 'sort'],
-        pastgames: ['conference', 'gameType', 'week', 'season', 'rankedGame', 'sort'],
+        pastgames: ['conference', 'gameType', 'rankedGame', 'sort'],
         scrimmages: ['conference', 'gameStatus', 'rankedGame', 'sort'],
     }[category] || [];
     console.log('Available filters:', availableFilters);
@@ -33,8 +32,6 @@ const FilterMenu = ({ onApply, category }) => {
                 filters: [],
                 sort: 'CLOSEST_TO_END',
                 conference: null,
-                season: null,
-                week: null,
                 gameType: null,
                 gameStatus: null,
                 rankedGame: null,
@@ -101,8 +98,6 @@ const FilterMenu = ({ onApply, category }) => {
             filters: [],
             sort: 'CLOSEST_TO_END',
             conference: null,
-            season: null,
-            week: null,
             gameType: null,
             gameStatus: null,
             rankedGame: null,
@@ -119,8 +114,6 @@ const FilterMenu = ({ onApply, category }) => {
         if (pendingFilters.gameType) count++;
         if (pendingFilters.gameStatus) count++;
         if (pendingFilters.rankedGame) count++;
-        if (pendingFilters.season) count++;
-        if (pendingFilters.week) count++;
         if (pendingFilters.filters.length > 0) count++;
         return count;
     };
@@ -214,27 +207,7 @@ const FilterMenu = ({ onApply, category }) => {
                     </Box>
                 )}
 
-                {/* Season Filter */}
-                {availableFilters.includes('season') && (
-                    <Box sx={{ mb: 2 }}>
-                        <SeasonDropdown
-                            value={pendingFilters.season}
-                            onChange={handleChange('season')}
-                            label="Season"
-                        />
-                    </Box>
-                )}
 
-                {/* Week Filter */}
-                {availableFilters.includes('week') && (
-                    <Box sx={{ mb: 2 }}>
-                        <WeekDropdown
-                            value={pendingFilters.week}
-                            onChange={handleChange('week')}
-                            label="Week"
-                        />
-                    </Box>
-                )}
             </Box>
 
             <Divider sx={{ my: 2 }} />

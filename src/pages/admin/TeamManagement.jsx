@@ -96,7 +96,7 @@ const TeamManagement = () => {
     };
 
     const handleTeamClick = (team) => {
-        navigate(`/admin/teams/${team.id}`);
+                        navigate(`/admin/edit-team/${team.id}`);
     };
 
     const getStatusColor = (team) => {
@@ -153,7 +153,7 @@ const TeamManagement = () => {
                     size="small"
                     onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/admin/teams/${team.id}`);
+                        navigate(`/admin/edit-team/${team.id}`);
                     }}
                     sx={{ color: 'primary.main' }}
                 >

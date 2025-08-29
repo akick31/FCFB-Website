@@ -8,7 +8,7 @@ export { GameDetails, Scoreboard } from './game';
 export { Teams, TeamDetails, ModifyTeam } from './team';
 
 // Admin Pages
-export { Admin, UserManagement, GameManagement, TeamManagement, TeamEdit, CoachManagement } from './admin';
+export { Admin, UserManagement, GameManagement, TeamManagement, EditTeam, CoachManagement, CoachTransactionLog, EditGame } from './admin';
 
 // Core Pages
 export { Home, Profile, Standings, Rankings, Error, NotFound } from './core';

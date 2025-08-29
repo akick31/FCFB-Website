@@ -28,10 +28,12 @@ import {
     Standings,
     Rankings,
     TeamManagement,
-    TeamEdit,
+    EditTeam,
     GameManagement,
     UserManagement,
-    CoachManagement
+    CoachManagement,
+    CoachTransactionLog,
+    EditGame
 } from './pages';
 import Theme from "./styles/Theme";
 
@@ -127,7 +129,9 @@ const App = () => {
                             <Route path="/admin/coach-management" element={<CoachManagement user={user} />} />
                             <Route path="/admin/game-management" element={<GameManagement user={user} />} />
                             <Route path="/admin/team-management" element={<TeamManagement user={user} />} />
-                            <Route path="/admin/teams/:teamId" element={<TeamEdit user={user} />} />
+                            <Route path="/admin/coach-transaction-log" element={<CoachTransactionLog user={user} />} />
+                            <Route path="/admin/edit-game/:gameId" element={<EditGame user={user} />} />
+                            <Route path="/admin/edit-team/:teamId" element={<EditTeam user={user} />} />
                             <Route path="/verify" element={<Verify
                                 userId={new URLSearchParams(window.location.search).get('id')}/>} />
                             <Route path="/game-details/:gameId" element={<GameDetails />} />
