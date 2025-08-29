@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { formatPlaybook, formatRole, formatPosition } from "../../utils/formatText";
+import { formatOffensivePlaybook, formatDefensivePlaybook, formatRole, formatPosition } from "../../utils/formatText";
 
 const UsersTable = ({
                         users,
@@ -119,8 +119,8 @@ const UsersTable = ({
                                 <TableCell>{user.bowl_wins}</TableCell>
                                 <TableCell>{user.playoff_wins}</TableCell>
                                 <TableCell>{user.national_championship_wins}</TableCell>
-                                <TableCell>{formatPlaybook(user.offensive_playbook)}</TableCell>
-                                <TableCell>{formatPlaybook(user.defensive_playbook)}</TableCell>
+                                <TableCell>{formatOffensivePlaybook(user.offensive_playbook)}</TableCell>
+                                <TableCell>{formatDefensivePlaybook(user.defensive_playbook)}</TableCell>
                                 <TableCell>{user.average_response_time}</TableCell>
                             </TableRow>
                         ))}

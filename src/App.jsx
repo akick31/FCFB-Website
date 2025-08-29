@@ -1,30 +1,62 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import Header from './components/header/Header';
-import Home from './pages/Home';
-import GameDetails from "./pages/GameDetails";
-import Scoreboard from './pages/Scoreboard';
-import Teams from './pages/Teams';
-import TeamDetails from './pages/TeamDetails';
-import Login from './pages/Login';
-import ModifyTeam from './pages/ModifyTeam';
-import Registration from './pages/Registration';
-import Profile from './pages/Profile';
-import Admin from './pages/Admin';
-import Verify from "./pages/Verify";
-import Users from './pages/Users';
-import NotFound from './pages/NotFound';
-import ErrorPage from "./pages/Error";
+import {
+    Home,
+    GameDetails,
+    Scoreboard,
+    Teams,
+    TeamDetails,
+    Login,
+    ModifyTeam,
+    Registration,
+    Profile,
+    Admin,
+    Verify,
+    NotFound,
+    Error
+} from './pages';
 import { getUserById } from './api/userApi';
 import { checkIfUserIsAdmin } from "./utils/utils";
 import { CssBaseline } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import { Box } from '@mui/system';
-import NewSignups from "./pages/NewSignups";
+import {
+    ResetPassword,
+    Complete,
+    RegistrationSuccess,
+    Standings,
+    Rankings,
+    TeamManagement,
+    EditTeam,
+    GameManagement,
+    UserManagement,
+    CoachManagement,
+    CoachTransactionLog,
+    EditGame
+} from './pages';
 import Theme from "./styles/Theme";
-import ResetPassword from "./pages/ResetPassword";
-import FinishRegistration from "./pages/FinishRegistration";
-import OpenTeams from "./pages/OpenTeams"; // Box component for layout control
+
+// Component to conditionally render header
+const ConditionalHeader = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, setIsAdmin }) => {
+    const location = useLocation();
+    const isAdminRoute = location.pathname.startsWith('/admin');
+    
+    if (isAdminRoute) {
+        return null; // Don't render header for admin routes
+    }
+    
+    return (
+        <Header
+            isAuthenticated={isAuthenticated}
+            isAdmin={isAdmin}
+            user={user}
+            setIsAuthenticated={setIsAuthenticated}
+            setUser={setUser}
+            setIsAdmin={setIsAdmin}
+        />
+    );
+};
 
 const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -60,16 +92,16 @@ const App = () => {
     return (
         <ThemeProvider theme={Theme}>
             <Router>
-                <CssBaseline /> {/* Normalize and reset browser styles */}
+                <CssBaseline />
                 <Box
                     sx={{
                         display: 'flex',
                         flexDirection: 'column',
-                        height: '100vh', // Ensures full viewport height
-                        overflow: 'hidden', // Prevents scrolling
+                        minHeight: '100vh',
+                        background: 'background.default',
                     }}
                 >
-                    <Header
+                    <ConditionalHeader
                         isAuthenticated={isAuthenticated}
                         isAdmin={isAdmin}
                         user={user}
@@ -81,31 +113,37 @@ const App = () => {
                         component="main"
                         sx={{
                             flexGrow: 1,
-                            overflowY: 'auto',
-                            paddingTop: 8,
-                            paddingX: 2,
-                            backgroundColor: '#ffffff',
+                            display: 'flex',
+                            flexDirection: 'column',
                         }}
                     >
                         <Routes>
                             <Route path="/" element={<Home />} />
                             <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUser={setUser} setIsAdmin={setIsAdmin} />} />
                             <Route path="/register" element={<Registration />} />
-                            <Route path="/finish-registration" element={<FinishRegistration />} />
+                            <Route path="/register/complete" element={<Complete />} />
+                            <Route path="/register/success" element={<RegistrationSuccess />} />
                             <Route path="/profile" element={<Profile user={user} />} />
                             <Route path="/admin" element={<Admin user={user} />} />
+                            <Route path="/admin/user-management" element={<UserManagement user={user} />} />
+                            <Route path="/admin/coach-management" element={<CoachManagement user={user} />} />
+                            <Route path="/admin/game-management" element={<GameManagement user={user} />} />
+                            <Route path="/admin/team-management" element={<TeamManagement user={user} />} />
+                            <Route path="/admin/coach-transaction-log" element={<CoachTransactionLog user={user} />} />
+                            <Route path="/admin/edit-game/:gameId" element={<EditGame user={user} />} />
+                            <Route path="/admin/edit-team/:teamId" element={<EditTeam user={user} />} />
                             <Route path="/verify" element={<Verify
                                 userId={new URLSearchParams(window.location.search).get('id')}/>} />
                             <Route path="/game-details/:gameId" element={<GameDetails />} />
+                            <Route path="/team/:teamId" element={<TeamDetails />} />
                             <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
                             <Route path="/modify-team/:teamId" element={<ModifyTeam user={user} />} />
-                            <Route path="/new-signups" element={<NewSignups user={user} />} />
-                            <Route path="/open-teams" element={<OpenTeams user={user} />} />
+                            <Route path="/standings" element={<Standings />} />
+                            <Route path="/rankings" element={<Rankings />} />
                             <Route path="/scoreboard" element={<Scoreboard />} />
                             <Route path="/teams" element={<Teams />} />
-                            <Route path="/users" element={<Users user={user}/>} />
                             <Route path="/reset-password" element={<ResetPassword />} />
-                            <Route path="/error" element={<ErrorPage />} />
+                            <Route path="/error" element={<Error />} />
                             <Route path="*" element={<NotFound />} />
                         </Routes>
                     </Box>

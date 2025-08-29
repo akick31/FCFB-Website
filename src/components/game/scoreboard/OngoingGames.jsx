@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getFilteredScorebugs } from '../../../api/scorebugApi';
-import ScorebugGrid from './ScorebugGrid';
+import { getFilteredGames } from '../../../api/gameApi';
+import ScoreboardList from './ScoreboardList';
 
-const OngoingGames = ({ menuOpen, menuAnchor, onMenuToggle }) => {
+const OngoingGames = () => {
     const [games, setGames] = useState([]);
     const [totalGames, setTotalGames] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -15,29 +15,36 @@ const OngoingGames = ({ menuOpen, menuAnchor, onMenuToggle }) => {
         conference: null,
         season: null,
         week: null,
+        gameType: null,
+        gameStatus: null,
+        rankedGame: null,
         page: 0,
-        size: 12,
+        size: 10,
     });
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await getFilteredScorebugs({
+                const response = await getFilteredGames({
                     filters: filters.filters,
                     week: filters.week,
                     season: filters.season,
                     conference: filters.conference,
+                    gameType: filters.gameType,
+                    gameStatus: filters.gameStatus,
+                    rankedGame: filters.rankedGame,
                     category: 'ONGOING',
                     sort: filters.sort,
                     page: filters.page,
                     size: filters.size,
                 });
+                
                 setGames(response.content);
                 setTotalPages(response["total_pages"]);
                 setTotalGames(response["total_elements"]);
             } catch (err) {
-                setError(`Failed to fetch scorebugs: ${err.message}`);
+                setError(`Failed to fetch games: ${err.message}`);
             } finally {
                 setLoading(false);
             }
@@ -53,20 +60,17 @@ const OngoingGames = ({ menuOpen, menuAnchor, onMenuToggle }) => {
     };
 
     return (
-        <ScorebugGrid
+        <ScoreboardList
             games={games}
             onPageChange={handlePageChange}
             totalGames={totalGames}
             currentPage={filters.page}
             totalPages={totalPages}
-            category={filters.category}
-            filters={filters}
-            setFilters={setFilters}
-            onMenuToggle={onMenuToggle}
-            menuOpen={menuOpen}
-            menuAnchor={menuAnchor}
             loading={loading}
             error={error}
+            title="Live Games"
+            filters={filters}
+            setFilters={setFilters}
         />
     );
 };

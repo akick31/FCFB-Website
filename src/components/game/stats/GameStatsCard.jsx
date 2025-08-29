@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box, Card, Grid, Paper, Typography, useTheme} from "@mui/material";
+import {Box, Grid, Paper, Typography} from "@mui/material";
 
 const StatsGrid = ({ stats }) => (
     <Grid container spacing={2}>

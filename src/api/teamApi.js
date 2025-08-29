@@ -91,6 +91,7 @@ export const hireCoach = async ({ team = null, discordId, coachPosition, process
     if (!discordId || !coachPosition || !processedBy) {
         throw new Error("Missing required parameters: discordId, coachPosition, and processedBy are required.");
     }
+    console.log(team, discordId, coachPosition, processedBy);
 
     try {
         const response = await apiClient.post('/team/hire', null, {

@@ -2,41 +2,58 @@ export const formatConference = (conference) => {
     if (!conference) return '-';
 
     if (conference === 'ACC') return 'ACC';
+    if (conference === 'AMERICAN') return 'American';
     if (conference === 'BIG_12') return 'Big 12';
     if (conference === 'BIG_TEN') return 'Big Ten';
-    if (conference === 'AMERICAN') return 'American';
-    if (conference === 'CUSA') return 'C-USA';
+    if (conference === 'FAKE_TEAM') return 'Fake Team';
     if (conference === 'FBS_INDEPENDENT') return 'FBS Independent';
     if (conference === 'MAC') return 'MAC';
     if (conference === 'MOUNTAIN_WEST') return 'Mountain West';
     if (conference === 'PAC_12') return 'Pac-12';
     if (conference === 'SEC') return 'SEC';
     if (conference === 'SUN_BELT') return 'Sun Belt';
-    if (conference === 'ATLANTIC_SUN') return 'Atlantic Sun';
-    if (conference === 'BIG_SKY') return 'Big Sky';
-    if (conference === 'CAROLINA_FOOTBALL_CONFERENCE') return 'Carolina Football Conference';
     if (conference === 'MISSOURI_VALLEY') return 'Missouri Valley';
     if (conference === 'COLONIAL') return 'Colonial';
     if (conference === 'NEC') return 'NEC';
-    if (conference === 'IVY_LEAGUE') return 'Ivy League';
-    if (conference === 'MID_ATLANTIC') return 'Mid-Atlantic';
-    if (conference === 'SOUTHLAND') return 'Southland';
-    if (conference === 'OHIO_VALLEY') return 'Ohio Valley';
-    if (conference === 'SWAC') return 'SWAC';
 
     return conference
 };
 
+export const formatOffensivePlaybook = (playbook) => {
+    if (!playbook) return '-';
+
+    if (playbook === 'FLEXBONE') return 'Flexbone';
+    if (playbook === 'AIR_RAID') return 'Air Raid';
+    if (playbook === 'PRO') return 'Pro';
+    if (playbook === 'SPREAD') return 'Spread';
+    if (playbook === 'WEST_COAST') return 'West Coast';
+
+    return playbook;
+}
+
+export const formatDefensivePlaybook = (playbook) => {
+    if (!playbook) return '-';
+
+    if (playbook === 'FOUR_THREE') return '4-3';
+    if (playbook === 'THREE_FOUR') return '3-4';
+    if (playbook === 'FIVE_TWO') return '5-2';
+    if (playbook === 'FOUR_FOUR') return '4-4';
+    if (playbook === 'THREE_THREE_FIVE') return '3-3-5';
+
+    return playbook;
+}
+
+// Keep the old function for backward compatibility, but mark as deprecated
 export const formatPlaybook = (playbook) => {
     if (!playbook) return '-';
 
-    if (playbook === 'AIR_RAID') return 'Air Raid';
-    if (playbook === 'SPREAD') return 'Spread';
-    if (playbook === 'PRO') return 'Pro';
-    if (playbook === 'WEST_COAST') return 'West Coast';
     if (playbook === 'FLEXBONE') return 'Flexbone';
-    if (playbook === 'THREE_FOUR') return '3-4';
+    if (playbook === 'AIR_RAID') return 'Air Raid';
+    if (playbook === 'PRO') return 'Pro';
+    if (playbook === 'SPREAD') return 'Spread';
+    if (playbook === 'WEST_COAST') return 'West Coast';
     if (playbook === 'FOUR_THREE') return '4-3';
+    if (playbook === 'THREE_FOUR') return '3-4';
     if (playbook === 'FIVE_TWO') return '5-2';
     if (playbook === 'FOUR_FOUR') return '4-4';
     if (playbook === 'THREE_THREE_FIVE') return '3-3-5';

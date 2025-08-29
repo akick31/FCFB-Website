@@ -1,13 +1,18 @@
 import apiClient from './apiClient';
 
 export const getUserById = async (userId) => {
-    if (!userId) return {};
-
+    if (!userId) {
+        console.log('getUserById: No userId provided');
+        return {};
+    }
+    
     try {
-        const response = await apiClient.get(`/user?userId=${userId}`);
+        const response = await apiClient.get(`/user/${userId}`);
         return response.data;
     } catch (error) {
         console.error("Failed to fetch user by ID:", error);
+        console.error("Error response:", error.response);
+
         if (error.response) {
             throw new Error(error.response.data.error || "Failed to fetch user by ID");
         }

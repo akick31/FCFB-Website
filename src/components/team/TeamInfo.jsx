@@ -11,7 +11,7 @@ import {
     Card,
     useTheme, Alert, CircularProgress
 } from "@mui/material";
-import { formatConference, formatPlaybook } from "../../utils/formatText";
+import { formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from "../../utils/formatText";
 import { useNavigate } from "react-router-dom";
 import {fireCoach, hireInterimCoach} from "../../api/teamApi";
 import {HireInterimCoachByUserMenu} from "../menu/HireCoachMenu";
@@ -218,10 +218,10 @@ const TeamInfo = ({ team, user }) => {
                     </Typography>
                     <Grid container spacing={2}>
                         <Grid item xs={12} sm={6}>
-                            <Typography variant="body1"><strong>Offensive Playbook:</strong> {formatPlaybook(team.offensive_playbook)}</Typography>
+                            <Typography variant="body1"><strong>Offensive Playbook:</strong> {formatOffensivePlaybook(team.offensive_playbook)}</Typography>
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <Typography variant="body1"><strong>Defensive Playbook:</strong> {formatPlaybook(team.defensive_playbook)}</Typography>
+                            <Typography variant="body1"><strong>Defensive Playbook:</strong> {formatDefensivePlaybook(team.defensive_playbook)}</Typography>
                         </Grid>
                     </Grid>
                 </Box>
