@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { getTeamPlaybooks } from '../../utils/teamDataUtils';
+import {formatConferenceName} from "../../utils/conferenceUtils";
 
 const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
     const theme = useTheme();
@@ -16,13 +17,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
     const formatRanking = (rank) => {
         if (!rank || rank === 0) return 'Unranked';
         return `#${rank}`;
-    };
-
-    const formatConference = (conference) => {
-        if (!conference) return 'N/A';
-        return conference.split('_').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ');
     };
 
     const formatRecord = (wins, losses) => {
@@ -315,7 +309,7 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                             fontWeight: 600,
                             fontSize: '0.75rem'
                         }}>
-                            {formatConference(team.conference)}
+                            {formatConferenceName(team.conference)}
                         </Typography>
                     </Box>
                 )}

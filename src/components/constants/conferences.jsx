@@ -3,7 +3,6 @@ export const conferences = [
     { value: "AMERICAN", label: "American" },
     { value: "BIG_12", label: "Big 12" },
     { value: "BIG_TEN", label: "Big Ten" },
-    { value: "FAKE_TEAM", label: "Fake Team" },
     { value: "FBS_INDEPENDENT", label: "FBS Independent" },
     { value: "MAC", label: "MAC" },
     { value: "MOUNTAIN_WEST", label: "Mountain West" },

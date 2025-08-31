@@ -11,7 +11,7 @@ const ConferenceDropdown = ({ value, onChange, sx = {} }) => {
             <Select
                 value={value}
                 label="Conference"
-                onChange={(e) => onChange(e.target.value)}
+                onChange={onChange}
                 displayEmpty
             >
                 {conferences.map((conference) => (
