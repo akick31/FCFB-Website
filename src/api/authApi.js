@@ -118,7 +118,10 @@ export const forgotPassword = async (email) => {
 
 export const resetPassword = async (token, newPassword) => {
     try {
-        const response = await apiClient.post('/auth/reset-password', { token, newPassword });
+        const response = await apiClient.post('/auth/reset-password', { 
+            token, 
+            newPassword 
+        });
         return response.data;
     } catch (error) {
         console.error('Failed to reset password:', error);

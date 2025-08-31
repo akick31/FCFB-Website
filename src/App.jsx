@@ -216,6 +216,7 @@ const App = () => {
                             <Route path="/scoreboard" element={<Scoreboard />} />
                             <Route path="/teams" element={<Teams />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
+
                             <Route path="/error" element={<Error />} />
                             <Route path="*" element={<NotFound />} />
                         </Routes>
