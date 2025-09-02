@@ -159,3 +159,16 @@ export const fireCoach = async ({ team = null, processedBy }) => {
         throw new Error("An unexpected error occurred while firing coach");
     }
 };
+
+export const createTeam = async (team) => {
+    try {
+        const response = await apiClient.post('/team', team);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to create team:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to create team");
+        }
+        throw new Error("An unexpected error occurred while creating team");
+    }
+};

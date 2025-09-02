@@ -160,9 +160,9 @@ export const endAllOngoingGames = async () => {
     }
 };
 
-export const updateGame = async (gameId, gameData) => {
+export const updateGame = async (gameData) => {
     try {
-        const response = await apiClient.put(`/game/${gameId}`, gameData);
+        const response = await apiClient.put(`/game`, gameData);
         return response.data;
     } catch (error) {
         console.error("Failed to update game:", error);

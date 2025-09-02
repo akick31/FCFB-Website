@@ -181,7 +181,7 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
                         <Box sx={{ textAlign: 'center' }}>
                             <Typography variant="body2" sx={{ mb: 2 }}>
                                 Don't have an account?{' '}
-                                <Link to="/registration" style={{ color: theme.palette.primary.main }}>
+                                <Link to="/register" style={{ color: theme.palette.primary.main }}>
                                     Sign up here
                                 </Link>
                             </Typography>
@@ -235,7 +235,7 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
                             variant="outlined"
                             size="large"
                             component={Link}
-                            to="/registration"
+                            to="/register"
                         >
                             Create Account
                         </StyledButton>

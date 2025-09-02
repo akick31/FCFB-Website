@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
     Box, 
     Typography,
     CircularProgress,
@@ -14,12 +14,14 @@ import {
     InputLabel,
     Select,
     MenuItem,
-    Grid
+    Grid,
+    Button
 } from '@mui/material';
-import { Edit, Search } from '@mui/icons-material';
+import { Edit, Search, Add } from '@mui/icons-material';
 import { CONFERENCES } from '../../constants/teamEnums';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getAllTeams } from '../../api/teamApi';
+import CreateTeamForm from '../../components/forms/CreateTeamForm';
 import { useNavigate } from 'react-router-dom';
 import StyledTable from '../../components/ui/StyledTable';
 import { formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
@@ -35,6 +37,7 @@ const TeamManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [conferenceFilter, setConferenceFilter] = useState('ALL');
     const [takenFilter, setTakenFilter] = useState('ALL');
+    const [createTeamOpen, setCreateTeamOpen] = useState(false);
 
     const navigationItems = adminNavigationItems;
 
@@ -97,6 +100,20 @@ const TeamManagement = () => {
 
     const handleTeamClick = (team) => {
                         navigate(`/admin/edit-team/${team.id}`);
+    };
+
+    const handleCreateTeam = () => {
+        setCreateTeamOpen(true);
+    };
+
+    const handleTeamCreated = async () => {
+        // Refresh the teams list
+        try {
+            const response = await getAllTeams();
+            setTeams(response);
+        } catch (error) {
+            console.error('Failed to refresh teams:', error);
+        }
     };
 
     const getStatusColor = (team) => {
@@ -188,9 +205,24 @@ const TeamManagement = () => {
             textColor="primary.main"
         >
             <Box sx={{ p: 3 }}>
-                <Typography variant="h4" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
-                    Team Management
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                    <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                        Team Management
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={handleCreateTeam}
+                        sx={{
+                            backgroundColor: 'primary.main',
+                            '&:hover': {
+                                backgroundColor: 'primary.dark',
+                            },
+                        }}
+                    >
+                        Create Team
+                    </Button>
+                </Box>
                 
                 {/* Filter Controls */}
                 <Box sx={{ mb: 3 }}>
@@ -274,6 +306,13 @@ const TeamManagement = () => {
                     onRowClick={handleTeamClick}
                     headerBackground="primary.main"
                     headerTextColor="white"
+                />
+
+                {/* Create Team Dialog */}
+                <CreateTeamForm 
+                    open={createTeamOpen}
+                    onClose={() => setCreateTeamOpen(false)}
+                    onTeamCreated={handleTeamCreated}
                 />
             </Box>
         </DashboardLayout>
