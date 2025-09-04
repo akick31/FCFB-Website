@@ -34,7 +34,11 @@ import {
     UserManagement,
     CoachManagement,
     CoachTransactionLog,
-    EditGame
+    EditGame,
+    Records,
+    SeasonStats,
+    LeagueStats,
+    Leaderboard
 } from './pages';
 import Theme from "./styles/Theme";
 
@@ -215,6 +219,10 @@ const App = () => {
                             <Route path="/rankings" element={<Rankings />} />
                             <Route path="/scoreboard" element={<Scoreboard />} />
                             <Route path="/teams" element={<Teams />} />
+                            <Route path="/records" element={<Records />} />
+                            <Route path="/season-stats" element={<SeasonStats user={user} />} />
+                            <Route path="/league-stats" element={<LeagueStats />} />
+                            <Route path="/leaderboard" element={<Leaderboard />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
 
                             <Route path="/error" element={<Error />} />

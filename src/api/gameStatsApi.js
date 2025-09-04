@@ -3,7 +3,7 @@ import apiClient from './apiClient';
 export const getGameStatsByIdAndTeam = async (gameId, team) => {
     try {
         const encodedTeam = encodeURIComponent(team);
-        return await apiClient.get(`/game_stats?gameId=${gameId}&team=${encodedTeam}`);
+        return await apiClient.get(`/game-stats?gameId=${gameId}&team=${encodedTeam}`);
     } catch (error) {
         console.error("Failed to fetch stats for game:", error);
         if (error.response) {
@@ -13,9 +13,23 @@ export const getGameStatsByIdAndTeam = async (gameId, team) => {
     }
 };
 
+export const getGameStatsByTeamAndSeason = async (team, season) => {
+    try {
+        const params = { team, season };
+        const response = await apiClient.get('/game-stats', { params });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch game stats by team and season:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to fetch game stats by team and season");
+        }
+        throw new Error("An unexpected error occurred while fetching game stats by team and season");
+    }
+};
+
 export const generateGameStats = async (gameId) => {
     try {
-        const response = await apiClient.post(`/game_stats/generate?gameId=${gameId}`);
+        const response = await apiClient.post(`/game-stats/generate?gameId=${gameId}`);
         return response.data;
     } catch (error) {
         console.error("Failed to generate game stats:", error);
@@ -28,7 +42,7 @@ export const generateGameStats = async (gameId) => {
 
 export const generateAllGameStats = async () => {
     try {
-        const response = await apiClient.post('/game_stats/generate/all');
+        const response = await apiClient.post('/game-stats/generate/all');
         return response.data;
     } catch (error) {
         console.error("Failed to generate all game stats:", error);
