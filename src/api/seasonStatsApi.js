@@ -21,10 +21,10 @@ export const getFilteredSeasonStats = async (team = null, conference = null, sea
 };
 
 // Leaderboard function
-export const getLeaderboard = async (statName, seasonNumber, subdivision, conference, limit = 10, ascending = false) => {
+export const getLeaderboard = async (statName, season, subdivision, conference, limit = 10, ascending = false) => {
     try {
         const params = { statName, limit, ascending };
-        if (seasonNumber) params.seasonNumber = seasonNumber;
+        if (season) params.season = season;
         if (subdivision) params.subdivision = subdivision;
         if (conference) params.conference = conference;
         
