@@ -24,7 +24,7 @@ import {
     CircularProgress,
     Alert
 } from '@mui/material';
-import { getSeasonStatsByTeamAndSeason } from '../../api/seasonStatsApi';
+import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getGameStatsByTeamAndSeason } from '../../api/gameStatsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { getCurrentSeason } from '../../api/seasonApi';
@@ -93,10 +93,15 @@ const SeasonStats = ({ user }) => {
             setLoading(true);
             setError(null);
             
-            const [seasonStats, gameStats] = await Promise.all([
-                getSeasonStatsByTeamAndSeason(team.name, season),
+            const [seasonStatsResponse, gameStats] = await Promise.all([
+                getFilteredSeasonStats(team.name, null, season, null, 0, 1), // Get season stats for specific team and season
                 getGameStatsByTeamAndSeason(team.name, season)
             ]);
+            
+            // Extract the season stats from the paginated response
+            const seasonStats = seasonStatsResponse.content && seasonStatsResponse.content.length > 0 
+                ? seasonStatsResponse.content[0] 
+                : null;
             
             // Fetch game details for each game to get opponent names
             const gameDetailsMap = {};

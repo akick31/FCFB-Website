@@ -24,9 +24,9 @@ import {
     Tabs,
     Tab
 } from '@mui/material';
-import { getAllConferenceStats, getConferenceStatsBySeason } from '../../api/conferenceStatsApi';
-import { getAllLeagueStats, getLeagueStatsBySeason } from '../../api/leagueStatsApi';
-import { getAllPlaybookStats, getPlaybookStatsBySeason } from '../../api/playbookStatsApi';
+import { getFilteredConferenceStats } from '../../api/conferenceStatsApi';
+import { getFilteredLeagueStats } from '../../api/leagueStatsApi';
+import { getFilteredPlaybookStats } from '../../api/playbookStatsApi';
 import { getCurrentSeason } from '../../api/seasonApi';
 import { conferences } from '../../components/constants/conferences';
 import { offensivePlaybooks } from '../../components/constants/offensivePlaybooks';
@@ -87,15 +87,16 @@ const LeagueStats = () => {
             setLoading(true);
             setError(null);
             
-            const [conferenceData, leagueData, playbookData] = await Promise.all([
-                getConferenceStatsBySeason(season),
-                getLeagueStatsBySeason(season),
-                getPlaybookStatsBySeason(season)
+            const [conferenceResponse, leagueResponse, playbookResponse] = await Promise.all([
+                getFilteredConferenceStats(null, season, null, 0, 1000), // Get all records for the season
+                getFilteredLeagueStats(null, season, 0, 1000), // Get all records for the season
+                getFilteredPlaybookStats(null, null, season, 0, 1000) // Get all records for the season
             ]);
             
-            setConferenceStats(conferenceData);
-            setLeagueStats(leagueData);
-            setPlaybookStats(playbookData);
+            // Extract content from paginated responses
+            setConferenceStats(conferenceResponse.content || []);
+            setLeagueStats(leagueResponse.content || []);
+            setPlaybookStats(playbookResponse.content || []);
         } catch (err) {
             setError('Failed to fetch league stats data');
             console.error('Error fetching league stats:', err);

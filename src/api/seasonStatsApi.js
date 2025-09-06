@@ -1,63 +1,22 @@
 import apiClient from './apiClient';
 
 // Season Stats API functions - matches SeasonStatsController
-export const getAllSeasonStats = async (filters = {}) => {
+export const getFilteredSeasonStats = async (team = null, conference = null, season = null, stat = null, page = 0, size = 20) => {
     try {
-        const params = {};
-        if (filters.team) params.team = filters.team;
-        if (filters.seasonNumber) params.seasonNumber = filters.seasonNumber;
-        if (filters.subdivision) params.subdivision = filters.subdivision;
+        const params = { page, size };
+        if (team) params.team = team;
+        if (conference) params.conference = conference;
+        if (season) params.season = season;
+        if (stat) params.stat = stat;
         
-        const response = await apiClient.get('/season-stats/all', { params });
-        return response.data;
-    } catch (error) {
-        console.error('Failed to fetch season stats:', error);
-        if (error.response) {
-            throw new Error(error.response.data.error || 'Failed to fetch season stats');
-        }
-        throw new Error('An unexpected error occurred while fetching season stats');
-    }
-};
-
-export const getSeasonStatsByTeamAndSeason = async (team, seasonNumber) => {
-    try {
-        const params = { team, seasonNumber };
         const response = await apiClient.get('/season-stats', { params });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch team season stats:', error);
+        console.error('Failed to fetch filtered season stats:', error);
         if (error.response) {
-            throw new Error(error.response.data.error || 'Failed to fetch team season stats');
+            throw new Error(error.response.data.error || 'Failed to fetch filtered season stats');
         }
-        throw new Error('An unexpected error occurred while fetching team season stats');
-    }
-};
-
-export const getSeasonStatsByTeam = async (team) => {
-    try {
-        const params = { team };
-        const response = await apiClient.get('/season-stats/team', { params });
-        return response.data;
-    } catch (error) {
-        console.error('Failed to fetch team season stats:', error);
-        if (error.response) {
-            throw new Error(error.response.data.error || 'Failed to fetch team season stats');
-        }
-        throw new Error('An unexpected error occurred while fetching team season stats');
-    }
-};
-
-export const getSeasonStatsBySeason = async (seasonNumber) => {
-    try {
-        const params = { seasonNumber };
-        const response = await apiClient.get('/season-stats/season', { params });
-        return response.data;
-    } catch (error) {
-        console.error('Failed to fetch season stats:', error);
-        if (error.response) {
-            throw new Error(error.response.data.error || 'Failed to fetch season stats');
-        }
-        throw new Error('An unexpected error occurred while fetching season stats');
+        throw new Error('An unexpected error occurred while fetching filtered season stats');
     }
 };
 
@@ -79,8 +38,6 @@ export const getLeaderboard = async (statName, seasonNumber, subdivision, confer
         throw new Error('An unexpected error occurred while fetching leaderboard');
     }
 };
-
-
 
 export const generateAllSeasonStats = async () => {
     try {

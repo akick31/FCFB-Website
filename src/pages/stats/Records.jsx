@@ -22,7 +22,7 @@ import {
     CardContent
 } from '@mui/material';
 import { 
-    getAllRecords,
+    getFilteredRecords,
 } from '../../api/recordsApi';
 import { getAllTeams } from '../../api/teamApi';
 
@@ -57,22 +57,23 @@ const Records = () => {
     const fetchInitialData = async () => {
         try {
             setLoading(true);
-            const [gameData, seasonData, teamsData] = await Promise.all([
-                getAllRecords({ recordType: 'SINGLE_GAME' }),
-                getAllRecords({ recordType: 'SINGLE_SEASON' }),
+            const [gameResponse, seasonResponse, teamsData] = await Promise.all([
+                getFilteredRecords(null, null, 'SINGLE_GAME', null, 0, 1000), // Get all single game records
+                getFilteredRecords(null, null, 'SINGLE_SEASON', null, 0, 1000), // Get all single season records
                 getAllTeams()
             ]);
             
-            setSingleGameRecords(gameData);
-            setSingleSeasonRecords(seasonData);
+            // Extract content from paginated responses
+            setSingleGameRecords(gameResponse.content || []);
+            setSingleSeasonRecords(seasonResponse.content || []);
             setTeams(teamsData);
             
             // Extract unique seasons from records
-            const allSeasons = [...new Set([...gameData, ...seasonData].map(record => record.seasonNumber))].sort((a, b) => b - a);
+            const allSeasons = [...new Set([...(gameResponse.content || []), ...(seasonResponse.content || [])].map(record => record.seasonNumber))].sort((a, b) => b - a);
             setSeasons(allSeasons);
             
             // Extract unique record names and format them
-            const allRecordNames = [...new Set([...gameData, ...seasonData].map(record => record.record_name))];
+            const allRecordNames = [...new Set([...(gameResponse.content || []), ...(seasonResponse.content || [])].map(record => record.record_name))];
             const formattedRecords = allRecordNames.map(recordName => ({
                 value: recordName,
                 label: formatStatName(recordName)
