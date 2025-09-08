@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {Box, Typography, Card, CardContent, Chip, useTheme, IconButton, Grid, Button, CircularProgress, Alert} from "@mui/material";
-import { ArrowBack, Assessment, Stop, Pause } from "@mui/icons-material";
+import { ArrowBack, Assessment, Stop, AccessTime } from "@mui/icons-material";
 import { getAllPlaysByGameId } from "../../api/playApi";
 import { getGameById } from "../../api/gameApi";
 import { getLatestScorebugByGameId } from "../../api/scorebugApi";
@@ -314,6 +314,20 @@ const GameDetails = ({ user, isAdmin }) => {
                         </Button>
                         <Button
                             variant="contained"
+                            color="warning"
+                            onClick={handleChewGame}
+                            disabled={chewingGame}
+                            startIcon={chewingGame ? <CircularProgress size={20} /> : <AccessTime />}
+                            sx={{ 
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                fontWeight: 600
+                            }}
+                        >
+                            {chewingGame ? 'Chewing Game...' : 'Chew Game'}
+                        </Button>
+                        <Button
+                            variant="contained"
                             color="error"
                             onClick={handleEndGame}
                             disabled={endingGame}
@@ -325,20 +339,6 @@ const GameDetails = ({ user, isAdmin }) => {
                             }}
                         >
                             {endingGame ? 'Ending Game...' : 'End Game'}
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="warning"
-                            onClick={handleChewGame}
-                            disabled={chewingGame}
-                            startIcon={chewingGame ? <CircularProgress size={20} /> : <Pause />}
-                            sx={{ 
-                                borderRadius: 2,
-                                textTransform: 'none',
-                                fontWeight: 600
-                            }}
-                        >
-                            {chewingGame ? 'Chewing Game...' : 'Chew Game'}
                         </Button>
                     </Box>
                 )}
