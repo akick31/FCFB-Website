@@ -202,37 +202,113 @@ const LeagueStats = () => {
 
         const sortedStats = sortData(filteredStats, conferenceSortField, conferenceSortDirection);
 
-        // Get all unique stat names from the data
-        const statColumns = [
-            { key: 'total_teams', label: 'Teams' },
-            { key: 'total_games', label: 'Games' },
-            { key: 'total_yards', label: 'Total Yards' },
-            { key: 'pass_yards', label: 'Pass Yards' },
-            { key: 'rush_yards', label: 'Rush Yards' },
-            { key: 'touchdowns', label: 'Touchdowns' },
-            { key: 'pass_touchdowns', label: 'Pass TDs' },
-            { key: 'rush_touchdowns', label: 'Rush TDs' },
-            { key: 'turnover_differential', label: 'Turnover Diff' },
-            { key: 'pass_attempts', label: 'Pass Attempts' },
-            { key: 'pass_completions', label: 'Pass Completions' },
-            { key: 'pass_completion_percentage', label: 'Pass Comp %', format: formatPercentage },
-            { key: 'rush_attempts', label: 'Rush Attempts' },
-            { key: 'rush_successes', label: 'Rush Successes' },
-            { key: 'rush_success_percentage', label: 'Rush Success %', format: formatPercentage },
-            { key: 'third_down_conversion_percentage', label: '3rd Down %', format: formatPercentage },
-            { key: 'fourth_down_conversion_percentage', label: '4th Down %', format: formatPercentage },
-            { key: 'red_zone_success_percentage', label: 'Red Zone %', format: formatPercentage },
-            { key: 'field_goal_percentage', label: 'FG %', format: formatPercentage },
-            { key: 'interceptions_lost', label: 'Int Lost' },
-            { key: 'interceptions_forced', label: 'Int Forced' },
-            { key: 'fumbles_lost', label: 'Fumbles Lost' },
-            { key: 'fumbles_forced', label: 'Fumbles Forced' }
+        // Define stat categories
+        const statCategories = [
+            {
+                title: 'Offense',
+                stats: [
+                    { key: 'total_yards', label: 'Total Yards' },
+                    { key: 'pass_yards', label: 'Pass Yards' },
+                    { key: 'rush_yards', label: 'Rush Yards' },
+                    { key: 'touchdowns', label: 'Touchdowns' },
+                    { key: 'pass_touchdowns', label: 'Pass TDs' },
+                    { key: 'rush_touchdowns', label: 'Rush TDs' },
+                    { key: 'pass_attempts', label: 'Pass Attempts' },
+                    { key: 'pass_completions', label: 'Pass Completions' },
+                    { key: 'pass_completion_percentage', label: 'Pass Comp %', format: formatPercentage },
+                    { key: 'rush_attempts', label: 'Rush Attempts' },
+                    { key: 'rush_successes', label: 'Rush Successes' },
+                    { key: 'rush_success_percentage', label: 'Rush Success %', format: formatPercentage },
+                    { key: 'first_downs', label: 'First Downs' },
+                    { key: 'average_yards_per_play', label: 'Avg Yds/Play' }
+                ]
+            },
+            {
+                title: 'Defense (Opponent Stats)',
+                stats: [
+                    { key: 'opponent_total_yards', label: 'Opp Total Yards' },
+                    { key: 'opponent_pass_yards', label: 'Opp Pass Yards' },
+                    { key: 'opponent_rush_yards', label: 'Opp Rush Yards' },
+                    { key: 'opponent_touchdowns', label: 'Opp Touchdowns' },
+                    { key: 'opponent_pass_touchdowns', label: 'Opp Pass TDs' },
+                    { key: 'opponent_rush_touchdowns', label: 'Opp Rush TDs' },
+                    { key: 'opponent_pass_attempts', label: 'Opp Pass Attempts' },
+                    { key: 'opponent_pass_completions', label: 'Opp Pass Completions' },
+                    { key: 'opponent_pass_completion_percentage', label: 'Opp Pass Comp %', format: formatPercentage },
+                    { key: 'opponent_rush_attempts', label: 'Opp Rush Attempts' },
+                    { key: 'opponent_rush_successes', label: 'Opp Rush Successes' },
+                    { key: 'opponent_rush_success_percentage', label: 'Opp Rush Success %', format: formatPercentage },
+                    { key: 'opponent_first_downs', label: 'Opp First Downs' },
+                    { key: 'opponent_average_yards_per_play', label: 'Opp Avg Yds/Play' }
+                ]
+            },
+            {
+                title: 'Turnovers & Sacks',
+                stats: [
+                    { key: 'turnover_differential', label: 'Turnover Diff' },
+                    { key: 'interceptions_lost', label: 'Int Lost' },
+                    { key: 'interceptions_forced', label: 'Int Forced' },
+                    { key: 'fumbles_lost', label: 'Fumbles Lost' },
+                    { key: 'fumbles_forced', label: 'Fumbles Forced' },
+                    { key: 'turnovers_lost', label: 'Turnovers Lost' },
+                    { key: 'turnovers_forced', label: 'Turnovers Forced' },
+                    { key: 'sacks_allowed', label: 'Sacks Allowed' },
+                    { key: 'sacks_forced', label: 'Sacks Forced' }
+                ]
+            },
+            {
+                title: 'Special Teams',
+                stats: [
+                    { key: 'field_goal_made', label: 'FG Made' },
+                    { key: 'field_goal_attempts', label: 'FG Attempts' },
+                    { key: 'field_goal_percentage', label: 'FG %', format: formatPercentage },
+                    { key: 'longest_field_goal', label: 'Longest FG' },
+                    { key: 'blocked_opponent_field_goals', label: 'Blocked FGs' },
+                    { key: 'punts_attempted', label: 'Punts' },
+                    { key: 'longest_punt', label: 'Longest Punt' },
+                    { key: 'average_punt_length', label: 'Avg Punt Length' },
+                    { key: 'blocked_opponent_punt', label: 'Blocked Punts' },
+                    { key: 'punt_return_td', label: 'Punt Return TDs' },
+                    { key: 'kick_return_td', label: 'Kick Return TDs' }
+                ]
+            },
+            {
+                title: 'Down Conversions',
+                stats: [
+                    { key: 'third_down_conversion_success', label: '3rd Down Success' },
+                    { key: 'third_down_conversion_attempts', label: '3rd Down Attempts' },
+                    { key: 'third_down_conversion_percentage', label: '3rd Down %', format: formatPercentage },
+                    { key: 'fourth_down_conversion_success', label: '4th Down Success' },
+                    { key: 'fourth_down_conversion_attempts', label: '4th Down Attempts' },
+                    { key: 'fourth_down_conversion_percentage', label: '4th Down %', format: formatPercentage },
+                    { key: 'opponent_third_down_conversion_success', label: 'Opp 3rd Down Success' },
+                    { key: 'opponent_third_down_conversion_attempts', label: 'Opp 3rd Down Attempts' },
+                    { key: 'opponent_third_down_conversion_percentage', label: 'Opp 3rd Down %', format: formatPercentage },
+                    { key: 'opponent_fourth_down_conversion_success', label: 'Opp 4th Down Success' },
+                    { key: 'opponent_fourth_down_conversion_attempts', label: 'Opp 4th Down Attempts' },
+                    { key: 'opponent_fourth_down_conversion_percentage', label: 'Opp 4th Down %', format: formatPercentage }
+                ]
+            },
+            {
+                title: 'Red Zone',
+                stats: [
+                    { key: 'red_zone_attempts', label: 'Red Zone Attempts' },
+                    { key: 'red_zone_successes', label: 'Red Zone Successes' },
+                    { key: 'red_zone_success_percentage', label: 'Red Zone Success %', format: formatPercentage },
+                    { key: 'opponent_red_zone_attempts', label: 'Opp Red Zone Attempts' },
+                    { key: 'opponent_red_zone_successes', label: 'Opp Red Zone Successes' },
+                    { key: 'opponent_red_zone_success_percentage', label: 'Opp Red Zone Success %', format: formatPercentage }
+                ]
+            }
         ];
 
         return (
             <Box>
                 <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
                     Conference Statistics - Season {selectedSeason}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary', fontStyle: 'italic' }}>
+                    Offensive stats show what each conference did. Opponent stats show what opponents did against each conference (defensive perspective).
                 </Typography>
                 
                 <Card sx={{ mb: 3 }}>
@@ -259,66 +335,75 @@ const LeagueStats = () => {
                     </CardContent>
                 </Card>
 
-                <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 600, overflow: 'auto' }}>
-                    <Table stickyHeader size="small">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell 
-                                    sx={{ 
-                                        fontWeight: 'bold', 
-                                        backgroundColor: 'primary.main', 
-                                        color: 'white',
-                                        cursor: 'pointer',
-                                        fontSize: '0.75rem',
-                                        minWidth: 100
-                                    }}
-                                    onClick={() => handleSort('conference', 'conference')}
-                                >
-                                    Conference {conferenceSortField === 'conference' && (conferenceSortDirection === 'asc' ? '↑' : '↓')}
-                                </TableCell>
-                                {statColumns.map((column) => (
-                                    <TableCell
-                                        key={column.key}
-                                        sx={{ 
-                                            fontWeight: 'bold', 
-                                            backgroundColor: 'primary.main', 
-                                            color: 'white', 
-                                            textAlign: 'center',
-                                            cursor: 'pointer',
-                                            fontSize: '0.75rem',
-                                            minWidth: 80
-                                        }}
-                                        onClick={() => handleSort(column.key, 'conference')}
-                                    >
-                                        {column.label} {conferenceSortField === column.key && (conferenceSortDirection === 'asc' ? '↑' : '↓')}
-                                    </TableCell>
-                                ))}
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {sortedStats.map((stat, index) => (
-                                <TableRow key={index} hover>
-                                    <TableCell sx={{ fontSize: '0.75rem' }}>
-                                        <Chip 
-                                            label={formatConference(stat.conference?.name || stat.conference || 'Unknown')} 
-                                            color="primary"
-                                            variant="outlined"
-                                            size="small"
-                                        />
-                                    </TableCell>
-                                    {statColumns.map((column) => (
-                                        <TableCell key={column.key} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                            {column.format 
-                                                ? column.format(stat[column.key])
-                                                : formatStatValue(stat[column.key])
-                                            }
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                {statCategories.map((category, categoryIndex) => (
+                    <Card key={categoryIndex} sx={{ mb: 2 }}>
+                        <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                                {category.title}
+                            </Typography>
+                            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 400, overflow: 'auto' }}>
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell 
+                                                sx={{ 
+                                                    fontWeight: 'bold', 
+                                                    backgroundColor: 'primary.main', 
+                                                    color: 'white',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.75rem',
+                                                    minWidth: 120
+                                                }}
+                                                onClick={() => handleSort('conference', 'conference')}
+                                            >
+                                                Conference {conferenceSortField === 'conference' && (conferenceSortDirection === 'asc' ? '↑' : '↓')}
+                                            </TableCell>
+                                            {category.stats.map((stat) => (
+                                                <TableCell
+                                                    key={stat.key}
+                                                    sx={{ 
+                                                        fontWeight: 'bold', 
+                                                        backgroundColor: 'primary.main', 
+                                                        color: 'white', 
+                                                        textAlign: 'center',
+                                                        cursor: 'pointer',
+                                                        fontSize: '0.75rem',
+                                                        minWidth: 100
+                                                    }}
+                                                    onClick={() => handleSort(stat.key, 'conference')}
+                                                >
+                                                    {stat.label} {conferenceSortField === stat.key && (conferenceSortDirection === 'asc' ? '↑' : '↓')}
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {sortedStats.map((stat, index) => (
+                                            <TableRow key={index} hover>
+                                                <TableCell sx={{ fontSize: '0.75rem' }}>
+                                                    <Chip 
+                                                        label={formatConference(stat.conference || 'Unknown')} 
+                                                        color="primary"
+                                                        variant="outlined"
+                                                        size="small"
+                                                    />
+                                                </TableCell>
+                                                {category.stats.map((statDef) => (
+                                                    <TableCell key={statDef.key} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
+                                                        {statDef.format 
+                                                            ? statDef.format(stat[statDef.key])
+                                                            : formatStatValue(stat[statDef.key])
+                                                        }
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </CardContent>
+                    </Card>
+                ))}
             </Box>
         );
     };
@@ -328,32 +413,55 @@ const LeagueStats = () => {
 
         const sortedStats = sortData(leagueStats, leagueSortField, leagueSortDirection);
 
-        const statColumns = [
-            { key: 'subdivision', label: 'Subdivision' },
-            { key: 'total_teams', label: 'Teams' },
-            { key: 'total_games', label: 'Games' },
-            { key: 'total_yards', label: 'Total Yards' },
-            { key: 'pass_yards', label: 'Pass Yards' },
-            { key: 'rush_yards', label: 'Rush Yards' },
-            { key: 'touchdowns', label: 'Touchdowns' },
-            { key: 'pass_touchdowns', label: 'Pass TDs' },
-            { key: 'rush_touchdowns', label: 'Rush TDs' },
-            { key: 'pass_attempts', label: 'Pass Attempts' },
-            { key: 'pass_completions', label: 'Pass Completions' },
-            { key: 'pass_completion_percentage', label: 'Pass Comp %', format: formatPercentage },
-            { key: 'rush_attempts', label: 'Rush Attempts' },
-            { key: 'rush_successes', label: 'Rush Successes' },
-            { key: 'rush_success_percentage', label: 'Rush Success %', format: formatPercentage },
-            { key: 'third_down_conversion_percentage', label: '3rd Down %', format: formatPercentage },
-            { key: 'fourth_down_conversion_percentage', label: '4th Down %', format: formatPercentage },
-            { key: 'red_zone_success_percentage', label: 'Red Zone %', format: formatPercentage },
-            { key: 'field_goal_percentage', label: 'FG %', format: formatPercentage },
-            { key: 'interceptions_lost', label: 'Int Lost' },
-            { key: 'interceptions_forced', label: 'Int Forced' },
-            { key: 'fumbles_lost', label: 'Fumbles Lost' },
-            { key: 'fumbles_forced', label: 'Fumbles Forced' },
-            { key: 'turnover_differential', label: 'Turnover Diff' },
-            { key: 'average_yards_per_play', label: 'Avg Yds/Play' }
+        // Define stat categories for League Stats
+        const statCategories = [
+            {
+                title: 'Offense',
+                stats: [
+                    { key: 'total_yards', label: 'Total Yards' },
+                    { key: 'pass_yards', label: 'Pass Yards' },
+                    { key: 'rush_yards', label: 'Rush Yards' },
+                    { key: 'pass_touchdowns', label: 'Pass TDs' },
+                    { key: 'rush_touchdowns', label: 'Rush TDs' },
+                    { key: 'pass_attempts', label: 'Pass Attempts' },
+                    { key: 'pass_completions', label: 'Pass Completions' },
+                    { key: 'pass_completion_percentage', label: 'Pass Comp %', format: formatPercentage },
+                    { key: 'pass_interceptions', label: 'Pass Int' },
+                    { key: 'pass_successes', label: 'Pass Successes' },
+                    { key: 'pass_success_percentage', label: 'Pass Success %', format: formatPercentage },
+                    { key: 'longest_pass', label: 'Longest Pass' },
+                    { key: 'rush_attempts', label: 'Rush Attempts' },
+                    { key: 'rush_successes', label: 'Rush Successes' },
+                    { key: 'rush_success_percentage', label: 'Rush Success %', format: formatPercentage },
+                    { key: 'longest_run', label: 'Longest Run' },
+                    { key: 'first_downs', label: 'First Downs' },
+                    { key: 'average_yards_per_play', label: 'Avg Yds/Play' }
+                ]
+            },
+            {
+                title: 'Defense',
+                stats: [
+                    { key: 'sacks_allowed', label: 'Sacks Allowed' },
+                    { key: 'sacks_forced', label: 'Sacks Forced' },
+                    { key: 'interceptions_forced', label: 'Int Forced' },
+                    { key: 'fumbles_forced', label: 'Fumbles Forced' },
+                    { key: 'fumbles_recovered', label: 'Fumbles Recovered' },
+                    { key: 'defensive_touchdowns', label: 'Def TDs' }
+                ]
+            },
+            {
+                title: 'Special Teams',
+                stats: [
+                    { key: 'field_goals_attempted', label: 'FG Attempts' },
+                    { key: 'field_goals_made', label: 'FG Made' },
+                    { key: 'field_goal_percentage', label: 'FG %', format: formatPercentage },
+                    { key: 'longest_field_goal', label: 'Longest FG' },
+                    { key: 'punts', label: 'Punts' },
+                    { key: 'longest_punt', label: 'Longest Punt' },
+                    { key: 'kickoff_return_touchdowns', label: 'Kick Return TDs' },
+                    { key: 'punt_return_touchdowns', label: 'Punt Return TDs' }
+                ]
+            }
         ];
 
         return (
@@ -362,63 +470,72 @@ const LeagueStats = () => {
                     League Statistics by Season
                 </Typography>
                 
-                <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 600, overflow: 'auto' }}>
-                    <Table stickyHeader size="small">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell 
-                                    sx={{ 
-                                        fontWeight: 'bold', 
-                                        backgroundColor: 'primary.main', 
-                                        color: 'white',
-                                        cursor: 'pointer',
-                                        fontSize: '0.75rem',
-                                        minWidth: 100
-                                    }}
-                                    onClick={() => handleSort('season_number', 'league')}
-                                >
-                                    Season {leagueSortField === 'season_number' && (leagueSortDirection === 'asc' ? '↑' : '↓')}
-                                </TableCell>
-                                {statColumns.map((column) => (
-                                    <TableCell
-                                        key={column.key}
-                                        sx={{ 
-                                            fontWeight: 'bold', 
-                                            backgroundColor: 'primary.main', 
-                                            color: 'white', 
-                                            textAlign: 'center',
-                                            cursor: 'pointer',
-                                            fontSize: '0.75rem',
-                                            minWidth: 80
-                                        }}
-                                        onClick={() => handleSort(column.key, 'league')}
-                                    >
-                                        {column.label} {leagueSortField === column.key && (leagueSortDirection === 'asc' ? '↑' : '↓')}
-                                    </TableCell>
-                                ))}
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {sortedStats.map((stat, index) => (
-                                <TableRow key={index} hover>
-                                    <TableCell sx={{ fontSize: '0.75rem' }}>
-                                        <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
-                                            Season {stat.season_number}
-                                        </Typography>
-                                    </TableCell>
-                                    {statColumns.map((column) => (
-                                        <TableCell key={column.key} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                            {column.format 
-                                                ? column.format(stat[column.key])
-                                                : formatStatValue(stat[column.key])
-                                            }
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                {statCategories.map((category, categoryIndex) => (
+                    <Card key={categoryIndex} sx={{ mb: 2 }}>
+                        <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                                {category.title}
+                            </Typography>
+                            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 400, overflow: 'auto' }}>
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell 
+                                                sx={{ 
+                                                    fontWeight: 'bold', 
+                                                    backgroundColor: 'primary.main', 
+                                                    color: 'white',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.75rem',
+                                                    minWidth: 120
+                                                }}
+                                                onClick={() => handleSort('season_number', 'league')}
+                                            >
+                                                Season {leagueSortField === 'season_number' && (leagueSortDirection === 'asc' ? '↑' : '↓')}
+                                            </TableCell>
+                                            {category.stats.map((stat) => (
+                                                <TableCell
+                                                    key={stat.key}
+                                                    sx={{ 
+                                                        fontWeight: 'bold', 
+                                                        backgroundColor: 'primary.main', 
+                                                        color: 'white', 
+                                                        textAlign: 'center',
+                                                        cursor: 'pointer',
+                                                        fontSize: '0.75rem',
+                                                        minWidth: 100
+                                                    }}
+                                                    onClick={() => handleSort(stat.key, 'league')}
+                                                >
+                                                    {stat.label} {leagueSortField === stat.key && (leagueSortDirection === 'asc' ? '↑' : '↓')}
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {sortedStats.map((stat, index) => (
+                                            <TableRow key={index} hover>
+                                                <TableCell sx={{ fontSize: '0.75rem' }}>
+                                                    <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
+                                                        Season {stat.season_number}
+                                                    </Typography>
+                                                </TableCell>
+                                                {category.stats.map((statDef) => (
+                                                    <TableCell key={statDef.key} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
+                                                        {statDef.format 
+                                                            ? statDef.format(stat[statDef.key])
+                                                            : formatStatValue(stat[statDef.key])
+                                                        }
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </CardContent>
+                    </Card>
+                ))}
             </Box>
         );
     };
@@ -428,14 +545,12 @@ const LeagueStats = () => {
         
         if (selectedOffensivePlaybook) {
             filteredStats = filteredStats.filter(stat => 
-                stat.offensive_playbook?.name === selectedOffensivePlaybook || 
                 stat.offensive_playbook === selectedOffensivePlaybook
             );
         }
         
         if (selectedDefensivePlaybook) {
             filteredStats = filteredStats.filter(stat => 
-                stat.defensive_playbook?.name === selectedDefensivePlaybook || 
                 stat.defensive_playbook === selectedDefensivePlaybook
             );
         }
@@ -444,27 +559,55 @@ const LeagueStats = () => {
 
         const sortedStats = sortData(filteredStats, playbookSortField, playbookSortDirection);
 
-        const statColumns = [
-            { key: 'season_number', label: 'Season' },
-            { key: 'total_teams', label: 'Teams' },
-            { key: 'total_games', label: 'Games' },
-            { key: 'total_yards', label: 'Total Yards' },
-            { key: 'pass_yards', label: 'Pass Yards' },
-            { key: 'rush_yards', label: 'Rush Yards' },
-            { key: 'touchdowns', label: 'Touchdowns' },
-            { key: 'pass_touchdowns', label: 'Pass TDs' },
-            { key: 'rush_touchdowns', label: 'Rush TDs' },
-            { key: 'pass_attempts', label: 'Pass Attempts' },
-            { key: 'pass_completions', label: 'Pass Completions' },
-            { key: 'pass_completion_percentage', label: 'Pass Comp %', format: formatPercentage },
-            { key: 'rush_attempts', label: 'Rush Attempts' },
-            { key: 'rush_successes', label: 'Rush Successes' },
-            { key: 'rush_success_percentage', label: 'Rush Success %', format: formatPercentage },
-            { key: 'interceptions_forced', label: 'Int Forced' },
-            { key: 'fumbles_forced', label: 'Fumbles Forced' },
-            { key: 'defensive_touchdowns', label: 'Def TDs' },
-            { key: 'field_goal_percentage', label: 'FG %', format: formatPercentage },
-            { key: 'average_yards_per_play', label: 'Avg Yds/Play' }
+        // Define stat categories for Playbook Stats
+        const statCategories = [
+            {
+                title: 'Offense',
+                stats: [
+                    { key: 'total_yards', label: 'Total Yards' },
+                    { key: 'pass_yards', label: 'Pass Yards' },
+                    { key: 'rush_yards', label: 'Rush Yards' },
+                    { key: 'pass_touchdowns', label: 'Pass TDs' },
+                    { key: 'rush_touchdowns', label: 'Rush TDs' },
+                    { key: 'pass_attempts', label: 'Pass Attempts' },
+                    { key: 'pass_completions', label: 'Pass Completions' },
+                    { key: 'pass_completion_percentage', label: 'Pass Comp %', format: formatPercentage },
+                    { key: 'pass_interceptions', label: 'Pass Int' },
+                    { key: 'pass_successes', label: 'Pass Successes' },
+                    { key: 'pass_success_percentage', label: 'Pass Success %', format: formatPercentage },
+                    { key: 'longest_pass', label: 'Longest Pass' },
+                    { key: 'rush_attempts', label: 'Rush Attempts' },
+                    { key: 'rush_successes', label: 'Rush Successes' },
+                    { key: 'rush_success_percentage', label: 'Rush Success %', format: formatPercentage },
+                    { key: 'longest_run', label: 'Longest Run' },
+                    { key: 'first_downs', label: 'First Downs' },
+                    { key: 'average_yards_per_play', label: 'Avg Yds/Play' }
+                ]
+            },
+            {
+                title: 'Defense',
+                stats: [
+                    { key: 'sacks_allowed', label: 'Sacks Allowed' },
+                    { key: 'sacks_forced', label: 'Sacks Forced' },
+                    { key: 'interceptions_forced', label: 'Int Forced' },
+                    { key: 'fumbles_forced', label: 'Fumbles Forced' },
+                    { key: 'fumbles_recovered', label: 'Fumbles Recovered' },
+                    { key: 'defensive_touchdowns', label: 'Def TDs' }
+                ]
+            },
+            {
+                title: 'Special Teams',
+                stats: [
+                    { key: 'field_goals_attempted', label: 'FG Attempts' },
+                    { key: 'field_goals_made', label: 'FG Made' },
+                    { key: 'field_goal_percentage', label: 'FG %', format: formatPercentage },
+                    { key: 'longest_field_goal', label: 'Longest FG' },
+                    { key: 'punts', label: 'Punts' },
+                    { key: 'longest_punt', label: 'Longest Punt' },
+                    { key: 'kickoff_return_touchdowns', label: 'Kick Return TDs' },
+                    { key: 'punt_return_touchdowns', label: 'Punt Return TDs' }
+                ]
+            }
         ];
 
         return (
@@ -514,87 +657,96 @@ const LeagueStats = () => {
                     </CardContent>
                 </Card>
 
-                <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 600, overflow: 'auto' }}>
-                    <Table stickyHeader size="small">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell 
-                                    sx={{ 
-                                        fontWeight: 'bold', 
-                                        backgroundColor: 'primary.main', 
-                                        color: 'white',
-                                        cursor: 'pointer',
-                                        fontSize: '0.75rem',
-                                        minWidth: 120
-                                    }}
-                                    onClick={() => handleSort('offensive_playbook', 'playbook')}
-                                >
-                                    Offensive Playbook {playbookSortField === 'offensive_playbook' && (playbookSortDirection === 'asc' ? '↑' : '↓')}
-                                </TableCell>
-                                <TableCell 
-                                    sx={{ 
-                                        fontWeight: 'bold', 
-                                        backgroundColor: 'primary.main', 
-                                        color: 'white',
-                                        cursor: 'pointer',
-                                        fontSize: '0.75rem',
-                                        minWidth: 120
-                                    }}
-                                    onClick={() => handleSort('defensive_playbook', 'playbook')}
-                                >
-                                    Defensive Playbook {playbookSortField === 'defensive_playbook' && (playbookSortDirection === 'asc' ? '↑' : '↓')}
-                                </TableCell>
-                                {statColumns.map((column) => (
-                                    <TableCell
-                                        key={column.key}
-                                        sx={{ 
-                                            fontWeight: 'bold', 
-                                            backgroundColor: 'primary.main', 
-                                            color: 'white', 
-                                            textAlign: 'center',
-                                            cursor: 'pointer',
-                                            fontSize: '0.75rem',
-                                            minWidth: 80
-                                        }}
-                                        onClick={() => handleSort(column.key, 'playbook')}
-                                    >
-                                        {column.label} {playbookSortField === column.key && (playbookSortDirection === 'asc' ? '↑' : '↓')}
-                                    </TableCell>
-                                ))}
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {sortedStats.map((stat, index) => (
-                                <TableRow key={index} hover>
-                                    <TableCell sx={{ fontSize: '0.75rem' }}>
-                                        <Chip 
-                                            label={formatOffensivePlaybook(stat.offensive_playbook?.name || stat.offensive_playbook || 'Unknown')} 
-                                            color="primary"
-                                            variant="outlined"
-                                            size="small"
-                                        />
-                                    </TableCell>
-                                    <TableCell sx={{ fontSize: '0.75rem' }}>
-                                        <Chip 
-                                            label={formatDefensivePlaybook(stat.defensive_playbook?.name || stat.defensive_playbook || 'Unknown')} 
-                                            color="secondary"
-                                            variant="outlined"
-                                            size="small"
-                                        />
-                                    </TableCell>
-                                    {statColumns.map((column) => (
-                                        <TableCell key={column.key} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                            {column.format 
-                                                ? column.format(stat[column.key])
-                                                : formatStatValue(stat[column.key])
-                                            }
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                {statCategories.map((category, categoryIndex) => (
+                    <Card key={categoryIndex} sx={{ mb: 2 }}>
+                        <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                                {category.title}
+                            </Typography>
+                            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 400, overflow: 'auto' }}>
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell 
+                                                sx={{ 
+                                                    fontWeight: 'bold', 
+                                                    backgroundColor: 'primary.main', 
+                                                    color: 'white',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.75rem',
+                                                    minWidth: 120
+                                                }}
+                                                onClick={() => handleSort('offensive_playbook', 'playbook')}
+                                            >
+                                                Offensive Playbook {playbookSortField === 'offensive_playbook' && (playbookSortDirection === 'asc' ? '↑' : '↓')}
+                                            </TableCell>
+                                            <TableCell 
+                                                sx={{ 
+                                                    fontWeight: 'bold', 
+                                                    backgroundColor: 'primary.main', 
+                                                    color: 'white',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.75rem',
+                                                    minWidth: 120
+                                                }}
+                                                onClick={() => handleSort('defensive_playbook', 'playbook')}
+                                            >
+                                                Defensive Playbook {playbookSortField === 'defensive_playbook' && (playbookSortDirection === 'asc' ? '↑' : '↓')}
+                                            </TableCell>
+                                            {category.stats.map((stat) => (
+                                                <TableCell
+                                                    key={stat.key}
+                                                    sx={{ 
+                                                        fontWeight: 'bold', 
+                                                        backgroundColor: 'primary.main', 
+                                                        color: 'white', 
+                                                        textAlign: 'center',
+                                                        cursor: 'pointer',
+                                                        fontSize: '0.75rem',
+                                                        minWidth: 100
+                                                    }}
+                                                    onClick={() => handleSort(stat.key, 'playbook')}
+                                                >
+                                                    {stat.label} {playbookSortField === stat.key && (playbookSortDirection === 'asc' ? '↑' : '↓')}
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {sortedStats.map((stat, index) => (
+                                            <TableRow key={index} hover>
+                                                <TableCell sx={{ fontSize: '0.75rem' }}>
+                                                    <Chip 
+                                                        label={formatOffensivePlaybook(stat.offensive_playbook?.name || stat.offensive_playbook || 'Unknown')} 
+                                                        color="primary"
+                                                        variant="outlined"
+                                                        size="small"
+                                                    />
+                                                </TableCell>
+                                                <TableCell sx={{ fontSize: '0.75rem' }}>
+                                                    <Chip 
+                                                        label={formatDefensivePlaybook(stat.defensive_playbook?.name || stat.defensive_playbook || 'Unknown')} 
+                                                        color="secondary"
+                                                        variant="outlined"
+                                                        size="small"
+                                                    />
+                                                </TableCell>
+                                                {category.stats.map((statDef) => (
+                                                    <TableCell key={statDef.key} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
+                                                        {statDef.format 
+                                                            ? statDef.format(stat[statDef.key])
+                                                            : formatStatValue(stat[statDef.key])
+                                                        }
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </CardContent>
+                    </Card>
+                ))}
             </Box>
         );
     };

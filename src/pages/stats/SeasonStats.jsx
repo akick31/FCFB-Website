@@ -283,6 +283,38 @@ const SeasonStats = ({ user }) => {
             { label: 'Number of Drives', value: teamSeasonStats.number_of_drives }
         ];
 
+        const opponentStats = [
+            { label: 'Opponent Total Yards', value: teamSeasonStats.opponent_total_yards },
+            { label: 'Opponent Pass Yards', value: teamSeasonStats.opponent_pass_yards },
+            { label: 'Opponent Rush Yards', value: teamSeasonStats.opponent_rush_yards },
+            { label: 'Opponent Touchdowns', value: teamSeasonStats.opponent_touchdowns },
+            { label: 'Opponent Pass TDs', value: teamSeasonStats.opponent_pass_touchdowns },
+            { label: 'Opponent Rush TDs', value: teamSeasonStats.opponent_rush_touchdowns },
+            { label: 'Opponent Pass Attempts', value: teamSeasonStats.opponent_pass_attempts },
+            { label: 'Opponent Pass Completions', value: teamSeasonStats.opponent_pass_completions },
+            { label: 'Opponent Pass Comp %', value: teamSeasonStats.opponent_pass_completion_percentage ? 
+                teamSeasonStats.opponent_pass_completion_percentage.toFixed(1) + '%' : 'N/A' },
+            { label: 'Opponent Rush Attempts', value: teamSeasonStats.opponent_rush_attempts },
+            { label: 'Opponent Rush Successes', value: teamSeasonStats.opponent_rush_successes },
+            { label: 'Opponent Rush Success %', value: teamSeasonStats.opponent_rush_success_percentage ? 
+                teamSeasonStats.opponent_rush_success_percentage.toFixed(1) + '%' : 'N/A' },
+            { label: 'Opponent First Downs', value: teamSeasonStats.opponent_first_downs },
+            { label: 'Opponent Avg Yds/Play', value: teamSeasonStats.opponent_average_yards_per_play ? 
+                teamSeasonStats.opponent_average_yards_per_play.toFixed(1) : 'N/A' },
+            { label: 'Opponent 3rd Down %', value: teamSeasonStats.opponent_third_down_conversion_percentage ? 
+                teamSeasonStats.opponent_third_down_conversion_percentage.toFixed(1) + '%' : 'N/A' },
+            { label: 'Opponent 4th Down %', value: teamSeasonStats.opponent_fourth_down_conversion_percentage ? 
+                teamSeasonStats.opponent_fourth_down_conversion_percentage.toFixed(1) + '%' : 'N/A' },
+            { label: 'Opponent Red Zone %', value: teamSeasonStats.opponent_red_zone_success_percentage ? 
+                teamSeasonStats.opponent_red_zone_success_percentage.toFixed(1) + '%' : 'N/A' },
+            { label: 'Opponent FG %', value: teamSeasonStats.opponent_field_goal_percentage ? 
+                teamSeasonStats.opponent_field_goal_percentage.toFixed(1) + '%' : 'N/A' },
+            { label: 'Opponent Time of Possession', value: teamSeasonStats.opponent_time_of_possession ? 
+                Math.floor(teamSeasonStats.opponent_time_of_possession / 60) + ':' + 
+                (teamSeasonStats.opponent_time_of_possession % 60).toString().padStart(2, '0') : 'N/A' },
+            { label: 'Opponent Drives', value: teamSeasonStats.opponent_number_of_drives }
+        ];
+
         const renderStatCategory = (title, stats, color = 'primary.main') => (
             <Card sx={{ mb: 2 }}>
                 <CardContent>
@@ -312,6 +344,9 @@ const SeasonStats = ({ user }) => {
                 <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
                     {selectedTeam?.name} - Season {selectedSeason} Statistics
                 </Typography>
+                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary', fontStyle: 'italic' }}>
+                    Offensive stats show what {selectedTeam?.name} did. Opponent stats show what opponents did against {selectedTeam?.name} (defensive perspective).
+                </Typography>
                 
                 {renderStatCategory('Record', recordStats, 'success.main')}
                 {renderStatCategory('Offense', offensiveStats, 'primary.main')}
@@ -319,6 +354,7 @@ const SeasonStats = ({ user }) => {
                 {renderStatCategory('Special Teams', specialTeamsStats, 'secondary.main')}
                 {renderStatCategory('Turnovers', turnoverStats, 'warning.main')}
                 {renderStatCategory('Efficiency', efficiencyStats, 'info.main')}
+                {renderStatCategory('Opponent Stats (What Opponents Did Against Us)', opponentStats, 'grey.600')}
             </Box>
         );
     };
@@ -326,193 +362,206 @@ const SeasonStats = ({ user }) => {
     const renderTeamGameStats = () => {
         if (!teamGameStats.length) return null;
 
-        const columns = [
-            { id: 'week', label: 'Week', width: 50 },
-            { id: 'opponent', label: 'Opponent', width: 100 },
-            { id: 'result', label: 'Result', width: 50 },
-            { id: 'score', label: 'Score', width: 60 },
-            { id: 'opponentScore', label: 'Opp Score', width: 70 },
-            { id: 'totalYards', label: 'Total Yds', width: 70 },
-            { id: 'passYards', label: 'Pass Yds', width: 70 },
-            { id: 'rushYards', label: 'Rush Yds', width: 70 },
-            { id: 'touchdowns', label: 'TDs', width: 40 },
-            { id: 'passTds', label: 'Pass TDs', width: 60 },
-            { id: 'rushTds', label: 'Rush TDs', width: 60 },
-            { id: 'completion', label: 'Comp %', width: 60 },
-            { id: 'thirdDown', label: '3rd %', width: 60 },
-            { id: 'fourthDown', label: '4th %', width: 60 },
-            { id: 'turnovers', label: 'TOs', width: 40 },
-            { id: 'firstDowns', label: '1st Downs', width: 60 },
-            { id: 'avgYards', label: 'Avg Yds/Play', width: 70 },
-            { id: 'passAttempts', label: 'Pass Att', width: 60 },
-            { id: 'passCompletions', label: 'Pass Comp', width: 60 },
-            { id: 'rushAttempts', label: 'Rush Att', width: 60 },
-            { id: 'rushSuccesses', label: 'Rush Success', width: 70 },
-            { id: 'passSuccesses', label: 'Pass Success', width: 70 },
-            { id: 'longestPass', label: 'Long Pass', width: 60 },
-            { id: 'longestRun', label: 'Long Run', width: 60 },
-            { id: 'sacksAllowed', label: 'Sacks Allowed', width: 70 },
-            { id: 'sacksForced', label: 'Sacks Forced', width: 70 },
-            { id: 'interceptionsLost', label: 'INT Lost', width: 60 },
-            { id: 'interceptionsForced', label: 'INT Forced', width: 60 },
-            { id: 'fumblesLost', label: 'Fumbles Lost', width: 70 },
-            { id: 'fumblesForced', label: 'Fumbles Forced', width: 70 },
-            { id: 'turnoverDiff', label: 'TO Diff', width: 60 },
-            { id: 'fieldGoals', label: 'FG Made/Att', width: 70 },
-            { id: 'fieldGoalPct', label: 'FG %', width: 50 },
-            { id: 'longestFG', label: 'Long FG', width: 60 },
-            { id: 'punts', label: 'Punts', width: 50 },
-            { id: 'longestPunt', label: 'Long Punt', width: 60 },
-            { id: 'avgPunt', label: 'Avg Punt', width: 60 },
-            { id: 'redZone', label: 'Red Zone', width: 60 },
-            { id: 'redZonePct', label: 'RZ %', width: 50 },
-            { id: 'timeOfPossession', label: 'TOP (min)', width: 70 },
-            { id: 'drives', label: 'Drives', width: 50 },
-            { id: 'largestLead', label: 'Largest Lead', width: 70 },
-            { id: 'largestDeficit', label: 'Largest Deficit', width: 80 }
+        // Define stat categories for game stats
+        const gameStatCategories = [
+            {
+                title: 'Basic Game Info',
+                stats: [
+                    { key: 'week', label: 'Week' },
+                    { key: 'opponent', label: 'Opponent', getValue: (game) => getOpponentName(game) },
+                    { key: 'result', label: 'Result', getValue: (game) => {
+                        let result = '-';
+                        if (game.game_status === 'FINAL') {
+                            result = game.score > 0 ? 'W' : 'L';
+                        } else if (game.game_status === 'IN_PROGRESS') {
+                            result = 'LIVE';
+                        }
+                        return result;
+                    }},
+                    { key: 'score', label: 'Score' },
+                    { key: 'opponentScore', label: 'Opp Score', getValue: (game) => getOpponentScore(game) }
+                ]
+            },
+            {
+                title: 'Offense',
+                stats: [
+                    { key: 'total_yards', label: 'Total Yards' },
+                    { key: 'pass_yards', label: 'Pass Yards' },
+                    { key: 'rush_yards', label: 'Rush Yards' },
+                    { key: 'touchdowns', label: 'Touchdowns' },
+                    { key: 'pass_touchdowns', label: 'Pass TDs' },
+                    { key: 'rush_touchdowns', label: 'Rush TDs' },
+                    { key: 'pass_attempts', label: 'Pass Attempts' },
+                    { key: 'pass_completions', label: 'Pass Completions' },
+                    { key: 'pass_completion_percentage', label: 'Pass Comp %', format: (val) => val ? val.toFixed(1) + '%' : 'N/A' },
+                    { key: 'rush_attempts', label: 'Rush Attempts' },
+                    { key: 'rush_successes', label: 'Rush Successes' },
+                    { key: 'pass_successes', label: 'Pass Successes' },
+                    { key: 'first_downs', label: 'First Downs' },
+                    { key: 'average_yards_per_play', label: 'Avg Yds/Play', format: (val) => val ? val.toFixed(1) : 'N/A' }
+                ]
+            },
+            {
+                title: 'Defense & Turnovers',
+                stats: [
+                    { key: 'sacks_allowed', label: 'Sacks Allowed' },
+                    { key: 'sacks_forced', label: 'Sacks Forced' },
+                    { key: 'interceptions_lost', label: 'INT Lost' },
+                    { key: 'interceptions_forced', label: 'INT Forced' },
+                    { key: 'fumbles_lost', label: 'Fumbles Lost' },
+                    { key: 'fumbles_forced', label: 'Fumbles Forced' },
+                    { key: 'turnover_differential', label: 'Turnover Diff' },
+                    { key: 'turnovers_lost', label: 'Turnovers Lost' },
+                    { key: 'turnovers_forced', label: 'Turnovers Forced' }
+                ]
+            },
+            {
+                title: 'Special Teams',
+                stats: [
+                    { key: 'field_goal_made', label: 'FG Made' },
+                    { key: 'field_goal_attempts', label: 'FG Attempts' },
+                    { key: 'field_goal_percentage', label: 'FG %', format: (val) => val ? val.toFixed(1) + '%' : 'N/A' },
+                    { key: 'longest_field_goal', label: 'Longest FG' },
+                    { key: 'punts_attempted', label: 'Punts' },
+                    { key: 'longest_punt', label: 'Longest Punt' },
+                    { key: 'average_punt_length', label: 'Avg Punt', format: (val) => val ? val.toFixed(1) : 'N/A' }
+                ]
+            },
+            {
+                title: 'Efficiency & Situational',
+                stats: [
+                    { key: 'third_down_conversion_success', label: '3rd Down Success' },
+                    { key: 'third_down_conversion_attempts', label: '3rd Down Attempts' },
+                    { key: 'third_down_conversion_percentage', label: '3rd Down %', format: (val) => val ? val.toFixed(1) + '%' : 'N/A' },
+                    { key: 'fourth_down_conversion_success', label: '4th Down Success' },
+                    { key: 'fourth_down_conversion_attempts', label: '4th Down Attempts' },
+                    { key: 'fourth_down_conversion_percentage', label: '4th Down %', format: (val) => val ? val.toFixed(1) + '%' : 'N/A' },
+                    { key: 'red_zone_successes', label: 'Red Zone Success' },
+                    { key: 'red_zone_attempts', label: 'Red Zone Attempts' },
+                    { key: 'red_zone_success_percentage', label: 'Red Zone %', format: (val) => val ? val.toFixed(1) + '%' : 'N/A' }
+                ]
+            },
+            {
+                title: 'Game Flow',
+                stats: [
+                    { key: 'time_of_possession', label: 'Time of Possession', format: (val) => val ? 
+                        Math.floor(val / 60) + ':' + (val % 60).toString().padStart(2, '0') : 'N/A' },
+                    { key: 'number_of_drives', label: 'Drives' },
+                    { key: 'largest_lead', label: 'Largest Lead' },
+                    { key: 'largest_deficit', label: 'Largest Deficit' }
+                ]
+            }
         ];
 
         return (
-            <Card sx={{ mb: 3 }}>
-                <CardContent>
-                    <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 600 }}>
-                        Game by Game Statistics
-                    </Typography>
-                    <TableContainer component={Paper} sx={{ maxHeight: 600 }}>
-                        <Table stickyHeader size="small">
-                            <TableHead>
-                                <TableRow>
-                                    {columns.map((column) => (
-                                        <TableCell
-                                            key={column.id}
-                                            sx={{
-                                                backgroundColor: 'primary.main',
-                                                color: 'white',
-                                                fontWeight: 'bold',
-                                                minWidth: column.width,
-                                                textAlign: 'center',
-                                                fontSize: '0.75rem'
-                                            }}
-                                        >
-                                            {column.label}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {teamGameStats.map((game, index) => {
-                                    // Determine result based on score and game status
-                                    let result = '-';
-                                    if (game.game_status === 'FINAL') {
-                                        result = game.score > 0 ? 'W' : 'L';
-                                    } else if (game.game_status === 'IN_PROGRESS') {
-                                        result = 'LIVE';
-                                    }
-                                    
-                                    return (
-                                        <TableRow key={index} hover>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
-                                                    {game.week}
-                                                </Typography>
+            <Box>
+                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
+                    Game by Game Statistics
+                </Typography>
+                
+                {gameStatCategories.map((category, categoryIndex) => (
+                    <Card key={categoryIndex} sx={{ mb: 2 }}>
+                        <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                                {category.title}
+                            </Typography>
+                            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 400, overflow: 'auto' }}>
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell 
+                                                sx={{ 
+                                                    fontWeight: 'bold', 
+                                                    backgroundColor: 'primary.main', 
+                                                    color: 'white',
+                                                    fontSize: '0.75rem',
+                                                    minWidth: 120
+                                                }}
+                                            >
+                                                Game
                                             </TableCell>
-                                            <TableCell sx={{ fontSize: '0.75rem' }}>
-                                                <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
-                                                    {getOpponentName(game)}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center' }}>
-                                                <Chip 
-                                                    label={result} 
-                                                    size="small"
-                                                    color={result === 'W' ? 'success' : result === 'L' ? 'error' : 'default'}
-                                                    variant="outlined"
-                                                />
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
-                                                    {game.score || '-'}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
-                                                    {getOpponentScore(game)}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.total_yards)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.pass_yards)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.rush_yards)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.touchdowns)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.pass_touchdowns)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.rush_touchdowns)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                {game.pass_completion_percentage ? 
-                                                    game.pass_completion_percentage.toFixed(1) + '%' : '-'}
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                {game.third_down_conversion_percentage ? 
-                                                    game.third_down_conversion_percentage.toFixed(1) + '%' : '-'}
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                {game.fourth_down_conversion_percentage ? 
-                                                    game.fourth_down_conversion_percentage.toFixed(1) + '%' : '-'}
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.turnovers_lost)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.first_downs)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                {game.average_yards_per_play ? 
-                                                    game.average_yards_per_play.toFixed(1) : '-'}
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.pass_attempts)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.pass_completions)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.rush_attempts)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.rush_successes)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.pass_successes)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.longest_pass)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.longest_run)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.sacks_allowed)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.sacks_forced)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.interceptions_lost)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.interceptions_forced)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.fumbles_lost)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.fumbles_forced)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.turnover_differential)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                {game.field_goal_made}/{game.field_goal_attempts}
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                {game.field_goal_percentage ? 
-                                                    game.field_goal_percentage.toFixed(1) + '%' : '-'}
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.longest_field_goal)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.punts_attempted)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.longest_punt)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                {game.average_punt_length ? 
-                                                    game.average_punt_length.toFixed(1) : '-'}
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                {game.red_zone_successes}/{game.red_zone_attempts}
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                {game.red_zone_success_percentage ? 
-                                                    game.red_zone_success_percentage.toFixed(1) + '%' : '-'}
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                {game.time_of_possession ? 
-                                                    Math.round(game.time_of_possession / 60) : '-'}
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.number_of_drives)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.largest_lead)}</TableCell>
-                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{formatStatValue(game.largest_deficit)}</TableCell>
+                                            {category.stats.map((stat) => (
+                                                <TableCell
+                                                    key={stat.key}
+                                                    sx={{ 
+                                                        fontWeight: 'bold', 
+                                                        backgroundColor: 'primary.main', 
+                                                        color: 'white', 
+                                                        textAlign: 'center',
+                                                        fontSize: '0.75rem',
+                                                        minWidth: 100
+                                                    }}
+                                                >
+                                                    {stat.label}
+                                                </TableCell>
+                                            ))}
                                         </TableRow>
-                                    );
-                                })}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </CardContent>
-            </Card>
+                                    </TableHead>
+                                    <TableBody>
+                                        {teamGameStats.map((game, index) => (
+                                            <TableRow key={index} hover>
+                                                <TableCell sx={{ fontSize: '0.75rem' }}>
+                                                    <Box>
+                                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                            Week {game.week}
+                                                        </Typography>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            vs {getOpponentName(game)}
+                                                        </Typography>
+                                                        <Box sx={{ mt: 0.5 }}>
+                                                            <Chip 
+                                                                label={(() => {
+                                                                    let result = '-';
+                                                                    if (game.game_status === 'FINAL') {
+                                                                        result = game.score > 0 ? 'W' : 'L';
+                                                                    } else if (game.game_status === 'IN_PROGRESS') {
+                                                                        result = 'LIVE';
+                                                                    }
+                                                                    return result;
+                                                                })()} 
+                                                                color={(() => {
+                                                                    let result = '-';
+                                                                    if (game.game_status === 'FINAL') {
+                                                                        result = game.score > 0 ? 'W' : 'L';
+                                                                    } else if (game.game_status === 'IN_PROGRESS') {
+                                                                        result = 'LIVE';
+                                                                    }
+                                                                    return result === 'W' ? 'success' : result === 'L' ? 'error' : 'warning';
+                                                                })()}
+                                                                size="small"
+                                                            />
+                                                        </Box>
+                                                        <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+                                                            {game.score} - {getOpponentScore(game)}
+                                                        </Typography>
+                                                    </Box>
+                                                </TableCell>
+                                                {category.stats.map((statDef) => (
+                                                    <TableCell key={statDef.key} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
+                                                        {(() => {
+                                                            let value;
+                                                            if (statDef.getValue) {
+                                                                value = statDef.getValue(game);
+                                                            } else {
+                                                                value = game[statDef.key];
+                                                            }
+                                                            
+                                                            if (statDef.format) {
+                                                                return statDef.format(value);
+                                                            }
+                                                            return formatStatValue(value);
+                                                        })()}
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </CardContent>
+                    </Card>
+                ))}
+            </Box>
         );
     };
 
