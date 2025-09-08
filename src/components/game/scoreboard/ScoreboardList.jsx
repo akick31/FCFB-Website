@@ -466,6 +466,60 @@ const ScoreboardList = ({
                                 </Box>
                             )}
 
+                            {/* Spread Column for Past Games */}
+                            {isPastGames && (
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    gap: 0.5
+                                }}>
+                                    {game.home_vegas_spread !== null && game.home_vegas_spread !== undefined ? (
+                                        <>
+                                            <Box sx={{
+                                                width: 16,
+                                                height: 16,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                overflow: 'hidden'
+                                            }}>
+                                                {homeTeamData?.logo ? (
+                                                    <img 
+                                                        src={homeTeamData.logo} 
+                                                        alt="Home Team"
+                                                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                                    />
+                                                ) : (
+                                                    <Typography sx={{
+                                                        color: theme.palette.primary.main,
+                                                        fontSize: '0.6rem',
+                                                        fontWeight: 600
+                                                    }}>
+                                                        {homeTeamName?.charAt(0) || 'H'}
+                                                    </Typography>
+                                                )}
+                                            </Box>
+                                            <Typography sx={{
+                                                color: 'text.primary',
+                                                fontSize: '0.8rem',
+                                                fontWeight: 500
+                                            }}>
+                                                {game.home_vegas_spread > 0 ? '+' : ''}{game.home_vegas_spread}
+                                            </Typography>
+                                        </>
+                                    ) : (
+                                        <Typography sx={{
+                                            color: 'text.primary',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 500
+                                        }}>
+                                            --
+                                        </Typography>
+                                    )}
+                                </Box>
+                            )}
+
                             {/* For Live Games: Show all the detailed columns */}
                             {!isPastGames && (
                                 <>
@@ -669,6 +723,58 @@ const ScoreboardList = ({
                                         {getGameStatusInfo(gameStatus).status}
                                     </Typography>
                                 </Box>
+                            </Box>
+
+                            {/* Spread Column */}
+                            <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                gap: 0.5
+                            }}>
+                                {game.home_vegas_spread !== null && game.home_vegas_spread !== undefined ? (
+                                    <>
+                                        <Box sx={{
+                                            width: 16,
+                                            height: 16,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            overflow: 'hidden'
+                                        }}>
+                                            {homeTeamData?.logo ? (
+                                                <img 
+                                                    src={homeTeamData.logo} 
+                                                    alt="Home Team"
+                                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                                />
+                                            ) : (
+                                                <Typography sx={{
+                                                    color: theme.palette.primary.main,
+                                                    fontSize: '0.6rem',
+                                                    fontWeight: 600
+                                                }}>
+                                                    {homeTeamName?.charAt(0) || 'H'}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                        <Typography sx={{
+                                            color: 'text.primary',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 500
+                                        }}>
+                                            {game.home_vegas_spread > 0 ? '+' : ''}{game.home_vegas_spread}
+                                        </Typography>
+                                    </>
+                                ) : (
+                                    <Typography sx={{
+                                        color: 'text.primary',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 500
+                                    }}>
+                                        --
+                                    </Typography>
+                                )}
                             </Box>
                             </>
                             )}

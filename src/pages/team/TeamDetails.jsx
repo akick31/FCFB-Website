@@ -159,6 +159,13 @@ const TeamDetails = () => {
                                 color={team.is_taken ? 'secondary' : 'success'}
                                 sx={{ fontWeight: 600 }}
                             />
+                            {team.current_elo !== null && team.current_elo !== undefined && (
+                                <Chip 
+                                    label={`ELO: ${Math.round(team.current_elo)}`} 
+                                    color="warning"
+                                    sx={{ fontWeight: 600 }}
+                                />
+                            )}
                         </Box>
                     </Grid>
                     

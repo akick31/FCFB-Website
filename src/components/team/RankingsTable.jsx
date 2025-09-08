@@ -88,6 +88,7 @@ const RankingsTable = ({ teams, rankingType }) => {
                             <TableCell sx={{ padding: '12px 8px' }}>Team</TableCell>
                             <TableCell sx={{ width: '100px', padding: '12px 8px' }}>Conference</TableCell>
                             <TableCell sx={{ width: '80px', padding: '12px 8px' }}>Record</TableCell>
+                            <TableCell sx={{ width: '80px', padding: '12px 8px' }}>ELO</TableCell>
                         </TableRow>
                     </TableHead>
 
@@ -192,6 +193,16 @@ const RankingsTable = ({ teams, rankingType }) => {
                                     <TableCell sx={{ padding: '8px', textAlign: 'center' }}>
                                         <Typography variant="body2" sx={{ fontWeight: 'medium', fontSize: '0.8rem' }}>
                                             {overallWins}-{overallLosses}
+                                        </Typography>
+                                    </TableCell>
+
+                                    {/* ELO */}
+                                    <TableCell sx={{ padding: '8px', textAlign: 'center' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'medium', fontSize: '0.8rem' }}>
+                                            {team.current_elo !== null && team.current_elo !== undefined ? 
+                                                Math.round(team.current_elo) : 
+                                                'N/A'
+                                            }
                                         </Typography>
                                     </TableCell>
 

@@ -18,10 +18,9 @@ export const getFilteredPlaybookStats = async (offensivePlaybook = null, defensi
         throw new Error('An unexpected error occurred while fetching filtered playbook stats');
     }
 };
-
 export const generateAllPlaybookStats = async () => {
     try {
-        const response = await apiClient.post('/playbook-stats/generate');
+        const response = await apiClient.post('/playbook-stats/generate/all');
         return response.data;
     } catch (error) {
         console.error('Failed to generate all playbook stats:', error);
@@ -31,3 +30,4 @@ export const generateAllPlaybookStats = async () => {
         throw new Error('An unexpected error occurred while generating all playbook stats');
     }
 };
+

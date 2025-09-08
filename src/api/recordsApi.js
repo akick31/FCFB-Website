@@ -19,7 +19,6 @@ export const getFilteredRecords = async (season = null, conference = null, recor
         throw new Error('An unexpected error occurred while fetching filtered records');
     }
 };
-
 export const generateAllRecords = async () => {
     try {
         const response = await apiClient.post('/records/generate/all');
@@ -32,3 +31,4 @@ export const generateAllRecords = async () => {
         throw new Error('An unexpected error occurred while generating all records');
     }
 };
+

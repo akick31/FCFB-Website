@@ -35,6 +35,7 @@ import {
     CoachManagement,
     CoachTransactionLog,
     EditGame,
+    StatsManagement,
     Records,
     SeasonStats,
     LeagueStats,
@@ -190,6 +191,11 @@ const App = () => {
                                     <TeamManagement user={user} />
                                 </ProtectedRoute>
                             } />
+                            <Route path="/admin/stats-management" element={
+                                <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                    <StatsManagement user={user} />
+                                </ProtectedRoute>
+                            } />
                             <Route path="/admin/coach-transaction-log" element={
                                 <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                     <CoachTransactionLog user={user} />
@@ -207,7 +213,7 @@ const App = () => {
                             } />
                             <Route path="/verify" element={<Verify
                                 userId={new URLSearchParams(window.location.search).get('id')}/>} />
-                            <Route path="/game-details/:gameId" element={<GameDetails />} />
+                            <Route path="/game-details/:gameId" element={<GameDetails user={user} isAdmin={isAdmin} />} />
                             <Route path="/team/:teamId" element={<TeamDetails />} />
                             <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
                             <Route path="/modify-team/:teamId" element={

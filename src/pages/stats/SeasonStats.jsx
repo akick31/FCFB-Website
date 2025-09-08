@@ -25,10 +25,8 @@ import {
     Alert
 } from '@mui/material';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
-import { getGameStatsByTeamAndSeason } from '../../api/gameStatsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { getCurrentSeason } from '../../api/seasonApi';
-import { getGameById } from '../../api/gameApi';
 
 const SeasonStats = ({ user }) => {
     const [loading, setLoading] = useState(false);
@@ -39,8 +37,6 @@ const SeasonStats = ({ user }) => {
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [selectedSeason, setSelectedSeason] = useState(null);
     const [teamSeasonStats, setTeamSeasonStats] = useState(null);
-    const [teamGameStats, setTeamGameStats] = useState([]);
-    const [gameDetails, setGameDetails] = useState({});
 
     // Available seasons
     const seasons = [11, 10];
@@ -93,33 +89,14 @@ const SeasonStats = ({ user }) => {
             setLoading(true);
             setError(null);
             
-            const [seasonStatsResponse, gameStats] = await Promise.all([
-                getFilteredSeasonStats(team.name, null, season, null, 0, 1), // Get season stats for specific team and season
-                getGameStatsByTeamAndSeason(team.name, season)
-            ]);
+            const seasonStatsResponse = await getFilteredSeasonStats(team.name, null, season, null, 0, 1); // Get season stats for specific team and season
             
             // Extract the season stats from the paginated response
             const seasonStats = seasonStatsResponse.content && seasonStatsResponse.content.length > 0 
                 ? seasonStatsResponse.content[0] 
                 : null;
             
-            // Fetch game details for each game to get opponent names
-            const gameDetailsMap = {};
-            const gameDetailPromises = gameStats.map(async (gameStat) => {
-                try {
-                    const gameDetail = await getGameById(gameStat.game_id);
-                    gameDetailsMap[gameStat.game_id] = gameDetail;
-                } catch (err) {
-                    console.error(`Failed to fetch game details for game ${gameStat.game_id}:`, err);
-                    gameDetailsMap[gameStat.game_id] = null;
-                }
-            });
-            
-            await Promise.all(gameDetailPromises);
-            
             setTeamSeasonStats(seasonStats);
-            setTeamGameStats(gameStats);
-            setGameDetails(gameDetailsMap);
         } catch (err) {
             setError('Failed to fetch team stats');
             console.error('Error fetching team stats:', err);
@@ -135,7 +112,6 @@ const SeasonStats = ({ user }) => {
             fetchTeamStats(newValue, selectedSeason);
         } else {
             setTeamSeasonStats(null);
-            setTeamGameStats([]);
         }
     };
 
@@ -158,33 +134,6 @@ const SeasonStats = ({ user }) => {
         return value.toString();
     };
 
-    const getOpponentName = (gameStat) => {
-        const gameDetail = gameDetails[gameStat.game_id];
-        if (!gameDetail) return 'TBD';
-        
-        // Find the opponent team (the team that is not the current team)
-        if (gameDetail.home_team === gameStat.team) {
-            return gameDetail.away_team || 'TBD';
-        } else if (gameDetail.away_team === gameStat.team) {
-            return gameDetail.home_team || 'TBD';
-        }
-        
-        return 'TBD';
-    };
-
-    const getOpponentScore = (gameStat) => {
-        const gameDetail = gameDetails[gameStat.game_id];
-        if (!gameDetail) return '-';
-        
-        // Find the opponent's score
-        if (gameDetail.home_team === gameStat.team) {
-            return gameDetail.away_score || '-';
-        } else if (gameDetail.away_team === gameStat.team) {
-            return gameDetail.home_score || '-';
-        }
-        
-        return '-';
-    };
 
     const renderTeamSeasonStats = () => {
         if (!teamSeasonStats) return null;
@@ -353,217 +302,11 @@ const SeasonStats = ({ user }) => {
                 {renderStatCategory('Defense', defenseStats, 'error.main')}
                 {renderStatCategory('Special Teams', specialTeamsStats, 'secondary.main')}
                 {renderStatCategory('Turnovers', turnoverStats, 'warning.main')}
-                {renderStatCategory('Efficiency', efficiencyStats, 'info.main')}
-                {renderStatCategory('Opponent Stats (What Opponents Did Against Us)', opponentStats, 'grey.600')}
+                {renderStatCategory('Defensive Stats', opponentStats, 'grey.600')}
             </Box>
         );
     };
 
-    const renderTeamGameStats = () => {
-        if (!teamGameStats.length) return null;
-
-        // Define stat categories for game stats
-        const gameStatCategories = [
-            {
-                title: 'Basic Game Info',
-                stats: [
-                    { key: 'week', label: 'Week' },
-                    { key: 'opponent', label: 'Opponent', getValue: (game) => getOpponentName(game) },
-                    { key: 'result', label: 'Result', getValue: (game) => {
-                        let result = '-';
-                        if (game.game_status === 'FINAL') {
-                            result = game.score > 0 ? 'W' : 'L';
-                        } else if (game.game_status === 'IN_PROGRESS') {
-                            result = 'LIVE';
-                        }
-                        return result;
-                    }},
-                    { key: 'score', label: 'Score' },
-                    { key: 'opponentScore', label: 'Opp Score', getValue: (game) => getOpponentScore(game) }
-                ]
-            },
-            {
-                title: 'Offense',
-                stats: [
-                    { key: 'total_yards', label: 'Total Yards' },
-                    { key: 'pass_yards', label: 'Pass Yards' },
-                    { key: 'rush_yards', label: 'Rush Yards' },
-                    { key: 'touchdowns', label: 'Touchdowns' },
-                    { key: 'pass_touchdowns', label: 'Pass TDs' },
-                    { key: 'rush_touchdowns', label: 'Rush TDs' },
-                    { key: 'pass_attempts', label: 'Pass Attempts' },
-                    { key: 'pass_completions', label: 'Pass Completions' },
-                    { key: 'pass_completion_percentage', label: 'Pass Comp %', format: (val) => val ? val.toFixed(1) + '%' : 'N/A' },
-                    { key: 'rush_attempts', label: 'Rush Attempts' },
-                    { key: 'rush_successes', label: 'Rush Successes' },
-                    { key: 'pass_successes', label: 'Pass Successes' },
-                    { key: 'first_downs', label: 'First Downs' },
-                    { key: 'average_yards_per_play', label: 'Avg Yds/Play', format: (val) => val ? val.toFixed(1) : 'N/A' }
-                ]
-            },
-            {
-                title: 'Defense & Turnovers',
-                stats: [
-                    { key: 'sacks_allowed', label: 'Sacks Allowed' },
-                    { key: 'sacks_forced', label: 'Sacks Forced' },
-                    { key: 'interceptions_lost', label: 'INT Lost' },
-                    { key: 'interceptions_forced', label: 'INT Forced' },
-                    { key: 'fumbles_lost', label: 'Fumbles Lost' },
-                    { key: 'fumbles_forced', label: 'Fumbles Forced' },
-                    { key: 'turnover_differential', label: 'Turnover Diff' },
-                    { key: 'turnovers_lost', label: 'Turnovers Lost' },
-                    { key: 'turnovers_forced', label: 'Turnovers Forced' }
-                ]
-            },
-            {
-                title: 'Special Teams',
-                stats: [
-                    { key: 'field_goal_made', label: 'FG Made' },
-                    { key: 'field_goal_attempts', label: 'FG Attempts' },
-                    { key: 'field_goal_percentage', label: 'FG %', format: (val) => val ? val.toFixed(1) + '%' : 'N/A' },
-                    { key: 'longest_field_goal', label: 'Longest FG' },
-                    { key: 'punts_attempted', label: 'Punts' },
-                    { key: 'longest_punt', label: 'Longest Punt' },
-                    { key: 'average_punt_length', label: 'Avg Punt', format: (val) => val ? val.toFixed(1) : 'N/A' }
-                ]
-            },
-            {
-                title: 'Efficiency & Situational',
-                stats: [
-                    { key: 'third_down_conversion_success', label: '3rd Down Success' },
-                    { key: 'third_down_conversion_attempts', label: '3rd Down Attempts' },
-                    { key: 'third_down_conversion_percentage', label: '3rd Down %', format: (val) => val ? val.toFixed(1) + '%' : 'N/A' },
-                    { key: 'fourth_down_conversion_success', label: '4th Down Success' },
-                    { key: 'fourth_down_conversion_attempts', label: '4th Down Attempts' },
-                    { key: 'fourth_down_conversion_percentage', label: '4th Down %', format: (val) => val ? val.toFixed(1) + '%' : 'N/A' },
-                    { key: 'red_zone_successes', label: 'Red Zone Success' },
-                    { key: 'red_zone_attempts', label: 'Red Zone Attempts' },
-                    { key: 'red_zone_success_percentage', label: 'Red Zone %', format: (val) => val ? val.toFixed(1) + '%' : 'N/A' }
-                ]
-            },
-            {
-                title: 'Game Flow',
-                stats: [
-                    { key: 'time_of_possession', label: 'Time of Possession', format: (val) => val ? 
-                        Math.floor(val / 60) + ':' + (val % 60).toString().padStart(2, '0') : 'N/A' },
-                    { key: 'number_of_drives', label: 'Drives' },
-                    { key: 'largest_lead', label: 'Largest Lead' },
-                    { key: 'largest_deficit', label: 'Largest Deficit' }
-                ]
-            }
-        ];
-
-        return (
-            <Box>
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
-                    Game by Game Statistics
-                </Typography>
-                
-                {gameStatCategories.map((category, categoryIndex) => (
-                    <Card key={categoryIndex} sx={{ mb: 2 }}>
-                        <CardContent>
-                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
-                                {category.title}
-                            </Typography>
-                            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 400, overflow: 'auto' }}>
-                                <Table size="small">
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell 
-                                                sx={{ 
-                                                    fontWeight: 'bold', 
-                                                    backgroundColor: 'primary.main', 
-                                                    color: 'white',
-                                                    fontSize: '0.75rem',
-                                                    minWidth: 120
-                                                }}
-                                            >
-                                                Game
-                                            </TableCell>
-                                            {category.stats.map((stat) => (
-                                                <TableCell
-                                                    key={stat.key}
-                                                    sx={{ 
-                                                        fontWeight: 'bold', 
-                                                        backgroundColor: 'primary.main', 
-                                                        color: 'white', 
-                                                        textAlign: 'center',
-                                                        fontSize: '0.75rem',
-                                                        minWidth: 100
-                                                    }}
-                                                >
-                                                    {stat.label}
-                                                </TableCell>
-                                            ))}
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {teamGameStats.map((game, index) => (
-                                            <TableRow key={index} hover>
-                                                <TableCell sx={{ fontSize: '0.75rem' }}>
-                                                    <Box>
-                                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                            Week {game.week}
-                                                        </Typography>
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            vs {getOpponentName(game)}
-                                                        </Typography>
-                                                        <Box sx={{ mt: 0.5 }}>
-                                                            <Chip 
-                                                                label={(() => {
-                                                                    let result = '-';
-                                                                    if (game.game_status === 'FINAL') {
-                                                                        result = game.score > 0 ? 'W' : 'L';
-                                                                    } else if (game.game_status === 'IN_PROGRESS') {
-                                                                        result = 'LIVE';
-                                                                    }
-                                                                    return result;
-                                                                })()} 
-                                                                color={(() => {
-                                                                    let result = '-';
-                                                                    if (game.game_status === 'FINAL') {
-                                                                        result = game.score > 0 ? 'W' : 'L';
-                                                                    } else if (game.game_status === 'IN_PROGRESS') {
-                                                                        result = 'LIVE';
-                                                                    }
-                                                                    return result === 'W' ? 'success' : result === 'L' ? 'error' : 'warning';
-                                                                })()}
-                                                                size="small"
-                                                            />
-                                                        </Box>
-                                                        <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
-                                                            {game.score} - {getOpponentScore(game)}
-                                                        </Typography>
-                                                    </Box>
-                                                </TableCell>
-                                                {category.stats.map((statDef) => (
-                                                    <TableCell key={statDef.key} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
-                                                        {(() => {
-                                                            let value;
-                                                            if (statDef.getValue) {
-                                                                value = statDef.getValue(game);
-                                                            } else {
-                                                                value = game[statDef.key];
-                                                            }
-                                                            
-                                                            if (statDef.format) {
-                                                                return statDef.format(value);
-                                                            }
-                                                            return formatStatValue(value);
-                                                        })()}
-                                                    </TableCell>
-                                                ))}
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
-                        </CardContent>
-                    </Card>
-                ))}
-            </Box>
-        );
-    };
 
 
     if (loading && !teams.length) {
@@ -688,7 +431,6 @@ const SeasonStats = ({ user }) => {
                             Team Statistics
                         </Typography>
                         {renderTeamSeasonStats()}
-                        {renderTeamGameStats()}
                     </Box>
                 )}
 

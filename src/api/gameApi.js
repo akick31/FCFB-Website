@@ -186,5 +186,31 @@ export const restartGame = async (gameId) => {
     }
 };
 
+export const endGameByGameId = async (gameId) => {
+    try {
+        const response = await apiClient.post(`/game/${gameId}/end`);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to end game:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to end game");
+        }
+        throw new Error("An unexpected error occurred while ending game");
+    }
+};
+
+export const chewGameByGameId = async (gameId) => {
+    try {
+        const response = await apiClient.post(`/game/${gameId}/chew`);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to chew game:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to chew game");
+        }
+        throw new Error("An unexpected error occurred while chewing game");
+    }
+};
+
 
 

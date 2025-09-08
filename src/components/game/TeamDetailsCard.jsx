@@ -223,6 +223,34 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                     />
                 </Box>
 
+                {/* ELO Rating */}
+                {team.current_elo !== null && team.current_elo !== undefined && (
+                    <Box sx={{
+                        textAlign: 'center',
+                        mb: 1.9
+                    }}>
+                        <Typography variant="caption" sx={{
+                            color: 'text.secondary',
+                            fontSize: '0.65rem',
+                            fontWeight: 500,
+                            display: 'block',
+                            mb: 0.4
+                        }}>
+                            ELO Rating
+                        </Typography>
+                        <Chip
+                            label={Math.round(team.current_elo)}
+                            size="small"
+                            sx={{
+                                backgroundColor: theme.palette.warning.main,
+                                color: 'white',
+                                fontWeight: 600,
+                                fontSize: '0.75rem'
+                            }}
+                        />
+                    </Box>
+                )}
+
                 {/* Playbooks */}
                 <Box sx={{ mb: 1.9, textAlign: 'center' }}>
                     <Typography variant="caption" sx={{

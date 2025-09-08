@@ -96,5 +96,20 @@ export const getTeamsTableColumns = (theme) => [
                 sx={{ fontWeight: 500 }}
             />
         )
+    },
+    { 
+        id: 'current_elo', 
+        label: 'ELO', 
+        align: 'center', 
+        width: TABLE_COLUMN_WIDTHS.ELO,
+        sortable: true,
+        render: (value, row) => (
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {row.current_elo !== null && row.current_elo !== undefined ? 
+                    Math.round(row.current_elo) : 
+                    'N/A'
+                }
+            </Typography>
+        )
     }
 ]; 
