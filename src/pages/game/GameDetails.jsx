@@ -312,34 +312,38 @@ const GameDetails = ({ user, isAdmin }) => {
                         >
                             {generatingStats ? 'Generating Stats...' : 'Generate Game Stats'}
                         </Button>
-                        <Button
-                            variant="contained"
-                            color="warning"
-                            onClick={handleChewGame}
-                            disabled={chewingGame}
-                            startIcon={chewingGame ? <CircularProgress size={20} /> : <AccessTime />}
-                            sx={{ 
-                                borderRadius: 2,
-                                textTransform: 'none',
-                                fontWeight: 600
-                            }}
-                        >
-                            {chewingGame ? 'Chewing Game...' : 'Chew Game'}
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="error"
-                            onClick={handleEndGame}
-                            disabled={endingGame}
-                            startIcon={endingGame ? <CircularProgress size={20} /> : <Stop />}
-                            sx={{ 
-                                borderRadius: 2,
-                                textTransform: 'none',
-                                fontWeight: 600
-                            }}
-                        >
-                            {endingGame ? 'Ending Game...' : 'End Game'}
-                        </Button>
+                        {game?.game_status !== 'FINAL' && (
+                            <>
+                                <Button
+                                    variant="contained"
+                                    color="warning"
+                                    onClick={handleChewGame}
+                                    disabled={chewingGame}
+                                    startIcon={chewingGame ? <CircularProgress size={20} /> : <AccessTime />}
+                                    sx={{ 
+                                        borderRadius: 2,
+                                        textTransform: 'none',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    {chewingGame ? 'Chewing Game...' : 'Chew Game'}
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    color="error"
+                                    onClick={handleEndGame}
+                                    disabled={endingGame}
+                                    startIcon={endingGame ? <CircularProgress size={20} /> : <Stop />}
+                                    sx={{ 
+                                        borderRadius: 2,
+                                        textTransform: 'none',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    {endingGame ? 'Ending Game...' : 'End Game'}
+                                </Button>
+                            </>
+                        )}
                     </Box>
                 )}
 
