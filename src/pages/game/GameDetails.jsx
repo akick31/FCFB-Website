@@ -35,7 +35,7 @@ const GameDetails = ({ user, isAdmin }) => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [orderBy, setOrderBy] = useState('play_number');
-    const [order, setOrder] = useState('asc');
+    const [order, setOrder] = useState('desc');
     const [generatingStats, setGeneratingStats] = useState(false);
     const [generateError, setGenerateError] = useState(null);
     const [endingGame, setEndingGame] = useState(false);
@@ -254,6 +254,17 @@ const GameDetails = ({ user, isAdmin }) => {
                                 borderColor: theme.palette.secondary.main, 
                                 color: theme.palette.secondary.main,
                                 backgroundColor: theme.palette.secondary.light + '20'
+                            }}
+                        />
+                    )}
+                    {(game.game_mode === 'CHEW') && (
+                        <Chip
+                            label="Chew Mode"
+                            variant="filled"
+                            sx={{ 
+                                fontWeight: 600, 
+                                backgroundColor: theme.palette.error.main,
+                                color: 'white'
                             }}
                         />
                     )}

@@ -76,7 +76,7 @@ const ScoreboardList = ({
         if (isPastGames) {
             return isSmallScreen ? '450px' : '1500px';
         } else {
-            return isSmallScreen ? '630px' : '1500px';
+            return isSmallScreen ? '705px' : '1605px'; // Adjusted width to cover all columns without extending too far
         }
     };
 
@@ -466,6 +466,33 @@ const ScoreboardList = ({
                                 </Box>
                             )}
 
+                            {/* Game Mode Column for Past Games */}
+                            {isPastGames && (
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center' 
+                                }}>
+                                    <Box sx={{
+                                        backgroundColor: game.gameMode === 'CHEW' ? theme.palette.error.main : theme.palette.primary.main,
+                                        px: 1,
+                                        py: 0.25,
+                                        borderRadius: 1,
+                                        minWidth: 60
+                                    }}>
+                                        <Typography sx={{
+                                            color: 'white',
+                                            fontSize: '0.7rem',
+                                            fontWeight: 600,
+                                            textAlign: 'center',
+                                            textTransform: 'uppercase'
+                                        }}>
+                                            {game.gameMode === 'CHEW' ? 'Chew' : 'Normal'}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            )}
+
                             {/* Spread Column for Past Games */}
                             {isPastGames && (
                                 <Box sx={{ 
@@ -721,6 +748,31 @@ const ScoreboardList = ({
                                         textTransform: 'uppercase'
                                     }}>
                                         {getGameStatusInfo(gameStatus).status}
+                                    </Typography>
+                                </Box>
+                            </Box>
+
+                            {/* Game Mode Column */}
+                            <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center' 
+                            }}>
+                                <Box sx={{
+                                    backgroundColor: game.game_mode === 'CHEW' ? theme.palette.error.main : theme.palette.primary.main,
+                                    px: 1,
+                                    py: 0.25,
+                                    borderRadius: 1,
+                                    minWidth: 60
+                                }}>
+                                    <Typography sx={{
+                                        color: 'white',
+                                        fontSize: '0.7rem',
+                                        fontWeight: 600,
+                                        textAlign: 'center',
+                                        textTransform: 'uppercase'
+                                    }}>
+                                        {game.game_mode === 'CHEW' ? 'Chew' : 'Normal'}
                                     </Typography>
                                 </Box>
                             </Box>

@@ -74,6 +74,7 @@ export const getFilteredGames = async (params) => {
         if (params.week) searchParams.append('week', params.week);
         if (params.season) searchParams.append('season', params.season);
         if (params.conference) searchParams.append('conference', params.conference);
+        if (params.gameMode) searchParams.append('gameMode', params.gameMode);
         if (params.category) searchParams.append('category', params.category);
         if (params.sort) searchParams.append('sort', params.sort);
         searchParams.append('page', params.page);

@@ -36,6 +36,7 @@ import {
     CoachTransactionLog,
     EditGame,
     StatsManagement,
+    Reports,
     Records,
     SeasonStats,
     LeagueStats,
@@ -194,6 +195,11 @@ const App = () => {
                             <Route path="/admin/stats-management" element={
                                 <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                     <StatsManagement user={user} />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="/admin/reports" element={
+                                <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                    <Reports user={user} />
                                 </ProtectedRoute>
                             } />
                             <Route path="/admin/coach-transaction-log" element={

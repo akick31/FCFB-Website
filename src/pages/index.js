@@ -9,7 +9,7 @@ export { Teams, TeamDetails, ModifyTeam } from './team';
 
 // Admin Pages
 export { Admin, UserManagement, GameManagement, TeamManagement, EditTeam, CoachManagement, CoachTransactionLog,
-    EditGame, StatsManagement } from './admin';
+    EditGame, StatsManagement, Reports } from './admin';
 
 // Core Pages
 export { Home, Profile, Standings, Rankings, Error, NotFound } from './core';
