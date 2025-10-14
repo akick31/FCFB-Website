@@ -104,17 +104,16 @@ const Reports = ({ user }) => {
                 ]);
                 setUsers(usersResponse);
                 setTeams(teamsResponse);
-                
-                // Create mock delay data for now - replace with actual API call
-                const mockDelayData = usersResponse.map(user => ({
+
+                const delayData = usersResponse.map(user => ({
                     username: user.username,
                     discordTag: user.discord_tag || 'N/A',
                     team: user.team || 'No Team',
                     teamLogo: teamsResponse.find(t => t.name === user.team)?.logo || null,
-                    delayInstances: Math.floor(Math.random() * 10) // Mock data
+                    delayInstances: user.delay_of_game_instances
                 }));
                 
-                setUserDelayData(mockDelayData);
+                setUserDelayData(delayData);
                 setDelayLoading(false);
             } catch (error) {
                 console.error('Failed to fetch delay data:', error);
