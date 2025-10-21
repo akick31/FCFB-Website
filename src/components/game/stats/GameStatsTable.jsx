@@ -171,6 +171,8 @@ const GameStatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         {
             label: 'Efficiency',
             isHeader: true,
+            home: '-',
+            away: '-'
         },
         {
             label: 'First Downs',
@@ -194,9 +196,9 @@ const GameStatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         },
         {
             label: 'Special Teams',
-            home: homeStats.field_goal_made,
-            away: awayStats.field_goal_made,
             isHeader: true,
+            home: '-',
+            away: '-',
         },
         {
             label: 'Field Goals Made/Attempted',
@@ -258,10 +260,13 @@ const GameStatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         {
             label: 'Game Performance',
             isHeader: true,
+            home: '-',
+            away: '-',
         },
         {
             label: 'Average Difference',
             home: homeStats.average_diff?.toFixed(2),
+            away: '-'
         },
         {
             label: 'Average Offensive Difference',
