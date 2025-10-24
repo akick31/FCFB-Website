@@ -204,7 +204,6 @@ const Reports = ({ user }) => {
     }, [userDelayData, delayTeamFilter, delaySearchTerm, delaySortField, delaySortDirection]);
 
     const handleNavigationChange = (item) => {
-        console.log('Navigate to:', item.path);
         navigate(item.path);
     };
 

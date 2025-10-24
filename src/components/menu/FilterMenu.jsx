@@ -16,16 +16,13 @@ import GameStatusDropdown from "../dropdown/GameStatusDropdown";
 
 
 const FilterMenu = ({ onApply, category }) => {
-    console.log('FilterMenu category:', category);
     const availableFilters = {
         livegames: ['conference', 'gameType', 'gameStatus', 'gameMode', 'rankedGame', 'sort'],
         pastgames: ['conference', 'gameType', 'rankedGame', 'sort'],
         scrimmages: ['conference', 'gameStatus', 'rankedGame', 'sort'],
     }[category] || [];
-    console.log('Available filters:', availableFilters);
 
     const getSavedFilters = () => {
-        console.log(category);
         const saved = sessionStorage.getItem(`filters_${category}`);
         
         // For debugging - clear sessionStorage to start fresh
@@ -96,7 +93,6 @@ const FilterMenu = ({ onApply, category }) => {
     };
 
     const handleApply = () => {
-        console.log('Applying filters:', pendingFilters);
         onApply(pendingFilters);
     };
 

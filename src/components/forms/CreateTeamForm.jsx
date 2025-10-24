@@ -84,7 +84,6 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
 
         try {
             const newTeam = await createTeam(formData);
-            console.log('Team created successfully:', newTeam);
             
             // Reset form
             setFormData({

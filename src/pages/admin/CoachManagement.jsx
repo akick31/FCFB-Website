@@ -123,7 +123,6 @@ const CoachManagement = ({ user }) => {
     }, [teams, conferenceFilter, takenFilter, activeFilter]);
 
     const handleNavigationChange = (item) => {
-        console.log('Navigate to:', item.path);
         navigate(item.path);
     };
 

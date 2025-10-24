@@ -46,7 +46,6 @@ const GameDetails = ({ user, isAdmin }) => {
         const fetchGame = async () => {
             try {
                 const gameResponse = await getGameById(gameId);
-                console.log(gameResponse);
                 setGame(gameResponse);
 
                 const scorebugResponse = await getLatestScorebugByGameId(gameId);

@@ -95,12 +95,10 @@ const UserManagement = ({ user }) => {
     }, [users, searchTerm, roleFilter, statusFilter]);
 
     const handleNavigationChange = (item) => {
-        console.log('Navigate to:', item.path);
         navigate(item.path);
     };
 
     const handleUserClick = (user) => {
-        console.log('View user details:', user.username);
     };
 
     const getRoleColor = (role) => {
@@ -160,7 +158,6 @@ const UserManagement = ({ user }) => {
                     size="small"
                     onClick={(e) => {
                         e.stopPropagation();
-                        console.log('Edit user:', user.username);
                     }}
                     sx={{ color: 'primary.main' }}
                 >

@@ -117,13 +117,10 @@ const ScoreboardList = ({
 
     const handleRowClick = (game) => {
         const gameId = game.game_id;
-        console.log('Final Game ID:', gameId);
         
         if (gameId) {
-            console.log('Navigating to:', `/game-details/${gameId}`);
             try {
                 navigate(`/game-details/${gameId}`);
-                console.log('Navigation called successfully');
             } catch (error) {
                 console.error('Navigation error:', error);
             }

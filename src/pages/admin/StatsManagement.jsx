@@ -30,7 +30,6 @@ import { generateAllSeasonStats } from '../../api/seasonStatsApi';
 import { generateAllLeagueStats } from '../../api/leagueStatsApi';
 import { generateAllConferenceStats } from '../../api/conferenceStatsApi';
 import { generateAllPlaybookStats } from '../../api/playbookStatsApi';
-import { generateAllGameStats } from '../../api/gameStatsApi';
 
 const StatsManagement = () => {
     const theme = useTheme();
@@ -86,14 +85,6 @@ const StatsManagement = () => {
             color: 'warning',
             action: generateAllPlaybookStats
         },
-        {
-            id: 'game-stats',
-            title: 'Generate Game Stats',
-            description: 'Recalculate all game statistics',
-            icon: <Assessment />,
-            color: 'error',
-            action: generateAllGameStats
-        }
     ];
 
     const handleGenerate = async (actionId, actionFunction, title) => {

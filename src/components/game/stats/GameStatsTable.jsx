@@ -27,9 +27,7 @@ const GameStatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
 
     // Get team colors with fallbacks
     const getTeamColors = (team) => {
-        console.log('team:', team);
         if (!team || !team.primary_color) {
-            console.log('Using fallback colors for team:', team?.name || 'unknown');
             return {
                 primary: theme.palette.primary.main,
                 secondary: theme.palette.primary.dark
@@ -45,8 +43,6 @@ const GameStatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
     const homeColors = getTeamColors(homeTeam);
     const awayColors = getTeamColors(awayTeam);
 
-    console.log('Final homeColors:', homeColors);
-    console.log('Final awayColors:', awayColors);
 
     const statsData = [
         {

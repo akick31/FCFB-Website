@@ -37,7 +37,6 @@ const TeamInfo = ({ team, user }) => {
                 setLoading(true);
                 const response = await getAllUsers();
                 setCoaches(response);
-                console.log(response)
                 setLoading(false);
             } catch (error) {
                 setLoading(false);

@@ -79,7 +79,6 @@ const App = () => {
             if (token && userId) {
                 setIsAuthenticated(true);
                 const adminStatus = checkIfUserIsAdmin();
-                console.log('Initial admin check - token:', !!token, 'userId:', !!userId, 'adminStatus:', adminStatus);
                 setIsAdmin(adminStatus);
 
                 try {
@@ -105,7 +104,6 @@ const App = () => {
         const handleStorageChange = () => {
             if (isAuthenticated) {
                 const newAdminStatus = checkIfUserIsAdmin();
-                console.log('Storage change detected, new admin status:', newAdminStatus);
                 setIsAdmin(newAdminStatus);
             }
         };
@@ -116,9 +114,7 @@ const App = () => {
         // Also check when the component re-renders
         if (isAuthenticated) {
             const newAdminStatus = checkIfUserIsAdmin();
-            console.log('Checking admin status on re-render:', newAdminStatus, 'current isAdmin:', isAdmin);
             if (newAdminStatus !== isAdmin) {
-                console.log('Admin status changed from', isAdmin, 'to', newAdminStatus);
                 setIsAdmin(newAdminStatus);
             }
         }

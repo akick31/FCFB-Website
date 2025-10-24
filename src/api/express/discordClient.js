@@ -31,8 +31,6 @@ app.get("/discord/redirect", async (req, res) => {
 
         const { username, discriminator } = userResponse.data;
         const discordTag = `${username}#${discriminator}`;
-        console.log("Username:", username);
-        console.log("Discord tag:", discordTag);
 
         // Redirect back to frontend with the Discord tag
         res.redirect(`${REDIRECT_URI}?discordTag=${encodeURIComponent(discordTag)}`);
@@ -42,4 +40,4 @@ app.get("/discord/redirect", async (req, res) => {
     }
 });
 
-app.listen(3001, () => console.log("Server running on port 3001"));
+app.listen(3001, () => {});

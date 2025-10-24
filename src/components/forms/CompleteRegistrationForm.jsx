@@ -78,7 +78,6 @@ const CompleteRegistrationForm = () => {
         const fetchOpenTeams = async () => {
             try {
                 const teams = await getOpenTeams();
-                console.log("Fetched open teams:", teams);
                 setOpenTeams(teams);
             } catch (error) {
                 console.error("Error fetching open teams:", error);

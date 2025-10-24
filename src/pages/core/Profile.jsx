@@ -71,7 +71,6 @@ const Profile = ({ user }) => {
     const handleSave = async () => {
         try {
             // TODO: Implement actual API call to update user data
-            console.log('Saving user data:', formData);
             setIsEditing(false);
         } catch (error) {
             console.error('Error updating profile:', error);

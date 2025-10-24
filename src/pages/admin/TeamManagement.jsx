@@ -94,7 +94,6 @@ const TeamManagement = () => {
     }, [teams, hideFakeTeams, conferenceFilter, takenFilter, searchTerm]);
 
     const handleNavigationChange = (item) => {
-        console.log('Navigate to:', item.path);
         navigate(item.path);
     };
 
