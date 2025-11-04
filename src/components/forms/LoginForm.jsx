@@ -10,6 +10,7 @@ import { login } from "../../api/authApi";
 import { checkIfUserIsAdmin } from "../../utils/utils";
 import StyledCard from "../ui/StyledCard";
 import StyledButton from "../ui/StyledButton";
+import ForgotPasswordForm from "./ForgotPasswordForm";
 import PropTypes from "prop-types";
 
 const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
@@ -23,6 +24,7 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -63,6 +65,10 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
 
     const handleTogglePasswordVisibility = () => {
         setShowPassword(!showPassword);
+    };
+
+    const handleForgotPasswordClick = () => {
+        setForgotPasswordOpen(true);
     };
 
     return (
@@ -175,23 +181,25 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
                         <Box sx={{ textAlign: 'center' }}>
                             <Typography variant="body2" sx={{ mb: 2 }}>
                                 Don't have an account?{' '}
-                                <Link to="/registration" style={{ color: theme.palette.primary.main }}>
+                                <Link to="/register" style={{ color: theme.palette.primary.main }}>
                                     Sign up here
                                 </Link>
                             </Typography>
                             
-                            <Link
-                                to="/reset-password"
-                                style={{
+                            <Typography
+                                component="span"
+                                onClick={handleForgotPasswordClick}
+                                sx={{
                                     color: theme.palette.text.secondary,
-                                    textDecoration: 'none',
+                                    cursor: 'pointer',
                                     fontSize: '0.875rem',
+                                    '&:hover': {
+                                        color: theme.palette.primary.main,
+                                    },
                                 }}
-                                onMouseEnter={(e) => e.target.style.color = theme.palette.primary.main}
-                                onMouseLeave={(e) => e.target.style.color = theme.palette.text.secondary}
                             >
                                 Forgot your password?
-                            </Link>
+                            </Typography>
                         </Box>
                     </Box>
                 </StyledCard>
@@ -227,7 +235,7 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
                             variant="outlined"
                             size="large"
                             component={Link}
-                            to="/registration"
+                            to="/register"
                         >
                             Create Account
                         </StyledButton>
@@ -242,6 +250,12 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
                     </Box>
                 </Box>
             </Grid>
+
+            {/* Forgot Password Dialog */}
+            <ForgotPasswordForm 
+                open={forgotPasswordOpen}
+                onClose={() => setForgotPasswordOpen(false)}
+            />
         </Grid>
     );
 };

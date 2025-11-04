@@ -74,6 +74,7 @@ const StandingsTable = ({ teams, conference }) => {
                             <TableCell sx={{ width: '100px' }}>Overall</TableCell>
                             <TableCell sx={{ width: '120px' }}>Conf Record</TableCell>
                             <TableCell sx={{ width: '100px' }}>Conf %</TableCell>
+                            <TableCell sx={{ width: '80px' }}>ELO</TableCell>
                         </TableRow>
                     </TableHead>
 
@@ -187,6 +188,16 @@ const StandingsTable = ({ teams, conference }) => {
                                     <TableCell>
                                         <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                                             {confWinPct}
+                                        </Typography>
+                                    </TableCell>
+
+                                    {/* ELO */}
+                                    <TableCell>
+                                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                            {team.current_elo !== null && team.current_elo !== undefined ? 
+                                                Math.round(team.current_elo) : 
+                                                'N/A'
+                                            }
                                         </Typography>
                                     </TableCell>
                                 </TableRow>

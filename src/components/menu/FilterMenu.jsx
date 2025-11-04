@@ -16,32 +16,34 @@ import GameStatusDropdown from "../dropdown/GameStatusDropdown";
 
 
 const FilterMenu = ({ onApply, category }) => {
-    console.log('FilterMenu category:', category);
     const availableFilters = {
-        livegames: ['conference', 'gameType', 'gameStatus', 'rankedGame', 'sort'],
+        livegames: ['conference', 'gameType', 'gameStatus', 'gameMode', 'rankedGame', 'sort'],
         pastgames: ['conference', 'gameType', 'rankedGame', 'sort'],
         scrimmages: ['conference', 'gameStatus', 'rankedGame', 'sort'],
     }[category] || [];
-    console.log('Available filters:', availableFilters);
 
     const getSavedFilters = () => {
-        console.log(category);
         const saved = sessionStorage.getItem(`filters_${category}`);
+        
+        // For debugging - clear sessionStorage to start fresh
+        // sessionStorage.removeItem(`filters_${category}`);
+        
         if (!saved) {
-            return {
-                filters: [],
-                sort: 'CLOSEST_TO_END',
-                conference: null,
-                gameType: null,
-                gameStatus: null,
-                rankedGame: null,
-                page: 0,
-                size: 10,
-            };
+        return {
+            filters: [],
+            sort: 'CLOSEST_TO_END',
+            conference: null,
+            gameType: null,
+            gameStatus: null,
+            gameMode: null,
+            rankedGame: null,
+            page: 0,
+            size: 10,
+        };
         }
 
         const parsed = JSON.parse(saved);
-        let { filters, gameStatus, gameType } = parsed;
+        let { filters, gameStatus, gameType, gameMode } = parsed;
 
         // Extract gameStatus and gameType from filters if present
         if (filters && Array.isArray(filters)) {
@@ -52,12 +54,14 @@ const FilterMenu = ({ onApply, category }) => {
             filters = filters.filter(f => f !== gameStatus && f !== gameType);
         }
 
-        return {
+        const result = {
             ...parsed,
             filters,
             gameStatus,
             gameType,
+            gameMode: gameMode === "CHEW" ? null : (gameMode || null), // Fix old CHEW value and ensure gameMode defaults to null
         };
+        return result;
     };
 
     const [pendingFilters, setPendingFilters] = useState(getSavedFilters);
@@ -89,7 +93,6 @@ const FilterMenu = ({ onApply, category }) => {
     };
 
     const handleApply = () => {
-        console.log('Applying filters:', pendingFilters);
         onApply(pendingFilters);
     };
 
@@ -100,6 +103,7 @@ const FilterMenu = ({ onApply, category }) => {
             conference: null,
             gameType: null,
             gameStatus: null,
+            gameMode: null,
             rankedGame: null,
             page: 0,
             size: 10,
@@ -113,6 +117,7 @@ const FilterMenu = ({ onApply, category }) => {
         if (pendingFilters.conference) count++;
         if (pendingFilters.gameType) count++;
         if (pendingFilters.gameStatus) count++;
+        if (pendingFilters.gameMode) count++;
         if (pendingFilters.rankedGame) count++;
         if (pendingFilters.filters.length > 0) count++;
         return count;
@@ -163,6 +168,9 @@ const FilterMenu = ({ onApply, category }) => {
                             value={pendingFilters.conference}
                             onChange={handleChange('conference')}
                             label="Conference"
+                            fullWidth={true}
+                            size="small"
+                            sx={{ margin: 0 }}
                         />
                     </Box>
                 )}
@@ -186,6 +194,24 @@ const FilterMenu = ({ onApply, category }) => {
                             onChange={handleChange('gameStatus')}
                             label="Game Status"
                         />
+                    </Box>
+                )}
+
+                {/* Game Mode Filter */}
+                {availableFilters.includes('gameMode') && (
+                    <Box sx={{ mb: 2 }}>
+                        <FormControl fullWidth size="small">
+                            <InputLabel>Game Mode</InputLabel>
+                            <Select
+                                value={pendingFilters.gameMode === null ? '' : (pendingFilters.gameMode || '')}
+                                label="Game Mode"
+                                onChange={handleChange('gameMode')}
+                            >
+                                <MenuItem value="">All Modes</MenuItem>
+                                <MenuItem value="NORMAL">Normal</MenuItem>
+                                <MenuItem value="CHEW">Chew</MenuItem>
+                            </Select>
+                        </FormControl>
                     </Box>
                 )}
 

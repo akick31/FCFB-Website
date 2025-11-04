@@ -31,9 +31,6 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
         }
 
         const auth = response.data;
-        console.log('Login response data:', auth);
-        console.log('Response data keys:', Object.keys(auth));
-        console.log('Response data values:', Object.values(auth));
 
         // Be defensive about field names - let's see what we actually get
         const token =
@@ -43,7 +40,6 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
         const role =
             auth?.role ?? auth?.user?.role ?? null;
 
-        console.log('Parsed values:', { token, userId, role });
 
         if (!token || !userId) {
             console.error('Login response missing token or userId:', { token, userId, role });
@@ -54,14 +50,8 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
         localStorage.setItem('userId', String(userId));
         if (role != null) localStorage.setItem('role', String(role));
 
-        console.log('Stored in localStorage:', { 
-            token: localStorage.getItem('token'), 
-            userId: localStorage.getItem('userId'), 
-            role: localStorage.getItem('role') 
-        });
 
         const userData = await getUserById(userId);
-        console.log('Fetched user data:', userData);
         
         setIsAuthenticated(true);
         setUser(userData);
@@ -118,7 +108,10 @@ export const forgotPassword = async (email) => {
 
 export const resetPassword = async (token, newPassword) => {
     try {
-        const response = await apiClient.post('/auth/reset-password', { token, newPassword });
+        const response = await apiClient.post('/auth/reset-password', { 
+            token, 
+            newPassword 
+        });
         return response.data;
     } catch (error) {
         console.error('Failed to reset password:', error);

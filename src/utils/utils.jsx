@@ -1,4 +1,5 @@
 export const checkIfUserIsAdmin = () => {
     const role = localStorage.getItem('role');
-    return role === 'ADMIN' || role === 'CONFERENCE_COMMISSIONER';
+    const isAdmin = role === 'ADMIN' || role === 'CONFERENCE_COMMISSIONER';
+    return isAdmin;
 };

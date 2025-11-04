@@ -2,7 +2,7 @@ import apiClient from './apiClient';
 
 export const getCurrentWeek = async () => {
     try {
-        const response = await apiClient.get(`/season/week`);
+        const response = await apiClient.get(`/season/current/week`);
         return response.data;
     } catch (error) {
         console.error("Failed to fetch current week:", error);

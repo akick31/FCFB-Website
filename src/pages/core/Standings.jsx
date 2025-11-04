@@ -133,7 +133,7 @@ const Standings = () => {
                     <ConferenceDropdown
                         value={selectedConference}
                         onChange={handleConferenceChange}
-                        sx={{ minWidth: 200 }}
+                        sx={{ minWidth: 250, maxWidth: 300 }}
                     />
                 </Box>
 

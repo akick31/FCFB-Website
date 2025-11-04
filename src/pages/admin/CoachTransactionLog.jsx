@@ -82,7 +82,6 @@ const CoachTransactionLog = () => {
     }, [transactions, teamFilter, positionFilter, transactionTypeFilter, searchTerm]);
 
     const handleNavigationChange = (item) => {
-        console.log('Navigate to:', item.path);
         navigate(item.path);
     };
 

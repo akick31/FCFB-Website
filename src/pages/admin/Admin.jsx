@@ -33,7 +33,6 @@ const Admin = ({ user }) => {
         const fetchNewSignups = async () => {
             try {
                 const response = await getNewSignups();
-                console.log(response);
                 setNewSignups(response);
                 setLoading(false);
             } catch (error) {
@@ -109,7 +108,6 @@ const Admin = ({ user }) => {
     const navigationItems = adminNavigationItems;
 
     const handleNavigationChange = (item) => {
-        console.log('Navigate to:', item.path);
         navigate(item.path);
     };
 
@@ -156,8 +154,7 @@ const Admin = ({ user }) => {
                                     data={transformedNewSignups}
                                     maxHeight={400}
                                     compact={true}
-                                    onRowClick={(user) => {
-                                        console.log('View user details:', user.username);
+                                    onRowClick={() => {
                                     }}
                                 />
                             </Box>
@@ -176,8 +173,7 @@ const Admin = ({ user }) => {
                                     data={transformedOpenTeams}
                                     maxHeight={400}
                                     compact={true}
-                                    onRowClick={(team) => {
-                                        console.log('View team details:', team.name);
+                                    onRowClick={() => {
                                     }}
                                 />
                             </Box>

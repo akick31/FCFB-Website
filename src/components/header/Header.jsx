@@ -21,7 +21,7 @@ import {
 } from "@mui/material";
 import {
     Menu as MenuIcon,
-
+    ArrowDropDown,
     Person,
     Logout,
     Login,
@@ -41,6 +41,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
     
     const [mobileOpen, setMobileOpen] = useState(false);
     const [userMenuAnchor, setUserMenuAnchor] = useState(null);
+    const [statsMenuAnchor, setStatsMenuAnchor] = useState(null);
 
     const [teamData, setTeamData] = useState(null);
     const [isLoadingTeam, setIsLoadingTeam] = useState(false);
@@ -74,6 +75,14 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
 
     const handleUserMenuClose = () => {
         setUserMenuAnchor(null);
+    };
+
+    const handleStatsMenuOpen = (event) => {
+        setStatsMenuAnchor(event.currentTarget);
+    };
+
+    const handleStatsMenuClose = () => {
+        setStatsMenuAnchor(null);
     };
 
 
@@ -122,6 +131,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
     };
 
     const isActiveRoute = (path) => location.pathname === path;
+    const isStatsActive = () => location.pathname === '/records' || location.pathname === '/season-stats' || location.pathname === '/league-stats' || location.pathname === '/leaderboard';
 
     // Mobile Drawer
     const drawer = (
@@ -170,6 +180,104 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                         </ListItemButton>
                     </ListItem>
                 ))}
+
+                {/* Stats Menu Items */}
+                <ListItem disablePadding>
+                    <ListItemButton
+                        onClick={() => handleNavigation('/records')}
+                        selected={isActiveRoute('/records')}
+                        sx={{
+                            borderRadius: 1,
+                            mx: 1,
+                            mb: 0.5,
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            },
+                            '&.Mui-selected': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                                },
+                            },
+                        }}
+                    >
+                        <ListItemText primary="Records" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton
+                        onClick={() => handleNavigation('/season-stats')}
+                        selected={isActiveRoute('/season-stats')}
+                        sx={{
+                            borderRadius: 1,
+                            mx: 1,
+                            mb: 0.5,
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            },
+                            '&.Mui-selected': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                                },
+                            },
+                        }}
+                    >
+                        <ListItemText primary="Season Stats" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton
+                        onClick={() => handleNavigation('/league-stats')}
+                        selected={isActiveRoute('/league-stats')}
+                        sx={{
+                            borderRadius: 1,
+                            mx: 1,
+                            mb: 0.5,
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            },
+                            '&.Mui-selected': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                                },
+                            },
+                        }}
+                    >
+                        <ListItemText primary="League Stats" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton
+                        onClick={() => handleNavigation('/leaderboard')}
+                        selected={isActiveRoute('/leaderboard')}
+                        sx={{
+                            borderRadius: 1,
+                            mx: 1,
+                            mb: 0.5,
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            },
+                            '&.Mui-selected': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                                },
+                            },
+                        }}
+                    >
+                        <ListItemText primary="Leaderboard" />
+                    </ListItemButton>
+                </ListItem>
 
                 {/* Admin Menu */}
                 {isAdmin && (
@@ -340,6 +448,38 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                     {label}
                                 </Button>
                             ))}
+
+                            {/* Stats Dropdown */}
+                            <Button
+                                onClick={handleStatsMenuOpen}
+                                variant={isStatsActive() ? "contained" : "text"}
+                                endIcon={<ArrowDropDown />}
+                                sx={{
+                                    color: 'white',
+                                    textTransform: 'none',
+                                    px: 2,
+                                    py: 0.75,
+                                    fontWeight: isStatsActive() ? 600 : 400,
+                                    fontSize: '0.95rem',
+                                    borderRadius: 2,
+                                    fontFamily: 'Exo, sans-serif',
+                                    whiteSpace: 'nowrap',
+                                    minHeight: 32,
+                                    minWidth: 'auto',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                    },
+                                    '&.MuiButton-contained': {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                                        color: 'white',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(255, 255, 255, 0.35)',
+                                        },
+                                    },
+                                }}
+                            >
+                                Stats
+                            </Button>
 
                             {/* Admin Button */}
                             {isAdmin && (
@@ -535,6 +675,86 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
             </Drawer>
 
 
+
+            {/* Stats Menu */}
+            <Menu
+                anchorEl={statsMenuAnchor}
+                open={Boolean(statsMenuAnchor)}
+                onClose={handleStatsMenuClose}
+                anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                }}
+                transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left',
+                }}
+                PaperProps={{
+                    sx: {
+                        mt: 1,
+                        minWidth: 150,
+                        boxShadow: theme.shadows[8],
+                        borderRadius: 0,
+                    },
+                }}
+            >
+                <MenuItem
+                    onClick={() => {
+                        navigate('/records');
+                        handleStatsMenuClose();
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        borderRadius: 0,
+                        backgroundColor: isActiveRoute('/records') ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
+                    }}
+                >
+                    <ListItemText primary="Records" />
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        navigate('/season-stats');
+                        handleStatsMenuClose();
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        borderRadius: 0,
+                        backgroundColor: isActiveRoute('/season-stats') ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
+                    }}
+                >
+                    <ListItemText primary="Season Stats" />
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        navigate('/league-stats');
+                        handleStatsMenuClose();
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        borderRadius: 0,
+                        backgroundColor: isActiveRoute('/league-stats') ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
+                    }}
+                >
+                    <ListItemText primary="League Stats" />
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        navigate('/leaderboard');
+                        handleStatsMenuClose();
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        borderRadius: 0,
+                        backgroundColor: isActiveRoute('/leaderboard') ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
+                    }}
+                >
+                    <ListItemText primary="Leaderboard" />
+                </MenuItem>
+            </Menu>
 
             {/* User Menu */}
             <Menu

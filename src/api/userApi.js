@@ -2,7 +2,6 @@ import apiClient from './apiClient';
 
 export const getUserById = async (userId) => {
     if (!userId) {
-        console.log('getUserById: No userId provided');
         return {};
     }
     
@@ -67,7 +66,6 @@ export const validateUser = async (formData) => {
             username: formData.username,
             email: formData.email,
         });
-        console.log("User validation response:", response.data);
         return response.data;
     } catch (error) {
         console.error("Error validating user fields:", error);

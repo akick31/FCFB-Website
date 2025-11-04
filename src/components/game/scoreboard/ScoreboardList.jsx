@@ -76,7 +76,7 @@ const ScoreboardList = ({
         if (isPastGames) {
             return isSmallScreen ? '450px' : '1500px';
         } else {
-            return isSmallScreen ? '630px' : '1500px';
+            return isSmallScreen ? '705px' : '1605px'; // Adjusted width to cover all columns without extending too far
         }
     };
 
@@ -117,13 +117,10 @@ const ScoreboardList = ({
 
     const handleRowClick = (game) => {
         const gameId = game.game_id;
-        console.log('Final Game ID:', gameId);
         
         if (gameId) {
-            console.log('Navigating to:', `/game-details/${gameId}`);
             try {
                 navigate(`/game-details/${gameId}`);
-                console.log('Navigation called successfully');
             } catch (error) {
                 console.error('Navigation error:', error);
             }
@@ -466,6 +463,87 @@ const ScoreboardList = ({
                                 </Box>
                             )}
 
+                            {/* Game Mode Column for Past Games */}
+                            {isPastGames && (
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center' 
+                                }}>
+                                    <Box sx={{
+                                        backgroundColor: game.gameMode === 'CHEW' ? theme.palette.error.main : theme.palette.primary.main,
+                                        px: 1,
+                                        py: 0.25,
+                                        borderRadius: 1,
+                                        minWidth: 60
+                                    }}>
+                                        <Typography sx={{
+                                            color: 'white',
+                                            fontSize: '0.7rem',
+                                            fontWeight: 600,
+                                            textAlign: 'center',
+                                            textTransform: 'uppercase'
+                                        }}>
+                                            {game.gameMode === 'CHEW' ? 'Chew' : 'Normal'}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            )}
+
+                            {/* Spread Column for Past Games */}
+                            {isPastGames && (
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    gap: 0.5
+                                }}>
+                                    {game.home_vegas_spread !== null && game.home_vegas_spread !== undefined ? (
+                                        <>
+                                            <Box sx={{
+                                                width: 16,
+                                                height: 16,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                overflow: 'hidden'
+                                            }}>
+                                                {homeTeamData?.logo ? (
+                                                    <img 
+                                                        src={homeTeamData.logo} 
+                                                        alt="Home Team"
+                                                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                                    />
+                                                ) : (
+                                                    <Typography sx={{
+                                                        color: theme.palette.primary.main,
+                                                        fontSize: '0.6rem',
+                                                        fontWeight: 600
+                                                    }}>
+                                                        {homeTeamName?.charAt(0) || 'H'}
+                                                    </Typography>
+                                                )}
+                                            </Box>
+                                            <Typography sx={{
+                                                color: 'text.primary',
+                                                fontSize: '0.8rem',
+                                                fontWeight: 500
+                                            }}>
+                                                {game.home_vegas_spread > 0 ? '+' : ''}{game.home_vegas_spread}
+                                            </Typography>
+                                        </>
+                                    ) : (
+                                        <Typography sx={{
+                                            color: 'text.primary',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 500
+                                        }}>
+                                            --
+                                        </Typography>
+                                    )}
+                                </Box>
+                            )}
+
                             {/* For Live Games: Show all the detailed columns */}
                             {!isPastGames && (
                                 <>
@@ -669,6 +747,83 @@ const ScoreboardList = ({
                                         {getGameStatusInfo(gameStatus).status}
                                     </Typography>
                                 </Box>
+                            </Box>
+
+                            {/* Game Mode Column */}
+                            <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center' 
+                            }}>
+                                <Box sx={{
+                                    backgroundColor: game.game_mode === 'CHEW' ? theme.palette.error.main : theme.palette.primary.main,
+                                    px: 1,
+                                    py: 0.25,
+                                    borderRadius: 1,
+                                    minWidth: 60
+                                }}>
+                                    <Typography sx={{
+                                        color: 'white',
+                                        fontSize: '0.7rem',
+                                        fontWeight: 600,
+                                        textAlign: 'center',
+                                        textTransform: 'uppercase'
+                                    }}>
+                                        {game.game_mode === 'CHEW' ? 'Chew' : 'Normal'}
+                                    </Typography>
+                                </Box>
+                            </Box>
+
+                            {/* Spread Column */}
+                            <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                gap: 0.5
+                            }}>
+                                {game.home_vegas_spread !== null && game.home_vegas_spread !== undefined ? (
+                                    <>
+                                        <Box sx={{
+                                            width: 16,
+                                            height: 16,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            overflow: 'hidden'
+                                        }}>
+                                            {homeTeamData?.logo ? (
+                                                <img 
+                                                    src={homeTeamData.logo} 
+                                                    alt="Home Team"
+                                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                                />
+                                            ) : (
+                                                <Typography sx={{
+                                                    color: theme.palette.primary.main,
+                                                    fontSize: '0.6rem',
+                                                    fontWeight: 600
+                                                }}>
+                                                    {homeTeamName?.charAt(0) || 'H'}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                        <Typography sx={{
+                                            color: 'text.primary',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 500
+                                        }}>
+                                            {game.home_vegas_spread > 0 ? '+' : ''}{game.home_vegas_spread}
+                                        </Typography>
+                                    </>
+                                ) : (
+                                    <Typography sx={{
+                                        color: 'text.primary',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 500
+                                    }}>
+                                        --
+                                    </Typography>
+                                )}
                             </Box>
                             </>
                             )}

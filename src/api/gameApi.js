@@ -74,6 +74,7 @@ export const getFilteredGames = async (params) => {
         if (params.week) searchParams.append('week', params.week);
         if (params.season) searchParams.append('season', params.season);
         if (params.conference) searchParams.append('conference', params.conference);
+        if (params.gameMode) searchParams.append('gameMode', params.gameMode);
         if (params.category) searchParams.append('category', params.category);
         if (params.sort) searchParams.append('sort', params.sort);
         searchParams.append('page', params.page);
@@ -160,9 +161,9 @@ export const endAllOngoingGames = async () => {
     }
 };
 
-export const updateGame = async (gameId, gameData) => {
+export const updateGame = async (gameData) => {
     try {
-        const response = await apiClient.put(`/game/${gameId}`, gameData);
+        const response = await apiClient.put(`/game`, gameData);
         return response.data;
     } catch (error) {
         console.error("Failed to update game:", error);
@@ -183,6 +184,32 @@ export const restartGame = async (gameId) => {
             throw new Error(error.response.data.error || "Failed to restart game");
         }
         throw new Error("An unexpected error occurred while restarting game");
+    }
+};
+
+export const endGameByGameId = async (gameId) => {
+    try {
+        const response = await apiClient.post(`/game/${gameId}/end`);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to end game:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to end game");
+        }
+        throw new Error("An unexpected error occurred while ending game");
+    }
+};
+
+export const chewGameByGameId = async (gameId) => {
+    try {
+        const response = await apiClient.post(`/game/${gameId}/chew`);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to chew game:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to chew game");
+        }
+        throw new Error("An unexpected error occurred while chewing game");
     }
 };
 

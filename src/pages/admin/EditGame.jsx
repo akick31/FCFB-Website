@@ -112,7 +112,7 @@ const EditGame = () => {
         setSaving(true);
         setError(null);
         try {
-            await updateGame(gameId, game);
+            await updateGame(game);
             setSuccess('Game updated successfully!');
         } catch (error) {
             setError(`Failed to update game: ${error.message}`);

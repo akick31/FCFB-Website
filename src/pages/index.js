@@ -8,10 +8,14 @@ export { GameDetails, Scoreboard } from './game';
 export { Teams, TeamDetails, ModifyTeam } from './team';
 
 // Admin Pages
-export { Admin, UserManagement, GameManagement, TeamManagement, EditTeam, CoachManagement, CoachTransactionLog, EditGame } from './admin';
+export { Admin, UserManagement, GameManagement, TeamManagement, EditTeam, CoachManagement, CoachTransactionLog,
+    EditGame, StatsManagement, Reports } from './admin';
 
 // Core Pages
 export { Home, Profile, Standings, Rankings, Error, NotFound } from './core';
+
+// Stats Pages
+export { Records, SeasonStats, LeagueStats, Leaderboard } from './stats';
 
 // Register Pages (special flow)
 export { default as Complete } from './register/Complete';

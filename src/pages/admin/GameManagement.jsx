@@ -108,13 +108,11 @@ const GameManagement = () => {
     useEffect(() => {
         const setDefaults = async () => {
             try {
-                console.log('Fetching current season and week...');
                 const [currentSeason, currentWeek] = await Promise.all([
                     getCurrentSeason(),
                     getCurrentWeek()
                 ]);
                 
-                console.log('Successfully fetched:', { currentSeason, currentWeek });
                 
                 setGameData(prev => ({
                     ...prev,
@@ -155,7 +153,6 @@ const GameManagement = () => {
             } catch (error) {
                 console.error('Failed to fetch current season/week:', error);
                 // Set fallback values if API fails (same as Past Games)
-                console.log('Setting fallback values: season=11, week=1');
                 setGameData(prev => ({
                     ...prev,
                     season: 11,

@@ -27,9 +27,7 @@ const GameStatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
 
     // Get team colors with fallbacks
     const getTeamColors = (team) => {
-        console.log('team:', team);
         if (!team || !team.primary_color) {
-            console.log('Using fallback colors for team:', team?.name || 'unknown');
             return {
                 primary: theme.palette.primary.main,
                 secondary: theme.palette.primary.dark
@@ -45,8 +43,6 @@ const GameStatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
     const homeColors = getTeamColors(homeTeam);
     const awayColors = getTeamColors(awayTeam);
 
-    console.log('Final homeColors:', homeColors);
-    console.log('Final awayColors:', awayColors);
 
     const statsData = [
         {
@@ -171,6 +167,8 @@ const GameStatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         {
             label: 'Efficiency',
             isHeader: true,
+            home: '-',
+            away: '-'
         },
         {
             label: 'First Downs',
@@ -194,9 +192,9 @@ const GameStatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         },
         {
             label: 'Special Teams',
-            home: homeStats.field_goal_made,
-            away: awayStats.field_goal_made,
             isHeader: true,
+            home: '-',
+            away: '-',
         },
         {
             label: 'Field Goals Made/Attempted',
@@ -258,10 +256,13 @@ const GameStatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         {
             label: 'Game Performance',
             isHeader: true,
+            home: '-',
+            away: '-',
         },
         {
             label: 'Average Difference',
             home: homeStats.average_diff?.toFixed(2),
+            away: '-'
         },
         {
             label: 'Average Offensive Difference',
