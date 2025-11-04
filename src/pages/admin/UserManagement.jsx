@@ -98,7 +98,7 @@ const UserManagement = ({ user }) => {
         navigate(item.path);
     };
 
-    const handleUserClick = (user) => {
+    const handleUserClick = () => {
     };
 
     const getRoleColor = (role) => {

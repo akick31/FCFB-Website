@@ -215,7 +215,7 @@ const App = () => {
                             } />
                             <Route path="/verify" element={<Verify
                                 userId={new URLSearchParams(window.location.search).get('id')}/>} />
-                            <Route path="/game-details/:gameId" element={<GameDetails user={user} isAdmin={isAdmin} />} />
+                            <Route path="/game-details/:gameId" element={<GameDetails isAdmin={isAdmin} />} />
                             <Route path="/team/:teamId" element={<TeamDetails />} />
                             <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
                             <Route path="/modify-team/:teamId" element={

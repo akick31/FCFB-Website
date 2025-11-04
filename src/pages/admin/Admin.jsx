@@ -154,7 +154,7 @@ const Admin = ({ user }) => {
                                     data={transformedNewSignups}
                                     maxHeight={400}
                                     compact={true}
-                                    onRowClick={(user) => {
+                                    onRowClick={() => {
                                     }}
                                 />
                             </Box>
@@ -173,7 +173,7 @@ const Admin = ({ user }) => {
                                     data={transformedOpenTeams}
                                     maxHeight={400}
                                     compact={true}
-                                    onRowClick={(team) => {
+                                    onRowClick={() => {
                                     }}
                                 />
                             </Box>

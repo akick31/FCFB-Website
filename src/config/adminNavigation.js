@@ -5,7 +5,6 @@ import {
     EmojiEvents,
     Settings,
     Headset,
-    History,
     Assessment,
     TrendingUp
 } from '@mui/icons-material';

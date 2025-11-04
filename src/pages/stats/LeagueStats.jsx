@@ -20,7 +20,6 @@ import {
     Chip,
     CircularProgress,
     Alert,
-    Button,
     Tabs,
     Tab
 } from '@mui/material';
@@ -64,7 +63,7 @@ const LeagueStats = () => {
         const fetchInitialData = async () => {
             try {
                 setLoading(true);
-                const currentSeason = await getCurrentSeason();
+                await getCurrentSeason();
                 
                 // Set default season to 11 (most recent season)
                 setSelectedSeason(11);

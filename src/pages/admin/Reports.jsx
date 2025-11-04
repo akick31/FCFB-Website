@@ -19,7 +19,6 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    IconButton
 } from '@mui/material';
 import { Search, History, People, TrendingUp, ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
@@ -45,8 +44,6 @@ const Reports = ({ user }) => {
     const [transactionTypeFilter, setTransactionTypeFilter] = useState('ALL');
 
     // User delay instances states
-    const [users, setUsers] = useState([]);
-    const [teams, setTeams] = useState([]);
     const [userDelayData, setUserDelayData] = useState([]);
     const [filteredUserDelayData, setFilteredUserDelayData] = useState([]);
     const [delayLoading, setDelayLoading] = useState(true);
@@ -102,8 +99,6 @@ const Reports = ({ user }) => {
                     getAllUsers(),
                     getAllTeams()
                 ]);
-                setUsers(usersResponse);
-                setTeams(teamsResponse);
 
                 const delayData = usersResponse.map(user => ({
                     username: user.username,

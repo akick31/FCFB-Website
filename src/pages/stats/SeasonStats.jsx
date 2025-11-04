@@ -12,21 +12,12 @@ import {
     TextField,
     Card,
     CardContent,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
     Avatar,
-    Chip,
     CircularProgress,
     Alert
 } from '@mui/material';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getAllTeams } from '../../api/teamApi';
-import { getCurrentSeason } from '../../api/seasonApi';
 
 const SeasonStats = ({ user }) => {
     const [loading, setLoading] = useState(false);
@@ -45,10 +36,7 @@ const SeasonStats = ({ user }) => {
         const fetchInitialData = async () => {
             try {
                 setLoading(true);
-                const [teamsData, currentSeason] = await Promise.all([
-                    getAllTeams(),
-                    getCurrentSeason()
-                ]);
+                const teamsData = await getAllTeams();
                 setTeams(teamsData);
                 
                 // Set default season to 11 (most recent season)
@@ -174,29 +162,6 @@ const SeasonStats = ({ user }) => {
             { label: 'Pick Sixes Forced', value: teamSeasonStats.pick_sixes_forced },
             { label: 'Fumble Return TDs Committed', value: teamSeasonStats.fumble_return_tds_committed },
             { label: 'Fumble Return TDs Forced', value: teamSeasonStats.fumble_return_tds_forced }
-        ];
-
-        const efficiencyStats = [
-            { label: 'Pass Completion %', value: teamSeasonStats.pass_completion_percentage ? 
-                teamSeasonStats.pass_completion_percentage.toFixed(1) + '%' : 'N/A' },
-            { label: 'Rush Success %', value: teamSeasonStats.rush_success_percentage ? 
-                teamSeasonStats.rush_success_percentage.toFixed(1) + '%' : 'N/A' },
-            { label: '3rd Down %', value: teamSeasonStats.third_down_conversion_percentage ? 
-                teamSeasonStats.third_down_conversion_percentage.toFixed(1) + '%' : 'N/A' },
-            { label: '4th Down %', value: teamSeasonStats.fourth_down_conversion_percentage ? 
-                teamSeasonStats.fourth_down_conversion_percentage.toFixed(1) + '%' : 'N/A' },
-            { label: 'Red Zone %', value: teamSeasonStats.red_zone_success_percentage ? 
-                teamSeasonStats.red_zone_success_percentage.toFixed(1) + '%' : 'N/A' },
-            { label: 'Avg Yards/Play', value: teamSeasonStats.average_yards_per_play ? 
-                teamSeasonStats.average_yards_per_play.toFixed(1) : 'N/A' },
-            { label: 'Pass Success %', value: teamSeasonStats.pass_success_percentage ? 
-                teamSeasonStats.pass_success_percentage.toFixed(1) + '%' : 'N/A' },
-            { label: '3rd Down Success', value: teamSeasonStats.third_down_conversion_success },
-            { label: '3rd Down Attempts', value: teamSeasonStats.third_down_conversion_attempts },
-            { label: '4th Down Success', value: teamSeasonStats.fourth_down_conversion_success },
-            { label: '4th Down Attempts', value: teamSeasonStats.fourth_down_conversion_attempts },
-            { label: 'Red Zone Attempts', value: teamSeasonStats.red_zone_attempts },
-            { label: 'Red Zone Successes', value: teamSeasonStats.red_zone_successes }
         ];
 
         const specialTeamsStats = [

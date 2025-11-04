@@ -39,7 +39,7 @@ const StatsManagement = () => {
     const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, title: '' });
     const navigationItems = adminNavigationItems;
 
-    const handleNavigationChange = (path) => {
+    const handleNavigationChange = () => {
         // Navigation is handled by React Router, so this can be empty
         // or you can add any additional logic here if needed
     };
@@ -101,7 +101,7 @@ const StatsManagement = () => {
         setResults(prev => ({ ...prev, [actionId]: null }));
 
         try {
-            const result = await actionFunction();
+            await actionFunction();
             setResults(prev => ({ 
                 ...prev, 
                 [actionId]: { 

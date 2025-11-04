@@ -35,7 +35,6 @@ const Records = () => {
     const [singleGameRecords, setSingleGameRecords] = useState([]);
     const [singleSeasonRecords, setSingleSeasonRecords] = useState([]);
     const [teams, setTeams] = useState([]);
-    const [seasons, setSeasons] = useState([]);
     const [availableRecords, setAvailableRecords] = useState([]);
     
     // Filter states
@@ -67,10 +66,6 @@ const Records = () => {
             setSingleGameRecords(gameResponse.content || []);
             setSingleSeasonRecords(seasonResponse.content || []);
             setTeams(teamsData);
-            
-            // Extract unique seasons from records
-            const allSeasons = [...new Set([...(gameResponse.content || []), ...(seasonResponse.content || [])].map(record => record.seasonNumber))].sort((a, b) => b - a);
-            setSeasons(allSeasons);
             
             // Extract unique record names and format them
             const allRecordNames = [...new Set([...(gameResponse.content || []), ...(seasonResponse.content || [])].map(record => record.record_name))];

@@ -18,7 +18,7 @@ import LoadingSpinner from "../../components/icons/LoadingSpinner";
 import { generateGameStats } from "../../api/gameStatsApi";
 import { endGameByGameId, chewGameByGameId } from "../../api/gameApi";
 
-const GameDetails = ({ user, isAdmin }) => {
+const GameDetails = ({ isAdmin }) => {
     const theme = useTheme();
     const navigate = useNavigate();
     const { gameId } = useParams();
