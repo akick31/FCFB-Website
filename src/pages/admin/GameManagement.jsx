@@ -1001,6 +1001,10 @@ const GameManagement = () => {
                                             <MenuItem value="ESPNU">ESPNU</MenuItem>
                                             <MenuItem value="ESPN+">ESPN+</MenuItem>
                                             <MenuItem value="SEC Network">SEC Network</MenuItem>
+                                            <MenuItem value="Pac-12 Network">Pac-12 Network</MenuItem>
+                                            <MenuItem value="TNT">TNT</MenuItem>
+                                            <MenuItem value="Peacock">Peacock</MenuItem>
+                                            <MenuItem value="ESPNEWS">ESPNEWS</MenuItem>
                                         </Select>
                                     </FormControl>
                                 </Grid>
