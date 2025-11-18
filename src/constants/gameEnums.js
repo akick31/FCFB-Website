@@ -15,7 +15,11 @@ export const TV_CHANNELS = [
     'THE_CW',
     'ESPNU',
     'ESPN_PLUS',
-    'SEC_NETWORK'
+    'SEC_NETWORK',
+    'TNT',
+    'PEACOCK',
+    'PAC_12_NETWORK',
+    'ESPNEWS'
 ];
 
 export const TEAM_SIDES = [
