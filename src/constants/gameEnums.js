@@ -18,7 +18,7 @@ export const TV_CHANNELS = [
     'SEC_NETWORK',
     'TNT',
     'PEACOCK',
-    'PAC_12_NETWORK'
+    'PAC_12_NETWORK',
     'ESPNEWS'
 ];
 
