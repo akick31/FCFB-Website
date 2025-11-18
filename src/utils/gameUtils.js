@@ -179,7 +179,11 @@ export const formatTVChannel = (tvChannel) => {
         'THE_CW': 'The CW',
         'ESPNU': 'ESPNU',
         'ESPN_PLUS': 'ESPN+',
-        'SEC_NETWORK': 'SEC Network'
+        'SEC_NETWORK': 'SEC Network',
+        'TNT': 'TNT',
+        'PAC_12_NETWORK': 'PAC-12 Network',
+        'PEACOCK': 'Peacock',
+        'ESPNEWS': 'ESPNEWS'
     };
     
     return tvChannelMappings[tvChannel] || tvChannel;
