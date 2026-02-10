@@ -3,7 +3,7 @@ import { Box, Typography, Paper, Avatar, CircularProgress, useTheme, IconButton,
 import { ArrowForward as ArrowForwardIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import BracketMatchup from './BracketMatchup';
-import { R2_BYE_SEEDS, R1_GAMES, R2_OPPONENT_R1 } from '../constants/playoffBracket';
+import { R2_BYE_SEEDS, R1_GAMES, R2_OPPONENT_R1, playoffWeekForRound } from '../constants/playoffBracket';
 
 // Helper to safely read schedule fields (backend uses SNAKE_CASE serialization)
 const field = (game, camel, snake) => game[camel] !== undefined ? game[camel] : game[snake];
