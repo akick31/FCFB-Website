@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {Box, Typography, Card, CardContent, Chip, useTheme, IconButton, Grid, Button, CircularProgress, Alert} from "@mui/material";
+import {Box, Typography, Card, CardContent, Chip, useTheme, IconButton, Grid, Button, CircularProgress, Alert, Avatar} from "@mui/material";
 import { ArrowBack, Assessment, Stop, AccessTime } from "@mui/icons-material";
 import { getAllPlaysByGameId } from "../../api/playApi";
 import { getGameById } from "../../api/gameApi";
@@ -268,6 +268,17 @@ const GameDetails = ({ isAdmin }) => {
                         />
                     )}
                 </Box>
+
+                {/* Postseason Game Logo - shown for bowl/playoff/conference championship/national championship games */}
+                {game?.postseason_game_logo && (game?.game_type === 'BOWL' || game?.game_type === 'PLAYOFFS' || game?.game_type === 'CONFERENCE_CHAMPIONSHIP' || game?.game_type === 'NATIONAL_CHAMPIONSHIP') && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                        <Avatar
+                            src={`${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${game.postseason_game_logo}`}
+                            sx={{ width: 120, height: 120 }}
+                            variant="rounded"
+                        />
+                    </Box>
+                )}
 
                 {/* Game ID and Number of Plays */}
                 <Box sx={{ 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     Box, 
     Typography, 
@@ -29,7 +29,9 @@ import {
     Timer, 
     Stop, 
     Edit,
-    Refresh
+    Refresh,
+    CheckCircle as SuccessIcon,
+    Replay as RetryIcon,
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavigationItems } from '../../config/adminNavigation';
@@ -44,6 +46,12 @@ import {
 } from '../../api/gameApi';
 import { getCurrentSeason, getCurrentWeek } from '../../api/seasonApi';
 import { getAllTeams } from '../../api/teamApi';
+import {
+    getScheduleBySeasonAndWeek,
+    startGameWeek,
+    getGameWeekJobStatus,
+    retryFailedGames,
+} from '../../api/scheduleApi';
 import StyledTable from '../../components/ui/StyledTable';
 import { 
     GAME_TYPES, 
@@ -99,11 +107,52 @@ const GameManagement = () => {
         gameType: 'Out of Conference'
     });
 
+    // Start Game Week state
+    const [currentSeason, setCurrentSeason] = useState(null);
+    const [currentWeek, setCurrentWeek] = useState(null);
+    const [weekSchedule, setWeekSchedule] = useState([]);
+    const [activeJobId, setActiveJobId] = useState(null);
+    const [jobData, setJobData] = useState(null);
+    const [isStarting, setIsStarting] = useState(false);
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const pollIntervalRef = useRef(null);
+    const POLL_INTERVAL_MS = 3000;
+
     const navigationItems = adminNavigationItems;
 
 
 
 
+
+    // Initialize current season/week for Start Game Week
+    useEffect(() => {
+        const initCurrentWeek = async () => {
+            try {
+                const [season, week] = await Promise.all([
+                    getCurrentSeason(),
+                    getCurrentWeek()
+                ]);
+                setCurrentSeason(season);
+                setCurrentWeek(week);
+                if (season && week) {
+                    const schedule = await getScheduleBySeasonAndWeek(season, week);
+                    setWeekSchedule(schedule || []);
+                }
+            } catch (err) {
+                console.error('Error initializing current week:', err);
+            }
+        };
+        initCurrentWeek();
+    }, []);
+
+    // Cleanup polling on unmount
+    useEffect(() => {
+        return () => {
+            if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         const setDefaults = async () => {
@@ -214,6 +263,74 @@ const GameManagement = () => {
 
     const handleNavigationChange = (item) => {
         navigate(item.path);
+    };
+
+    // Start Game Week functions
+    const getGameStats = () => {
+        const total = weekSchedule.length;
+        const started = weekSchedule.filter(g => g.started || g.started === true).length;
+        const finished = weekSchedule.filter(g => g.finished || g.finished === true).length;
+        const notStarted = weekSchedule.filter(g => !g.started && g.started !== true).length;
+        return { total, started, finished, notStarted };
+    };
+
+    const startPolling = useCallback((jobId) => {
+        if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+        }
+
+        const poll = async () => {
+            try {
+                const status = await getGameWeekJobStatus(jobId);
+                setJobData(status);
+
+                if (status.status === 'COMPLETED' || status.status === 'FAILED') {
+                    clearInterval(pollIntervalRef.current);
+                    pollIntervalRef.current = null;
+                    setIsStarting(false);
+                    const schedule = await getScheduleBySeasonAndWeek(currentSeason, currentWeek);
+                    setWeekSchedule(schedule || []);
+                }
+            } catch (err) {
+                console.error('Error polling job status:', err);
+            }
+        };
+
+        poll();
+        pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
+    }, [currentSeason, currentWeek]);
+
+    const handleStartWeek = async () => {
+        setConfirmDialogOpen(false);
+        setIsStarting(true);
+        setJobData(null);
+
+        try {
+            const result = await startGameWeek(currentSeason, currentWeek);
+            const jobId = result.jobId;
+            setActiveJobId(jobId);
+            startPolling(jobId);
+        } catch (err) {
+            console.error('Error starting week:', err);
+            setIsStarting(false);
+            setError(`Failed to start week: ${err.message}`);
+        }
+    };
+
+    const handleRetryFailed = async () => {
+        if (!activeJobId) return;
+        setIsStarting(true);
+        try {
+            const result = await retryFailedGames(activeJobId);
+            const newJobId = result.jobId;
+            setActiveJobId(newJobId);
+            setJobData(null);
+            startPolling(newJobId);
+        } catch (err) {
+            console.error('Error retrying failed games:', err);
+            setIsStarting(false);
+            setError(`Failed to retry: ${err.message}`);
+        }
     };
 
     // Function to refresh games with current filters (avoids infinite loops)
@@ -483,6 +600,122 @@ const GameManagement = () => {
                         {success}
                     </Alert>
                 )}
+
+                {/* Start Game Week Section */}
+                {currentSeason && currentWeek && (
+                    <Card sx={{ mb: 4, backgroundColor: 'rgba(25, 118, 210, 0.05)', border: '1px solid', borderColor: 'primary.main' }}>
+                        <CardContent>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                <Box>
+                                    <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main', mb: 0.5 }}>
+                                        Start Game Week
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                        Season {currentSeason}, Week {currentWeek}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                    {(() => {
+                                        const stats = getGameStats();
+                                        return (
+                                            <>
+                                                <Chip label={`${stats.total} Total`} size="small" />
+                                                <Chip label={`${stats.started} Started`} size="small" color="success" />
+                                                <Chip label={`${stats.notStarted} Not Started`} size="small" color="warning" />
+                                            </>
+                                        );
+                                    })()}
+                                </Box>
+                            </Box>
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                                <Button
+                                    variant="contained"
+                                    color="success"
+                                    size="large"
+                                    startIcon={isStarting ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />}
+                                    onClick={() => setConfirmDialogOpen(true)}
+                                    disabled={isStarting}
+                                    sx={{ minWidth: 200 }}
+                                >
+                                    {isStarting ? 'Starting...' : `Start Week ${currentWeek}`}
+                                </Button>
+                                {(() => {
+                                    const stats = getGameStats();
+                                    if (stats.notStarted === 0 && stats.total > 0) {
+                                        return (
+                                            <Chip
+                                                icon={<SuccessIcon />}
+                                                label="All Games Started"
+                                                color="success"
+                                                variant="outlined"
+                                                sx={{ height: 40 }}
+                                            />
+                                        );
+                                    }
+                                    return null;
+                                })()}
+                                {jobData && jobData.failedGames > 0 && (jobData.status === 'COMPLETED' || jobData.status === 'FAILED') && (
+                                    <Button
+                                        variant="outlined"
+                                        color="warning"
+                                        startIcon={<RetryIcon />}
+                                        onClick={handleRetryFailed}
+                                        disabled={isStarting}
+                                    >
+                                        Retry {jobData.failedGames} Failed
+                                    </Button>
+                                )}
+                            </Box>
+                            {jobData && jobData.logs && jobData.logs.length > 0 && (
+                                <Box sx={{ mt: 2, maxHeight: 200, overflow: 'auto', backgroundColor: 'background.paper', p: 1, borderRadius: 1 }}>
+                                    {jobData.logs.slice(-10).map((log, idx) => (
+                                        <Typography key={idx} variant="caption" sx={{ display: 'block', fontFamily: 'monospace', fontSize: '0.7rem' }}>
+                                            [{log.timestamp}] {log.homeTeam} vs {log.awayTeam}: {log.status} - {log.message}
+                                        </Typography>
+                                    ))}
+                                </Box>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Confirm Start Week Dialog */}
+                <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
+                    <DialogTitle>Start Game Week {currentWeek}?</DialogTitle>
+                    <DialogContent>
+                        {(() => {
+                            const stats = getGameStats();
+                            if (stats.notStarted === 0 && stats.total > 0) {
+                                return (
+                                    <>
+                                        <Typography variant="body1" sx={{ mb: 2 }}>
+                                            All games for Week {currentWeek}, Season {currentSeason} have already been started.
+                                        </Typography>
+                                        <Alert severity="info">
+                                            Clicking "Start Week" will attempt to start any games that may have failed previously or were missed.
+                                        </Alert>
+                                    </>
+                                );
+                            }
+                            return (
+                                <>
+                                    <Typography variant="body1" sx={{ mb: 2 }}>
+                                        This will start all {stats.notStarted} unstarted games for Week {currentWeek}, Season {currentSeason}.
+                                    </Typography>
+                                    <Alert severity="info" sx={{ mb: 1 }}>
+                                        Games will be started with smart pacing (~3s between each game, 60s cooldown every 25 games) to respect Discord rate limits.
+                                    </Alert>
+                                </>
+                            );
+                        })()}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
+                        <Button variant="contained" color="success" onClick={handleStartWeek}>
+                            Start Week {currentWeek}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
                 
                 <Grid container spacing={4} sx={{ mb: 4 }}>
                     {/* Create New Game */}
