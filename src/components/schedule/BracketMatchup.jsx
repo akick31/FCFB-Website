@@ -1,9 +1,7 @@
 import React from 'react';
 import { Box, Typography, Avatar, Paper, useTheme } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-
-// Helper to safely read schedule fields (backend uses SNAKE_CASE serialization)
-const field = (game, camel, snake) => game[camel] !== undefined ? game[camel] : game[snake];
+import { field } from '../../utils/fieldHelper';
 
 const BracketMatchup = ({ game, teamMap = {}, compact = false }) => {
     const theme = useTheme();

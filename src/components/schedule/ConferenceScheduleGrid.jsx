@@ -21,11 +21,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { formatConference } from '../../utils/formatText';
 import { conferences } from '../constants/conferences';
+import { field } from '../../utils/fieldHelper';
 
 const TOTAL_WEEKS = 12;
-
-// Helper to safely read schedule fields (backend uses SNAKE_CASE serialization)
-const field = (game, camel, snake) => game[camel] !== undefined ? game[camel] : game[snake];
 
 const ConferenceScheduleGrid = ({
     selectedConference,

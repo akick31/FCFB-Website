@@ -35,9 +35,7 @@ import { uploadPostseasonLogo } from '../../api/uploadApi';
 import { conferences } from '../constants/conferences';
 import PlayoffBracket from '../schedule/PlayoffBracket';
 import { R2_BYE_SEEDS, ROUND_LABELS, playoffWeekForRound } from '../constants/playoffBracket';
-
-// Helper to safely read schedule fields
-const field = (game, camel, snake) => game[camel] !== undefined ? game[camel] : game[snake];
+import { field } from '../../utils/fieldHelper';
 
 // Conferences available for CCG (exclude FBS Independent)
 const CCG_CONFERENCES = conferences.filter(c => c.value !== 'FBS_INDEPENDENT');
@@ -397,12 +395,28 @@ const PostseasonAdminTab = ({
                 return (gt === 'PLAYOFFS' || gt === 'NATIONAL_CHAMPIONSHIP') && pr === currentRound;
             });
 
-            // Sort games by home seed to determine bracket position
-            const sortedCurrentGames = [...currentRoundGames].sort((a, b) => {
-                const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed') || 99;
-                const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed') || 99;
-                return sa - sb;
-            });
+            // Sort games by bracket position (not by seed value)
+            let sortedCurrentGames;
+            if (currentRound === 2) {
+                // R2: Sort by position in R2_BYE_SEEDS array (bracket order)
+                sortedCurrentGames = [...currentRoundGames].sort((a, b) => {
+                    const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed');
+                    const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed');
+                    const idxA = R2_BYE_SEEDS.indexOf(sa);
+                    const idxB = R2_BYE_SEEDS.indexOf(sb);
+                    // If seed not found in R2_BYE_SEEDS, put at end
+                    if (idxA === -1) return 1;
+                    if (idxB === -1) return -1;
+                    return idxA - idxB;
+                });
+            } else {
+                // Other rounds: Sort by home seed (ascending)
+                sortedCurrentGames = [...currentRoundGames].sort((a, b) => {
+                    const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                    const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                    return sa - sb;
+                });
+            }
 
             const currentGameIndex = sortedCurrentGames.findIndex(g => g.id === advanceGame.id);
             if (currentGameIndex === -1) {
@@ -410,12 +424,12 @@ const PostseasonAdminTab = ({
             }
 
             // Calculate target bracket position in next round
-            // R2 (8 games) → QF (4 games): games 0,1 → QF 0; games 2,3 → QF 1; games 4,5 → QF 2; games 6,7 → QF 3
-            // QF (4 games) → SF (2 games): games 0,1 → SF 0; games 2,3 → SF 1
-            // SF (2 games) → NCG (1 game): games 0,1 → NCG 0
+            // R2 (8 games) → QF (4 games): bracket positions 0,1 → QF 0; 2,3 → QF 1; 4,5 → QF 2; 6,7 → QF 3
+            // QF (4 games) → SF (2 games): games 0,1 → SF 0; 2,3 → SF 1
+            // SF (2 games) → NCG (1 game): both games → NCG 0
             let targetNextRoundIndex;
             if (currentRound === 2) {
-                // R2 → QF: pair games 0,1 → QF 0; 2,3 → QF 1; 4,5 → QF 2; 6,7 → QF 3
+                // R2 → QF: pair bracket positions 0,1 → QF 0; 2,3 → QF 1; 4,5 → QF 2; 6,7 → QF 3
                 targetNextRoundIndex = Math.floor(currentGameIndex / 2);
             } else if (currentRound === 3) {
                 // QF → SF: pair games 0,1 → SF 0; 2,3 → SF 1
@@ -432,12 +446,23 @@ const PostseasonAdminTab = ({
             let targetGame = null;
 
             if (targetNextRoundIndex !== null) {
-                // Sort next round games by home seed to match bracket order
-                const sortedNextRoundGames = [...nextRoundGames].sort((a, b) => {
-                    const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed') || 99;
-                    const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed') || 99;
-                    return sa - sb;
-                });
+                // Sort next round games to match bracket order
+                let sortedNextRoundGames;
+                if (nextRound === 3) {
+                    // QF: Sort by home seed (ascending) for QF
+                    sortedNextRoundGames = [...nextRoundGames].sort((a, b) => {
+                        const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                        const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                        return sa - sb;
+                    });
+                } else {
+                    // SF, NCG: Sort by home seed (ascending)
+                    sortedNextRoundGames = [...nextRoundGames].sort((a, b) => {
+                        const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                        const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                        return sa - sb;
+                    });
+                }
 
                 // Find the game at the target bracket position
                 if (targetNextRoundIndex < sortedNextRoundGames.length) {

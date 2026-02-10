@@ -24,12 +24,10 @@ import {
 } from '@mui/icons-material';
 import StyledCard from '../ui/StyledCard';
 import { formatGameType, formatConference } from '../../utils/formatText';
+import { field } from '../../utils/fieldHelper';
 
 const TOTAL_WEEKS = 12;
 const DEFAULT_OOC_GAMES = 3;
-
-// Helper to safely read schedule fields
-const field = (game, camel, snake) => game[camel] !== undefined ? game[camel] : game[snake];
 
 const OOCScheduleAdminTab = ({
     allTeams,

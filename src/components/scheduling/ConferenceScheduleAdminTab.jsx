@@ -34,12 +34,10 @@ import {
 import StyledCard from '../ui/StyledCard';
 import { formatConference } from '../../utils/formatText';
 import CircularProgress from '@mui/material/CircularProgress';
+import { field } from '../../utils/fieldHelper';
 
 const TOTAL_WEEKS = 12;
 const DEFAULT_CONFERENCE_GAMES = 9;
-
-// Helper to safely read schedule fields
-const field = (game, camel, snake) => game[camel] !== undefined ? game[camel] : game[snake];
 
 const ConferenceScheduleAdminTab = ({
     selectedConference,
