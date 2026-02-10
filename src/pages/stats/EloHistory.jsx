@@ -32,7 +32,6 @@ const EloHistory = () => {
     // Data states
     const [teams, setTeams] = useState([]);
     const [seasons, setSeasons] = useState([]);
-    const [currentSeason, setCurrentSeason] = useState(null);
 
     // Initialize data
     useEffect(() => {
@@ -48,7 +47,6 @@ const EloHistory = () => {
                 setTeams(teamsData.filter(t => t.active).sort((a, b) => (a.name || '').localeCompare(b.name || '')));
                 const seasonNumbers = seasonsData.map(s => s.season_number || s.seasonNumber).sort((a, b) => b - a);
                 setSeasons(seasonNumbers);
-                setCurrentSeason(currentSeasonData);
                 
                 // Set default season to current season
                 if (currentSeasonData && seasonNumbers.includes(currentSeasonData)) {

@@ -160,7 +160,7 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                         Game #{label}
                     </Typography>
                     {teamsAtPoint.length > 0 ? (
-                        teamsAtPoint.map((team, index) => (
+                        teamsAtPoint.map((team) => (
                             <Box key={team.name} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                                 <Box
                                     sx={{
@@ -191,7 +191,7 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
     };
 
     // Custom tooltip for single team view
-    const SingleTeamTooltip = ({ active, payload, label }) => {
+    const SingleTeamTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
             const data = payload[0].payload;
             return (
@@ -276,7 +276,6 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                                 // Generate a distinct color using golden angle for better distribution
                                 color = `hsl(${(index * 137.508) % 360}, 70%, 50%)`;
                             }
-                            const displayName = teamInfo?.abbreviation || teamName?.substring(0, 10) || teamName;
 
                             return (
                                 <Line
