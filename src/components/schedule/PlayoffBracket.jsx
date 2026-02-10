@@ -23,7 +23,7 @@ const R1_GAMES = [
 ];
 
 // R2 bye seeds in bracket position order  (byeSeed + r1HighSeed = 17)
-const R2_BYE_SEEDS = [1, 8, 4, 5, 3, 6, 7, 2];
+const R2_BYE_SEEDS = [1, 8, 4, 5, 3, 6, 2, 7];
 const R2_OPPONENT_R1 = [
     { h: 16, l: 17 }, { h: 9, l: 24 }, { h: 13, l: 20 }, { h: 12, l: 21 },
     { h: 14, l: 19 }, { h: 11, l: 22 }, { h: 15, l: 18 }, { h: 10, l: 23 },
@@ -486,11 +486,8 @@ const PlayoffBracket = ({
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                         {ccgGames.map(game => {
-                            const gameId = field(game, 'gameId', 'game_id');
-                            const started = field(game, 'started', 'started');
-                            const clickable = gameId && started;
                             return (
-                                <Box key={game.id} onClick={() => clickable && navigate(`/game-details/${gameId}`)} sx={{ cursor: clickable ? 'pointer' : 'default' }}>
+                                <Box key={game.id}>
                                     <BracketMatchup game={game} teamMap={teamMap} />
                                 </Box>
                             );
@@ -522,11 +519,8 @@ const PlayoffBracket = ({
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                         {bowlGames.map(game => {
-                            const gameId = field(game, 'gameId', 'game_id');
-                            const started = field(game, 'started', 'started');
-                            const clickable = gameId && started;
                             return (
-                                <Box key={game.id} onClick={() => clickable && navigate(`/game-details/${gameId}`)} sx={{ cursor: clickable ? 'pointer' : 'default' }}>
+                                <Box key={game.id}>
                                     <BracketMatchup game={game} teamMap={teamMap} />
                                 </Box>
                             );
