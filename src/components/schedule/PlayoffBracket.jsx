@@ -7,14 +7,6 @@ import BracketMatchup from './BracketMatchup';
 // Helper to safely read schedule fields (backend uses SNAKE_CASE serialization)
 const field = (game, camel, snake) => game[camel] !== undefined ? game[camel] : game[snake];
 
-const ROUND_LABELS = {
-    1: 'First Round',
-    2: 'Second Round',
-    3: 'Quarterfinals',
-    4: 'Semifinals',
-    5: 'Championship',
-};
-
 const playoffWeekForRound = (round) => 13 + round;
 
 // ─── Full 24-team bracket structure ─────────────────────────────────
@@ -35,18 +27,6 @@ const R2_BYE_SEEDS = [1, 8, 4, 5, 3, 6, 7, 2];
 const R2_OPPONENT_R1 = [
     { h: 16, l: 17 }, { h: 9, l: 24 }, { h: 13, l: 20 }, { h: 12, l: 21 },
     { h: 14, l: 19 }, { h: 11, l: 22 }, { h: 15, l: 18 }, { h: 10, l: 23 },
-];
-
-// Placeholder labels for unfilled later-round slots
-const QF_LABELS = [
-    { t: '#1 / #16/#17 region', b: '#8 / #9/#24 region' },
-    { t: '#4 / #13/#20 region', b: '#5 / #12/#21 region' },
-    { t: '#3 / #14/#19 region', b: '#6 / #11/#22 region' },
-    { t: '#7 / #15/#18 region', b: '#2 / #10/#23 region' },
-];
-const SF_LABELS = [
-    { t: 'QF 1 Winner', b: 'QF 2 Winner' },
-    { t: 'QF 3 Winner', b: 'QF 4 Winner' },
 ];
 
 // ─── Component ──────────────────────────────────────────────────────

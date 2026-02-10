@@ -62,9 +62,6 @@ const EXCLUDED_ADMIN_CONFERENCES = ['FBS_INDEPENDENT'];
 // Helper to safely read schedule fields
 const field = (game, camel, snake) => game[camel] !== undefined ? game[camel] : game[snake];
 
-// Compute playoff week from round number: Round 1 = Week 14, Round 2 = Week 15, etc.
-const playoffWeekForRound = (round) => 13 + round;
-
 const Scheduling = () => {
     const navigate = useNavigate();
     const [season, setSeason] = useState(null);
@@ -756,7 +753,6 @@ const Scheduling = () => {
                 {/* ======================== CONFERENCE SCHEDULE TAB ======================== */}
                 {tabIndex === 0 && (
                     <ConferenceScheduleAdminTab
-                        season={season}
                         selectedConference={selectedConference}
                         onConferenceChange={setSelectedConference}
                         adminConferences={adminConferences}

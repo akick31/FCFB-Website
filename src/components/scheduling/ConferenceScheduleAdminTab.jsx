@@ -42,7 +42,6 @@ const DEFAULT_CONFERENCE_GAMES = 9;
 const field = (game, camel, snake) => game[camel] !== undefined ? game[camel] : game[snake];
 
 const ConferenceScheduleAdminTab = ({
-    season,
     selectedConference,
     onConferenceChange,
     adminConferences,

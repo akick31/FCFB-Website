@@ -8,7 +8,6 @@ import {
     Assessment,
     TrendingUp,
     CalendarMonth,
-    PlayCircle,
 } from '@mui/icons-material';
 
 export const adminNavigationItems = [
