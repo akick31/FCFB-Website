@@ -43,6 +43,8 @@ import {
     generateConferenceSchedule,
     generateAllConferenceSchedules,
     pollScheduleGenJobStatus,
+    saveConferenceRules,
+    getConferenceRules,
 } from '../../api/scheduleApi';
 import { getCurrentSeason, getAllSeasons, isScheduleLocked, lockSchedule, unlockSchedule, createSeasonForScheduling } from '../../api/seasonApi';
 import { uploadPostseasonLogo } from '../../api/uploadApi';
@@ -242,8 +244,30 @@ const Scheduling = () => {
     useEffect(() => {
         if (season && selectedConference && tabIndex === 0) {
             fetchConferenceSchedule();
+            loadConferenceRules();
         }
     }, [season, selectedConference, tabIndex]);
+
+    // Load conference rules when conference changes
+    const loadConferenceRules = async () => {
+        if (!selectedConference) return;
+        try {
+            const rules = await getConferenceRules(selectedConference);
+            if (rules) {
+                setNumConferenceGames(rules.numConferenceGames || DEFAULT_CONFERENCE_GAMES);
+                setProtectedRivalries(rules.protectedRivalries || []);
+            } else {
+                // No saved rules, use defaults
+                setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
+                setProtectedRivalries([]);
+            }
+        } catch (err) {
+            console.error('Error loading conference rules:', err);
+            // On error, use defaults
+            setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
+            setProtectedRivalries([]);
+        }
+    };
 
     // Fetch OOC schedule (full schedule) when team changes
     useEffect(() => {
@@ -576,6 +600,17 @@ const Scheduling = () => {
         setProtectedRivalries(updated);
     };
 
+    // Save conference rules
+    const handleSaveConferenceRules = async (conference, numGames, rivalries) => {
+        try {
+            await saveConferenceRules(conference, numGames, rivalries);
+            showSnackbar(`Conference rules saved for ${formatConference(conference)}`);
+        } catch (err) {
+            console.error('Error saving conference rules:', err);
+            showSnackbar('Failed to save conference rules: ' + err.message, 'error');
+        }
+    };
+
     const navigationItems = adminNavigationItems;
     const handleNavigationChange = (item) => navigate(item.path);
 
@@ -780,6 +815,7 @@ const Scheduling = () => {
                         onRemoveRivalry={removeRivalry}
                         onUpdateRivalry={updateRivalry}
                         hasGamesPlayed={hasGamesPlayed}
+                        onSaveConferenceRules={handleSaveConferenceRules}
                     />
                 )}
 

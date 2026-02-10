@@ -242,6 +242,42 @@ export const getPostseasonSchedule = async (season) => {
     }
 };
 
+export const saveConferenceRules = async (conference, numConferenceGames, protectedRivalries) => {
+    try {
+        const response = await apiClient.post('/schedule/conference-rules', {
+            conference,
+            numConferenceGames,
+            protectedRivalries: protectedRivalries.filter(r => r.team1 && r.team2),
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to save conference rules:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to save conference rules");
+        }
+        throw new Error("An unexpected error occurred while saving conference rules");
+    }
+};
+
+export const getConferenceRules = async (conference) => {
+    try {
+        const response = await apiClient.get('/schedule/conference-rules', {
+            params: { conference }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch conference rules:", error);
+        if (error.response) {
+            // 404 is expected if rules don't exist yet
+            if (error.response.status === 404) {
+                return null;
+            }
+            throw new Error(error.response.data.error || "Failed to fetch conference rules");
+        }
+        throw new Error("An unexpected error occurred while fetching conference rules");
+    }
+};
+
 // ===== PUT Endpoints =====
 
 export const updateScheduleEntry = async (id, entry) => {

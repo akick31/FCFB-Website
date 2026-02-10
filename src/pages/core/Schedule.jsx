@@ -13,7 +13,7 @@ import {
     Tab,
 } from '@mui/material';
 import { getAllTeams } from '../../api/teamApi';
-import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedule } from '../../api/scheduleApi';
+import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedule, getScheduleBySeason } from '../../api/scheduleApi';
 import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
 import { conferences } from '../../components/constants/conferences';
 import TeamScheduleTable from '../../components/schedule/TeamScheduleTable';
@@ -49,6 +49,7 @@ const Schedule = () => {
         return localStorage.getItem(LS_CONFERENCE) || '';
     });
     const [conferenceSchedule, setConferenceSchedule] = useState([]);
+    const [allSeasonSchedule, setAllSeasonSchedule] = useState([]); // Full schedule for OOC display
     const [conferenceTeams, setConferenceTeams] = useState([]);
     const [confLoading, setConfLoading] = useState(false);
 
@@ -171,17 +172,22 @@ const Schedule = () => {
         fetchSchedule();
     }, [selectedTeam, season, tabIndex]);
 
-    // Fetch conference schedule when conference/season changes and tab is Conference
+    // Fetch conference schedule and full season schedule when conference/season changes and tab is Conference
     useEffect(() => {
         const fetchConfSchedule = async () => {
             if (!season || !selectedConference || tabIndex !== 1) return;
             try {
                 setConfLoading(true);
-                const data = await getConferenceSchedule(season, selectedConference);
-                setConferenceSchedule(data || []);
+                const [confData, allData] = await Promise.all([
+                    getConferenceSchedule(season, selectedConference),
+                    getScheduleBySeason(season)
+                ]);
+                setConferenceSchedule(confData || []);
+                setAllSeasonSchedule(allData || []);
             } catch (err) {
                 console.error('Error fetching conference schedule:', err);
                 setConferenceSchedule([]);
+                setAllSeasonSchedule([]);
             } finally {
                 setConfLoading(false);
             }
@@ -300,6 +306,7 @@ const Schedule = () => {
                         onConferenceChange={setSelectedConference}
                         conferenceTeams={conferenceTeams}
                         conferenceSchedule={conferenceSchedule}
+                        allSeasonSchedule={allSeasonSchedule}
                         teamMap={teamMap}
                         loading={confLoading}
                     />

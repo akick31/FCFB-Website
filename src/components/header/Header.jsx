@@ -131,7 +131,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
     };
 
     const isActiveRoute = (path) => location.pathname === path;
-    const isStatsActive = () => location.pathname === '/records' || location.pathname === '/season-stats' || location.pathname === '/league-stats' || location.pathname === '/leaderboard';
+    const isStatsActive = () => location.pathname === '/records' || location.pathname === '/season-stats' || location.pathname === '/league-stats' || location.pathname === '/leaderboard' || location.pathname === '/elo-history';
 
     // Mobile Drawer
     const drawer = (
@@ -699,6 +699,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 }}
             >
                 <MenuItem
+                    key="records"
                     onClick={() => {
                         navigate('/records');
                         handleStatsMenuClose();
@@ -713,6 +714,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     <ListItemText primary="Records" />
                 </MenuItem>
                 <MenuItem
+                    key="season-stats"
                     onClick={() => {
                         navigate('/season-stats');
                         handleStatsMenuClose();
@@ -727,6 +729,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     <ListItemText primary="Season Stats" />
                 </MenuItem>
                 <MenuItem
+                    key="league-stats"
                     onClick={() => {
                         navigate('/league-stats');
                         handleStatsMenuClose();
@@ -741,6 +744,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     <ListItemText primary="League Stats" />
                 </MenuItem>
                 <MenuItem
+                    key="leaderboard"
                     onClick={() => {
                         navigate('/leaderboard');
                         handleStatsMenuClose();
@@ -753,6 +757,21 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     }}
                 >
                     <ListItemText primary="Leaderboard" />
+                </MenuItem>
+                <MenuItem
+                    key="elo-history"
+                    onClick={() => {
+                        navigate('/elo-history');
+                        handleStatsMenuClose();
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        borderRadius: 0,
+                        backgroundColor: isActiveRoute('/elo-history') ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
+                    }}
+                >
+                    <ListItemText primary="ELO History" />
                 </MenuItem>
             </Menu>
 

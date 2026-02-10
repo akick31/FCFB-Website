@@ -4,7 +4,7 @@ const baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:1313/api
 
 const apiClient = axios.create({
     baseURL: baseURL,
-    timeout: 10000,
+    timeout: 60000, // Increased to 60 seconds for large queries like ELO history
 });
 
 // Add request interceptor to include authentication token
