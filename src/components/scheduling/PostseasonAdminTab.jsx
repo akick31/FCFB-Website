@@ -34,23 +34,10 @@ import { createScheduleEntry, updateScheduleEntry, deleteScheduleEntry } from '.
 import { uploadPostseasonLogo } from '../../api/uploadApi';
 import { conferences } from '../constants/conferences';
 import PlayoffBracket from '../schedule/PlayoffBracket';
+import { R2_BYE_SEEDS, ROUND_LABELS, playoffWeekForRound } from '../constants/playoffBracket';
 
 // Helper to safely read schedule fields
 const field = (game, camel, snake) => game[camel] !== undefined ? game[camel] : game[snake];
-
-// Compute playoff week from round number: Round 1 = Week 14, Round 2 = Week 15, etc.
-const playoffWeekForRound = (round) => 13 + round;
-
-const ROUND_LABELS = {
-    1: 'First Round',
-    2: 'Second Round',
-    3: 'Quarterfinals',
-    4: 'Semifinals',
-    5: 'National Championship',
-};
-
-// R2 bye seeds in bracket order (byeSeed + r1HighSeed = 17)
-const R2_BYE_SEEDS = [1, 8, 4, 5, 3, 6, 7, 2];
 
 // Conferences available for CCG (exclude FBS Independent)
 const CCG_CONFERENCES = conferences.filter(c => c.value !== 'FBS_INDEPENDENT');
@@ -106,13 +93,8 @@ const PostseasonAdminTab = ({
     );
 
     // Only playoff games for the bracket component (avoid duplicate CCG/Bowl rendering)
-    const playoffOnlySchedule = useMemo(() =>
-        postseasonSchedule.filter(g => {
-            const gt = field(g, 'gameType', 'game_type');
-            return gt === 'PLAYOFFS' || gt === 'NATIONAL_CHAMPIONSHIP';
-        }),
-        [postseasonSchedule]
-    );
+    // Reuse postseasonPlayoffs instead of duplicating the filter
+    const playoffOnlySchedule = postseasonPlayoffs;
 
     // Teams already selected in the bracket (duplicate prevention)
     const selectedPlayoffTeamNames = useMemo(() =>
@@ -401,27 +383,90 @@ const PostseasonAdminTab = ({
                 }
             }
 
-            // Later rounds: find OPEN/TBD placeholder in next round
+            // Later rounds: determine bracket position and find the correct game
             const nextRoundGames = postseasonSchedule.filter(g => {
                 const gt = field(g, 'gameType', 'game_type');
                 const pr = field(g, 'playoffRound', 'playoff_round');
                 return (gt === 'PLAYOFFS' || gt === 'NATIONAL_CHAMPIONSHIP') && pr === nextRound;
             });
 
-            const isPlaceholder = (name) => !name || name === 'TBD' || name === 'OPEN';
-            const placeholderGame = nextRoundGames.find(g => {
-                const h = field(g, 'homeTeam', 'home_team');
-                const a = field(g, 'awayTeam', 'away_team');
-                return isPlaceholder(h) || isPlaceholder(a);
+            // Determine the bracket position of the current game
+            const currentRoundGames = postseasonSchedule.filter(g => {
+                const gt = field(g, 'gameType', 'game_type');
+                const pr = field(g, 'playoffRound', 'playoff_round');
+                return (gt === 'PLAYOFFS' || gt === 'NATIONAL_CHAMPIONSHIP') && pr === currentRound;
             });
 
-            if (placeholderGame) {
-                const h = field(placeholderGame, 'homeTeam', 'home_team');
-                const a = field(placeholderGame, 'awayTeam', 'away_team');
-                const existingHomeSeed = field(placeholderGame, 'playoffHomeSeed', 'playoff_home_seed');
-                const existingAwaySeed = field(placeholderGame, 'playoffAwaySeed', 'playoff_away_seed');
+            // Sort games by home seed to determine bracket position
+            const sortedCurrentGames = [...currentRoundGames].sort((a, b) => {
+                const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                return sa - sb;
+            });
 
-                await updateScheduleEntry(placeholderGame.id, {
+            const currentGameIndex = sortedCurrentGames.findIndex(g => g.id === advanceGame.id);
+            if (currentGameIndex === -1) {
+                throw new Error('Could not find current game in bracket');
+            }
+
+            // Calculate target bracket position in next round
+            // R2 (8 games) → QF (4 games): games 0,1 → QF 0; games 2,3 → QF 1; games 4,5 → QF 2; games 6,7 → QF 3
+            // QF (4 games) → SF (2 games): games 0,1 → SF 0; games 2,3 → SF 1
+            // SF (2 games) → NCG (1 game): games 0,1 → NCG 0
+            let targetNextRoundIndex;
+            if (currentRound === 2) {
+                // R2 → QF: pair games 0,1 → QF 0; 2,3 → QF 1; 4,5 → QF 2; 6,7 → QF 3
+                targetNextRoundIndex = Math.floor(currentGameIndex / 2);
+            } else if (currentRound === 3) {
+                // QF → SF: pair games 0,1 → SF 0; 2,3 → SF 1
+                targetNextRoundIndex = Math.floor(currentGameIndex / 2);
+            } else if (currentRound === 4) {
+                // SF → NCG: both games → NCG 0
+                targetNextRoundIndex = 0;
+            } else {
+                // Fallback: use first available placeholder
+                targetNextRoundIndex = null;
+            }
+
+            const isPlaceholder = (name) => !name || name === 'TBD' || name === 'OPEN';
+            let targetGame = null;
+
+            if (targetNextRoundIndex !== null) {
+                // Sort next round games by home seed to match bracket order
+                const sortedNextRoundGames = [...nextRoundGames].sort((a, b) => {
+                    const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                    const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                    return sa - sb;
+                });
+
+                // Find the game at the target bracket position
+                if (targetNextRoundIndex < sortedNextRoundGames.length) {
+                    const candidateGame = sortedNextRoundGames[targetNextRoundIndex];
+                    const h = field(candidateGame, 'homeTeam', 'home_team');
+                    const a = field(candidateGame, 'awayTeam', 'away_team');
+                    // Only use this game if it has a placeholder slot
+                    if (isPlaceholder(h) || isPlaceholder(a)) {
+                        targetGame = candidateGame;
+                    }
+                }
+            }
+
+            // Fallback: if we couldn't find the correct bracket position, use first available placeholder
+            if (!targetGame) {
+                targetGame = nextRoundGames.find(g => {
+                    const h = field(g, 'homeTeam', 'home_team');
+                    const a = field(g, 'awayTeam', 'away_team');
+                    return isPlaceholder(h) || isPlaceholder(a);
+                });
+            }
+
+            if (targetGame) {
+                const h = field(targetGame, 'homeTeam', 'home_team');
+                const a = field(targetGame, 'awayTeam', 'away_team');
+                const existingHomeSeed = field(targetGame, 'playoffHomeSeed', 'playoff_home_seed');
+                const existingAwaySeed = field(targetGame, 'playoffAwaySeed', 'playoff_away_seed');
+
+                await updateScheduleEntry(targetGame.id, {
                     season,
                     week: nextWeek,
                     subdivision: 'FBS',

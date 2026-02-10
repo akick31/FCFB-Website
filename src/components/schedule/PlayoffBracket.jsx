@@ -3,31 +3,10 @@ import { Box, Typography, Paper, Avatar, CircularProgress, useTheme, IconButton,
 import { ArrowForward as ArrowForwardIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import BracketMatchup from './BracketMatchup';
+import { R2_BYE_SEEDS, R1_GAMES, R2_OPPONENT_R1 } from '../constants/playoffBracket';
 
 // Helper to safely read schedule fields (backend uses SNAKE_CASE serialization)
 const field = (game, camel, snake) => game[camel] !== undefined ? game[camel] : game[snake];
-
-const playoffWeekForRound = (round) => 13 + round;
-
-// ─── Full 24-team bracket structure ─────────────────────────────────
-// 8 First-Round games (seeds 9-24). Bye teams (1-8) appear only in the Second Round.
-const R1_GAMES = [
-    { highSeed: 16, lowSeed: 17 },
-    { highSeed: 9,  lowSeed: 24 },
-    { highSeed: 13, lowSeed: 20 },
-    { highSeed: 12, lowSeed: 21 },
-    { highSeed: 14, lowSeed: 19 },
-    { highSeed: 11, lowSeed: 22 },
-    { highSeed: 15, lowSeed: 18 },
-    { highSeed: 10, lowSeed: 23 },
-];
-
-// R2 bye seeds in bracket position order  (byeSeed + r1HighSeed = 17)
-const R2_BYE_SEEDS = [1, 8, 4, 5, 3, 6, 2, 7];
-const R2_OPPONENT_R1 = [
-    { h: 16, l: 17 }, { h: 9, l: 24 }, { h: 13, l: 20 }, { h: 12, l: 21 },
-    { h: 14, l: 19 }, { h: 11, l: 22 }, { h: 15, l: 18 }, { h: 10, l: 23 },
-];
 
 // ─── Component ──────────────────────────────────────────────────────
 const PlayoffBracket = ({
