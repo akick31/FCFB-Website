@@ -13,7 +13,8 @@ import {
     Select,
     MenuItem,
     FormControl,
-    InputLabel
+    InputLabel,
+    Avatar
 } from '@mui/material';
 import { FilterList, Close } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -290,6 +291,24 @@ const ScoreboardList = ({
                             }}
                             onClick={() => handleRowClick(game)}
                         >
+                            {/* Postseason Game Logo - shown above matchup for bowl/playoff/conference championship games */}
+                            {((game.gameType === 'BOWL' || game.gameType === 'PLAYOFFS' || game.gameType === 'CONFERENCE_CHAMPIONSHIP' || game.gameType === 'NATIONAL_CHAMPIONSHIP' || 
+                              game.game_type === 'BOWL' || game.game_type === 'PLAYOFFS' || game.game_type === 'CONFERENCE_CHAMPIONSHIP' || game.game_type === 'NATIONAL_CHAMPIONSHIP') &&
+                              (game.postseasonGameLogo || game.postseason_game_logo)) && (
+                                <Box sx={{ 
+                                    gridColumn: '1 / -1', 
+                                    display: 'flex', 
+                                    justifyContent: 'center', 
+                                    mb: 1 
+                                }}>
+                                    <Avatar
+                                        src={`${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${game.postseasonGameLogo || game.postseason_game_logo}`}
+                                        sx={{ width: 60, height: 60 }}
+                                        variant="rounded"
+                                    />
+                                </Box>
+                            )}
+
                             {/* Team Matchup Column */}
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 {/* Home Team */}

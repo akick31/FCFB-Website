@@ -9,10 +9,10 @@ export { Teams, TeamDetails, ModifyTeam } from './team';
 
 // Admin Pages
 export { Admin, UserManagement, GameManagement, TeamManagement, EditTeam, CoachManagement, CoachTransactionLog,
-    EditGame, StatsManagement, Reports } from './admin';
+    EditGame, StatsManagement, Reports, Scheduling, GameWeek } from './admin';
 
 // Core Pages
-export { Home, Profile, Standings, Rankings, Error, NotFound } from './core';
+export { Home, Profile, Standings, Rankings, Schedule, Error, NotFound } from './core';
 
 // Stats Pages
 export { Records, SeasonStats, LeagueStats, Leaderboard } from './stats';

@@ -28,6 +28,7 @@ import {
     RegistrationSuccess,
     Standings,
     Rankings,
+    Schedule,
     TeamManagement,
     EditTeam,
     GameManagement,
@@ -37,6 +38,8 @@ import {
     EditGame,
     StatsManagement,
     Reports,
+    Scheduling,
+    GameWeek,
     Records,
     SeasonStats,
     LeagueStats,
@@ -213,6 +216,16 @@ const App = () => {
                                     <EditTeam user={user} />
                                 </ProtectedRoute>
                             } />
+                            <Route path="/admin/scheduling" element={
+                                <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                    <Scheduling user={user} />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="/admin/game-week" element={
+                                <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                    <GameWeek user={user} />
+                                </ProtectedRoute>
+                            } />
                             <Route path="/verify" element={<Verify
                                 userId={new URLSearchParams(window.location.search).get('id')}/>} />
                             <Route path="/game-details/:gameId" element={<GameDetails isAdmin={isAdmin} />} />
@@ -223,6 +236,7 @@ const App = () => {
                                     <ModifyTeam user={user} />
                                 </ProtectedRoute>
                             } />
+                            <Route path="/schedules" element={<Schedule />} />
                             <Route path="/standings" element={<Standings />} />
                             <Route path="/rankings" element={<Rankings />} />
                             <Route path="/scoreboard" element={<Scoreboard />} />

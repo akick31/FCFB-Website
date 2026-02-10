@@ -23,6 +23,7 @@ import {
     CheckCircle,
     Error
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavigationItems } from '../../config/adminNavigation';
 import { generateAllRecords } from '../../api/recordsApi';
@@ -37,11 +38,13 @@ const StatsManagement = () => {
     const [results, setResults] = useState({});
     const [error, setError] = useState(null);
     const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, title: '' });
+    const navigate = useNavigate();
     const navigationItems = adminNavigationItems;
 
-    const handleNavigationChange = () => {
-        // Navigation is handled by React Router, so this can be empty
-        // or you can add any additional logic here if needed
+    const handleNavigationChange = (item) => {
+        if (item && item.path) {
+            navigate(item.path);
+        }
     };
 
     const statsActions = [
