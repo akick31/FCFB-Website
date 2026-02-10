@@ -167,8 +167,8 @@ const Scheduling = () => {
                 setAllTeams(teamsData);
                 const seasonNumbers = seasonsData.map(s => s.season_number || s.seasonNumber);
                 setAllSeasons(seasonNumbers);
-                const nextSeason = currentSeason + 1;
-                setSeason(seasonNumbers.includes(nextSeason) ? nextSeason : currentSeason);
+                // Default to current season
+                setSeason(currentSeason);
             } catch (err) {
                 console.error('Error initializing scheduling page:', err);
                 showSnackbar('Failed to load data', 'error');

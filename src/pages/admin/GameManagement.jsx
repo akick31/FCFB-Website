@@ -124,27 +124,6 @@ const GameManagement = () => {
 
 
 
-    // Initialize current season/week for Start Game Week
-    useEffect(() => {
-        const initCurrentWeek = async () => {
-            try {
-                const [season, week] = await Promise.all([
-                    getCurrentSeason(),
-                    getCurrentWeek()
-                ]);
-                setCurrentSeason(season);
-                setCurrentWeek(week);
-                if (season && week) {
-                    const schedule = await getScheduleBySeasonAndWeek(season, week);
-                    setWeekSchedule(schedule || []);
-                }
-            } catch (err) {
-                console.error('Error initializing current week:', err);
-            }
-        };
-        initCurrentWeek();
-    }, []);
-
     // Cleanup polling on unmount
     useEffect(() => {
         return () => {
@@ -154,25 +133,37 @@ const GameManagement = () => {
         };
     }, []);
 
+    // Initialize current season/week and set defaults
     useEffect(() => {
-        const setDefaults = async () => {
+        const initDefaults = async () => {
             try {
-                const [currentSeason, currentWeek] = await Promise.all([
+                const [season, week] = await Promise.all([
                     getCurrentSeason(),
                     getCurrentWeek()
                 ]);
                 
+                // Set state for Start Game Week
+                setCurrentSeason(season);
+                setCurrentWeek(week);
                 
+                // Load schedule for Start Game Week
+                if (season && week) {
+                    const schedule = await getScheduleBySeasonAndWeek(season, week);
+                    setWeekSchedule(schedule || []);
+                }
+                
+                
+                // Set defaults for game data and filters
                 setGameData(prev => ({
                     ...prev,
-                    season: currentSeason,
-                    week: currentWeek
+                    season: season,
+                    week: week
                 }));
 
                 setFilters(prev => ({
                     ...prev,
-                    season: currentSeason,
-                    week: currentWeek
+                    season: season,
+                    week: week
                 }));
                 
                 // Load games once on mount
@@ -180,8 +171,8 @@ const GameManagement = () => {
                 try {
                     const response = await getFilteredGames({
                         filters: [],
-                        season: currentSeason,
-                        week: currentWeek,
+                        season: season,
+                        week: week,
                         gameType: null,
                         gameStatus: null,
                         sort: 'MOST_TIME_REMAINING',
@@ -241,7 +232,7 @@ const GameManagement = () => {
             }
         };
         
-        setDefaults();
+        initDefaults();
     }, []);
 
 
