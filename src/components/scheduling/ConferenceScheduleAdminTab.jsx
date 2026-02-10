@@ -60,8 +60,10 @@ const ConferenceScheduleAdminTab = ({
     onRemoveRivalry,
     onUpdateRivalry,
     hasGamesPlayed = false,
+    onSaveConferenceRules,
 }) => {
     const [rulesExpanded, setRulesExpanded] = useState(false);
+    const [savingRules, setSavingRules] = useState(false);
 
     // Build a grid: rows = teams, columns = weeks
     const grid = useMemo(() => {
@@ -267,6 +269,26 @@ const ConferenceScheduleAdminTab = ({
                                         </Box>
                                     );
                                 })}
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={async () => {
+                                            if (!onSaveConferenceRules) return;
+                                            setSavingRules(true);
+                                            try {
+                                                await onSaveConferenceRules(selectedConference, numConferenceGames, protectedRivalries);
+                                            } catch (err) {
+                                                console.error('Error saving conference rules:', err);
+                                            } finally {
+                                                setSavingRules(false);
+                                            }
+                                        }}
+                                        disabled={savingRules || scheduleLocked}
+                                    >
+                                        {savingRules ? 'Saving...' : 'Save Conference Rules'}
+                                    </Button>
+                                </Box>
                             </Box>
                         </Box>
                     </Collapse>

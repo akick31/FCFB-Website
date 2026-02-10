@@ -97,9 +97,17 @@ const Records = () => {
         if (!singleGameRecords.length) return null;
 
         // Filter records based on selected record
-        const filteredRecords = selectedRecord 
+        let filteredRecords = selectedRecord 
             ? singleGameRecords.filter(record => record.record_name === selectedRecord.value)
             : singleGameRecords;
+        
+        // For offensive diff, prioritize LOWEST record over HIGHEST
+        if (selectedRecord?.value === 'AVERAGE_OFFENSIVE_DIFF') {
+            const lowestRecords = filteredRecords.filter(r => r.record_type === 'SINGLE_GAME_LOWEST');
+            const highestRecords = filteredRecords.filter(r => r.record_type === 'SINGLE_GAME');
+            // Show LOWEST first, then HIGHEST if no LOWEST exists
+            filteredRecords = lowestRecords.length > 0 ? lowestRecords : highestRecords;
+        }
 
         const columns = [
             { id: 'stat', label: 'Statistic', width: 200 },
@@ -182,9 +190,17 @@ const Records = () => {
         if (!singleSeasonRecords.length) return null;
 
         // Filter records based on selected record
-        const filteredRecords = selectedRecord 
+        let filteredRecords = selectedRecord 
             ? singleSeasonRecords.filter(record => record.record_name === selectedRecord.value)
             : singleSeasonRecords;
+        
+        // For offensive diff, prioritize LOWEST record over HIGHEST
+        if (selectedRecord?.value === 'AVERAGE_OFFENSIVE_DIFF') {
+            const lowestRecords = filteredRecords.filter(r => r.record_type === 'SINGLE_SEASON_LOWEST');
+            const highestRecords = filteredRecords.filter(r => r.record_type === 'SINGLE_SEASON');
+            // Show LOWEST first, then HIGHEST if no LOWEST exists
+            filteredRecords = lowestRecords.length > 0 ? lowestRecords : highestRecords;
+        }
 
         const columns = [
             { id: 'stat', label: 'Statistic', width: 200 },

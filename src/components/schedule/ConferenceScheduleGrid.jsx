@@ -30,15 +30,34 @@ const ConferenceScheduleGrid = ({
     onConferenceChange,
     conferenceTeams = [],
     conferenceSchedule = [],
+    allSeasonSchedule = [], // Full schedule including OOC games
     teamMap = {},
     loading = false,
 }) => {
     const theme = useTheme();
     const navigate = useNavigate();
 
+    // Build a set of conference game keys for quick lookup
+    const conferenceGameKeys = useMemo(() => {
+        const keys = new Set();
+        conferenceSchedule.forEach(game => {
+            const home = field(game, 'homeTeam', 'home_team');
+            const away = field(game, 'awayTeam', 'away_team');
+            const week = game.week;
+            if (home && away && week) {
+                keys.add(`${home}|${away}|${week}`);
+                keys.add(`${away}|${home}|${week}`);
+            }
+        });
+        return keys;
+    }, [conferenceSchedule]);
+
     // Build conference grid (read-only): rows = teams, columns = weeks
+    // Shows ALL games (conference + OOC) for each team
     const confGrid = useMemo(() => {
         const grid = {};
+        const teamNames = conferenceTeams.map(t => t.name);
+        
         conferenceTeams.forEach(team => {
             grid[team.name] = {};
             for (let w = 1; w <= TOTAL_WEEKS; w++) {
@@ -46,11 +65,11 @@ const ConferenceScheduleGrid = ({
             }
         });
 
+        // First, add all conference games
         conferenceSchedule.forEach(game => {
             const week = game.week;
             const home = field(game, 'homeTeam', 'home_team');
             const away = field(game, 'awayTeam', 'away_team');
-            const teamNames = conferenceTeams.map(t => t.name);
 
             if (teamNames.includes(home)) {
                 grid[home] = grid[home] || {};
@@ -58,6 +77,7 @@ const ConferenceScheduleGrid = ({
                     ...game,
                     opponent: away,
                     isHome: true,
+                    isConferenceGame: true,
                 };
             }
             if (teamNames.includes(away)) {
@@ -66,23 +86,73 @@ const ConferenceScheduleGrid = ({
                     ...game,
                     opponent: home,
                     isHome: false,
+                    isConferenceGame: true,
                 };
             }
         });
 
-        return grid;
-    }, [conferenceTeams, conferenceSchedule]);
+        // Then, add OOC games (games where one team is in the conference but the other is not)
+        allSeasonSchedule.forEach(game => {
+            const week = game.week;
+            const home = field(game, 'homeTeam', 'home_team');
+            const away = field(game, 'awayTeam', 'away_team');
+            const gameKey = `${home}|${away}|${week}`;
+            
+            // Skip if this is already a conference game
+            if (conferenceGameKeys.has(gameKey)) {
+                return;
+            }
 
-    // Count home/away for a team in conference
+            // If home team is in conference and away is not, add it as OOC
+            if (teamNames.includes(home) && !teamNames.includes(away)) {
+                grid[home] = grid[home] || {};
+                if (!grid[home][week]) { // Only add if no conference game already exists
+                    grid[home][week] = {
+                        ...game,
+                        opponent: away,
+                        isHome: true,
+                        isConferenceGame: false,
+                    };
+                }
+            }
+            // If away team is in conference and home is not, add it as OOC
+            if (teamNames.includes(away) && !teamNames.includes(home)) {
+                grid[away] = grid[away] || {};
+                if (!grid[away][week]) { // Only add if no conference game already exists
+                    grid[away][week] = {
+                        ...game,
+                        opponent: home,
+                        isHome: false,
+                        isConferenceGame: false,
+                    };
+                }
+            }
+        });
+
+        return grid;
+    }, [conferenceTeams, conferenceSchedule, allSeasonSchedule, conferenceGameKeys]);
+
+    // Count wins/losses for a team in conference games
     const getGameCounts = (teamName) => {
-        let home = 0, away = 0;
+        let wins = 0, losses = 0;
         conferenceSchedule.forEach(game => {
             const h = field(game, 'homeTeam', 'home_team');
             const a = field(game, 'awayTeam', 'away_team');
-            if (h === teamName) home++;
-            if (a === teamName) away++;
+            const finished = field(game, 'finished', 'finished');
+            const homeScore = field(game, 'homeScore', 'home_score');
+            const awayScore = field(game, 'awayScore', 'away_score');
+            
+            if (finished && homeScore != null && awayScore != null) {
+                if (h === teamName) {
+                    if (homeScore > awayScore) wins++;
+                    else if (homeScore < awayScore) losses++;
+                } else if (a === teamName) {
+                    if (awayScore > homeScore) wins++;
+                    else if (awayScore < homeScore) losses++;
+                }
+            }
         });
-        return { home, away };
+        return { wins, losses };
     };
 
     return (
@@ -166,12 +236,12 @@ const ConferenceScheduleGrid = ({
                                     fontWeight: 700, textAlign: 'center',
                                     backgroundColor: 'primary.main', color: 'white',
                                     py: 0.5, px: 0.25, fontSize: '0.65rem',
-                                }}>H</TableCell>
+                                }}>W</TableCell>
                                 <TableCell sx={{
                                     fontWeight: 700, textAlign: 'center',
                                     backgroundColor: 'primary.main', color: 'white',
                                     py: 0.5, px: 0.25, fontSize: '0.65rem',
-                                }}>A</TableCell>
+                                }}>L</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -232,9 +302,12 @@ const ConferenceScheduleGrid = ({
                                                                 cursor: cellClickable ? 'pointer' : 'default',
                                                                 backgroundColor: hasScore
                                                                     ? (wonGame ? 'rgba(5, 150, 105, 0.1)' : 'rgba(220, 38, 38, 0.08)')
-                                                                    : (cell.isHome
-                                                                        ? 'rgba(5, 150, 105, 0.06)'
-                                                                        : 'rgba(217, 119, 6, 0.06)'),
+                                                                    : (cell.isConferenceGame
+                                                                        ? (cell.isHome
+                                                                            ? 'rgba(5, 150, 105, 0.06)'
+                                                                            : 'rgba(217, 119, 6, 0.06)')
+                                                                        : 'rgba(156, 163, 175, 0.08)'), // Gray for OOC games
+                                                                border: cell.isConferenceGame ? 'none' : '1px dashed rgba(156, 163, 175, 0.4)', // Dashed border for OOC
                                                                 '&:hover': cellClickable ? {
                                                                     backgroundColor: 'rgba(25, 118, 210, 0.12)',
                                                                 } : {},
@@ -251,9 +324,11 @@ const ConferenceScheduleGrid = ({
                                                                     fontWeight: 500, fontSize: '0.55rem', lineHeight: 1.2,
                                                                     overflow: 'hidden', textOverflow: 'ellipsis',
                                                                     whiteSpace: 'nowrap', maxWidth: '100%',
+                                                                    color: cell.isConferenceGame ? 'inherit' : 'text.secondary',
                                                                 }}>
                                                                     {cell.isHome ? 'v' : '@'}{' '}
                                                                     {teamMap[cell.opponent]?.abbreviation || cell.opponent?.substring(0, 3)}
+                                                                    {!cell.isConferenceGame && ' (OOC)'}
                                                                 </Typography>
                                                                 {hasScore && (
                                                                     <Typography variant="caption" sx={{
@@ -275,12 +350,12 @@ const ConferenceScheduleGrid = ({
                                         })}
                                         <TableCell sx={{ textAlign: 'center', py: 0.25, px: 0.25 }}>
                                             <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.6rem', color: 'success.main' }}>
-                                                {counts.home}
+                                                {counts.wins}
                                             </Typography>
                                         </TableCell>
                                         <TableCell sx={{ textAlign: 'center', py: 0.25, px: 0.25 }}>
-                                            <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.6rem', color: 'warning.main' }}>
-                                                {counts.away}
+                                            <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.6rem', color: 'error.main' }}>
+                                                {counts.losses}
                                             </Typography>
                                         </TableCell>
                                     </TableRow>

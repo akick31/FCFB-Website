@@ -27,7 +27,7 @@ import {
 } from '@mui/material';
 import { getLeaderboard } from '../../api/seasonStatsApi';
 import { getAllTeams } from '../../api/teamApi';
-import { getCurrentSeason } from '../../api/seasonApi';
+import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
 import { conferences } from '../../components/constants/conferences';
 
 const Leaderboard = () => {
@@ -68,23 +68,19 @@ const Leaderboard = () => {
         const fetchInitialData = async () => {
             try {
                 setLoading(true);
-                const [teamsData, currentSeason] = await Promise.all([
+                const [teamsData, currentSeason, allSeasonsData] = await Promise.all([
                     getAllTeams(),
-                    getCurrentSeason()
+                    getCurrentSeason(),
+                    getAllSeasons()
                 ]);
                 setTeams(teamsData);
                 
-                // Create seasons array (only seasons 10 and 11)
-                const seasonsArray = [11, 10];
-                setSeasons(seasonsArray);
+                // Create seasons array from all seasons, sorted descending
+                const seasonNumbers = allSeasonsData.map(s => s.season_number || s.seasonNumber);
+                setSeasons(seasonNumbers.sort((a, b) => b - a));
                 
-                // Set default season to the current season, but ensure it's 11 if current is 10
-                if (currentSeason && currentSeason === 11) {
-                    setSelectedSeason(11);
-                } else {
-                    // Default to Season 11 (most recent)
-                    setSelectedSeason(11);
-                }
+                // Set default season to the current season
+                setSelectedSeason(currentSeason);
                 
                 // Load all stats by default
                 await fetchLeaderboard();
@@ -101,23 +97,39 @@ const Leaderboard = () => {
 
     const fetchLeaderboard = async () => {
         if (showAllStats) {
-            // Fetch all stats
+            // Fetch all stats in parallel with error handling
             try {
                 setLoading(true);
                 setError(null);
                 const allStatsData = {};
                 
-                for (const stat of availableStats) {
-                    const data = await getLeaderboard(
-                        stat.value,
-                        selectedSeason || null,
-                        null, // subdivision parameter (not used in this component)
-                        selectedConference || null,
-                        limit,
-                        ascending
-                    );
-                    allStatsData[stat.value] = data;
-                }
+                // Fetch all stats in parallel, but continue even if some fail
+                const promises = availableStats.map(async (stat) => {
+                    try {
+                        const data = await getLeaderboard(
+                            stat.value,
+                            selectedSeason || null,
+                            null, // subdivision parameter (not used in this component)
+                            selectedConference || null,
+                            limit,
+                            ascending
+                        );
+                        return { stat: stat.value, data, error: null };
+                    } catch (err) {
+                        console.error(`Error fetching leaderboard for ${stat.value}:`, err);
+                        return { stat: stat.value, data: null, error: err.message };
+                    }
+                });
+                
+                const results = await Promise.all(promises);
+                results.forEach(({ stat, data, error }) => {
+                    if (data) {
+                        allStatsData[stat] = data;
+                    } else if (error) {
+                        // Log error but don't block the rest
+                        console.warn(`Failed to load ${stat}: ${error}`);
+                    }
+                });
                 
                 setAllStatsLeaderboard(allStatsData);
             } catch (err) {
