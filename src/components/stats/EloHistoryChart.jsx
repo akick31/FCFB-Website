@@ -294,7 +294,7 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         const boundaries = [];
         let lastSeason = null;
         let lastWeek = null;
-        chartData.forEach((point, index) => {
+        chartData.forEach((point) => {
             const currentSeason = point.season || point.season_number;
             const currentWeek = point.week || point.week_number;
             

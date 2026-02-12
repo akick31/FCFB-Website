@@ -198,9 +198,6 @@ const ScatterPlotChart = ({
         const yDomainMax = yTickResult.max + yPadding;
         
         // Filter ticks to ensure they're within the domain bounds
-        // Use the actual domain min/max values (not reversed) for filtering
-        const xDomainFinal = reversedX ? [xDomainMax, xDomainMin] : [xDomainMin, xDomainMax];
-        const yDomainFinal = reversedY ? [yDomainMax, yDomainMin] : [yDomainMin, yDomainMax];
         
         // Filter ticks using the non-reversed domain bounds
         // This ensures ticks are within the actual data range

@@ -39,7 +39,6 @@ const ScatterPlotsTab = () => {
     // Data states
     const [teams, setTeams] = useState([]);
     const [seasons, setSeasons] = useState([]);
-    const [weeks, setWeeks] = useState([]);
 
     // Initialize data
     useEffect(() => {
@@ -191,67 +190,6 @@ const ScatterPlotsTab = () => {
             // Group stats by team and calculate defensive stats from opponents
             const teamStatsMap = new Map();
             
-            // Helper function to process team stats (moved outside to fix ESLint)
-            const processTeamStats = (teamStat, opponentStat, map) => {
-                const teamName = teamStat.team;
-                if (!map.has(teamName)) {
-                    map.set(teamName, {
-                        team: teamName,
-                        offenseAvgDiff: [],
-                        defenseAvgDiff: [],
-                        offenseThirdFourthDown: [],
-                        defenseThirdFourthDown: [],
-                        offenseSuccessRate: [],
-                        defenseSuccessRate: [],
-                    });
-                }
-                
-                const teamData = map.get(teamName);
-                
-                // Average diff - handle both snake_case and camelCase
-                const avgOffDiff = teamStat.average_offensive_diff ?? teamStat.averageOffensiveDiff;
-                const avgDefDiff = teamStat.average_defensive_diff ?? teamStat.averageDefensiveDiff;
-                if (avgOffDiff != null) {
-                    teamData.offenseAvgDiff.push(avgOffDiff);
-                }
-                if (avgDefDiff != null) {
-                    teamData.defenseAvgDiff.push(avgDefDiff);
-                }
-                
-                // 3rd/4th down success (offensive from team, defensive from opponent) - convert from percentage to decimal
-                const thirdDownPct = (teamStat.third_down_conversion_percentage ?? teamStat.thirdDownConversionPercentage ?? 0) / 100;
-                const fourthDownPct = (teamStat.fourth_down_conversion_percentage ?? teamStat.fourthDownConversionPercentage ?? 0) / 100;
-                const combinedThirdFourth = (thirdDownPct + fourthDownPct) / 2;
-                teamData.offenseThirdFourthDown.push(combinedThirdFourth);
-                
-                // Defensive 3rd/4th down from opponent - convert from percentage to decimal
-                const oppThirdDownPct = (opponentStat.third_down_conversion_percentage ?? opponentStat.thirdDownConversionPercentage ?? 0) / 100;
-                const oppFourthDownPct = (opponentStat.fourth_down_conversion_percentage ?? opponentStat.fourthDownConversionPercentage ?? 0) / 100;
-                const oppCombinedThirdFourth = (oppThirdDownPct + oppFourthDownPct) / 2;
-                teamData.defenseThirdFourthDown.push(oppCombinedThirdFourth);
-                
-                // Success rate (offensive from team, defensive from opponent) - as decimal
-                const passAttempts = teamStat.pass_attempts ?? teamStat.passAttempts ?? 0;
-                const rushAttempts = teamStat.rush_attempts ?? teamStat.rushAttempts ?? 0;
-                const totalAttempts = passAttempts + rushAttempts;
-                if (totalAttempts > 0) {
-                    const passSuccesses = teamStat.pass_successes ?? teamStat.passSuccesses ?? 0;
-                    const rushSuccesses = teamStat.rush_successes ?? teamStat.rushSuccesses ?? 0;
-                    const successRate = (passSuccesses + rushSuccesses) / totalAttempts;
-                    teamData.offenseSuccessRate.push(successRate);
-                }
-                
-                // Defensive success rate from opponent - as decimal
-                const oppPassAttempts = opponentStat.pass_attempts ?? opponentStat.passAttempts ?? 0;
-                const oppRushAttempts = opponentStat.rush_attempts ?? opponentStat.rushAttempts ?? 0;
-                const oppTotalAttempts = oppPassAttempts + oppRushAttempts;
-                if (oppTotalAttempts > 0) {
-                    const oppPassSuccesses = opponentStat.pass_successes ?? opponentStat.passSuccesses ?? 0;
-                    const oppRushSuccesses = opponentStat.rush_successes ?? opponentStat.rushSuccesses ?? 0;
-                    const oppSuccessRate = (oppPassSuccesses + oppRushSuccesses) / oppTotalAttempts;
-                    teamData.defenseSuccessRate.push(oppSuccessRate);
-                }
-            }
             
             // Calculate averages and create scatter plot points
             const scatterData = [];

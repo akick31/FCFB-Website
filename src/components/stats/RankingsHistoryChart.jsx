@@ -170,7 +170,7 @@ const RankingsHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
     }
 
     // Custom tooltip for all teams view - only show the hovered team
-    const AllTeamsTooltip = ({ active, payload, label, coordinate }) => {
+    const AllTeamsTooltip = ({ active, payload, coordinate }) => {
         if (!active || !payload || payload.length === 0) {
             return null;
         }
@@ -317,7 +317,7 @@ const RankingsHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         const boundaries = [];
         let lastSeason = null;
         let lastWeek = null;
-        chartData.forEach((point, index) => {
+        chartData.forEach((point) => {
             const currentSeason = point.season || point.season_number;
             const currentWeek = point.week || point.week_number;
             
