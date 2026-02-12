@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Typography,
@@ -14,7 +14,9 @@ import {
     MenuItem,
     FormControl,
     InputLabel,
-    Avatar
+    Avatar,
+    Autocomplete,
+    TextField
 } from '@mui/material';
 import { FilterList, Close } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +25,7 @@ import FilterMenu from '../../menu/FilterMenu';
 import { useTeamData } from './hooks/useTeamData';
 import { useGameFilters } from './hooks/useGameFilters';
 import { useGamePagination } from './hooks/useGamePagination';
+import { getAllTeams } from '../../../api/teamApi';
 import { 
     formatBallLocationWithTeam,
     formatPossessionWithLogo,
@@ -56,10 +59,43 @@ const ScoreboardList = ({
     const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
     const navigate = useNavigate();
     
+    // Team search state
+    const [allTeams, setAllTeams] = useState([]);
+    const [selectedTeam, setSelectedTeam] = useState(null);
+    const [filteredGames, setFilteredGames] = useState(games);
+    
     // Use custom hooks for better organization
-    const { teamsData, loading: teamsLoading } = useTeamData(games);
+    const { teamsData, loading: teamsLoading } = useTeamData(filteredGames);
     const { filterMenuOpen, handleFilterApply, openFilterMenu, closeFilterMenu } = useGameFilters(filters, setFilters);
     const { rowsPerPage, handleRowsPerPageChange } = useGamePagination(SCOREBOARD_CONSTANTS.DEFAULT_ROWS_PER_PAGE);
+    
+    // Fetch all teams for search
+    useEffect(() => {
+        const fetchTeams = async () => {
+            try {
+                const teams = await getAllTeams();
+                setAllTeams(teams.filter(t => t.active));
+            } catch (err) {
+                console.error('Failed to fetch teams for search:', err);
+            }
+        };
+        fetchTeams();
+    }, []);
+    
+    // Filter games by selected team
+    useEffect(() => {
+        if (!selectedTeam) {
+            setFilteredGames(games);
+        } else {
+            const teamName = selectedTeam.name;
+            const filtered = games.filter(game => {
+                const homeTeam = game.homeTeam || game.home_team;
+                const awayTeam = game.awayTeam || game.away_team;
+                return homeTeam === teamName || awayTeam === teamName;
+            });
+            setFilteredGames(filtered);
+        }
+    }, [selectedTeam, games]);
 
     // Check if this is showing past games
     const isPastGames = title === "Past Games" || title === "Scrimmages";
@@ -98,7 +134,7 @@ const ScoreboardList = ({
     }
 
     // Don't render until team logos are loaded
-    if (teamsLoading && games.length > 0) {
+    if (teamsLoading && filteredGames.length > 0) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                 <CircularProgress />
@@ -151,6 +187,43 @@ const ScoreboardList = ({
                             {title}
                         </Typography>
                         
+                        {/* Team Search */}
+                        <Box sx={{ minWidth: 200 }}>
+                            <Autocomplete
+                                options={allTeams}
+                                getOptionLabel={(option) => option.name || ''}
+                                value={selectedTeam}
+                                onChange={(event, newValue) => {
+                                    setSelectedTeam(newValue);
+                                }}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Search Team"
+                                        placeholder="Search for a team..."
+                                        size="small"
+                                    />
+                                )}
+                                renderOption={(props, option) => {
+                                    const { key, ...otherProps } = props;
+                                    return (
+                                        <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            {option.logo && (
+                                                <Avatar
+                                                    src={option.logo}
+                                                    alt={option.name}
+                                                    sx={{ width: 24, height: 24 }}
+                                                />
+                                            )}
+                                            <span>{option.name}</span>
+                                        </Box>
+                                    );
+                                }}
+                                clearOnEscape
+                                clearText="Clear"
+                            />
+                        </Box>
+                        
                         {/* Season and Week Filters - only show if provided */}
                         {seasonFilter && (
                             <Box sx={{ minWidth: 150 }}>
@@ -165,7 +238,10 @@ const ScoreboardList = ({
                     </Box>
                     
                     <Typography variant="body2" color="text.secondary">
-                        {totalGames} game{totalGames !== 1 ? 's' : ''} found
+                        {selectedTeam 
+                            ? `${filteredGames.length} game${filteredGames.length !== 1 ? 's' : ''} found for ${selectedTeam.name}`
+                            : `${totalGames} game${totalGames !== 1 ? 's' : ''} found`
+                        }
                     </Typography>
                 </Box>
                 
@@ -197,7 +273,7 @@ const ScoreboardList = ({
             </Box>
 
             {/* Games List or No Games Message */}
-            {(!games || games.length === 0) ? (
+            {(!filteredGames || filteredGames.length === 0) ? (
                 <Box sx={{ 
                     textAlign: 'center', 
                     p: 4,
@@ -264,7 +340,7 @@ const ScoreboardList = ({
                 </Box>
 
                 {/* Game Rows */}
-                {games.map((game, index) => {
+                {filteredGames.map((game, index) => {
                     const awayTeamName = game.awayTeam || game.away_team;
                     const homeTeamName = game.homeTeam || game.home_team;
                     const awayTeamData = teamsData[awayTeamName];
@@ -280,7 +356,7 @@ const ScoreboardList = ({
                                 gridTemplateColumns: getGridColumns(),
                                 gap: 1,
                                 p: 1.5,
-                                borderBottom: index < games.length - 1 ? '1px solid #e9ecef' : 'none',
+                                borderBottom: index < filteredGames.length - 1 ? '1px solid #e9ecef' : 'none',
                                 cursor: 'pointer',
                                 transition: 'background-color 0.2s',
                                 backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa',
@@ -853,7 +929,7 @@ const ScoreboardList = ({
             )}
 
             {/* Pagination - only show when there are games and multiple pages */}
-            {games && games.length > 0 && totalPages > 1 && (
+            {filteredGames && filteredGames.length > 0 && totalPages > 1 && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                     <Pagination
                         count={totalPages}

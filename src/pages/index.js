@@ -15,7 +15,7 @@ export { Admin, UserManagement, GameManagement, TeamManagement, EditTeam, CoachM
 export { Home, Profile, Standings, Rankings, Schedule, Error, NotFound } from './core';
 
 // Stats Pages
-export { Records, SeasonStats, LeagueStats, Leaderboard, EloHistory } from './stats';
+export { Records, SeasonStats, LeagueStats, Leaderboard, EloHistory, Charts } from './stats';
 
 // Register Pages (special flow)
 export { default as Complete } from './register/Complete';

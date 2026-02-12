@@ -6,35 +6,34 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    Legend,
     ResponsiveContainer,
     Brush,
     ReferenceLine,
 } from 'recharts';
-import { Box, Typography, Paper, IconButton, Tooltip as MuiTooltip } from '@mui/material';
+import { Box, Typography, Paper, Avatar, IconButton, Tooltip as MuiTooltip } from '@mui/material';
 import { ZoomIn, ZoomOut, FitScreen } from '@mui/icons-material';
 
 /**
- * ELO History Chart Component
- * Displays a line chart of ELO ratings over time
+ * Rankings History Chart Component
+ * Displays a line chart of coaches poll rankings over time
  * Supports single team or all teams view
  */
-const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
+const RankingsHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
     // Zoom state for line charts
     const [zoomDomain, setZoomDomain] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState(null);
-    // Build team map for colors and names
+    // Build team map for colors, names, and logos
     const teamMap = useMemo(() => {
         const map = {};
         teams.forEach(team => {
             if (team.name) {
-                // Handle both camelCase and snake_case from API
                 const primaryColor = team.primaryColor || team.primary_color;
                 map[team.name] = {
                     primaryColor: primaryColor || '#1976d2',
                     abbreviation: team.abbreviation || team.name?.substring(0, 3).toUpperCase(),
                     name: team.name,
+                    logo: team.logo || null,
                 };
             }
         });
@@ -47,13 +46,10 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
 
         if (showAllTeams) {
             // Group by chronological timeline (season + week combinations)
-            // Each point represents a specific season+week, and shows ELO for all teams that played in that week
-            
-            // First, get all unique season+week combinations and sort chronologically
             const timelineMap = new Map();
-            data.forEach(entry => {
-                const season = entry.season || entry.season_number || 0;
-                const week = entry.week || entry.week_number || 0;
+            data.forEach(game => {
+                const season = game.season || game.season_number || 0;
+                const week = game.week || game.week_number || 0;
                 const key = `${season}_${week}`;
                 if (!timelineMap.has(key)) {
                     timelineMap.set(key, {
@@ -76,30 +72,48 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                 entry.gameIndex = index + 1;
             });
             
-            // Create a map of team -> game index -> elo
+            // Create a map of team -> game index -> rank
             const teamGameMap = new Map();
-            data.forEach(entry => {
-                const teamName = entry.team || entry.team_name;
-                if (!teamName) return;
-                
-                const season = entry.season || entry.season_number || 0;
-                const week = entry.week || entry.week_number || 0;
+            data.forEach(game => {
+                const season = game.season || game.season_number || 0;
+                const week = game.week || game.week_number || 0;
                 const key = `${season}_${week}`;
                 const timelineEntry = timelineMap.get(key);
                 
                 if (!timelineEntry) return;
                 
-                if (!teamGameMap.has(teamName)) {
-                    teamGameMap.set(teamName, new Map());
+                // Process home team rank
+                if (game.home_team_rank && game.home_team_rank >= 1 && game.home_team_rank <= 25) {
+                    const teamName = game.home_team || game.homeTeam;
+                    if (teamName) {
+                        if (!teamGameMap.has(teamName)) {
+                            teamGameMap.set(teamName, new Map());
+                        }
+                        teamGameMap.get(teamName).set(timelineEntry.gameIndex, {
+                            rank: game.home_team_rank,
+                            season,
+                            week,
+                        });
+                    }
                 }
-                teamGameMap.get(teamName).set(timelineEntry.gameIndex, {
-                    elo: entry.elo || entry.team_elo || 1500,
-                    season,
-                    week,
-                });
+                
+                // Process away team rank
+                if (game.away_team_rank && game.away_team_rank >= 1 && game.away_team_rank <= 25) {
+                    const teamName = game.away_team || game.awayTeam;
+                    if (teamName) {
+                        if (!teamGameMap.has(teamName)) {
+                            teamGameMap.set(teamName, new Map());
+                        }
+                        teamGameMap.get(teamName).set(timelineEntry.gameIndex, {
+                            rank: game.away_team_rank,
+                            season,
+                            week,
+                        });
+                    }
+                }
             });
             
-            // Build chart data points - one per timeline entry
+            // Build chart data points
             const chartPoints = sortedTimeline.map((timelineEntry) => {
                 const point = {
                     gameIndex: timelineEntry.gameIndex,
@@ -107,11 +121,11 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                     week: timelineEntry.week,
                 };
                 
-                // Add ELO for each team at this game index (only if they played in this week)
+                // Add rank for each team at this game index
                 teamGameMap.forEach((gameMap, teamName) => {
-                    const teamElo = gameMap.get(timelineEntry.gameIndex);
-                    if (teamElo) {
-                        point[`${teamName}_elo`] = teamElo.elo;
+                    const teamRank = gameMap.get(timelineEntry.gameIndex);
+                    if (teamRank) {
+                        point[`${teamName}_rank`] = teamRank.rank;
                     }
                 });
                 
@@ -120,39 +134,51 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
             
             return chartPoints;
         } else {
-            // Single team view - simple sequential games
-            return data.map((entry, index) => ({
-                gameIndex: index + 1,
-                elo: entry.elo || entry.team_elo || 1500,
-                week: entry.week || entry.week_number || 'N/A',
-                season: entry.season || entry.season_number || 0,
-                opponent: entry.opponent || 'N/A',
-                result: entry.result || '-',
-                gameId: entry.game_id || entry.gameId,
-            }));
+            // Single team view
+            const teamRankings = [];
+            data.forEach(game => {
+                const season = game.season || game.season_number || 0;
+                const week = game.week || game.week_number || 0;
+                
+                // Check if this team is home or away
+                const isHome = game.home_team === teams[0]?.name || game.homeTeam === teams[0]?.name;
+                const rank = isHome ? (game.home_team_rank || game.homeTeamRank) : (game.away_team_rank || game.awayTeamRank);
+                
+                if (rank && rank >= 1 && rank <= 25) {
+                    teamRankings.push({
+                        gameIndex: teamRankings.length + 1,
+                        rank,
+                        week,
+                        season,
+                        opponent: isHome ? (game.away_team || game.awayTeam) : (game.home_team || game.homeTeam),
+                    });
+                }
+            });
+            
+            return teamRankings;
         }
-    }, [data, showAllTeams]);
+    }, [data, showAllTeams, teams]);
 
     if (!data || data.length === 0) {
         return (
             <Paper sx={{ p: 3, textAlign: 'center' }}>
                 <Typography variant="body1" color="text.secondary">
-                    No ELO history data available
+                    No rankings history data available
                 </Typography>
             </Paper>
         );
     }
 
-    // Custom tooltip for all teams view - shows only the team being hovered
-    const AllTeamsTooltip = ({ active, payload, label, coordinate }) => {
+    // Custom tooltip for all teams view - only show the hovered team
+    const AllTeamsTooltip = ({ active, payload, coordinate }) => {
         if (!active || !payload || payload.length === 0) {
             return null;
         }
 
-        // Filter to only show payloads with valid values
-        // With shared={false}, there should only be one, but filter just in case
+        // With shared={false}, payload should only contain the hovered line's data
+        // But filter to ensure we only show valid rank data
         const validPayloads = payload.filter(
-            p => p.value != null && p.value !== undefined && p.dataKey && p.dataKey.includes('_elo')
+            p => p.value != null && p.value !== undefined && p.dataKey && p.dataKey.includes('_rank')
         );
 
         if (validPayloads.length === 0) {
@@ -165,10 +191,13 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         
         if (coordinate && validPayloads.length > 1) {
             // Find the payload whose Y coordinate is closest to the mouse Y coordinate
+            // This helps identify which line is actually being hovered
             let closestPayload = validPayloads[0];
             let minDistance = Infinity;
             
             validPayloads.forEach(p => {
+                // Calculate distance from mouse Y to the payload's Y position
+                // The payload should have coordinate information
                 if (p.coordinate && coordinate.y !== undefined) {
                     const distance = Math.abs(p.coordinate.y - coordinate.y);
                     if (distance < minDistance) {
@@ -181,21 +210,13 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
             hoveredPayload = closestPayload;
         }
         
-        const teamName = hoveredPayload.dataKey.replace('_elo', '');
+        const teamName = hoveredPayload.dataKey.replace('_rank', '');
         const teamInfo = teamMap[teamName];
         
         if (!teamInfo && !teamName) {
             return null;
         }
 
-        const teamData = {
-            name: teamInfo?.name || teamName,
-            abbreviation: teamInfo?.abbreviation || teamName?.substring(0, 3).toUpperCase(),
-            elo: hoveredPayload.value,
-            color: teamInfo?.primaryColor || '#1976d2',
-        };
-
-        // Get season and week from the payload's payload (the data point)
         const dataPoint = hoveredPayload.payload;
         const season = dataPoint?.season || 'N/A';
         const week = dataPoint?.week || 'N/A';
@@ -203,28 +224,32 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         return (
             <Paper sx={{ p: 2, border: '1px solid #ccc', maxWidth: 250 }}>
                 <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                    Game #{label}
+                    Season {season}, Week {week}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    {teamInfo?.logo && (
+                        <Avatar
+                            src={teamInfo.logo}
+                            alt={teamInfo.name}
+                            sx={{ width: 24, height: 24 }}
+                        />
+                    )}
                     <Box
                         sx={{
                             width: 12,
                             height: 12,
-                            backgroundColor: teamData.color,
+                            backgroundColor: teamInfo?.primaryColor || '#1976d2',
                             borderRadius: '50%',
                             flexShrink: 0,
                         }}
                     />
                     <Typography variant="body2" sx={{ flex: 1, fontWeight: 'bold' }}>
-                        {teamData.name}
+                        {teamInfo?.name || teamName}
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                        {teamData.elo.toFixed(1)}
+                        #{hoveredPayload.value}
                     </Typography>
                 </Box>
-                <Typography variant="body2" color="text.secondary">
-                    Season {season}, Week {week}
-                </Typography>
             </Paper>
         );
     };
@@ -239,22 +264,17 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                         Game #{data.gameIndex}
                     </Typography>
                     <Typography variant="body2">
+                        <strong>Rank:</strong> #{data.rank}
+                    </Typography>
+                    <Typography variant="body2">
                         <strong>Season:</strong> {data.season}
                     </Typography>
                     <Typography variant="body2">
                         <strong>Week:</strong> {data.week}
                     </Typography>
-                    <Typography variant="body2">
-                        <strong>ELO:</strong> {data.elo?.toFixed(1) || 'N/A'}
-                    </Typography>
-                    {data.opponent && data.opponent !== 'N/A' && (
+                    {data.opponent && (
                         <Typography variant="body2">
                             <strong>Opponent:</strong> {data.opponent}
-                        </Typography>
-                    )}
-                    {data.result && data.result !== '-' && (
-                        <Typography variant="body2">
-                            <strong>Result:</strong> {data.result}
                         </Typography>
                     )}
                 </Paper>
@@ -267,26 +287,17 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
     const uniqueTeams = useMemo(() => {
         if (!showAllTeams) return [];
         const teamSet = new Set();
-        data.forEach(entry => {
-            const teamName = entry.team || entry.team_name;
-            if (teamName) teamSet.add(teamName);
+        data.forEach(game => {
+            if (game.home_team_rank && game.home_team_rank >= 1 && game.home_team_rank <= 25) {
+                teamSet.add(game.home_team || game.homeTeam);
+            }
+            if (game.away_team_rank && game.away_team_rank >= 1 && game.away_team_rank <= 25) {
+                teamSet.add(game.away_team || game.awayTeam);
+            }
         });
-        return Array.from(teamSet).sort();
+        return Array.from(teamSet).filter(Boolean).sort();
     }, [data, showAllTeams]);
 
-    // Format X-axis label - show week instead of game number
-    const formatXAxisLabel = (value) => {
-        const dataPoint = chartData.find(d => d.gameIndex === value);
-        if (dataPoint) {
-            const season = dataPoint.season || dataPoint.season_number;
-            const week = dataPoint.week || dataPoint.week_number;
-            if (season && week) {
-                return `W${week}`;
-            }
-        }
-        return `Game ${value}`;
-    };
-    
     // Get season boundaries for visual delineation
     // Detect when season changes OR when week decreases significantly (14 -> 1 indicates new season)
     const seasonBoundaries = useMemo(() => {
@@ -302,6 +313,7 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
             if (lastSeason !== null && lastWeek !== null) {
                 const seasonChanged = currentSeason !== lastSeason;
                 // Week decreased significantly (e.g., 14 -> 1, 12 -> 2) indicates new season
+                // Only trigger if week decreased by more than 2 (to avoid false positives)
                 const weekDecreasedSignificantly = currentWeek < lastWeek && (lastWeek - currentWeek) > 2;
                 
                 if (seasonChanged || weekDecreasedSignificantly) {
@@ -320,6 +332,9 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         });
         return boundaries;
     }, [chartData]);
+
+    // Y-axis: rank 1 at top, 25 at bottom (reversed)
+    const yAxisDomain = [1, 25];
 
     // Zoom handlers - allow zooming beyond data bounds
     const handleZoomIn = () => {
@@ -457,9 +472,19 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                     <XAxis
                         dataKey="gameIndex"
                         label={{ value: 'Week', position: 'insideBottom', offset: -5 }}
-                        tickFormatter={formatXAxisLabel}
                         domain={zoomDomain ? zoomDomain : ['auto', 'auto']}
                         allowDataOverflow={true}
+                        tickFormatter={(value) => {
+                            const dataPoint = chartData.find(d => d.gameIndex === value);
+                            if (dataPoint) {
+                                const season = dataPoint.season || dataPoint.season_number;
+                                const week = dataPoint.week !== undefined && dataPoint.week !== null ? dataPoint.week : (dataPoint.week_number !== undefined && dataPoint.week_number !== null ? dataPoint.week_number : null);
+                                if (season && week !== null && week !== undefined && week > 0) {
+                                    return `W${week}`;
+                                }
+                            }
+                            return `Game ${value}`;
+                        }}
                     />
                     {/* Add CLEAR season boundary lines - solid black with SEASON X label */}
                     {seasonBoundaries.length > 0 && seasonBoundaries.map((boundary, idx) => {
@@ -484,40 +509,37 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                         );
                     })}
                     <YAxis
-                        label={{ value: 'ELO Rating', angle: -90, position: 'insideLeft' }}
-                        domain={['dataMin - 50', 'dataMax + 50']}
+                        label={{ value: 'Rank', angle: -90, position: 'insideLeft', offset: 10 }}
+                        domain={yAxisDomain}
+                        reversed={true}
+                        allowDataOverflow={false}
                     />
                     <Tooltip 
                         content={showAllTeams ? <AllTeamsTooltip /> : <SingleTeamTooltip />} 
                         shared={false}
-                        filterNull={false}
+                        filterNull={true}
                     />
-                    {!showAllTeams && <Legend />}
-                    {/* Hide legend for all teams view - too many teams to be useful */}
                     {showAllTeams ? (
                         // Render a line for each team
-                        uniqueTeams.map((teamName, index) => {
+                        uniqueTeams.map((teamName) => {
                             const teamInfo = teamMap[teamName];
-                            // Use team's primary color from database, or generate a distinct color if missing/invalid
-                            let color = teamInfo?.primaryColor;
-                            // Only fallback to generated color if color is missing, null, or invalid
+                            let color = teamInfo?.primaryColor || '#1976d2';
                             if (!color || color.trim() === '' || color === '#000000' || color === '#ffffff' || color === '#fff' || color === '#000' || !color.startsWith('#')) {
-                                // Generate a distinct color using golden angle for better distribution
-                                color = `hsl(${(index * 137.508) % 360}, 70%, 50%)`;
+                                color = '#1976d2';
                             }
 
                             return (
                                 <Line
                                     key={teamName}
                                     type="linear"
-                                    dataKey={`${teamName}_elo`}
+                                    dataKey={`${teamName}_rank`}
                                     stroke={color}
                                     strokeWidth={1.5}
                                     dot={false}
-                                    activeDot={{ r: 5, fill: color }}
-                                    name={`${teamName}_elo`}
+                                    activeDot={{ r: 6, fill: color, strokeWidth: 2, stroke: '#fff' }}
                                     connectNulls={false}
                                     isAnimationActive={false}
+                                    hide={false}
                                 />
                             );
                         })
@@ -525,12 +547,11 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                         // Single team line
                         <Line
                             type="linear"
-                            dataKey="elo"
+                            dataKey="rank"
                             stroke="#1976d2"
                             strokeWidth={2}
                             dot={{ r: 4 }}
                             activeDot={{ r: 6 }}
-                            name="ELO Rating"
                         />
                     )}
                     {/* Add zoom brush for all teams view - allows manual zoom by dragging */}
@@ -539,7 +560,17 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                             dataKey="gameIndex"
                             height={30}
                             stroke="#8884d8"
-                            tickFormatter={formatXAxisLabel}
+                            tickFormatter={(value) => {
+                                const dataPoint = chartData.find(d => d.gameIndex === value);
+                                if (dataPoint) {
+                                    const season = dataPoint.season || dataPoint.season_number;
+                                    const week = dataPoint.week || dataPoint.week_number;
+                                    if (season && week) {
+                                        return `W${week}`;
+                                    }
+                                }
+                                return `Game ${value}`;
+                            }}
                             startIndex={zoomDomain ? chartData.findIndex(d => d.gameIndex >= zoomDomain[0]) : Math.max(0, chartData.length - 20)}
                             endIndex={zoomDomain ? chartData.findIndex(d => d.gameIndex >= zoomDomain[1]) : chartData.length - 1}
                             onChange={(domain) => {
@@ -563,4 +594,4 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
     );
 };
 
-export default EloHistoryChart;
+export default RankingsHistoryChart;

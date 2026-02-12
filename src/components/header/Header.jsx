@@ -131,7 +131,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
     };
 
     const isActiveRoute = (path) => location.pathname === path;
-    const isStatsActive = () => location.pathname === '/records' || location.pathname === '/season-stats' || location.pathname === '/league-stats' || location.pathname === '/leaderboard' || location.pathname === '/elo-history';
+    const isStatsActive = () => location.pathname === '/records' || location.pathname === '/season-stats' || location.pathname === '/league-stats' || location.pathname === '/leaderboard' || location.pathname === '/charts';
 
     // Mobile Drawer
     const drawer = (
@@ -759,19 +759,19 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     <ListItemText primary="Leaderboard" />
                 </MenuItem>
                 <MenuItem
-                    key="elo-history"
+                    key="charts"
                     onClick={() => {
-                        navigate('/elo-history');
+                        navigate('/charts');
                         handleStatsMenuClose();
                     }}
                     sx={{
                         py: 1.5,
                         px: 2,
                         borderRadius: 0,
-                        backgroundColor: isActiveRoute('/elo-history') ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
+                        backgroundColor: isActiveRoute('/charts') ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
                     }}
                 >
-                    <ListItemText primary="ELO History" />
+                    <ListItemText primary="Charts" />
                 </MenuItem>
             </Menu>
 
