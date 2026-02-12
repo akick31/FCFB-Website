@@ -44,7 +44,8 @@ import {
     SeasonStats,
     LeagueStats,
     Leaderboard,
-    EloHistory
+    EloHistory,
+    Charts
 } from './pages';
 import Theme from "./styles/Theme";
 
@@ -247,6 +248,7 @@ const App = () => {
                             <Route path="/league-stats" element={<LeagueStats />} />
                             <Route path="/leaderboard" element={<Leaderboard />} />
                             <Route path="/elo-history" element={<EloHistory />} />
+                            <Route path="/charts" element={<Charts />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
 
                             <Route path="/error" element={<Error />} />

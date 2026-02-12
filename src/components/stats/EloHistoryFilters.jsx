@@ -45,6 +45,12 @@ const EloHistoryFilters = ({
                                         setShowAllTeams(e.target.checked);
                                         if (e.target.checked) {
                                             setSelectedTeam(null);
+                                        } else {
+                                            // When switching to single team, default to first team alphabetically
+                                            if (teams && teams.length > 0) {
+                                                const sortedTeams = [...teams].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                                                setSelectedTeam(sortedTeams[0]);
+                                            }
                                         }
                                     }
                                 }}
