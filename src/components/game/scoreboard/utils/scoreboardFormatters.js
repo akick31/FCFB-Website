@@ -69,5 +69,7 @@ export const isGameOngoing = (gameStatus) => {
     return gameStatus === 'IN_PROGRESS' || 
            gameStatus === 'HALFTIME' || 
            gameStatus === 'OVERTIME' ||
-           gameStatus === 'OPENING_KICKOFF';
+           gameStatus === 'OPENING_KICKOFF' ||
+           gameStatus === 'PREGAME' ||
+           gameStatus === 'END_OF_REGULATION';
 }; 
