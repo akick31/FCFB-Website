@@ -298,18 +298,6 @@ const RankingsHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         return Array.from(teamSet).filter(Boolean).sort();
     }, [data, showAllTeams]);
 
-    // Format X-axis label - show week instead of game number
-    const formatXAxisLabel = (value, payload) => {
-        if (!payload || !payload.payload) return `Game ${value}`;
-        const dataPoint = payload.payload;
-        const season = dataPoint.season || dataPoint.season_number;
-        const week = dataPoint.week || dataPoint.week_number;
-        if (season && week) {
-            return `S${season} W${week}`;
-        }
-        return `Game ${value}`;
-    };
-    
     // Get season boundaries for visual delineation
     // Detect when season changes OR when week decreases significantly (14 -> 1 indicates new season)
     const seasonBoundaries = useMemo(() => {
