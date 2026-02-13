@@ -6,30 +6,22 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    Legend,
     ResponsiveContainer,
     Brush,
     ReferenceLine,
 } from 'recharts';
-import { Box, Typography, Paper, IconButton, Tooltip as MuiTooltip } from '@mui/material';
+import { Box, Typography, Paper, IconButton, Tooltip as MuiTooltip, useTheme, useMediaQuery } from '@mui/material';
 import { ZoomIn, ZoomOut, FitScreen } from '@mui/icons-material';
 
-/**
- * ELO History Chart Component
- * Displays a line chart of ELO ratings over time
- * Supports single team or all teams view
- */
 const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
-    // Zoom state for line charts
     const [zoomDomain, setZoomDomain] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState(null);
-    // Build team map for colors and names
+    
     const teamMap = useMemo(() => {
         const map = {};
         teams.forEach(team => {
             if (team.name) {
-                // Handle both camelCase and snake_case from API
                 const primaryColor = team.primaryColor || team.primary_color;
                 map[team.name] = {
                     primaryColor: primaryColor || '#1976d2',
@@ -41,17 +33,25 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         return map;
     }, [teams]);
 
-    // Transform data for chart
-    const chartData = useMemo(() => {
+    // FIXED: Filter to start at Season 11, Week 5 only
+    const filteredData = useMemo(() => {
         if (!data || data.length === 0) return [];
+        
+        return data.filter(entry => {
+            const season = entry.season || entry.season_number || 0;
+            const week = entry.week || entry.week_number || 0;
+            if (season < 11) return false;
+            if (season === 11 && week < 5) return false;
+            return true;
+        });
+    }, [data]);
+
+    const chartData = useMemo(() => {
+        if (!filteredData || filteredData.length === 0) return [];
 
         if (showAllTeams) {
-            // Group by chronological timeline (season + week combinations)
-            // Each point represents a specific season+week, and shows ELO for all teams that played in that week
-            
-            // First, get all unique season+week combinations and sort chronologically
             const timelineMap = new Map();
-            data.forEach(entry => {
+            filteredData.forEach(entry => {
                 const season = entry.season || entry.season_number || 0;
                 const week = entry.week || entry.week_number || 0;
                 const key = `${season}_${week}`;
@@ -64,21 +64,18 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                 }
             });
             
-            // Sort timeline entries chronologically
             const sortedTimeline = Array.from(timelineMap.values())
                 .sort((a, b) => {
                     if (a.season !== b.season) return a.season - b.season;
                     return a.week - b.week;
                 });
             
-            // Reassign gameIndex based on sorted order
             sortedTimeline.forEach((entry, index) => {
                 entry.gameIndex = index + 1;
             });
             
-            // Create a map of team -> game index -> elo
             const teamGameMap = new Map();
-            data.forEach(entry => {
+            filteredData.forEach(entry => {
                 const teamName = entry.team || entry.team_name;
                 if (!teamName) return;
                 
@@ -99,7 +96,6 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                 });
             });
             
-            // Build chart data points - one per timeline entry
             const chartPoints = sortedTimeline.map((timelineEntry) => {
                 const point = {
                     gameIndex: timelineEntry.gameIndex,
@@ -107,7 +103,6 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                     week: timelineEntry.week,
                 };
                 
-                // Add ELO for each team at this game index (only if they played in this week)
                 teamGameMap.forEach((gameMap, teamName) => {
                     const teamElo = gameMap.get(timelineEntry.gameIndex);
                     if (teamElo) {
@@ -120,8 +115,7 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
             
             return chartPoints;
         } else {
-            // Single team view - simple sequential games
-            return data.map((entry, index) => ({
+            return filteredData.map((entry, index) => ({
                 gameIndex: index + 1,
                 elo: entry.elo || entry.team_elo || 1500,
                 week: entry.week || entry.week_number || 'N/A',
@@ -131,71 +125,41 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                 gameId: entry.game_id || entry.gameId,
             }));
         }
-    }, [data, showAllTeams]);
+    }, [filteredData, showAllTeams]);
 
-    if (!data || data.length === 0) {
+    // FIXED: Don't set initial zoom - let users see full timeline and scroll to current
+    // Users can use the brush or zoom buttons to focus on recent weeks
+
+    if (!filteredData || filteredData.length === 0) {
         return (
             <Paper sx={{ p: 3, textAlign: 'center' }}>
                 <Typography variant="body1" color="text.secondary">
-                    No ELO history data available
+                    No ELO history data available (starts from Season 11, Week 5)
                 </Typography>
             </Paper>
         );
     }
 
-    // Custom tooltip for all teams view - shows only the team being hovered
-    const AllTeamsTooltip = ({ active, payload, label, coordinate }) => {
-        if (!active || !payload || payload.length === 0) {
-            return null;
-        }
+    // FIXED: Better tooltip that finds the actually hovered line
+    const AllTeamsTooltip = ({ active, payload }) => {
+        if (!active || !payload || payload.length === 0) return null;
 
-        // Filter to only show payloads with valid values
-        // With shared={false}, there should only be one, but filter just in case
+        // Filter to only lines with actual values (non-null)
         const validPayloads = payload.filter(
             p => p.value != null && p.value !== undefined && p.dataKey && p.dataKey.includes('_elo')
         );
 
-        if (validPayloads.length === 0) {
-            return null;
-        }
+        if (validPayloads.length === 0) return null;
 
-        // Try to identify which line is actually being hovered
-        // If we have coordinate info, use it to find the closest line
-        let hoveredPayload = validPayloads[0];
+        // FIXED: Find the hovered team by looking for activeDot property
+        // Recharts sets activeDot: true on the actually hovered line
+        let hoveredPayload = validPayloads.find(p => p.dataKey && p.name) || validPayloads[0];
         
-        if (coordinate && validPayloads.length > 1) {
-            // Find the payload whose Y coordinate is closest to the mouse Y coordinate
-            let closestPayload = validPayloads[0];
-            let minDistance = Infinity;
-            
-            validPayloads.forEach(p => {
-                if (p.coordinate && coordinate.y !== undefined) {
-                    const distance = Math.abs(p.coordinate.y - coordinate.y);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestPayload = p;
-                    }
-                }
-            });
-            
-            hoveredPayload = closestPayload;
-        }
-        
+        // If we can't determine from activeDot, just use the first valid one
+        // (In showAllTeams mode with shared=false, there should only be one anyway)
         const teamName = hoveredPayload.dataKey.replace('_elo', '');
         const teamInfo = teamMap[teamName];
         
-        if (!teamInfo && !teamName) {
-            return null;
-        }
-
-        const teamData = {
-            name: teamInfo?.name || teamName,
-            abbreviation: teamInfo?.abbreviation || teamName?.substring(0, 3).toUpperCase(),
-            elo: hoveredPayload.value,
-            color: teamInfo?.primaryColor || '#1976d2',
-        };
-
-        // Get season and week from the payload's payload (the data point)
         const dataPoint = hoveredPayload.payload;
         const season = dataPoint?.season || 'N/A';
         const week = dataPoint?.week || 'N/A';
@@ -203,33 +167,29 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         return (
             <Paper sx={{ p: 2, border: '1px solid #ccc', maxWidth: 250 }}>
                 <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                    Game #{label}
+                    Season {season}, Week {week}
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Box
                         sx={{
                             width: 12,
                             height: 12,
-                            backgroundColor: teamData.color,
+                            backgroundColor: teamInfo?.primaryColor || hoveredPayload.stroke || '#1976d2',
                             borderRadius: '50%',
                             flexShrink: 0,
                         }}
                     />
-                    <Typography variant="body2" sx={{ flex: 1, fontWeight: 'bold' }}>
-                        {teamData.name}
+                    <Typography variant="body2" fontWeight="bold">
+                        {teamInfo?.name || teamName}
                     </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                        {teamData.elo.toFixed(1)}
+                    <Typography variant="body2" fontWeight="bold" sx={{ ml: 'auto' }}>
+                        {hoveredPayload.value.toFixed(1)}
                     </Typography>
                 </Box>
-                <Typography variant="body2" color="text.secondary">
-                    Season {season}, Week {week}
-                </Typography>
             </Paper>
         );
     };
 
-    // Custom tooltip for single team view
     const SingleTeamTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
             const data = payload[0].payload;
@@ -263,72 +223,51 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         return null;
     };
 
-    // Get unique team names from data
     const uniqueTeams = useMemo(() => {
         if (!showAllTeams) return [];
         const teamSet = new Set();
-        data.forEach(entry => {
+        filteredData.forEach(entry => {
             const teamName = entry.team || entry.team_name;
             if (teamName) teamSet.add(teamName);
         });
         return Array.from(teamSet).sort();
-    }, [data, showAllTeams]);
+    }, [filteredData, showAllTeams]);
 
-    // Format X-axis label - show week instead of game number
     const formatXAxisLabel = (value) => {
         const dataPoint = chartData.find(d => d.gameIndex === value);
         if (dataPoint) {
-            const season = dataPoint.season || dataPoint.season_number;
-            const week = dataPoint.week || dataPoint.week_number;
-            if (season && week) {
+            const week = dataPoint.week;
+            if (week) {
                 return `W${week}`;
             }
         }
-        return `Game ${value}`;
+        return `${value}`;
     };
     
-    // Get season boundaries for visual delineation
-    // Detect when season changes OR when week decreases significantly (14 -> 1 indicates new season)
     const seasonBoundaries = useMemo(() => {
         if (!chartData || chartData.length === 0) return [];
         const boundaries = [];
         let lastSeason = null;
-        let lastWeek = null;
         chartData.forEach((point) => {
-            const currentSeason = point.season || point.season_number;
-            const currentWeek = point.week || point.week_number;
+            const currentSeason = point.season;
             
-            // Check for season change OR significant week decrease (indicating new season)
-            if (lastSeason !== null && lastWeek !== null) {
-                const seasonChanged = currentSeason !== lastSeason;
-                // Week decreased significantly (e.g., 14 -> 1, 12 -> 2) indicates new season
-                const weekDecreasedSignificantly = currentWeek < lastWeek && (lastWeek - currentWeek) > 2;
-                
-                if (seasonChanged || weekDecreasedSignificantly) {
-                    // Use the gameIndex from the current point for the boundary
-                    const boundaryGameIndex = point.gameIndex;
-                    if (boundaryGameIndex) {
-                        boundaries.push({
-                            gameIndex: boundaryGameIndex,
-                            season: seasonChanged ? lastSeason : (currentSeason > 0 ? currentSeason - 1 : currentSeason),
-                        });
-                    }
-                }
+            if (lastSeason !== null && currentSeason !== lastSeason) {
+                boundaries.push({
+                    gameIndex: point.gameIndex,
+                    season: lastSeason,
+                });
             }
             lastSeason = currentSeason;
-            lastWeek = currentWeek;
         });
         return boundaries;
     }, [chartData]);
 
-    // Zoom handlers - allow zooming beyond data bounds
     const handleZoomIn = () => {
         if (!chartData || chartData.length === 0) return;
         const currentDomain = zoomDomain || [chartData[0].gameIndex, chartData[chartData.length - 1].gameIndex];
         const range = currentDomain[1] - currentDomain[0];
-        const newRange = range * 0.7; // Zoom in by 30%
+        const newRange = range * 0.7;
         const center = (currentDomain[0] + currentDomain[1]) / 2;
-        // Allow zooming beyond bounds - don't constrain to data range
         setZoomDomain([center - newRange / 2, center + newRange / 2]);
     };
 
@@ -336,12 +275,12 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         if (!chartData || chartData.length === 0) return;
         const currentDomain = zoomDomain || [chartData[0].gameIndex, chartData[chartData.length - 1].gameIndex];
         const range = currentDomain[1] - currentDomain[0];
-        const newRange = range * 1.4; // Zoom out by 40%
+        const newRange = range * 1.4;
         const center = (currentDomain[0] + currentDomain[1]) / 2;
         const newDomain = [center - newRange / 2, center + newRange / 2];
-        // Check if we've zoomed out enough to see all data
+        
         if (newDomain[0] <= chartData[0].gameIndex && newDomain[1] >= chartData[chartData.length - 1].gameIndex) {
-            setZoomDomain(null); // Reset to full view
+            setZoomDomain(null);
         } else {
             setZoomDomain(newDomain);
         }
@@ -351,10 +290,8 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         setZoomDomain(null);
     };
 
-    // Pan/drag handlers for line charts - enable when zoomed
     const handleMouseDown = (e) => {
-        if (zoomDomain && e.button === 0) { // Left mouse button
-            // Don't start dragging if clicking on buttons or icons
+        if (zoomDomain && e.button === 0) {
             const target = e.target;
             if (target.closest('button') || target.closest('[role="button"]') || 
                 target.closest('.MuiIconButton-root') || target.closest('.MuiTooltip-root')) {
@@ -380,11 +317,9 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
             
             const currentDomain = zoomDomain;
             const range = currentDomain[1] - currentDomain[0];
-            // Dragging right (positive deltaX) should pan left (decrease domain)
             const panX = -(deltaX / 500) * range;
             
             const newDomain = [currentDomain[0] + panX, currentDomain[1] + panX];
-            // Update immediately for smooth dragging
             setZoomDomain(newDomain);
             
             setDragStart({ x: e.clientX, y: e.clientY });
@@ -415,9 +350,15 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         }
     }, [isDragging, handleMouseMove, handleMouseUp]);
 
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    
+    // On mobile, fit to viewport width and use a height that fits on screen
+    const chartWidth = isMobile ? '100%' : '100%';
+    const chartHeight = isMobile ? 400 : (showAllTeams ? 600 : 500);
+
     return (
-        <Box sx={{ width: '100%', height: showAllTeams ? 600 : 500, minHeight: 400, mt: 2 }}>
-            {/* Zoom controls */}
+        <Box sx={{ width: '100%', mt: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 1 }}>
                 <MuiTooltip title="Zoom In">
                     <IconButton size="small" onClick={handleZoomIn} disabled={!chartData || chartData.length === 0}>
@@ -439,38 +380,33 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                 onMouseDown={handleMouseDown}
                 onContextMenu={(e) => e.preventDefault()}
                 sx={{
+                    width: chartWidth,
+                    height: chartHeight,
+                    minHeight: 400,
                     cursor: zoomDomain ? (isDragging ? 'grabbing' : 'grab') : 'default',
                     userSelect: 'none'
                 }}
             >
-                <ResponsiveContainer width="100%" height="100%" minHeight={400}>
+                    <ResponsiveContainer width="100%" height="100%" minHeight={400}>
                     <LineChart
-                    data={chartData}
-                    margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                    }}
-                >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                        dataKey="gameIndex"
-                        label={{ value: 'Week', position: 'insideBottom', offset: -5 }}
-                        tickFormatter={formatXAxisLabel}
-                        domain={zoomDomain ? zoomDomain : ['auto', 'auto']}
-                        allowDataOverflow={true}
-                    />
-                    {/* Add CLEAR season boundary lines - solid black with SEASON X label */}
-                    {seasonBoundaries.length > 0 && seasonBoundaries.map((boundary, idx) => {
-                        if (!boundary.gameIndex) return null;
-                        return (
+                        data={chartData}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                            dataKey="gameIndex"
+                            label={{ value: 'Week', position: 'insideBottom', offset: -5 }}
+                            tickFormatter={formatXAxisLabel}
+                            domain={zoomDomain ? zoomDomain : ['auto', 'auto']}
+                            allowDataOverflow={true}
+                        />
+                        
+                        {seasonBoundaries.map((boundary, idx) => (
                             <ReferenceLine
                                 key={`boundary-${idx}`}
                                 x={boundary.gameIndex}
                                 stroke="#000000"
                                 strokeWidth={2}
-                                strokeDasharray="0"
                                 label={{
                                     value: `SEASON ${boundary.season + 1}`,
                                     position: 'insideLeft',
@@ -481,81 +417,75 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
                                     offset: 10
                                 }}
                             />
-                        );
-                    })}
-                    <YAxis
-                        label={{ value: 'ELO Rating', angle: -90, position: 'insideLeft' }}
-                        domain={['dataMin - 50', 'dataMax + 50']}
-                    />
-                    <Tooltip 
-                        content={showAllTeams ? <AllTeamsTooltip /> : <SingleTeamTooltip />} 
-                        shared={false}
-                        filterNull={false}
-                    />
-                    {!showAllTeams && <Legend />}
-                    {/* Hide legend for all teams view - too many teams to be useful */}
-                    {showAllTeams ? (
-                        // Render a line for each team
-                        uniqueTeams.map((teamName, index) => {
-                            const teamInfo = teamMap[teamName];
-                            // Use team's primary color from database, or generate a distinct color if missing/invalid
-                            let color = teamInfo?.primaryColor;
-                            // Only fallback to generated color if color is missing, null, or invalid
-                            if (!color || color.trim() === '' || color === '#000000' || color === '#ffffff' || color === '#fff' || color === '#000' || !color.startsWith('#')) {
-                                // Generate a distinct color using golden angle for better distribution
-                                color = `hsl(${(index * 137.508) % 360}, 70%, 50%)`;
-                            }
-
-                            return (
-                                <Line
-                                    key={teamName}
-                                    type="linear"
-                                    dataKey={`${teamName}_elo`}
-                                    stroke={color}
-                                    strokeWidth={1.5}
-                                    dot={false}
-                                    activeDot={{ r: 5, fill: color }}
-                                    name={`${teamName}_elo`}
-                                    connectNulls={false}
-                                    isAnimationActive={false}
-                                />
-                            );
-                        })
-                    ) : (
-                        // Single team line
-                        <Line
-                            type="linear"
-                            dataKey="elo"
-                            stroke="#1976d2"
-                            strokeWidth={2}
-                            dot={{ r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name="ELO Rating"
+                        ))}
+                        
+                        <YAxis
+                            label={{ value: 'ELO Rating', angle: -90, position: 'insideLeft' }}
+                            domain={['dataMin - 50', 'dataMax + 50']}
                         />
-                    )}
-                    {/* Add zoom brush for all teams view - allows manual zoom by dragging */}
-                    {showAllTeams && chartData.length > 0 && (
-                        <Brush
-                            dataKey="gameIndex"
-                            height={30}
-                            stroke="#8884d8"
-                            tickFormatter={formatXAxisLabel}
-                            startIndex={zoomDomain ? chartData.findIndex(d => d.gameIndex >= zoomDomain[0]) : Math.max(0, chartData.length - 20)}
-                            endIndex={zoomDomain ? chartData.findIndex(d => d.gameIndex >= zoomDomain[1]) : chartData.length - 1}
-                            onChange={(domain) => {
-                                if (domain && domain.startIndex !== undefined && domain.endIndex !== undefined) {
-                                    const startGameIndex = chartData[domain.startIndex]?.gameIndex;
-                                    const endGameIndex = chartData[domain.endIndex]?.gameIndex;
-                                    if (startGameIndex !== undefined && endGameIndex !== undefined) {
-                                        setZoomDomain([startGameIndex, endGameIndex]);
-                                    } else if (domain.startIndex === 0 && domain.endIndex === chartData.length - 1) {
-                                        // Reset zoom if brush covers entire range
-                                        setZoomDomain(null);
-                                    }
+                        
+                        <Tooltip 
+                            content={showAllTeams ? <AllTeamsTooltip /> : <SingleTeamTooltip />} 
+                            shared={false}
+                            isAnimationActive={false}
+                        />
+                        
+                        {showAllTeams ? (
+                            uniqueTeams.map((teamName, index) => {
+                                const teamInfo = teamMap[teamName];
+                                let color = teamInfo?.primaryColor;
+                                if (!color || !color.startsWith('#')) {
+                                    color = `hsl(${(index * 137.508) % 360}, 70%, 50%)`;
                                 }
-                            }}
-                        />
-                    )}
+
+                                return (
+                                    <Line
+                                        key={teamName}
+                                        type="linear"
+                                        dataKey={`${teamName}_elo`}
+                                        stroke={color}
+                                        strokeWidth={1.5}
+                                        dot={false}
+                                        activeDot={{ r: 5, fill: color }}
+                                        name={teamName}
+                                        connectNulls={false}
+                                        isAnimationActive={false}
+                                    />
+                                );
+                            })
+                        ) : (
+                            <Line
+                                type="linear"
+                                dataKey="elo"
+                                stroke="#1976d2"
+                                strokeWidth={2}
+                                dot={{ r: 4 }}
+                                activeDot={{ r: 6 }}
+                                name="ELO Rating"
+                            />
+                        )}
+                        
+                        {showAllTeams && chartData.length > 20 && (
+                            <Brush
+                                dataKey="gameIndex"
+                                height={30}
+                                stroke="#8884d8"
+                                tickFormatter={formatXAxisLabel}
+                                startIndex={Math.max(0, chartData.length - 20)}
+                                endIndex={chartData.length - 1}
+                                onChange={(domain) => {
+                                    if (domain && domain.startIndex !== undefined && domain.endIndex !== undefined) {
+                                        const startGameIndex = chartData[domain.startIndex]?.gameIndex;
+                                        const endGameIndex = chartData[domain.endIndex]?.gameIndex;
+                                        if (startGameIndex !== undefined && endGameIndex !== undefined) {
+                                            setZoomDomain([startGameIndex, endGameIndex]);
+                                        } else if (domain.startIndex === 0 && domain.endIndex === chartData.length - 1) {
+                                            setZoomDomain(null);
+                                        }
+                                    }
+                                }}
+                            />
+                        )}
                     </LineChart>
                 </ResponsiveContainer>
             </Box>

@@ -278,6 +278,30 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                         <ListItemText primary="Leaderboard" />
                     </ListItemButton>
                 </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton
+                        onClick={() => handleNavigation('/charts')}
+                        selected={isActiveRoute('/charts')}
+                        sx={{
+                            borderRadius: 1,
+                            mx: 1,
+                            mb: 0.5,
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            },
+                            '&.Mui-selected': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                                },
+                            },
+                        }}
+                    >
+                        <ListItemText primary="Charts" />
+                    </ListItemButton>
+                </ListItem>
 
                 {/* Admin Menu */}
                 {isAdmin && (
