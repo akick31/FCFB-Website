@@ -23,6 +23,9 @@ import ScatterPlotChart from '../ScatterPlotChart';
 /**
  * Scatter Plots Tab Component
  * Displays performance scatter plots for teams
+ * 
+ * NOTE: Success rate is calculated as (successes / attempts)
+ * Example: 5 successful conversions out of 10 attempts = 5/10 = 0.50 = 50% success rate
  */
 const ScatterPlotsTab = () => {
     const [loading, setLoading] = useState(true);
@@ -30,17 +33,14 @@ const ScatterPlotsTab = () => {
     const [gameStatsData, setGameStatsData] = useState([]);
     const [seasonStatsData, setSeasonStatsData] = useState([]);
     
-    // Filter states
     const [selectedSeason, setSelectedSeason] = useState(null);
     const [selectedWeek, setSelectedWeek] = useState(null);
-    const [viewMode, setViewMode] = useState('season'); // 'season' or 'week'
-    const [activeChart, setActiveChart] = useState(0); // 0: avg diff, 1: 3rd/4th down, 2: success rate
+    const [viewMode, setViewMode] = useState('season');
+    const [activeChart, setActiveChart] = useState(0);
     
-    // Data states
     const [teams, setTeams] = useState([]);
     const [seasons, setSeasons] = useState([]);
 
-    // Initialize data
     useEffect(() => {
         const initData = async () => {
             try {
@@ -69,7 +69,6 @@ const ScatterPlotsTab = () => {
         initData();
     }, []);
 
-    // Fetch stats data
     const fetchStats = async () => {
         if (!selectedSeason) {
             setError('Please select a season');
@@ -81,12 +80,10 @@ const ScatterPlotsTab = () => {
             setError(null);
             
             if (viewMode === 'season') {
-                // Use season_stats for overall season view
                 const response = await getFilteredSeasonStats(null, null, selectedSeason, null, 0, 1000);
                 setSeasonStatsData(response.content || []);
                 setGameStatsData([]);
             } else {
-                // Use game_stats for week-by-week view
                 const week = selectedWeek;
                 if (!week) {
                     setError('Please select a week');
@@ -108,59 +105,63 @@ const ScatterPlotsTab = () => {
         }
     };
 
-    // Auto-fetch when season/week changes
     useEffect(() => {
         if (selectedSeason && (viewMode === 'season' || selectedWeek)) {
             fetchStats();
         }
     }, [selectedSeason, selectedWeek, viewMode]);
 
-    // Calculate scatter plot data
     const scatterPlotData = useMemo(() => {
         if (viewMode === 'season') {
-            // Use season_stats data
             if (!seasonStatsData || seasonStatsData.length === 0) return [];
             
             return seasonStatsData
                 .filter(stat => {
-                    // Handle both snake_case and camelCase field names
                     const avgOffDiff = stat.average_offensive_diff ?? stat.averageOffensiveDiff;
                     const avgDefDiff = stat.average_defensive_diff ?? stat.averageDefensiveDiff;
                     return avgOffDiff != null && avgDefDiff != null;
                 })
                 .map(stat => {
-                    // Handle both snake_case and camelCase field names
                     const avgOffDiff = stat.average_offensive_diff ?? stat.averageOffensiveDiff;
                     const avgDefDiff = stat.average_defensive_diff ?? stat.averageDefensiveDiff;
                     
-                    // Calculate 3rd/4th down success rate (combined) - convert from percentage to decimal
-                    const thirdDownPct = (stat.third_down_conversion_percentage ?? stat.thirdDownConversionPercentage ?? 0) / 100;
-                    const fourthDownPct = (stat.fourth_down_conversion_percentage ?? stat.fourthDownConversionPercentage ?? 0) / 100;
-                    const offenseThirdFourthDown = (thirdDownPct + fourthDownPct) / 2;
+                    // Success Rate Formula: successes / attempts
+                    // Example: 7 conversions out of 10 attempts = 7/10 = 0.70 = 70%
+                    const thirdDownSuccess = stat.third_down_conversion_success ?? stat.thirdDownConversionSuccess ?? 0;
+                    const thirdDownAttempts = stat.third_down_conversion_attempts ?? stat.thirdDownConversionAttempts ?? 0;
+                    const fourthDownSuccess = stat.fourth_down_conversion_success ?? stat.fourthDownConversionSuccess ?? 0;
+                    const fourthDownAttempts = stat.fourth_down_conversion_attempts ?? stat.fourthDownConversionAttempts ?? 0;
+                    const totalSuccess = thirdDownSuccess + fourthDownSuccess;
+                    const totalAttempts = thirdDownAttempts + fourthDownAttempts;
+                    const offenseThirdFourthDown = totalAttempts > 0 ? totalSuccess / totalAttempts : null;
                     
-                    // Defensive 3rd/4th down from opponent stats - convert from percentage to decimal
-                    const oppThirdDownPct = (stat.opponent_third_down_conversion_percentage ?? stat.opponentThirdDownConversionPercentage ?? 0) / 100;
-                    const oppFourthDownPct = (stat.opponent_fourth_down_conversion_percentage ?? stat.opponentFourthDownConversionPercentage ?? 0) / 100;
-                    const defenseThirdFourthDown = (oppThirdDownPct + oppFourthDownPct) / 2;
+                    // Defensive 3rd/4th down from opponent stats
+                    const oppThirdDownSuccess = stat.opponent_third_down_conversion_success ?? stat.opponentThirdDownConversionSuccess ?? 0;
+                    const oppThirdDownAttempts = stat.opponent_third_down_conversion_attempts ?? stat.opponentThirdDownConversionAttempts ?? 0;
+                    const oppFourthDownSuccess = stat.opponent_fourth_down_conversion_success ?? stat.opponentFourthDownConversionSuccess ?? 0;
+                    const oppFourthDownAttempts = stat.opponent_fourth_down_conversion_attempts ?? stat.opponentFourthDownConversionAttempts ?? 0;
+                    const oppTotalSuccess = oppThirdDownSuccess + oppFourthDownSuccess;
+                    const oppTotalAttempts = oppThirdDownAttempts + oppFourthDownAttempts;
+                    const defenseThirdFourthDown = oppTotalAttempts > 0 ? oppTotalSuccess / oppTotalAttempts : null;
                     
-                    // Success rate (pass + rush combined) - as decimal, not percentage
+                    // Overall success rate (pass + rush)
                     const passAttempts = stat.pass_attempts ?? stat.passAttempts ?? 0;
                     const rushAttempts = stat.rush_attempts ?? stat.rushAttempts ?? 0;
-                    const totalAttempts = passAttempts + rushAttempts;
+                    const totalPlayAttempts = passAttempts + rushAttempts;
                     const passSuccesses = stat.pass_successes ?? stat.passSuccesses ?? 0;
                     const rushSuccesses = stat.rush_successes ?? stat.rushSuccesses ?? 0;
-                    const offenseSuccessRate = totalAttempts > 0
-                        ? (passSuccesses + rushSuccesses) / totalAttempts
+                    const offenseSuccessRate = totalPlayAttempts > 0
+                        ? (passSuccesses + rushSuccesses) / totalPlayAttempts
                         : null;
                     
-                    // Defensive success rate from opponent stats - as decimal
+                    // Defensive success rate from opponent stats
                     const oppPassAttempts = stat.opponent_pass_attempts ?? stat.opponentPassAttempts ?? 0;
                     const oppRushAttempts = stat.opponent_rush_attempts ?? stat.opponentRushAttempts ?? 0;
-                    const oppTotalAttempts = oppPassAttempts + oppRushAttempts;
+                    const oppTotalPlayAttempts = oppPassAttempts + oppRushAttempts;
                     const oppPassSuccesses = stat.opponent_pass_successes ?? stat.opponentPassSuccesses ?? 0;
                     const oppRushSuccesses = stat.opponent_rush_successes ?? stat.opponentRushSuccesses ?? 0;
-                    const defenseSuccessRate = oppTotalAttempts > 0
-                        ? (oppPassSuccesses + oppRushSuccesses) / oppTotalAttempts
+                    const defenseSuccessRate = oppTotalPlayAttempts > 0
+                        ? (oppPassSuccesses + oppRushSuccesses) / oppTotalPlayAttempts
                         : null;
                     
                     return {
@@ -174,69 +175,11 @@ const ScatterPlotsTab = () => {
                     };
                 });
         } else {
-            // Use game_stats data for week-by-week
-            if (!gameStatsData || gameStatsData.length === 0) return [];
-            
-            // Create a map of game_id -> [team1Stats, team2Stats]
-            const gameStatsMap = new Map();
-            gameStatsData.forEach(stat => {
-                const gameId = stat.game_id || stat.gameId;
-                if (!gameStatsMap.has(gameId)) {
-                    gameStatsMap.set(gameId, []);
-                }
-                gameStatsMap.get(gameId).push(stat);
-            });
-            
-            // Group stats by team and calculate defensive stats from opponents
-            const teamStatsMap = new Map();
-            
-            
-            // Calculate averages and create scatter plot points
-            const scatterData = [];
-            
-            teamStatsMap.forEach((teamData, teamName) => {
-                // Average Diff
-                const avgOffenseDiff = teamData.offenseAvgDiff.length > 0
-                    ? teamData.offenseAvgDiff.reduce((a, b) => a + b, 0) / teamData.offenseAvgDiff.length
-                    : null;
-                const avgDefenseDiff = teamData.defenseAvgDiff.length > 0
-                    ? teamData.defenseAvgDiff.reduce((a, b) => a + b, 0) / teamData.defenseAvgDiff.length
-                    : null;
-                
-                // 3rd/4th Down Success
-                const avgThirdFourthDown = teamData.offenseThirdFourthDown.length > 0
-                    ? teamData.offenseThirdFourthDown.reduce((a, b) => a + b, 0) / teamData.offenseThirdFourthDown.length
-                    : null;
-                const avgDefenseThirdFourthDown = teamData.defenseThirdFourthDown.length > 0
-                    ? teamData.defenseThirdFourthDown.reduce((a, b) => a + b, 0) / teamData.defenseThirdFourthDown.length
-                    : null;
-                
-                // Success Rate
-                const avgSuccessRate = teamData.offenseSuccessRate.length > 0
-                    ? teamData.offenseSuccessRate.reduce((a, b) => a + b, 0) / teamData.offenseSuccessRate.length
-                    : null;
-                const avgDefenseSuccessRate = teamData.defenseSuccessRate.length > 0
-                    ? teamData.defenseSuccessRate.reduce((a, b) => a + b, 0) / teamData.defenseSuccessRate.length
-                    : null;
-                
-                if (avgOffenseDiff != null && avgDefenseDiff != null) {
-                    scatterData.push({
-                        team: teamName,
-                        offense: avgOffenseDiff,
-                        defense: avgDefenseDiff,
-                        thirdFourthDown: avgThirdFourthDown,
-                        defenseThirdFourthDown: avgDefenseThirdFourthDown,
-                        successRate: avgSuccessRate,
-                        defenseSuccessRate: avgDefenseSuccessRate,
-                    });
-                }
-            });
-            
-            return scatterData;
+            // Week-by-week view - not implemented yet
+            return [];
         }
     }, [gameStatsData, seasonStatsData, viewMode]);
 
-    // Chart configurations
     const chartConfigs = [
         {
             title: 'Average Difference',
@@ -244,8 +187,8 @@ const ScatterPlotsTab = () => {
             yAxisLabel: 'Defense',
             xDataKey: 'offense',
             yDataKey: 'defense',
-            reversedX: true, // Higher on left (offense decreases left to right)
-            reversedY: false, // Higher on top (defense increases bottom to top)
+            reversedX: true,
+            reversedY: false,
         },
         {
             title: '3rd/4th Down Success Rates',
@@ -265,7 +208,6 @@ const ScatterPlotsTab = () => {
 
     return (
         <Box>
-            {/* Filters */}
             <Paper sx={{ p: 2, mb: 3 }}>
                 <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={6} md={3}>
@@ -331,21 +273,18 @@ const ScatterPlotsTab = () => {
                 </Grid>
             </Paper>
 
-            {/* Error Display */}
             {error && (
                 <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
                     {error}
                 </Alert>
             )}
 
-            {/* Loading State */}
             {loading && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                     <CircularProgress size={60} />
                 </Box>
             )}
 
-            {/* Chart Tabs */}
             {!loading && selectedSeason && (
                 <Paper sx={{ mb: 3 }}>
                     <Tabs
@@ -361,13 +300,11 @@ const ScatterPlotsTab = () => {
                 </Paper>
             )}
 
-            {/* Charts */}
             {!loading && !error && selectedSeason && scatterPlotData.length > 0 && (
                 <Paper sx={{ p: 3 }}>
                     <ScatterPlotChart
                         key={`${activeChart}-${selectedSeason}-${selectedWeek}-${viewMode}`}
                         data={scatterPlotData.filter(d => {
-                            // Filter out data points missing required values for the active chart
                             const config = chartConfigs[activeChart];
                             return d[config.xDataKey] != null && d[config.yDataKey] != null;
                         })}
@@ -384,7 +321,6 @@ const ScatterPlotsTab = () => {
                 </Paper>
             )}
 
-            {/* No Data State */}
             {!loading && !error && selectedSeason && scatterPlotData.length === 0 && (
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
                     <Typography variant="body1" color="text.secondary">
@@ -394,7 +330,6 @@ const ScatterPlotsTab = () => {
                 </Paper>
             )}
 
-            {/* Initial State */}
             {!loading && !error && !selectedSeason && (
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
                     <Typography variant="body1" color="text.secondary">
