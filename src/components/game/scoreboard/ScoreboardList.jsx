@@ -39,6 +39,7 @@ import {
     formatGameType
 } from '../../../utils/gameUtils';
 import { SCOREBOARD_CONSTANTS } from './utils/scoreboardConstants';
+import { getAllOngoingGames } from '../../../api/gameApi';
 
 const ScoreboardList = ({ 
     games, 
@@ -63,6 +64,7 @@ const ScoreboardList = ({
     const [allTeams, setAllTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [filteredGames, setFilteredGames] = useState(games);
+    const [allLiveGames, setAllLiveGames] = useState(null);
     
     // Use custom hooks for better organization
     const { teamsData, loading: teamsLoading } = useTeamData(filteredGames);
@@ -81,6 +83,37 @@ const ScoreboardList = ({
         };
         fetchTeams();
     }, []);
+
+    // For Live Games, load all ongoing games once so team search can span every game,
+    // not just those on the current page.
+    useEffect(() => {
+        const isLiveGamesView = title === 'Live Games';
+        if (!isLiveGamesView || allLiveGames !== null) {
+            return;
+        }
+
+        const fetchAllLiveGames = async () => {
+            try {
+                const response = await getAllOngoingGames();
+                const data = response?.data ?? response;
+
+                if (Array.isArray(data)) {
+                    setAllLiveGames(data);
+                } else if (data && Array.isArray(data.content)) {
+                    // Fallback in case the API wraps results in a paged response
+                    setAllLiveGames(data.content);
+                } else {
+                    setAllLiveGames([]);
+                }
+            } catch (err) {
+                console.error('Failed to fetch all live games for search:', err);
+                // Fall back to current page only
+                setAllLiveGames([]);
+            }
+        };
+
+        fetchAllLiveGames();
+    }, [title, allLiveGames]);
     
     // Filter games by selected team
     useEffect(() => {
@@ -88,14 +121,21 @@ const ScoreboardList = ({
             setFilteredGames(games);
         } else {
             const teamName = selectedTeam.name;
-            const filtered = games.filter(game => {
+            // For Live Games, search across all live games (not just the current page)
+            const isLiveGamesView = title === 'Live Games';
+            const sourceGames =
+                isLiveGamesView && allLiveGames && allLiveGames.length > 0
+                    ? allLiveGames
+                    : games;
+
+            const filtered = sourceGames.filter(game => {
                 const homeTeam = game.homeTeam || game.home_team;
                 const awayTeam = game.awayTeam || game.away_team;
                 return homeTeam === teamName || awayTeam === teamName;
             });
             setFilteredGames(filtered);
         }
-    }, [selectedTeam, games]);
+    }, [selectedTeam, games, allLiveGames, title]);
 
     // Check if this is showing past games
     const isPastGames = title === "Past Games" || title === "Scrimmages";
@@ -928,8 +968,9 @@ const ScoreboardList = ({
                 </Box>
             )}
 
-            {/* Pagination - only show when there are games and multiple pages */}
-            {filteredGames && filteredGames.length > 0 && totalPages > 1 && (
+            {/* Pagination - only show when there are games and multiple pages,
+                and when we're not in a team-specific search */}
+            {!selectedTeam && filteredGames && filteredGames.length > 0 && totalPages > 1 && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                     <Pagination
                         count={totalPages}
