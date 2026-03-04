@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Box,
     Typography,
@@ -39,7 +39,7 @@ import {
     formatGameType
 } from '../../../utils/gameUtils';
 import { SCOREBOARD_CONSTANTS } from './utils/scoreboardConstants';
-import { getAllOngoingGames } from '../../../api/gameApi';
+// getAllOngoingGames no longer used; team search now works via filter size expansion
 
 const ScoreboardList = ({ 
     games, 
@@ -64,7 +64,8 @@ const ScoreboardList = ({
     const [allTeams, setAllTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [filteredGames, setFilteredGames] = useState(games);
-    const [allLiveGames, setAllLiveGames] = useState(null);
+    // Track the page size before a team search expands it so we can restore it on clear
+    const preSearchSizeRef = useRef(null);
     
     // Use custom hooks for better organization
     const { teamsData, loading: teamsLoading } = useTeamData(filteredGames);
@@ -84,58 +85,20 @@ const ScoreboardList = ({
         fetchTeams();
     }, []);
 
-    // For Live Games, load all ongoing games once so team search can span every game,
-    // not just those on the current page.
-    useEffect(() => {
-        const isLiveGamesView = title === 'Live Games';
-        if (!isLiveGamesView || allLiveGames !== null) {
-            return;
-        }
-
-        const fetchAllLiveGames = async () => {
-            try {
-                const response = await getAllOngoingGames();
-                const data = response?.data ?? response;
-
-                if (Array.isArray(data)) {
-                    setAllLiveGames(data);
-                } else if (data && Array.isArray(data.content)) {
-                    // Fallback in case the API wraps results in a paged response
-                    setAllLiveGames(data.content);
-                } else {
-                    setAllLiveGames([]);
-                }
-            } catch (err) {
-                console.error('Failed to fetch all live games for search:', err);
-                // Fall back to current page only
-                setAllLiveGames([]);
-            }
-        };
-
-        fetchAllLiveGames();
-    }, [title, allLiveGames]);
-    
     // Filter games by selected team
     useEffect(() => {
         if (!selectedTeam) {
             setFilteredGames(games);
         } else {
             const teamName = selectedTeam.name;
-            // For Live Games, search across all live games (not just the current page)
-            const isLiveGamesView = title === 'Live Games';
-            const sourceGames =
-                isLiveGamesView && allLiveGames && allLiveGames.length > 0
-                    ? allLiveGames
-                    : games;
-
-            const filtered = sourceGames.filter(game => {
+            const filtered = games.filter(game => {
                 const homeTeam = game.homeTeam || game.home_team;
                 const awayTeam = game.awayTeam || game.away_team;
                 return homeTeam === teamName || awayTeam === teamName;
             });
             setFilteredGames(filtered);
         }
-    }, [selectedTeam, games, allLiveGames, title]);
+    }, [selectedTeam, games]);
 
     // Check if this is showing past games
     const isPastGames = title === "Past Games" || title === "Scrimmages";
@@ -189,7 +152,12 @@ const ScoreboardList = ({
 
     const handleRowsPerPageChangeLocal = (event) => {
         const newRowsPerPage = handleRowsPerPageChange(event);
-        setFilters(prev => ({ ...prev, size: newRowsPerPage, page: 0 }));
+        if (title === 'Live Games' && selectedTeam) {
+            // While searching by team, save the new preference for when search is cleared
+            preSearchSizeRef.current = newRowsPerPage;
+        } else {
+            setFilters(prev => ({ ...prev, size: newRowsPerPage, page: 0 }));
+        }
     };
 
     const handleRowClick = (game) => {
@@ -235,6 +203,17 @@ const ScoreboardList = ({
                                 value={selectedTeam}
                                 onChange={(event, newValue) => {
                                     setSelectedTeam(newValue);
+                                    // For Live Games, expand fetch size so search spans all games,
+                                    // not just those on the current page
+                                    if (title === 'Live Games' && setFilters) {
+                                        if (newValue) {
+                                            preSearchSizeRef.current = filters?.size || rowsPerPage;
+                                            setFilters(prev => ({ ...prev, size: Math.max(totalGames || 0, 500), page: 0 }));
+                                        } else {
+                                            setFilters(prev => ({ ...prev, size: preSearchSizeRef.current || rowsPerPage, page: 0 }));
+                                            preSearchSizeRef.current = null;
+                                        }
+                                    }
                                 }}
                                 renderInput={(params) => (
                                     <TextField
