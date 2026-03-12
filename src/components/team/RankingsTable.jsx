@@ -9,11 +9,14 @@ import {
     Paper,
     Box,
     Typography,
-    Chip
+    Chip,
+    Avatar,
+    Tooltip
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { formatConference } from '../../utils/formatText';
+import { conferences as conferencesList } from '../constants/conferences';
 
 const RankingsTable = ({ teams, rankingType }) => {
     const navigate = useNavigate();
@@ -184,9 +187,20 @@ const RankingsTable = ({ teams, rankingType }) => {
 
                                     {/* Conference */}
                                     <TableCell sx={{ padding: '8px' }}>
-                                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                                            {formatConference(team.conference)}
-                                        </Typography>
+                                        {(() => {
+                                            const confData = conferencesList.find(c => c.value === team.conference);
+                                            const logo = confData?.logo;
+                                            const label = confData?.label || formatConference(team.conference);
+                                            return logo ? (
+                                                <Tooltip title={label} arrow>
+                                                    <Avatar src={logo} sx={{ width: 28, height: 28, mx: 'auto' }} variant="rounded" />
+                                                </Tooltip>
+                                            ) : (
+                                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                                                    {label}
+                                                </Typography>
+                                            );
+                                        })()}
                                     </TableCell>
 
                                     {/* Record */}

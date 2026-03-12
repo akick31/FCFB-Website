@@ -114,7 +114,7 @@ const ScoreboardList = ({
     // Get responsive minimum widths
     const getMinWidth = () => {
         if (isPastGames) {
-            return isSmallScreen ? '450px' : '1500px';
+            return isSmallScreen ? '490px' : '810px';
         } else {
             return isSmallScreen ? '705px' : '1605px'; // Adjusted width to cover all columns without extending too far
         }
@@ -386,24 +386,6 @@ const ScoreboardList = ({
                             }}
                             onClick={() => handleRowClick(game)}
                         >
-                            {/* Postseason Game Logo - shown above matchup for bowl/playoff/conference championship games */}
-                            {((game.gameType === 'BOWL' || game.gameType === 'PLAYOFFS' || game.gameType === 'CONFERENCE_CHAMPIONSHIP' || game.gameType === 'NATIONAL_CHAMPIONSHIP' || 
-                              game.game_type === 'BOWL' || game.game_type === 'PLAYOFFS' || game.game_type === 'CONFERENCE_CHAMPIONSHIP' || game.game_type === 'NATIONAL_CHAMPIONSHIP') &&
-                              (game.postseasonGameLogo || game.postseason_game_logo)) && (
-                                <Box sx={{ 
-                                    gridColumn: '1 / -1', 
-                                    display: 'flex', 
-                                    justifyContent: 'center', 
-                                    mb: 1 
-                                }}>
-                                    <Avatar
-                                        src={`${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${game.postseasonGameLogo || game.postseason_game_logo}`}
-                                        sx={{ width: 60, height: 60 }}
-                                        variant="rounded"
-                                    />
-                                </Box>
-                            )}
-
                             {/* Team Matchup Column */}
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 {/* Home Team */}
@@ -585,7 +567,7 @@ const ScoreboardList = ({
                                     justifyContent: 'center' 
                                 }}>
                                     <Box sx={{
-                                        backgroundColor: game.gameMode === 'CHEW' ? theme.palette.error.main : theme.palette.primary.main,
+                                        backgroundColor: (game.gameMode || game.game_mode) === 'CHEW' ? theme.palette.error.main : theme.palette.primary.main,
                                         px: 1,
                                         py: 0.25,
                                         borderRadius: 1,
@@ -598,7 +580,7 @@ const ScoreboardList = ({
                                             textAlign: 'center',
                                             textTransform: 'uppercase'
                                         }}>
-                                            {game.gameMode === 'CHEW' ? 'Chew' : 'Normal'}
+                                            {(game.gameMode || game.game_mode) === 'CHEW' ? 'Chew' : 'Normal'}
                                         </Typography>
                                     </Box>
                                 </Box>

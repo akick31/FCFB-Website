@@ -5,9 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import BracketMatchup from './BracketMatchup';
 import { R2_BYE_SEEDS, R1_GAMES, R2_OPPONENT_R1, playoffWeekForRound } from '../constants/playoffBracket';
 import { field } from '../../utils/fieldHelper';
+import { conferences } from '../constants/conferences';
+import { formatConferenceName } from '../../utils/conferenceUtils';
 
 // ─── Component ──────────────────────────────────────────────────────
-const PlayoffBracket = ({
+const Postseason = ({
     postseasonSchedule = [],
     teamMap = {},
     loading = false,
@@ -165,7 +167,7 @@ const PlayoffBracket = ({
             <Box sx={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 px: 0.75, py: 0.4,
-                backgroundColor: isWinner ? 'rgba(5,150,105,0.1)' : 'transparent',
+                backgroundColor: 'transparent',
                 borderBottom: isTop ? '1px solid' : 'none', borderColor: 'divider',
             }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
@@ -452,27 +454,73 @@ const PlayoffBracket = ({
         );
     }
 
+    // ── Helper: get conference info (label + logo) ──────────────────
+    const getConferenceInfo = (confValue) => {
+        if (!confValue) return { label: null, logo: null };
+        const conf = conferences.find(c => c.value === confValue);
+        if (conf) return conf;
+        return { label: formatConferenceName(confValue), logo: null };
+    };
+
+    // ── Shared grid layout for postseason game cards ─────────────────
+    const cardGridSx = {
+        display: 'grid',
+        gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+            lg: 'repeat(4, 1fr)',
+        },
+        gap: 2.5,
+    };
+
+    // ── Section header ───────────────────────────────────────────────
+    const SectionHeader = ({ children }) => (
+        <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main', mb: 2 }}>
+            {children}
+        </Typography>
+    );
+
+    // ── Game card header (logo + title) ──────────────────────────────
+    const GameCardHeader = ({ logo, title }) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            {logo && (
+                <Avatar src={logo} sx={{ width: 24, height: 24 }} variant="rounded" />
+            )}
+            <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, color: 'primary.main', fontSize: '0.8rem' }}>
+                {title}
+            </Typography>
+        </Box>
+    );
+
+    // ── Derive CCG card header info ──────────────────────────────────
+    const getCCGHeaderInfo = (game) => {
+        const homeTeam = field(game, 'homeTeam', 'home_team');
+        const awayTeam = field(game, 'awayTeam', 'away_team');
+        const confValue = teamMap[homeTeam]?.conference || teamMap[awayTeam]?.conference;
+        const confInfo = getConferenceInfo(confValue);
+        return {
+            logo: confInfo.logo,
+            title: confInfo.label ? `${confInfo.label} Championship` : 'Conference Championship',
+        };
+    };
+
+    // ── Derive Bowl card header info ─────────────────────────────────
+    const getBowlHeaderInfo = (game) => {
+        const bowlName = field(game, 'bowlGameName', 'bowl_game_name');
+        const gameLogo = field(game, 'postseasonGameLogo', 'postseason_game_logo');
+        const logoUrl = gameLogo
+            ? `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${gameLogo}`
+            : null;
+        return {
+            logo: logoUrl,
+            title: bowlName || 'Bowl Game',
+        };
+    };
+
     // ── Render ───────────────────────────────────────────────────────
     return (
         <Box>
-            {/* Conference Championships */}
-            {ccgGames.length > 0 && (
-                <Box sx={{ mb: 4 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main', mb: 2 }}>
-                        Conference Championships
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                        {ccgGames.map(game => {
-                            return (
-                                <Box key={game.id}>
-                                    <BracketMatchup game={game} teamMap={teamMap} />
-                                </Box>
-                            );
-                        })}
-                    </Box>
-                </Box>
-            )}
-
             {/* Playoff Bracket */}
             <Box sx={{ mb: 4 }}>
                 <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main', mb: 3, textAlign: 'center' }}>
@@ -481,23 +529,41 @@ const PlayoffBracket = ({
                 {playoffGames.length > 0
                     ? renderFullBracket()
                     : (
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
                             No playoff games scheduled for this season.
                         </Typography>
                     )
                 }
             </Box>
 
+            {/* Conference Championships */}
+            {ccgGames.length > 0 && (
+                <Box sx={{ mb: 4 }}>
+                    <SectionHeader>Conference Championships</SectionHeader>
+                    <Box sx={cardGridSx}>
+                        {ccgGames.map(game => {
+                            const { logo, title } = getCCGHeaderInfo(game);
+                            return (
+                                <Box key={game.id}>
+                                    <GameCardHeader logo={logo} title={title} />
+                                    <BracketMatchup game={game} teamMap={teamMap} />
+                                </Box>
+                            );
+                        })}
+                    </Box>
+                </Box>
+            )}
+
             {/* Bowl Games */}
             {bowlGames.length > 0 && (
                 <Box sx={{ mb: 4 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main', mb: 2 }}>
-                        Bowl Games
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                    <SectionHeader>Bowl Games</SectionHeader>
+                    <Box sx={cardGridSx}>
                         {bowlGames.map(game => {
+                            const { logo, title } = getBowlHeaderInfo(game);
                             return (
                                 <Box key={game.id}>
+                                    <GameCardHeader logo={logo} title={title} />
                                     <BracketMatchup game={game} teamMap={teamMap} />
                                 </Box>
                             );
@@ -509,4 +575,4 @@ const PlayoffBracket = ({
     );
 };
 
-export default PlayoffBracket;
+export default Postseason;

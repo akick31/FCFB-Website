@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
     Chip,
-    Box, 
-    Grid, 
-    Typography
+    Box,
+    Grid,
+    Typography,
+    Avatar,
+    Tooltip
 } from '@mui/material';
 import {
     People,
@@ -20,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { getNewSignups } from '../../api/newSignupsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { formatPosition, formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
+import { conferences as conferencesList } from '../../components/constants/conferences';
 import { adminNavigationItems } from '../../config/adminNavigation';
 
 const Admin = ({ user }) => {
@@ -95,7 +98,14 @@ const Admin = ({ user }) => {
         .filter(team => !team.is_taken && team.active)
         .map(team => ({
             ...team,
-            conference: formatConference(team.conference),
+            conference: (() => {
+                const confData = conferencesList.find(c => c.value === team.conference);
+                return confData?.logo ? (
+                    <Tooltip title={confData.label} arrow>
+                        <Avatar src={confData.logo} sx={{ width: 24, height: 24 }} variant="rounded" />
+                    </Tooltip>
+                ) : (formatConference(team.conference) || 'None');
+            })(),
             status: (
                 <Chip
                     label="Open"

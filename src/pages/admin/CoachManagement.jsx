@@ -28,6 +28,7 @@ import { hireCoach, hireInterimCoach, fireCoach } from '../../api/teamApi';
 import { useNavigate } from 'react-router-dom';
 import StyledTable from '../../components/ui/StyledTable';
 import { formatConference } from '../../utils/formatText';
+import { conferences as conferencesList } from '../../components/constants/conferences';
 import { adminNavigationItems } from '../../config/adminNavigation';
 import { CONFERENCES } from '../../constants/teamEnums';
 
@@ -246,7 +247,14 @@ const CoachManagement = ({ user }) => {
             </Avatar>
         ),
         name: team.name,
-        conference: formatConference(team.conference) || 'No Conference',
+        conference: (() => {
+            const confData = conferencesList.find(c => c.value === team.conference);
+            return confData?.logo ? (
+                <Tooltip title={confData.label} arrow>
+                    <Avatar src={confData.logo} sx={{ width: 24, height: 24 }} variant="rounded" />
+                </Tooltip>
+            ) : (formatConference(team.conference) || 'No Conference');
+        })(),
         actions: (
             <Box sx={{ display: 'flex', gap: 1 }}>
                 <Tooltip title="Hire Coach">
