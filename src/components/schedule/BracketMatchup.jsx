@@ -19,7 +19,7 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false }) => {
     const gameId = field(game, 'gameId', 'game_id');
     const homeWon = finished && homeScore != null && homeScore > awayScore;
     const awayWon = finished && awayScore != null && awayScore > homeScore;
-    const clickable = gameId && started;
+    const clickable = !!gameId;
 
     return (
         <Paper
@@ -42,7 +42,7 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false }) => {
             <Box sx={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 px: 1, py: 0.5,
-                backgroundColor: homeWon ? 'rgba(5, 150, 105, 0.12)' : 'transparent',
+                backgroundColor: 'transparent',
                 borderBottom: '1px solid',
                 borderColor: 'divider',
             }}>
@@ -81,7 +81,7 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false }) => {
             <Box sx={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 px: 1, py: 0.5,
-                backgroundColor: awayWon ? 'rgba(5, 150, 105, 0.12)' : 'transparent',
+                backgroundColor: 'transparent',
             }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     {awaySeed && (

@@ -1,20 +1,22 @@
 import React from 'react';
-import { 
-    Box, 
-    Grid, 
-    Typography, 
-    TextField, 
+import {
+    Box,
+    Grid,
+    Typography,
+    TextField,
     InputAdornment,
     FormControl,
     InputLabel,
     Select,
-    MenuItem
+    MenuItem,
+    Avatar
 } from '@mui/material';
-import { 
+import {
     Search,
     FilterList
 } from '@mui/icons-material';
 import { formatConferenceName, getUniqueConferences } from '../../utils/conferenceUtils';
+import { conferences as conferencesList } from '../constants/conferences';
 import { getAvailableTeamsCount } from '../../utils/teamDataUtils';
 import { TEAM_STATUS, TEAM_STATUS_LABELS, FILTER_LABELS } from '../../constants/teamConstants';
 
@@ -94,11 +96,19 @@ const TeamsFilters = ({
                             sx={{ borderRadius: 2 }}
                         >
                             <MenuItem value="">{FILTER_LABELS.ALL_CONFERENCES}</MenuItem>
-                            {conferences.map((conf) => (
-                                <MenuItem key={conf} value={conf}>
-                                    {formatConferenceName(conf)}
-                                </MenuItem>
-                            ))}
+                            {conferences.map((conf) => {
+                                const confData = conferencesList.find(c => c.value === conf);
+                                return (
+                                    <MenuItem key={conf} value={conf}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            {confData?.logo && (
+                                                <Avatar src={confData.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                                            )}
+                                            {formatConferenceName(conf)}
+                                        </Box>
+                                    </MenuItem>
+                                );
+                            })}
                         </Select>
                     </FormControl>
                 </Grid>

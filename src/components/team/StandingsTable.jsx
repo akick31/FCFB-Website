@@ -9,11 +9,13 @@ import {
     Paper,
     Box,
     Typography,
-    Chip
+    Chip,
+    Avatar
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { formatConference } from '../../utils/formatText';
+import { conferences } from '../constants/conferences';
 
 const StandingsTable = ({ teams, conference }) => {
     const navigate = useNavigate();
@@ -38,9 +40,17 @@ const StandingsTable = ({ teams, conference }) => {
         <Box>
             {/* Conference Header */}
             <Box sx={{ mb: 3, textAlign: 'center' }}>
-                <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                    {getConferenceDisplayName(conference)}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
+                    {(() => {
+                        const conf = conferences.find(c => c.value === conference);
+                        return conf?.logo ? (
+                            <Avatar src={conf.logo} sx={{ width: 36, height: 36 }} variant="rounded" />
+                        ) : null;
+                    })()}
+                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                        {getConferenceDisplayName(conference)}
+                    </Typography>
+                </Box>
                                        <Typography variant="body2" color="text.secondary">
                            {teams.length} teams • Sorted by conference win percentage, then alphabetically • Click team to view details
                        </Typography>

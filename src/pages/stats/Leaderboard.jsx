@@ -251,7 +251,12 @@ const Leaderboard = () => {
                                         <MenuItem value="">All Conferences</MenuItem>
                                         {conferences.map((conference) => (
                                             <MenuItem key={conference.value} value={conference.value}>
-                                                {conference.label}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    {conference.logo && (
+                                                        <Avatar src={conference.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                                                    )}
+                                                    {conference.label}
+                                                </Box>
                                             </MenuItem>
                                         ))}
                                     </Select>
@@ -406,12 +411,20 @@ const Leaderboard = () => {
                                                                     </Box>
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Chip 
-                                                                        label={entry.conference || entry.subdivision?.name || 'Independent'} 
-                                                                        size="small"
-                                                                        color="primary"
-                                                                        variant="outlined"
-                                                                    />
+                                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                                        {(() => {
+                                                                            const conf = conferences.find(c => c.value === entry.conference);
+                                                                            return conf?.logo ? (
+                                                                                <Avatar src={conf.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                                                                            ) : null;
+                                                                        })()}
+                                                                        <Chip
+                                                                            label={entry.conference || entry.subdivision?.name || 'Independent'}
+                                                                            size="small"
+                                                                            color="primary"
+                                                                            variant="outlined"
+                                                                        />
+                                                                    </Box>
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
@@ -481,12 +494,20 @@ const Leaderboard = () => {
                                                         </Box>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Chip 
-                                                            label={entry.conference || entry.subdivision?.name || 'Independent'} 
-                                                            size="small"
-                                                            color="primary"
-                                                            variant="outlined"
-                                                        />
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                            {(() => {
+                                                                const conf = conferences.find(c => c.value === entry.conference);
+                                                                return conf?.logo ? (
+                                                                    <Avatar src={conf.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                                                                ) : null;
+                                                            })()}
+                                                            <Chip
+                                                                label={entry.conference || entry.subdivision?.name || 'Independent'}
+                                                                size="small"
+                                                                color="primary"
+                                                                variant="outlined"
+                                                            />
+                                                        </Box>
                                                     </TableCell>
                                                     <TableCell>
                                                         <Typography variant="body2">

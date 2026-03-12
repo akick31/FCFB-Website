@@ -21,7 +21,8 @@ import {
     CircularProgress,
     Alert,
     Tabs,
-    Tab
+    Tab,
+    Avatar
 } from '@mui/material';
 import { getFilteredConferenceStats } from '../../api/conferenceStatsApi';
 import { getFilteredLeagueStats } from '../../api/leagueStatsApi';
@@ -324,7 +325,12 @@ const LeagueStats = () => {
                                         <MenuItem value="">All Conferences</MenuItem>
                                         {conferences.map((conference) => (
                                             <MenuItem key={conference.value} value={conference.value}>
-                                                {conference.label}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    {conference.logo && (
+                                                        <Avatar src={conference.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                                                    )}
+                                                    {conference.label}
+                                                </Box>
                                             </MenuItem>
                                         ))}
                                     </Select>
@@ -380,12 +386,20 @@ const LeagueStats = () => {
                                         {sortedStats.map((stat, index) => (
                                             <TableRow key={index} hover>
                                                 <TableCell sx={{ fontSize: '0.75rem' }}>
-                                                    <Chip 
-                                                        label={formatConference(stat.conference || 'Unknown')} 
-                                                        color="primary"
-                                                        variant="outlined"
-                                                        size="small"
-                                                    />
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                        {(() => {
+                                                            const conf = conferences.find(c => c.value === stat.conference);
+                                                            return conf?.logo ? (
+                                                                <Avatar src={conf.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                                                            ) : null;
+                                                        })()}
+                                                        <Chip
+                                                            label={formatConference(stat.conference || 'Unknown')}
+                                                            color="primary"
+                                                            variant="outlined"
+                                                            size="small"
+                                                        />
+                                                    </Box>
                                                 </TableCell>
                                                 {category.stats.map((statDef) => (
                                                     <TableCell key={statDef.key} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>

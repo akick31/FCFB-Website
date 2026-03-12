@@ -18,7 +18,7 @@ import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
 import { conferences } from '../../components/constants/conferences';
 import TeamScheduleTable from '../../components/schedule/TeamScheduleTable';
 import ConferenceScheduleGrid from '../../components/schedule/ConferenceScheduleGrid';
-import PlayoffBracket from '../../components/schedule/PlayoffBracket';
+import Postseason from '../../components/schedule/Postseason';
 
 // localStorage keys
 const LS_TEAM = 'schedule_selectedTeam';
@@ -278,7 +278,7 @@ const Schedule = () => {
                     <Tabs value={tabIndex} onChange={(_, v) => setTabIndex(v)}>
                         <Tab label="Team Schedule" />
                         <Tab label="Conference" />
-                        {hasPostseason && <Tab label="Playoff Bracket" />}
+                        {hasPostseason && <Tab label="Postseason" />}
                     </Tabs>
                 </Box>
 
@@ -314,7 +314,7 @@ const Schedule = () => {
 
                 {/* PLAYOFF BRACKET TAB */}
                 {tabIndex === 2 && hasPostseason && (
-                    <PlayoffBracket
+                    <Postseason
                         postseasonSchedule={postseasonSchedule}
                         teamMap={teamMap}
                         loading={postseasonLoading}

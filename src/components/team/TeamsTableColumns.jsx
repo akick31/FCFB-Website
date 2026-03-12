@@ -1,8 +1,9 @@
 import React from 'react';
-import { Box, Typography, Chip } from '@mui/material';
+import { Box, Typography, Chip, Avatar, Tooltip } from '@mui/material';
 import { formatConferenceName } from '../../utils/conferenceUtils';
 import { formatTeamRecord, getTeamStatusText, getTeamStatusColor } from '../../utils/teamDataUtils';
 import { TABLE_COLUMN_WIDTHS } from '../../constants/teamConstants';
+import { conferences as conferencesList } from '../constants/conferences';
 
 /**
  * Team table columns configuration
@@ -45,21 +46,34 @@ export const getTeamsTableColumns = (theme) => [
             </Box>
         )
     },
-    { 
-        id: 'conference', 
-        label: 'Conference', 
+    {
+        id: 'conference',
+        label: 'Conference',
         width: TABLE_COLUMN_WIDTHS.CONFERENCE,
-        render: (value) => (
-            <Chip 
-                label={formatConferenceName(value)} 
-                size="small" 
-                sx={{ 
-                    backgroundColor: theme.palette.primary.light,
-                    color: 'white',
-                    fontWeight: 500
-                }}
-            />
-        )
+        render: (value) => {
+            const confData = conferencesList.find(c => c.value === value);
+            const logo = confData?.logo;
+            const label = confData?.label || formatConferenceName(value);
+            return (
+                <Tooltip title={label} arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, justifyContent: 'center' }}>
+                        {logo ? (
+                            <Avatar src={logo} sx={{ width: 28, height: 28 }} variant="rounded" />
+                        ) : (
+                            <Chip
+                                label={label}
+                                size="small"
+                                sx={{
+                                    backgroundColor: theme.palette.primary.light,
+                                    color: 'white',
+                                    fontWeight: 500
+                                }}
+                            />
+                        )}
+                    </Box>
+                </Tooltip>
+            );
+        }
     },
     { 
         id: 'currentRecord', 

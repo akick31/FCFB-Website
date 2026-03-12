@@ -168,16 +168,29 @@ const ConferenceScheduleGrid = ({
                     >
                         {[...conferences].sort((a, b) => a.label.localeCompare(b.label)).map(conf => (
                             <MenuItem key={conf.value} value={conf.value}>
-                                {conf.label}
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    {conf.logo && (
+                                        <Avatar src={conf.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                                    )}
+                                    {conf.label}
+                                </Box>
                             </MenuItem>
                         ))}
                     </Select>
                 </FormControl>
             </Box>
 
-            <Typography variant="h5" sx={{ textAlign: 'center', fontWeight: 700, color: 'primary.main', mb: 3 }}>
-                {formatConference(selectedConference)} Conference Schedule
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mb: 3 }}>
+                {(() => {
+                    const conf = conferences.find(c => c.value === selectedConference);
+                    return conf?.logo ? (
+                        <Avatar src={conf.logo} sx={{ width: 36, height: 36 }} variant="rounded" />
+                    ) : null;
+                })()}
+                <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                    {formatConference(selectedConference)} Conference Schedule
+                </Typography>
+            </Box>
 
             {/* FBS Independent note */}
             {selectedConference === 'FBS_INDEPENDENT' && (

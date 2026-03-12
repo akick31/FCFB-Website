@@ -33,7 +33,7 @@ import {
 import { createScheduleEntry, updateScheduleEntry, deleteScheduleEntry } from '../../api/scheduleApi';
 import { uploadPostseasonLogo } from '../../api/uploadApi';
 import { conferences } from '../constants/conferences';
-import PlayoffBracket from '../schedule/PlayoffBracket';
+import Postseason from '../schedule/Postseason';
 import { R2_BYE_SEEDS, ROUND_LABELS, playoffWeekForRound } from '../constants/playoffBracket';
 import { field } from '../../utils/fieldHelper';
 
@@ -635,7 +635,7 @@ const PostseasonAdminTab = ({
                     <Divider sx={{ my: 3 }} />
 
                     {/* ── Playoff Bracket (visual bracket with admin actions) */}
-                    <PlayoffBracket
+                    <Postseason
                         postseasonSchedule={playoffOnlySchedule}
                         teamMap={teamMap}
                         adminMode={true}
@@ -882,7 +882,7 @@ const PostseasonAdminTab = ({
                                 <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                                     Bracket Preview
                                 </Typography>
-                                <PlayoffBracket
+                                <Postseason
                                     postseasonSchedule={previewScheduleEntries}
                                     teamMap={teamMap}
                                 />

@@ -25,6 +25,7 @@ import CreateTeamForm from '../../components/forms/CreateTeamForm';
 import { useNavigate } from 'react-router-dom';
 import StyledTable from '../../components/ui/StyledTable';
 import { formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
+import { conferences as conferencesList } from '../../components/constants/conferences';
 import { adminNavigationItems } from '../../config/adminNavigation';
 
 const TeamManagement = () => {
@@ -151,7 +152,14 @@ const TeamManagement = () => {
                 {team.abbreviation?.charAt(0) || 'T'}
             </Avatar>
         ),
-        conference: formatConference(team.conference) || 'None',
+        conference: (() => {
+            const confData = conferencesList.find(c => c.value === team.conference);
+            return confData?.logo ? (
+                <Tooltip title={confData.label} arrow>
+                    <Avatar src={confData.logo} sx={{ width: 24, height: 24 }} variant="rounded" />
+                </Tooltip>
+            ) : (formatConference(team.conference) || 'None');
+        })(),
         offensive_playbook: formatOffensivePlaybook(team.offensive_playbook) || 'None',
         defensive_playbook: formatDefensivePlaybook(team.defensive_playbook) || 'None',
         currentRecord: `${team.current_wins}-${team.current_losses}`,

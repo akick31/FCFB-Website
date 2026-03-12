@@ -1,5 +1,5 @@
 import React from 'react';
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, Box, Avatar } from '@mui/material';
 import { conferences } from '../constants/conferences';
 import PropTypes from 'prop-types';
 
@@ -16,7 +16,12 @@ const ConferenceDropdown = ({ value, onChange, sx = {}, fullWidth = false, size 
             >
                 {conferences.map((conference) => (
                     <MenuItem key={conference.value} value={conference.value}>
-                        {conference.label}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {conference.logo && (
+                                <Avatar src={conference.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                            )}
+                            {conference.label}
+                        </Box>
                     </MenuItem>
                 ))}
             </Select>
