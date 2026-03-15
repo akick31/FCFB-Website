@@ -18,6 +18,8 @@ import ErrorMessage from '../../components/message/ErrorMessage';
 const Teams = () => {
     const theme = useTheme();
     const navigate = useNavigate();
+
+    useEffect(() => { document.title = 'FCFB | Teams'; }, []);
     const [searchTerm, setSearchTerm] = useState('');
     const [teams, setTeams] = useState([]);
     const [filteredTeams, setFilteredTeams] = useState([]);

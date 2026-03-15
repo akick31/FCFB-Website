@@ -19,6 +19,8 @@ import EloHistoryFilters from '../../components/stats/EloHistoryFilters';
  * Displays ELO rating history for teams with interactive charts
  */
 const EloHistory = () => {
+    useEffect(() => { document.title = 'FCFB | ELO History'; }, []);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [eloData, setEloData] = useState([]);

@@ -481,17 +481,7 @@ const Postseason = ({
         </Typography>
     );
 
-    // ── Game card header (logo + title) ──────────────────────────────
-    const GameCardHeader = ({ logo, title }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-            {logo && (
-                <Avatar src={logo} sx={{ width: 24, height: 24 }} variant="rounded" />
-            )}
-            <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, color: 'primary.main', fontSize: '0.8rem' }}>
-                {title}
-            </Typography>
-        </Box>
-    );
+    // GameCardHeader removed — title/logo now passed as props to BracketMatchup
 
     // ── Derive CCG card header info ──────────────────────────────────
     const getCCGHeaderInfo = (game) => {
@@ -545,8 +535,7 @@ const Postseason = ({
                             const { logo, title } = getCCGHeaderInfo(game);
                             return (
                                 <Box key={game.id}>
-                                    <GameCardHeader logo={logo} title={title} />
-                                    <BracketMatchup game={game} teamMap={teamMap} />
+                                    <BracketMatchup game={game} teamMap={teamMap} title={title} titleLogo={logo} />
                                 </Box>
                             );
                         })}
@@ -563,8 +552,7 @@ const Postseason = ({
                             const { logo, title } = getBowlHeaderInfo(game);
                             return (
                                 <Box key={game.id}>
-                                    <GameCardHeader logo={logo} title={title} />
-                                    <BracketMatchup game={game} teamMap={teamMap} />
+                                    <BracketMatchup game={game} teamMap={teamMap} title={title} titleLogo={logo} />
                                 </Box>
                             );
                         })}

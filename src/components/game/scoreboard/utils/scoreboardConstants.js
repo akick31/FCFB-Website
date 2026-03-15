@@ -7,8 +7,8 @@ export const SCOREBOARD_CONSTANTS = {
             large: '350px 140px 100px 100px 160px 100px 120px 120px 120px 100px 100px'
         },
         PAST_GAMES: {
-            small: '180px 80px 90px 70px 70px',
-            large: '350px 120px 140px 100px 100px'
+            small: '1fr 80px 90px 80px',
+            large: '1fr 140px 200px 160px'
         }
     },
     COLUMN_HEADERS: {
@@ -29,7 +29,6 @@ export const SCOREBOARD_CONSTANTS = {
             'Team Matchup',
             'Score',
             'Game Type',
-            'Game Mode',
             'Spread'
         ]
     }

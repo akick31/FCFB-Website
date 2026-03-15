@@ -244,7 +244,24 @@ const TeamScheduleTable = ({
                                                         />
                                                     </Box>
                                                 )}
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 1.5,
+                                                        cursor: opponentData?.id ? 'pointer' : 'default',
+                                                        '&:hover': opponentData?.id ? {
+                                                            textDecoration: 'underline',
+                                                            opacity: 0.8,
+                                                        } : {},
+                                                    }}
+                                                    onClick={(e) => {
+                                                        if (opponentData?.id) {
+                                                            e.stopPropagation();
+                                                            navigate(`/team-details/${opponentData.id}`);
+                                                        }
+                                                    }}
+                                                >
                                                     <Avatar
                                                         src={opponentData?.logo}
                                                         alt={opponentName}
