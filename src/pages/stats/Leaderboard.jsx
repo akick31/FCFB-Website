@@ -31,6 +31,8 @@ import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
 import { conferences } from '../../components/constants/conferences';
 
 const Leaderboard = () => {
+    useEffect(() => { document.title = 'FCFB | Leaderboard'; }, []);
+
     const [leaderboard, setLeaderboard] = useState([]);
     const [allStatsLeaderboard, setAllStatsLeaderboard] = useState({});
     const [teams, setTeams] = useState([]);

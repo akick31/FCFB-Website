@@ -1,14 +1,14 @@
-import React from 'react';
-import { 
-    Box, 
-    Button, 
-    Container, 
-    Typography, 
-    Grid, 
-    Link, 
+import React, { useEffect } from 'react';
+import {
+    Box,
+    Button,
+    Container,
+    Typography,
+    Grid,
+    Link,
     useTheme
 } from '@mui/material';
-import { 
+import {
     ArrowForward,
     PlayArrow
 } from '@mui/icons-material';
@@ -19,6 +19,8 @@ import logo from '../../assets/graphics/main_logo.png';
 
 const HomePage = () => {
     const theme = useTheme();
+
+    useEffect(() => { document.title = 'FCFB | Home'; }, []);
 
     return (
         <Box sx={{ minHeight: '100vh', background: theme.palette.background.default }}>

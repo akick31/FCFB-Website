@@ -14,7 +14,8 @@ import {
     Admin,
     Verify,
     NotFound,
-    Error
+    Error,
+    UserDetails
 } from './pages';
 import { getUserById } from './api/userApi';
 import { checkIfUserIsAdmin } from "./utils/utils";
@@ -233,6 +234,7 @@ const App = () => {
                             <Route path="/game-details/:gameId" element={<GameDetails isAdmin={isAdmin} />} />
                             <Route path="/team/:teamId" element={<TeamDetails />} />
                             <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
+                            <Route path="/user-details/:coachName" element={<UserDetails />} />
                             <Route path="/modify-team/:teamId" element={
                                 <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                     <ModifyTeam user={user} />

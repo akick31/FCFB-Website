@@ -14,6 +14,9 @@ export { Admin, UserManagement, GameManagement, TeamManagement, EditTeam, CoachM
 // Core Pages
 export { Home, Profile, Standings, Rankings, Schedule, Error, NotFound } from './core';
 
+// User Pages
+export { UserDetails } from './user';
+
 // Stats Pages
 export { Records, SeasonStats, LeagueStats, Leaderboard, EloHistory, Charts } from './stats';
 

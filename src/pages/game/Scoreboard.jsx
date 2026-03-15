@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Box,
     Tabs, 
@@ -21,6 +21,8 @@ const Scoreboard = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [activeTab, setActiveTab] = useState(0);
+
+    useEffect(() => { document.title = 'FCFB | Scoreboard'; }, []);
 
     const tabs = [
         { label: 'Live Games', icon: <SportsFootball />, component: <OngoingGames /> },

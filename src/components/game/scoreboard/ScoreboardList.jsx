@@ -26,19 +26,11 @@ import { useTeamData } from './hooks/useTeamData';
 import { useGameFilters } from './hooks/useGameFilters';
 import { useGamePagination } from './hooks/useGamePagination';
 import { getAllTeams } from '../../../api/teamApi';
-import { 
-    formatBallLocationWithTeam,
-    formatPossessionWithLogo,
-    formatWaitingOnWithLogo,
-    getGameStatusInfo,
-    isGameOngoing
-} from './utils/scoreboardFormatters';
-import { 
-    formatScoreboardQuarter, 
-    formatDownAndDistance, 
+import {
     formatGameType
 } from '../../../utils/gameUtils';
 import { SCOREBOARD_CONSTANTS } from './utils/scoreboardConstants';
+import LiveGameCard from './LiveGameCard';
 // getAllOngoingGames no longer used; team search now works via filter size expansion
 
 const ScoreboardList = ({ 
@@ -114,7 +106,7 @@ const ScoreboardList = ({
     // Get responsive minimum widths
     const getMinWidth = () => {
         if (isPastGames) {
-            return isSmallScreen ? '490px' : '810px';
+            return isSmallScreen ? '490px' : '100%';
         } else {
             return isSmallScreen ? '705px' : '1605px'; // Adjusted width to cover all columns without extending too far
         }
@@ -293,8 +285,8 @@ const ScoreboardList = ({
 
             {/* Games List or No Games Message */}
             {(!filteredGames || filteredGames.length === 0) ? (
-                <Box sx={{ 
-                    textAlign: 'center', 
+                <Box sx={{
+                    textAlign: 'center',
                     p: 4,
                     backgroundColor: '#f8f9fa',
                     borderRadius: 2,
@@ -304,16 +296,43 @@ const ScoreboardList = ({
                         No games found
                     </Typography>
                 </Box>
+            ) : !isPastGames ? (
+                /* ═══ LIVE GAMES: Card-based layout ═══ */
+                <Box sx={{
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        xs: '1fr',
+                        md: 'repeat(2, 1fr)',
+                        xl: 'repeat(3, 1fr)',
+                    },
+                    gap: 2,
+                }}>
+                    {filteredGames.map((game) => {
+                        const awayTeamName = game.awayTeam || game.away_team;
+                        const homeTeamName = game.homeTeam || game.home_team;
+                        const awayTeamData = teamsData[awayTeamName];
+                        const homeTeamData = teamsData[homeTeamName];
+                        return (
+                            <LiveGameCard
+                                key={game.gameId || game.game_id || game.id}
+                                game={game}
+                                homeTeamData={homeTeamData}
+                                awayTeamData={awayTeamData}
+                            />
+                        );
+                    })}
+                </Box>
             ) : (
-                <Box sx={{ 
+                /* ═══ PAST GAMES: Grid table layout ═══ */
+                <Box sx={{
                     backgroundColor: '#f8f9fa',
                     borderRadius: 2,
                     border: '1px solid #e9ecef',
                     overflow: 'hidden',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    overflowX: 'auto', // Enable horizontal scrolling
-                    position: 'relative', // For sticky header positioning
-                    '&::-webkit-scrollbar': { 
+                    overflowX: 'auto',
+                    position: 'relative',
+                    '&::-webkit-scrollbar': {
                         height: '8px',
                         backgroundColor: '#f1f1f1'
                     },
@@ -337,18 +356,18 @@ const ScoreboardList = ({
                     position: 'sticky',
                     top: 0,
                     zIndex: 1,
-                    width: 'max-content', // Force header to cover full content width
+                    width: '100%',
                     '& > *': {
-                        backgroundColor: theme.palette.primary.main, // Ensure each header cell is blue
+                        backgroundColor: theme.palette.primary.main,
                     }
                 }}>
-                    {SCOREBOARD_CONSTANTS.COLUMN_HEADERS[isPastGames ? 'PAST_GAMES' : 'LIVE_GAMES'].map((header, index) => (
-                        <Typography key={index} sx={{ 
-                            fontSize: '0.875rem', 
-                            fontWeight: 600, 
+                    {SCOREBOARD_CONSTANTS.COLUMN_HEADERS.PAST_GAMES.map((header, index) => (
+                        <Typography key={index} sx={{
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
                             textAlign: 'center',
-                            backgroundColor: theme.palette.primary.main, // Ensure each header cell is blue
-                            minHeight: '100%', // Full height coverage
+                            backgroundColor: theme.palette.primary.main,
+                            minHeight: '100%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
@@ -358,15 +377,13 @@ const ScoreboardList = ({
                     ))}
                 </Box>
 
-                {/* Game Rows */}
+                {/* Past Game Rows */}
                 {filteredGames.map((game, index) => {
                     const awayTeamName = game.awayTeam || game.away_team;
                     const homeTeamName = game.homeTeam || game.home_team;
                     const awayTeamData = teamsData[awayTeamName];
                     const homeTeamData = teamsData[homeTeamName];
-                    const gameStatus = game.game_status;
-                    const isOngoing = isGameOngoing(gameStatus);
-                    
+
                     return (
                         <Box
                             key={game.gameId || game.id}
@@ -379,7 +396,7 @@ const ScoreboardList = ({
                                 cursor: 'pointer',
                                 transition: 'background-color 0.2s',
                                 backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa',
-                                minWidth: getMinWidth(), // Minimum width to prevent squishing
+                                minWidth: getMinWidth(),
                                 '&:hover': {
                                     backgroundColor: theme.palette.primary.light + '20'
                                 }
@@ -399,8 +416,8 @@ const ScoreboardList = ({
                                         overflow: 'hidden'
                                     }}>
                                         {homeTeamData?.logo ? (
-                                            <img 
-                                                src={homeTeamData.logo} 
+                                            <img
+                                                src={homeTeamData.logo}
                                                 alt="Home Team"
                                                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                             />
@@ -423,12 +440,11 @@ const ScoreboardList = ({
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap'
                                         }}>
-                                            {isSmallScreen 
+                                            {isSmallScreen
                                                 ? (homeTeamData?.short_name || homeTeamData?.abbreviation || '')
                                                 : homeTeamName
                                             }
                                         </Typography>
-                                        {/* Home Team Ranking */}
                                         {homeTeamData?.coaches_poll_ranking && homeTeamData.coaches_poll_ranking > 0 && (
                                             <Typography sx={{
                                                 fontSize: '0.7rem',
@@ -460,11 +476,11 @@ const ScoreboardList = ({
                                         overflow: 'hidden'
                                     }}>
                                         {awayTeamData?.logo ? (
-                                            <img 
-                                                src={awayTeamData.logo} 
+                                            <img
+                                                src={awayTeamData.logo}
                                                 alt="Away Team"
                                                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                        />
+                                            />
                                         ) : (
                                             <Typography sx={{
                                                 color: theme.palette.primary.main,
@@ -484,12 +500,11 @@ const ScoreboardList = ({
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap'
                                         }}>
-                                            {isSmallScreen 
+                                            {isSmallScreen
                                                 ? (awayTeamData?.short_name || awayTeamData?.abbreviation || '')
                                                 : awayTeamName
                                             }
                                         </Typography>
-                                        {/* Away Team Ranking */}
                                         {awayTeamData?.coaches_poll_ranking && awayTeamData.coaches_poll_ranking > 0 && (
                                             <Typography sx={{
                                                 fontSize: '0.7rem',
@@ -504,15 +519,15 @@ const ScoreboardList = ({
                                             }}>
                                                 #{awayTeamData.coaches_poll_ranking}
                                             </Typography>
-                                            )}
+                                        )}
                                     </Box>
                                 </Box>
                             </Box>
 
                             {/* Score Column */}
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: 0.5
                             }}>
@@ -542,341 +557,15 @@ const ScoreboardList = ({
                                 </Typography>
                             </Box>
 
-                            {/* For Past Games: Show Game Type */}
-                            {isPastGames && (
-                                <Box sx={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center' 
-                                }}>
-                                    <Typography sx={{
-                                        color: 'text.primary',
-                                        fontSize: '0.8rem',
-                                        fontWeight: 500
-                                    }}>
-                                        {formatGameType(game.gameType || game.game_type)}
-                                    </Typography>
-                                </Box>
-                            )}
-
-                            {/* Game Mode Column for Past Games */}
-                            {isPastGames && (
-                                <Box sx={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center' 
-                                }}>
-                                    <Box sx={{
-                                        backgroundColor: (game.gameMode || game.game_mode) === 'CHEW' ? theme.palette.error.main : theme.palette.primary.main,
-                                        px: 1,
-                                        py: 0.25,
-                                        borderRadius: 1,
-                                        minWidth: 60
-                                    }}>
-                                        <Typography sx={{
-                                            color: 'white',
-                                            fontSize: '0.7rem',
-                                            fontWeight: 600,
-                                            textAlign: 'center',
-                                            textTransform: 'uppercase'
-                                        }}>
-                                            {(game.gameMode || game.game_mode) === 'CHEW' ? 'Chew' : 'Normal'}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            )}
-
-                            {/* Spread Column for Past Games */}
-                            {isPastGames && (
-                                <Box sx={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center',
-                                    gap: 0.5
-                                }}>
-                                    {game.home_vegas_spread !== null && game.home_vegas_spread !== undefined ? (
-                                        <>
-                                            <Box sx={{
-                                                width: 16,
-                                                height: 16,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                overflow: 'hidden'
-                                            }}>
-                                                {homeTeamData?.logo ? (
-                                                    <img 
-                                                        src={homeTeamData.logo} 
-                                                        alt="Home Team"
-                                                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                                    />
-                                                ) : (
-                                                    <Typography sx={{
-                                                        color: theme.palette.primary.main,
-                                                        fontSize: '0.6rem',
-                                                        fontWeight: 600
-                                                    }}>
-                                                        {homeTeamName?.charAt(0) || 'H'}
-                                                    </Typography>
-                                                )}
-                                            </Box>
-                                            <Typography sx={{
-                                                color: 'text.primary',
-                                                fontSize: '0.8rem',
-                                                fontWeight: 500
-                                            }}>
-                                                {game.home_vegas_spread > 0 ? '+' : ''}{game.home_vegas_spread}
-                                            </Typography>
-                                        </>
-                                    ) : (
-                                        <Typography sx={{
-                                            color: 'text.primary',
-                                            fontSize: '0.8rem',
-                                            fontWeight: 500
-                                        }}>
-                                            --
-                                        </Typography>
-                                    )}
-                                </Box>
-                            )}
-
-                            {/* For Live Games: Show all the detailed columns */}
-                            {!isPastGames && (
-                                <>
-                            {/* Quarter Column */}
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center' 
-                            }}>
-                                <Typography sx={{
-                                    color: 'text.primary',
-                                    fontSize: '0.8rem',
-                                    fontWeight: 500
-                                }}>
-                                    {isOngoing ? 
-                                        formatScoreboardQuarter(game.quarter) : 
-                                        'Final'
-                                    }
+                            {/* Game Type */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Typography sx={{ color: 'text.primary', fontSize: '0.8rem', fontWeight: 500 }}>
+                                    {formatGameType(game.gameType || game.game_type)}
                                 </Typography>
                             </Box>
 
-                            {/* Time Column */}
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center' 
-                            }}>
-                                <Typography sx={{
-                                    color: 'text.primary',
-                                    fontSize: '0.8rem',
-                                    fontWeight: 500
-                                }}>
-                                    {isOngoing ? 
-                                        (game.clock || game.game_clock || '00:00') : 
-                                        '--'
-                                    }
-                                </Typography>
-                            </Box>
-
-                            {/* Down & Distance Column */}
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center' 
-                            }}>
-                                <Typography sx={{
-                                    color: 'text.primary',
-                                    fontSize: '0.8rem',
-                                    fontWeight: 500
-                                }}>
-                                    {isOngoing && game.down ? 
-                                        formatDownAndDistance(game.down, game.yards_to_go || game.yardsToGo || 0) : 
-                                        '--'
-                                    }
-                                </Typography>
-                            </Box>
-
-                            {/* Possession Column */}
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center' 
-                            }}>
-                                {isOngoing && game.possession ? (
-                                    (() => {
-                                        const logoUrl = formatPossessionWithLogo(game.possession, homeTeamData, awayTeamData);
-                                        if (logoUrl && logoUrl !== 'H' && logoUrl !== 'A') {
-                                            return (
-                                                <Box sx={{
-                                                    width: 20,
-                                                    height: 20,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    overflow: 'hidden'
-                                                }}>
-                                                    <img 
-                                                        src={logoUrl} 
-                                                        alt="Team Logo"
-                                                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                                    />
-                                                </Box>
-                                            );
-                                        } else {
-                                            return (
-                                                <Typography sx={{
-                                                    color: theme.palette.primary.main,
-                                                    fontSize: '0.7rem',
-                                                    fontWeight: 600
-                                                }}>
-                                                    {logoUrl}
-                                                </Typography>
-                                            );
-                                        }
-                                    })()
-                                ) : (
-                                    <Typography sx={{
-                                        color: 'text.primary',
-                                        fontSize: '0.8rem',
-                                        fontWeight: 500
-                                    }}>
-                                        --
-                                    </Typography>
-                                )}
-                            </Box>
-
-                            {/* Ball Location Column */}
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center' 
-                            }}>
-                                <Typography sx={{
-                                    color: 'text.primary',
-                                    fontSize: '0.8rem',
-                                    fontWeight: 500
-                                }}>
-                                    {isOngoing ? 
-                                        formatBallLocationWithTeam(
-                                            game.ball_location, 
-                                            game.possession, 
-                                            homeTeamName, 
-                                            awayTeamName, 
-                                            homeTeamData, 
-                                            awayTeamData
-                                        ) : 
-                                        '--'
-                                    }
-                                </Typography>
-                            </Box>
-
-                            {/* Waiting On Column */}
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center' 
-                            }}>
-                                {isOngoing && game.waiting_on ? (
-                                    (() => {
-                                        const logoUrl = formatWaitingOnWithLogo(game.waiting_on, homeTeamName, awayTeamName, homeTeamData, awayTeamData);
-                                        if (logoUrl && logoUrl !== 'H' && logoUrl !== 'A') {
-                                            return (
-                                                <Box sx={{
-                                                    width: 20,
-                                                    height: 20,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    overflow: 'hidden'
-                                                }}>
-                                                    <img 
-                                                        src={logoUrl} 
-                                                        alt="Team Logo"
-                                                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                                    />
-                                                </Box>
-                                            );
-                                        } else {
-                                            return (
-                                                <Typography sx={{
-                                                    color: theme.palette.primary.main,
-                                                    fontSize: '0.7rem',
-                                                    fontWeight: 600
-                                                }}>
-                                                    {logoUrl}
-                                                </Typography>
-                                            );
-                                        }
-                                    })()
-                                ) : (
-                                    <Typography sx={{
-                                        color: 'text.primary',
-                                        fontSize: '0.8rem',
-                                        fontWeight: 500
-                                    }}>
-                                        --
-                                    </Typography>
-                                )}
-                            </Box>
-
-                            {/* Game Status Column */}
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center' 
-                            }}>
-                                <Box sx={{
-                                    backgroundColor: getGameStatusInfo(gameStatus).color,
-                                    px: 1,
-                                    py: 0.25,
-                                    borderRadius: 1,
-                                    minWidth: 60
-                                }}>
-                                    <Typography sx={{
-                                        color: 'white',
-                                        fontSize: '0.7rem',
-                                        fontWeight: 600,
-                                        textAlign: 'center',
-                                        textTransform: 'uppercase'
-                                    }}>
-                                        {getGameStatusInfo(gameStatus).status}
-                                    </Typography>
-                                </Box>
-                            </Box>
-
-                            {/* Game Mode Column */}
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center' 
-                            }}>
-                                <Box sx={{
-                                    backgroundColor: game.game_mode === 'CHEW' ? theme.palette.error.main : theme.palette.primary.main,
-                                    px: 1,
-                                    py: 0.25,
-                                    borderRadius: 1,
-                                    minWidth: 60
-                                }}>
-                                    <Typography sx={{
-                                        color: 'white',
-                                        fontSize: '0.7rem',
-                                        fontWeight: 600,
-                                        textAlign: 'center',
-                                        textTransform: 'uppercase'
-                                    }}>
-                                        {game.game_mode === 'CHEW' ? 'Chew' : 'Normal'}
-                                    </Typography>
-                                </Box>
-                            </Box>
-
-                            {/* Spread Column */}
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center',
-                                gap: 0.5
-                            }}>
+                            {/* Spread */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                                 {game.home_vegas_spread !== null && game.home_vegas_spread !== undefined ? (
                                     <>
                                         <Box sx={{
@@ -888,8 +577,8 @@ const ScoreboardList = ({
                                             overflow: 'hidden'
                                         }}>
                                             {homeTeamData?.logo ? (
-                                                <img 
-                                                    src={homeTeamData.logo} 
+                                                <img
+                                                    src={homeTeamData.logo}
                                                     alt="Home Team"
                                                     style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                                 />
@@ -912,17 +601,11 @@ const ScoreboardList = ({
                                         </Typography>
                                     </>
                                 ) : (
-                                    <Typography sx={{
-                                        color: 'text.primary',
-                                        fontSize: '0.8rem',
-                                        fontWeight: 500
-                                    }}>
+                                    <Typography sx={{ color: 'text.primary', fontSize: '0.8rem', fontWeight: 500 }}>
                                         --
                                     </Typography>
                                 )}
                             </Box>
-                            </>
-                            )}
                         </Box>
                     );
                 })}

@@ -27,6 +27,8 @@ import {
 import { getAllTeams } from '../../api/teamApi';
 
 const Records = () => {
+    useEffect(() => { document.title = 'FCFB | Records'; }, []);
+
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');

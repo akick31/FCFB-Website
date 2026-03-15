@@ -34,6 +34,8 @@ import { defensivePlaybooks } from '../../components/constants/defensivePlaybook
 import { formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 
 const LeagueStats = () => {
+    useEffect(() => { document.title = 'FCFB | League Stats'; }, []);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState(0);

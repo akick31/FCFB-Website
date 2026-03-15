@@ -20,6 +20,8 @@ import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getAllTeams } from '../../api/teamApi';
 
 const SeasonStats = ({ user }) => {
+    useEffect(() => { document.title = 'FCFB | Season Stats'; }, []);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     

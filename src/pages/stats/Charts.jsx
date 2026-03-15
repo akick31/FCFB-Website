@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Container,
     Box,
@@ -17,6 +17,8 @@ import ScatterPlotsTab from '../../components/stats/charts/ScatterPlotsTab';
  * Main page for all statistical charts with tabbed interface
  */
 const Charts = () => {
+    useEffect(() => { document.title = 'FCFB | Charts'; }, []);
+
     const [activeTab, setActiveTab] = useState(0);
 
     const handleTabChange = (event, newValue) => {

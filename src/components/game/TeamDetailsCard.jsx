@@ -5,12 +5,14 @@ import {
     Chip,
     useTheme
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { getTeamPlaybooks } from '../../utils/teamDataUtils';
 import {formatConferenceName} from "../../utils/conferenceUtils";
 
 const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
     const theme = useTheme();
+    const navigate = useNavigate();
 
     if (!team || !game) return null;
 
@@ -74,12 +76,17 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
             ...sx
         }}>
             {/* Header with team logo and name */}
-            <Box sx={{
-                background: `linear-gradient(135deg, ${teamColors.primary} 0%, ${teamColors.secondary} 100%)`,
-                p: 1.9,
-                textAlign: 'center',
-                position: 'relative'
-            }}>
+            <Box
+                onClick={() => team?.id && navigate(`/team-details/${team.id}`)}
+                sx={{
+                    background: `linear-gradient(135deg, ${teamColors.primary} 0%, ${teamColors.secondary} 100%)`,
+                    p: 1.9,
+                    textAlign: 'center',
+                    position: 'relative',
+                    cursor: team?.id ? 'pointer' : 'default',
+                    '&:hover': team?.id ? { opacity: 0.9 } : {},
+                }}
+            >
                 {/* Home/Away indicator - moved to top-left corner */}
                 <Box sx={{
                     position: 'absolute',
@@ -306,16 +313,33 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                             backgroundColor: theme.palette.grey[50],
                             p: 1.4,
                             borderRadius: 1,
-                            border: '1px solid #e0e0e0'
+                            border: '1px solid #e0e0e0',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 0.5,
+                            justifyContent: 'center',
                         }}>
-                            <Typography variant="body2" sx={{
-                                color: 'text.primary',
-                                fontSize: '0.75rem',
-                                fontWeight: 500,
-                                textAlign: 'center'
-                            }}>
-                                {teamData.coaches.join(", ")}
-                            </Typography>
+                            {teamData.coaches.map((coach, idx) => (
+                                <Typography
+                                    key={idx}
+                                    variant="body2"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/user-details/${encodeURIComponent(coach)}`);
+                                    }}
+                                    sx={{
+                                        color: teamColors.primary,
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        textDecoration: 'underline',
+                                        textDecorationColor: 'transparent',
+                                        '&:hover': { textDecorationColor: 'inherit' },
+                                    }}
+                                >
+                                    {coach}{idx < teamData.coaches.length - 1 ? ',' : ''}
+                                </Typography>
+                            ))}
                         </Box>
                     </Box>
                 )}

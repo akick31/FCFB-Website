@@ -6,6 +6,8 @@ import { getAllTeams } from '../../api/teamApi';
 import { formatTeamStats } from '../../utils/teamDataUtils';
 
 const Standings = () => {
+    useEffect(() => { document.title = 'FCFB | Standings'; }, []);
+
     const [teams, setTeams] = useState([]);
     const [filteredTeams, setFilteredTeams] = useState([]);
     const [selectedConference, setSelectedConference] = useState('ACC');

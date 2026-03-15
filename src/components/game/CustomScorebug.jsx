@@ -3,9 +3,11 @@ import {
     Box,
     Typography,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
+    const navigate = useNavigate();
     if (!game) return null;
 
     const formatQuarter = (quarter) => {
@@ -116,7 +118,16 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                 {/* Team Info - Left Side */}
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     {/* Logo and Team Name Row */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            mb: 0.5,
+                            cursor: awayTeam?.id ? 'pointer' : 'default',
+                            '&:hover': awayTeam?.id ? { opacity: 0.8 } : {},
+                        }}
+                        onClick={() => awayTeam?.id && navigate(`/team-details/${awayTeam.id}`)}
+                    >
                         {/* Logo */}
                         <Box sx={{
                             width: 32,
@@ -219,7 +230,16 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                 {/* Team Info - Left Side */}
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     {/* Logo and Team Name Row */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            mb: 0.5,
+                            cursor: homeTeam?.id ? 'pointer' : 'default',
+                            '&:hover': homeTeam?.id ? { opacity: 0.8 } : {},
+                        }}
+                        onClick={() => homeTeam?.id && navigate(`/team-details/${homeTeam.id}`)}
+                    >
                         {/* Logo */}
                         <Box sx={{
                             width: 32,

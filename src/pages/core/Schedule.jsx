@@ -27,6 +27,8 @@ const LS_TAB = 'schedule_tab';
 const LS_CONFERENCE = 'schedule_conference';
 
 const Schedule = () => {
+    useEffect(() => { document.title = 'FCFB | Schedules'; }, []);
+
     const [teams, setTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [schedule, setSchedule] = useState([]);

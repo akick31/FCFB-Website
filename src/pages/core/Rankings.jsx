@@ -4,6 +4,8 @@ import RankingsTable from '../../components/team/RankingsTable';
 import { getAllTeams } from '../../api/teamApi';
 
 const Rankings = () => {
+    useEffect(() => { document.title = 'FCFB | Rankings'; }, []);
+
     const [teams, setTeams] = useState([]);
     const [filteredTeams, setFilteredTeams] = useState([]);
     const [selectedRanking, setSelectedRanking] = useState('');
