@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Chip, useTheme, useMediaQuery } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, Typography, Paper, Chip, useTheme, useMediaQuery, keyframes } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import {
     formatBallLocationWithTeam,
@@ -136,6 +136,13 @@ const GameTypeInfo = ({ game, homeTeamData }) => {
     }
 };
 
+// ── Flash animation for updated cards ───────────────────────────
+const flashBorder = keyframes`
+    0%   { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.6); }
+    40%  { box-shadow: 0 0 8px 2px rgba(25, 118, 210, 0.4); }
+    100% { box-shadow: none; }
+`;
+
 // ── Main card ──────────────────────────────────────────────────
 const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
     const theme = useTheme();
@@ -147,6 +154,20 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
     const homeScore = game.homeScore || game.home_score || 0;
     const awayScore = game.awayScore || game.away_score || 0;
     const gameStatus = game.game_status;
+
+    // Track changes to flash the card on updates
+    const [justUpdated, setJustUpdated] = useState(false);
+    const prevDataRef = useRef(null);
+
+    useEffect(() => {
+        const key = `${homeScore}-${awayScore}-${game.quarter}-${game.down}-${game.clock || game.game_clock}`;
+        if (prevDataRef.current !== null && prevDataRef.current !== key) {
+            setJustUpdated(true);
+            const timer = setTimeout(() => setJustUpdated(false), 1500);
+            return () => clearTimeout(timer);
+        }
+        prevDataRef.current = key;
+    }, [homeScore, awayScore, game.quarter, game.down, game.clock, game.game_clock]);
     const isOngoing = isGameOngoing(gameStatus);
     const statusInfo = getGameStatusInfo(gameStatus);
     const possession = game.possession;
@@ -174,9 +195,9 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                 setPreviousPlayText(desc || null);
             })
             .catch(() => {});
-    }, [gameId, isOngoing, possession, homeTeamName, awayTeamName, homeTeamData, awayTeamData]);
+    }, [gameId, isOngoing, possession, homeScore, awayScore, homeTeamName, awayTeamName, homeTeamData, awayTeamData]);
 
-    // Quarter scores — fetch once per game
+    // Quarter scores — re-fetch when score changes
     useEffect(() => {
         if (!gameId || !homeTeamName || !awayTeamName) return;
         Promise.all([
@@ -186,7 +207,7 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
             setHomeStats(h?.data || h || null);
             setAwayStats(a?.data || a || null);
         });
-    }, [gameId, homeTeamName, awayTeamName]);
+    }, [gameId, homeTeamName, awayTeamName, homeScore, awayScore]);
 
     const handleClick = () => gameId && navigate(`/game-details/${gameId}`);
 
@@ -292,6 +313,7 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                 transition: 'transform 0.15s, box-shadow 0.15s',
                 '&:hover': gameId ? { transform: 'translateY(-2px)', boxShadow: theme.shadows[6] } : {},
                 border: '1px solid', borderColor: isOngoing ? theme.palette.primary.main + '40' : 'divider',
+                ...(justUpdated && isOngoing ? { animation: `${flashBorder} 1.5s ease-out` } : {}),
             }}
         >
             {/* ─── Top Bar: Game Type | Quarter Headers | CHEW chip ─── */}
