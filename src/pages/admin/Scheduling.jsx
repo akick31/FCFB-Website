@@ -422,7 +422,7 @@ const Scheduling = () => {
                 playoffRound: addGamePlayoffRound,
                 playoffHomeSeed: addGameHomeSeed,
                 playoffAwaySeed: addGameAwaySeed,
-                bowlGameName: addGameType === 'BOWL' ? addGameBowlName : null,
+                postseasonGameName: addGameType === 'BOWL' ? addGameBowlName : null,
                 postseasonGameLogo: (addGameType === 'BOWL' || addGameType === 'PLAYOFFS' || addGameType === 'CONFERENCE_CHAMPIONSHIP' || addGameType === 'NATIONAL_CHAMPIONSHIP') ? addGameLogo : null,
             });
             showSnackbar('Game added successfully');

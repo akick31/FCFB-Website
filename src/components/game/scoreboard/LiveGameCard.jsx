@@ -20,10 +20,11 @@ const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:1313';
 const GameTypeInfo = ({ game, homeTeamData }) => {
     const theme = useTheme();
     const gameType = game.game_type;
-    const postseasonLogo = game.postseason_game_logo
-        ? `${API_BASE}/images/${game.postseason_game_logo}`
+    const rawLogo = game.postseason_game_logo;
+    const postseasonLogo = rawLogo
+        ? (rawLogo.startsWith('http') ? rawLogo : `${API_BASE}/images/${rawLogo}`)
         : null;
-    const bowlName = game.bowl_game_name;
+    const bowlName = game.postseason_game_name;
     const confData = homeTeamData?.conference
         ? conferences.find(c => c.value === homeTeamData.conference)
         : null;

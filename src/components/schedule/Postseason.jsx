@@ -497,10 +497,10 @@ const Postseason = ({
 
     // ── Derive Bowl card header info ─────────────────────────────────
     const getBowlHeaderInfo = (game) => {
-        const bowlName = field(game, 'bowlGameName', 'bowl_game_name');
+        const bowlName = field(game, 'postseasonGameName', 'postseason_game_name');
         const gameLogo = field(game, 'postseasonGameLogo', 'postseason_game_logo');
         const logoUrl = gameLogo
-            ? `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${gameLogo}`
+            ? (gameLogo.startsWith('http') ? gameLogo : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${gameLogo}`)
             : null;
         return {
             logo: logoUrl,

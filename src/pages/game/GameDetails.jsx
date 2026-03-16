@@ -342,7 +342,7 @@ const GameDetails = ({ isAdmin }) => {
                 {game?.postseason_game_logo && (game?.game_type === 'BOWL' || game?.game_type === 'PLAYOFFS' || game?.game_type === 'CONFERENCE_CHAMPIONSHIP' || game?.game_type === 'NATIONAL_CHAMPIONSHIP') && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
                         <Avatar
-                            src={`${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${game.postseason_game_logo}`}
+                            src={game.postseason_game_logo.startsWith('http') ? game.postseason_game_logo : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${game.postseason_game_logo}`}
                             sx={{ width: 120, height: 120 }}
                             variant="rounded"
                         />
