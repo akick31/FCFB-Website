@@ -133,10 +133,21 @@ const GameDetails = ({ isAdmin }) => {
             if (i > 0) {
                 const prev = wpData[i - 1];
                 if ((prev.homeWP - 50) * (curr.homeWP - 50) < 0) {
-                    processedWp.push({ play: `${prev.play}x`, homeWP: 50, homeAbove: 50, homeBelow: 50 });
+                    // Crossing point: both line segments meet here
+                    processedWp.push({
+                        play: `${prev.play}x`, homeWP: 50,
+                        homeAbove: 50, homeBelow: 50,
+                        homeLineAbove: 50, homeLineBelow: 50,
+                    });
                 }
             }
-            processedWp.push({ ...curr, homeAbove: Math.max(curr.homeWP, 50), homeBelow: Math.min(curr.homeWP, 50) });
+            processedWp.push({
+                ...curr,
+                homeAbove: Math.max(curr.homeWP, 50),
+                homeBelow: Math.min(curr.homeWP, 50),
+                homeLineAbove: curr.homeWP >= 50 ? curr.homeWP : null,
+                homeLineBelow: curr.homeWP <= 50 ? curr.homeWP : null,
+            });
         }
 
         return { scoreData, wpData: processedWp };
@@ -535,14 +546,6 @@ const GameDetails = ({ isAdmin }) => {
                                             </Box>
                                             <ResponsiveContainer width="100%" height={240}>
                                                 <AreaChart data={chartData.wpData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                                                    <defs>
-                                                        <linearGradient id="wpLineGradient" x1="0" y1="1" x2="0" y2="0">
-                                                            <stop offset="0%" stopColor={awayColor} />
-                                                            <stop offset="50%" stopColor={awayColor} />
-                                                            <stop offset="50%" stopColor={homeColor} />
-                                                            <stop offset="100%" stopColor={homeColor} />
-                                                        </linearGradient>
-                                                    </defs>
                                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                                     <XAxis dataKey="play" tick={false} axisLine={false} />
                                                     <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={v => `${v}%`} fontSize={11} />
@@ -566,7 +569,8 @@ const GameDetails = ({ isAdmin }) => {
                                                     />
                                                     <Area type="linear" dataKey="homeAbove" stroke="none" fill={homeColor} fillOpacity={0.25} baseValue={50} dot={false} activeDot={false} />
                                                     <Area type="linear" dataKey="homeBelow" stroke="none" fill={awayColor} fillOpacity={0.25} baseValue={50} dot={false} activeDot={false} />
-                                                    <Line type="linear" dataKey="homeWP" stroke="url(#wpLineGradient)" strokeWidth={2} dot={false} activeDot={false} />
+                                                    <Line type="linear" dataKey="homeLineAbove" stroke={homeColor} strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />
+                                                    <Line type="linear" dataKey="homeLineBelow" stroke={awayColor} strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                         </CardContent>
