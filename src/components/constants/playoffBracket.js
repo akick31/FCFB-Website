@@ -1,5 +1,8 @@
 // ─── Playoff Bracket Constants ────────────────────────────────────────
 
+// Official CFP logo
+export const CFP_LOGO_URL = 'https://am-prod-client-files.ppub-tmaws.io/cfbplayoff/s3fs-public/CFP%20Symbol%20Gold%20PMS%20Dark%20BG.PNG';
+
 // R2 bye seeds in bracket position order (byeSeed + r1HighSeed = 17)
 // This defines which bye team (seeds 1-8) faces which R1 winner in Round 2
 export const R2_BYE_SEEDS = [1, 8, 4, 5, 3, 6, 2, 7];
