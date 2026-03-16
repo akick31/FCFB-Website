@@ -133,10 +133,21 @@ const GameDetails = ({ isAdmin }) => {
             if (i > 0) {
                 const prev = wpData[i - 1];
                 if ((prev.homeWP - 50) * (curr.homeWP - 50) < 0) {
-                    processedWp.push({ play: `${prev.play}x`, homeWP: 50, homeAbove: 50, homeBelow: 50 });
+                    // Crossing point: both line segments meet here
+                    processedWp.push({
+                        play: `${prev.play}x`, homeWP: 50,
+                        homeAbove: 50, homeBelow: 50,
+                        homeLineAbove: 50, homeLineBelow: 50,
+                    });
                 }
             }
-            processedWp.push({ ...curr, homeAbove: Math.max(curr.homeWP, 50), homeBelow: Math.min(curr.homeWP, 50) });
+            processedWp.push({
+                ...curr,
+                homeAbove: Math.max(curr.homeWP, 50),
+                homeBelow: Math.min(curr.homeWP, 50),
+                homeLineAbove: curr.homeWP >= 50 ? curr.homeWP : null,
+                homeLineBelow: curr.homeWP <= 50 ? curr.homeWP : null,
+            });
         }
 
         return { scoreData, wpData: processedWp };
@@ -490,11 +501,11 @@ const GameDetails = ({ isAdmin }) => {
                                             <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                     <Box sx={{ width: 14, height: 3, backgroundColor: homeColor, borderRadius: 1 }} />
-                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{homeTeam?.abbreviation || game.home_team}</Typography>
+                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{homeTeam?.name || game.home_team}</Typography>
                                                 </Box>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                     <Box sx={{ width: 14, height: 3, backgroundColor: awayColor, borderRadius: 1 }} />
-                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{awayTeam?.abbreviation || game.away_team}</Typography>
+                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{awayTeam?.name || game.away_team}</Typography>
                                                 </Box>
                                             </Box>
                                             <ResponsiveContainer width="100%" height={240}>
@@ -503,7 +514,7 @@ const GameDetails = ({ isAdmin }) => {
                                                     <XAxis dataKey="play" tick={false} axisLine={false} />
                                                     <YAxis fontSize={11} />
                                                     <RechartsTooltip
-                                                        formatter={(value, name) => [value, name === 'home' ? (homeTeam?.abbreviation || game.home_team) : (awayTeam?.abbreviation || game.away_team)]}
+                                                        formatter={(value, name) => [value, name === 'home' ? (homeTeam?.name || game.home_team) : (awayTeam?.name || game.away_team)]}
                                                         labelFormatter={(label) => `Play ${label?.replace('P', '')}`}
                                                     />
                                                     <Line type="stepAfter" dataKey="home" name="home" stroke={homeColor} strokeWidth={2} dot={false} />
@@ -558,7 +569,8 @@ const GameDetails = ({ isAdmin }) => {
                                                     />
                                                     <Area type="linear" dataKey="homeAbove" stroke="none" fill={homeColor} fillOpacity={0.25} baseValue={50} dot={false} activeDot={false} />
                                                     <Area type="linear" dataKey="homeBelow" stroke="none" fill={awayColor} fillOpacity={0.25} baseValue={50} dot={false} activeDot={false} />
-                                                    <Line type="linear" dataKey="homeWP" stroke={theme.palette.text.secondary} strokeWidth={2} dot={false} activeDot={false} />
+                                                    <Line type="linear" dataKey="homeLineAbove" stroke={homeColor} strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />
+                                                    <Line type="linear" dataKey="homeLineBelow" stroke={awayColor} strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                         </CardContent>

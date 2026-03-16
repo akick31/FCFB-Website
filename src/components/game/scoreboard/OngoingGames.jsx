@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getFilteredGames } from '../../../api/gameApi';
 import ScoreboardList from './ScoreboardList';
+
+const POLL_INTERVAL_MS = 15000; // 15 seconds
 
 const OngoingGames = () => {
     const [games, setGames] = useState([]);
@@ -22,37 +24,55 @@ const OngoingGames = () => {
         page: 0,
         size: 10,
     });
+    const isFirstLoad = useRef(true);
+    const pollTimerRef = useRef(null);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const response = await getFilteredGames({
-                    filters: filters.filters,
-                    week: filters.week,
-                    season: filters.season,
-                    conference: filters.conference,
-                    gameType: filters.gameType,
-                    gameStatus: filters.gameStatus,
-                    gameMode: filters.gameMode,
-                    rankedGame: filters.rankedGame,
-                    category: 'ONGOING',
-                    sort: filters.sort,
-                    page: filters.page,
-                    size: filters.size,
-                });
-                
-                setGames(response.content);
-                setTotalPages(response["total_pages"]);
-                setTotalGames(response["total_elements"]);
-            } catch (err) {
-                setError(`Failed to fetch games: ${err.message}`);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
+    const fetchData = useCallback(async (showLoading = true) => {
+        if (showLoading) setLoading(true);
+        try {
+            const response = await getFilteredGames({
+                filters: filters.filters,
+                week: filters.week,
+                season: filters.season,
+                conference: filters.conference,
+                gameType: filters.gameType,
+                gameStatus: filters.gameStatus,
+                gameMode: filters.gameMode,
+                rankedGame: filters.rankedGame,
+                category: 'ONGOING',
+                sort: filters.sort,
+                page: filters.page,
+                size: filters.size,
+            });
+
+            setGames(response.content);
+            setTotalPages(response["total_pages"]);
+            setTotalGames(response["total_elements"]);
+            setError(null);
+        } catch (err) {
+            setError(`Failed to fetch games: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
     }, [filters]);
+
+    // Initial fetch + re-fetch when filters change
+    useEffect(() => {
+        const showLoading = isFirstLoad.current;
+        isFirstLoad.current = false;
+        fetchData(showLoading);
+    }, [fetchData]);
+
+    // Auto-poll every 15 seconds (silent refresh, no loading spinner)
+    useEffect(() => {
+        pollTimerRef.current = setInterval(() => {
+            fetchData(false);
+        }, POLL_INTERVAL_MS);
+
+        return () => {
+            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+        };
+    }, [fetchData]);
 
     const handlePageChange = (newPage) => {
         setFilters(prev => ({

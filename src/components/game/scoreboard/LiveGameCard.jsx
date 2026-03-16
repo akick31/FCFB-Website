@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Chip, useTheme } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, Typography, Paper, Chip, useTheme, useMediaQuery, keyframes } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import {
     formatBallLocationWithTeam,
@@ -15,6 +15,85 @@ import { getGameStatsByIdAndTeam } from '../../../api/gameStatsApi';
 import { conferences } from '../../constants/conferences';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:1313';
+
+// ── Format previous play into readable text ─────────────────────
+const formatPreviousPlay = (play, homeTeamName, awayTeamName) => {
+    if (!play) return null;
+    const result = play.actual_result || play.result;
+    if (!result) return null;
+
+    const poss = play.possession;
+    const offenseTeam = poss === 'HOME'
+        ? (homeTeamName || 'Home')
+        : (awayTeamName || 'Away');
+    const defenseTeam = poss === 'HOME'
+        ? (awayTeamName || 'Away')
+        : (homeTeamName || 'Home');
+    const yards = play.yards != null ? Math.abs(play.yards) : null;
+
+    // Normalize UPPER_SNAKE_CASE to a readable description
+    const r = result.toUpperCase().replace(/\s+/g, '_');
+    switch (r) {
+        case 'GAIN':
+            return yards != null ? `${offenseTeam} gains ${yards} yard${yards !== 1 ? 's' : ''}` : `${offenseTeam} gains yards`;
+        case 'NO_GAIN':
+            return `${offenseTeam} runs for no gain`;
+        case 'LOSS':
+            return yards != null ? `${offenseTeam} loses ${yards} yard${yards !== 1 ? 's' : ''}` : `${offenseTeam} loses yards`;
+        case 'TOUCHDOWN':
+            return `Touchdown ${offenseTeam}!`;
+        case 'FIELD_GOAL':
+            return yards != null ? `${offenseTeam} ${yards} yard field goal is good` : `${offenseTeam} field goal is good`;
+        case 'MISSED_FIELD_GOAL':
+            return `${offenseTeam} misses field goal`;
+        case 'PUNT':
+            return `${offenseTeam} punts`;
+        case 'TURNOVER_ON_DOWNS':
+            return 'Turnover on downs';
+        case 'FUMBLE':
+            return `${offenseTeam} fumbles, recovered by ${defenseTeam}`;
+        case 'INTERCEPTION':
+            return `${offenseTeam} intercepted by ${defenseTeam}`;
+        case 'INCOMPLETE':
+        case 'INCOMPLETE_PASS':
+            return 'Incomplete pass';
+        case 'SACK':
+            return yards != null ? `${offenseTeam} sacked for ${yards} yard${yards !== 1 ? 's' : ''}` : `${offenseTeam} sacked`;
+        case 'SAFETY':
+            return `Safety! ${defenseTeam} scores`;
+        case 'KICKOFF':
+            return 'Kickoff';
+        case 'KICKOFF_RETURN_TOUCHDOWN':
+        case 'KICK_RETURN_TOUCHDOWN':
+            return `Kickoff return touchdown ${defenseTeam}!`;
+        case 'PUNT_RETURN_TOUCHDOWN':
+            return `Punt return touchdown ${defenseTeam}!`;
+        case 'DELAY_OF_GAME':
+            return 'Delay of game penalty';
+        case 'SPIKE':
+            return `${offenseTeam} spikes the ball`;
+        case 'KNEEL':
+            return `${offenseTeam} kneels`;
+        case 'PAT':
+        case 'EXTRA_POINT':
+            return 'Extra point is good';
+        case 'MISSED_PAT':
+        case 'MISSED_EXTRA_POINT':
+            return 'Extra point missed';
+        case 'TWO_POINT':
+        case 'TWO_POINT_CONVERSION':
+            return 'Two-point conversion';
+        case 'DEFENSIVE_TOUCHDOWN':
+            return `Defensive touchdown ${defenseTeam}!`;
+        case 'TOUCHBACK':
+            return 'Touchback';
+        default: {
+            // Fallback: convert UPPER_SNAKE_CASE to Title Case
+            const readable = result.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+            return readable;
+        }
+    }
+};
 
 // ── Game type badge ─────────────────────────────────────────────
 const GameTypeInfo = ({ game, homeTeamData }) => {
@@ -57,16 +136,38 @@ const GameTypeInfo = ({ game, homeTeamData }) => {
     }
 };
 
+// ── Flash animation for updated cards ───────────────────────────
+const flashBorder = keyframes`
+    0%   { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.6); }
+    40%  { box-shadow: 0 0 8px 2px rgba(25, 118, 210, 0.4); }
+    100% { box-shadow: none; }
+`;
+
 // ── Main card ──────────────────────────────────────────────────
 const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
     const theme = useTheme();
     const navigate = useNavigate();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const homeTeamName = game.homeTeam || game.home_team;
     const awayTeamName = game.awayTeam || game.away_team;
     const homeScore = game.homeScore || game.home_score || 0;
     const awayScore = game.awayScore || game.away_score || 0;
     const gameStatus = game.game_status;
+
+    // Track changes to flash the card on updates
+    const [justUpdated, setJustUpdated] = useState(false);
+    const prevDataRef = useRef(null);
+
+    useEffect(() => {
+        const key = `${homeScore}-${awayScore}-${game.quarter}-${game.down}-${game.clock || game.game_clock}`;
+        if (prevDataRef.current !== null && prevDataRef.current !== key) {
+            setJustUpdated(true);
+            const timer = setTimeout(() => setJustUpdated(false), 1500);
+            return () => clearTimeout(timer);
+        }
+        prevDataRef.current = key;
+    }, [homeScore, awayScore, game.quarter, game.down, game.clock, game.game_clock]);
     const isOngoing = isGameOngoing(gameStatus);
     const statusInfo = getGameStatusInfo(gameStatus);
     const possession = game.possession;
@@ -77,10 +178,11 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
     const [homeWinProb, setHomeWinProb] = useState(null);
     const [homeStats, setHomeStats] = useState(null);
     const [awayStats, setAwayStats] = useState(null);
+    const [previousPlayText, setPreviousPlayText] = useState(null);
 
-    // Win probability
+    // Win probability + previous play
     useEffect(() => {
-        if (!gameId || !isOngoing) { setHomeWinProb(null); return; }
+        if (!gameId || !isOngoing) { setHomeWinProb(null); setPreviousPlayText(null); return; }
         getPreviousPlay(gameId)
             .then(play => {
                 if (play?.win_probability != null) {
@@ -88,11 +190,14 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                     const p = play.possession || possession;
                     setHomeWinProb(p === 'HOME' ? wp : p === 'AWAY' ? 1 - wp : null);
                 }
+                // Build readable previous play description
+                const desc = formatPreviousPlay(play, homeTeamName, awayTeamName, homeTeamData, awayTeamData);
+                setPreviousPlayText(desc || null);
             })
             .catch(() => {});
-    }, [gameId, isOngoing, possession]);
+    }, [gameId, isOngoing, possession, homeScore, awayScore, homeTeamName, awayTeamName, homeTeamData, awayTeamData]);
 
-    // Quarter scores — fetch once per game
+    // Quarter scores — re-fetch when score changes
     useEffect(() => {
         if (!gameId || !homeTeamName || !awayTeamName) return;
         Promise.all([
@@ -102,7 +207,7 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
             setHomeStats(h?.data || h || null);
             setAwayStats(a?.data || a || null);
         });
-    }, [gameId, homeTeamName, awayTeamName]);
+    }, [gameId, homeTeamName, awayTeamName, homeScore, awayScore]);
 
     const handleClick = () => gameId && navigate(`/game-details/${gameId}`);
 
@@ -125,8 +230,8 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                 borderColor: 'divider',
                 backgroundColor: 'transparent',
             }}>
-                {/* Left side: Team info (fixed ~35%) */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, width: '35%', minWidth: 0, flexShrink: 0 }}>
+                {/* Left side: Team info */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: isMobile ? 0.5 : 0.75, width: showQuarters ? (isMobile ? '30%' : '35%') : 'auto', flex: showQuarters ? 'none' : 1, minWidth: 0, flexShrink: 0 }}>
                     <Box sx={{
                         width: 7, height: 7, borderRadius: '50%',
                         backgroundColor: hasPossession ? theme.palette.warning.main : 'transparent',
@@ -145,11 +250,14 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                         </Typography>
                     )}
                     <Typography sx={{
-                        fontSize: '1.0rem', fontWeight: 700,
+                        fontSize: isMobile ? '0.75rem' : '1.0rem', fontWeight: 700,
                         color: isWinner ? theme.palette.primary.main : 'text.primary',
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
-                        {teamName && teamName.length > 12 ? teamData?.abbreviation || teamName.substring(0, 12) : teamName || ''}
+                        {isMobile
+                            ? (teamData?.abbreviation || (teamName && teamName.length > 10 ? teamName.substring(0, 10) : teamName) || '')
+                            : (teamName && teamName.length > 12 ? teamData?.abbreviation || teamName.substring(0, 12) : teamName || '')
+                        }
                     </Typography>
                 </Box>
                 {/* Middle: Quarter scores (if available) */}
@@ -157,7 +265,7 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                     <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, gap: 0.25 }}>
                         {quarterCols.map(key => (
                             <Typography key={key} sx={{
-                                fontSize: '0.8rem', fontWeight: 500,
+                                fontSize: isMobile ? '0.65rem' : '0.8rem', fontWeight: 500,
                                 color: 'text.secondary',
                                 textAlign: 'center', flex: 1, minWidth: 0,
                             }}>
@@ -168,9 +276,9 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                 )}
                 {/* Right: Total score */}
                 <Typography sx={{
-                    fontSize: '1.15rem', fontWeight: 800,
+                    fontSize: isMobile ? '0.95rem' : '1.15rem', fontWeight: 800,
                     color: isWinner ? theme.palette.primary.main : 'text.primary',
-                    minWidth: 40, textAlign: 'right', flexShrink: 0,
+                    minWidth: isMobile ? 28 : 40, textAlign: 'right', flexShrink: 0,
                 }}>
                     {score}
                 </Typography>
@@ -205,6 +313,7 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                 transition: 'transform 0.15s, box-shadow 0.15s',
                 '&:hover': gameId ? { transform: 'translateY(-2px)', boxShadow: theme.shadows[6] } : {},
                 border: '1px solid', borderColor: isOngoing ? theme.palette.primary.main + '40' : 'divider',
+                ...(justUpdated && isOngoing ? { animation: `${flashBorder} 1.5s ease-out` } : {}),
             }}
         >
             {/* ─── Top Bar: Game Type | Quarter Headers | CHEW chip ─── */}
@@ -215,7 +324,7 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                 borderBottom: '1px solid',
                 borderColor: isOngoing ? theme.palette.primary.main + '30' : 'divider',
             }}>
-                <Box sx={{ width: '35%', minWidth: 0, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ width: showQuarters ? (isMobile ? '30%' : '35%') : 'auto', minWidth: 0, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     {isFinal ? (
                         <Chip label={statusInfo.status} size="small" sx={{ backgroundColor: statusInfo.color, color: 'white', fontWeight: 600, fontSize: '0.65rem', height: 20, '& .MuiChip-label': { px: 0.75 } }} />
                     ) : (
@@ -229,12 +338,12 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                     <>
                         <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, gap: 0.25 }}>
                             {quarterHeaders.map(h => (
-                                <Typography key={h} sx={{ fontSize: '0.7rem', fontWeight: 600, color: 'text.disabled', textAlign: 'center', flex: 1, minWidth: 0 }}>
+                                <Typography key={h} sx={{ fontSize: isMobile ? '0.55rem' : '0.7rem', fontWeight: 600, color: 'text.disabled', textAlign: 'center', flex: 1, minWidth: 0 }}>
                                     {h}
                                 </Typography>
                             ))}
                         </Box>
-                        <Box sx={{ minWidth: 40, flexShrink: 0 }} />
+                        <Box sx={{ minWidth: isMobile ? 28 : 40, flexShrink: 0 }} />
                     </>
                 )}
             </Box>
@@ -246,13 +355,13 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
             {/* ─── Bottom Bar: Spread | Game State | Waiting On ─── */}
             <Box sx={{
                 display: 'flex', alignItems: 'center',
-                px: 1.5, py: 0.5,
+                px: isMobile ? 0.75 : 1.5, py: 0.5,
                 backgroundColor: theme.palette.grey[50],
                 borderTop: '1px solid', borderColor: 'divider',
                 gap: 0.5, minHeight: 32,
             }}>
                 {/* Left: Spread */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 48 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: isMobile ? 36 : 48 }}>
                     {game.home_vegas_spread !== null && game.home_vegas_spread !== undefined && (
                         <>
                             <Box sx={{ width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -316,6 +425,22 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                     )}
                 </Box>
             </Box>
+
+            {/* ─── Previous Play ─── */}
+            {isOngoing && previousPlayText && (
+                <Box sx={{
+                    px: 1.5, py: 0.4,
+                    borderTop: '1px solid', borderColor: 'divider',
+                    backgroundColor: theme.palette.grey[50],
+                }}>
+                    <Typography sx={{ fontSize: '0.65rem', color: 'text.secondary', textAlign: 'center' }}>
+                        <Typography component="span" sx={{ fontSize: '0.65rem', fontWeight: 700, color: 'text.secondary' }}>
+                            Previous Play:
+                        </Typography>
+                        {' '}{previousPlayText}
+                    </Typography>
+                </Box>
+            )}
 
             {/* ─── Win Probability ─── */}
             {isOngoing && homeWinPct != null && (

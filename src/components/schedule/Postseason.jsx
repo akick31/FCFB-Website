@@ -194,6 +194,16 @@ const Postseason = ({
         );
     };
 
+    const formatBracketQuarter = (q) => {
+        if (q >= 6) return `${q - 4}OT`;
+        if (q === 5) return 'OT';
+        if (q === 4) return '4th';
+        if (q === 3) return '3rd';
+        if (q === 2) return '2nd';
+        if (q === 1) return '1st';
+        return '';
+    };
+
     const renderGameCard = (game, width, customAwayLabel = null) => {
         if (!game) return null;
         const home = field(game, 'homeTeam', 'home_team');
@@ -205,9 +215,22 @@ const Postseason = ({
         const hsc = field(game, 'homeScore', 'home_score');
         const asc = field(game, 'awayScore', 'away_score');
         const gid = field(game, 'gameId', 'game_id');
+        const quarter = field(game, 'quarter', 'quarter');
+        const clock = field(game, 'clock', 'clock') || field(game, 'gameClock', 'game_clock');
+        const status = field(game, 'status', 'status') || field(game, 'gameStatus', 'game_status');
         const homeWon = fin && hsc != null && hsc > asc;
         const awayWon = fin && asc != null && asc > hsc;
-        const clickable = !adminMode && gid && started;
+        const clickable = !adminMode && gid && (started || fin);
+
+        // Build status text for in-progress games only (no "FINAL" for finished)
+        let statusText = null;
+        if (started && !fin && status !== 'FINAL' && status !== 'COMPLETED') {
+            const qtr = formatBracketQuarter(quarter);
+            const time = (quarter >= 5) ? '' : (clock || '');
+            if (qtr && time) statusText = `${qtr} ${time}`;
+            else if (qtr) statusText = qtr;
+        }
+
         return (
             <Paper
                 elevation={1}
@@ -222,6 +245,21 @@ const Postseason = ({
             >
                 {renderTeamRow(home, hs, (fin || started) ? hsc : null, homeWon, true)}
                 {renderTeamRow(away, as_, (fin || started) ? asc : null, awayWon, false, '0.72rem', customAwayLabel)}
+                {statusText && (
+                    <Box sx={{
+                        textAlign: 'center', py: 0.2, px: 0.5,
+                        backgroundColor: theme.palette.warning.light + '30',
+                        borderTop: '1px solid', borderColor: 'divider',
+                    }}>
+                        <Typography variant="caption" sx={{
+                            fontWeight: 600, fontSize: '0.6rem',
+                            color: theme.palette.warning.dark,
+                            textTransform: 'uppercase',
+                        }}>
+                            {statusText}
+                        </Typography>
+                    </Box>
+                )}
                 {adminMode && (onAdvanceTeam || onDeleteGame) && (
                     <Box sx={{
                         display: 'flex', justifyContent: 'flex-end', gap: 0.25,
