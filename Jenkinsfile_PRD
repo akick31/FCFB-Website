@@ -50,7 +50,7 @@ pipeline {
             steps {
                 echo 'Building Docker image for FCFB Website...'
                 sh """
-                    docker build --no-cache -f ${DOCKERFILE} -t ${IMAGE_NAME}:latest .
+                    docker build -f ${DOCKERFILE} -t ${IMAGE_NAME}:latest .
                 """
             }
         }
