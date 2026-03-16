@@ -501,11 +501,11 @@ const GameDetails = ({ isAdmin }) => {
                                             <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                     <Box sx={{ width: 14, height: 3, backgroundColor: homeColor, borderRadius: 1 }} />
-                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{homeTeam?.abbreviation || game.home_team}</Typography>
+                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{homeTeam?.name || game.home_team}</Typography>
                                                 </Box>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                     <Box sx={{ width: 14, height: 3, backgroundColor: awayColor, borderRadius: 1 }} />
-                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{awayTeam?.abbreviation || game.away_team}</Typography>
+                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{awayTeam?.name || game.away_team}</Typography>
                                                 </Box>
                                             </Box>
                                             <ResponsiveContainer width="100%" height={240}>
@@ -514,7 +514,7 @@ const GameDetails = ({ isAdmin }) => {
                                                     <XAxis dataKey="play" tick={false} axisLine={false} />
                                                     <YAxis fontSize={11} />
                                                     <RechartsTooltip
-                                                        formatter={(value, name) => [value, name === 'home' ? (homeTeam?.abbreviation || game.home_team) : (awayTeam?.abbreviation || game.away_team)]}
+                                                        formatter={(value, name) => [value, name === 'home' ? (homeTeam?.name || game.home_team) : (awayTeam?.name || game.away_team)]}
                                                         labelFormatter={(label) => `Play ${label?.replace('P', '')}`}
                                                     />
                                                     <Line type="stepAfter" dataKey="home" name="home" stroke={homeColor} strokeWidth={2} dot={false} />

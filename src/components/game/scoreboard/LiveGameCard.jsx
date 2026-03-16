@@ -24,11 +24,11 @@ const formatPreviousPlay = (play, homeTeamName, awayTeamName, homeTeamData, away
 
     const poss = play.possession;
     const offenseTeam = poss === 'HOME'
-        ? (homeTeamData?.abbreviation || homeTeamName || 'Home')
-        : (awayTeamData?.abbreviation || awayTeamName || 'Away');
+        ? (homeTeamName || 'Home')
+        : (awayTeamName || 'Away');
     const defenseTeam = poss === 'HOME'
-        ? (awayTeamData?.abbreviation || awayTeamName || 'Away')
-        : (homeTeamData?.abbreviation || homeTeamName || 'Home');
+        ? (awayTeamName || 'Away')
+        : (homeTeamName || 'Home');
     const yards = play.yards != null ? Math.abs(play.yards) : null;
 
     // Normalize UPPER_SNAKE_CASE to a readable description
