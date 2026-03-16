@@ -38,14 +38,14 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
 
     const getStatusText = () => {
         if (finished || status === 'FINAL' || status === 'COMPLETED') {
-            if (quarter >= 6) return `Final/${quarter - 4}OT`;
-            if (quarter === 5) return 'Final/OT';
-            return 'Final';
+            return null; // No "FINAL" text — finished games just show score
         }
         if (started) {
             const qtr = formatQuarter(quarter);
-            const time = (quarter >= 5) ? '' : (clock || '0:00');
-            return time ? `${qtr} ${time}` : qtr;
+            const time = (quarter >= 5) ? '' : (clock || '');
+            if (qtr && time) return `${qtr} ${time}`;
+            if (qtr) return qtr;
+            return null;
         }
         return null;
     };

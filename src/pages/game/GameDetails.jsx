@@ -535,6 +535,14 @@ const GameDetails = ({ isAdmin }) => {
                                             </Box>
                                             <ResponsiveContainer width="100%" height={240}>
                                                 <AreaChart data={chartData.wpData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                                                    <defs>
+                                                        <linearGradient id="wpLineGradient" x1="0" y1="1" x2="0" y2="0">
+                                                            <stop offset="0%" stopColor={awayColor} />
+                                                            <stop offset="50%" stopColor={awayColor} />
+                                                            <stop offset="50%" stopColor={homeColor} />
+                                                            <stop offset="100%" stopColor={homeColor} />
+                                                        </linearGradient>
+                                                    </defs>
                                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                                     <XAxis dataKey="play" tick={false} axisLine={false} />
                                                     <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={v => `${v}%`} fontSize={11} />
@@ -558,7 +566,7 @@ const GameDetails = ({ isAdmin }) => {
                                                     />
                                                     <Area type="linear" dataKey="homeAbove" stroke="none" fill={homeColor} fillOpacity={0.25} baseValue={50} dot={false} activeDot={false} />
                                                     <Area type="linear" dataKey="homeBelow" stroke="none" fill={awayColor} fillOpacity={0.25} baseValue={50} dot={false} activeDot={false} />
-                                                    <Line type="linear" dataKey="homeWP" stroke={theme.palette.text.secondary} strokeWidth={2} dot={false} activeDot={false} />
+                                                    <Line type="linear" dataKey="homeWP" stroke="url(#wpLineGradient)" strokeWidth={2} dot={false} activeDot={false} />
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                         </CardContent>
