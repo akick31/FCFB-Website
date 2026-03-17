@@ -108,6 +108,7 @@ const GameDetails = ({ isAdmin }) => {
         const scoreData = [];
         const wpData = [];
 
+        let lastHomeWP = null;
         sorted.forEach((play, idx) => {
             const label = `P${play.play_number || idx + 1}`;
             const homeScore = play.home_score ?? play.homeScore ?? 0;
@@ -121,8 +122,13 @@ const GameDetails = ({ isAdmin }) => {
                 const homeWP = poss === 'HOME' ? wp * 100 : poss === 'AWAY' ? (1 - wp) * 100 : null;
                 if (homeWP != null) {
                     const rounded = Math.round(homeWP);
+                    lastHomeWP = rounded;
                     wpData.push({ play: label, homeWP: rounded });
                 }
+            } else if (lastHomeWP != null) {
+                // Carry forward previous WP for plays without win_probability
+                // (e.g. delay of game penalties)
+                wpData.push({ play: label, homeWP: lastHomeWP });
             }
         });
 
