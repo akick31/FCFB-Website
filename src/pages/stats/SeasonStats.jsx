@@ -18,13 +18,20 @@ import {
 } from '@mui/material';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getAllTeams } from '../../api/teamApi';
+import { useParams, useNavigate } from 'react-router-dom';
+
+const teamToSlug = (name) => name?.toLowerCase().replace(/\s+/g, '_') || '';
+const slugToTeam = (slug, teams) => teams.find(t => teamToSlug(t.name) === slug) || null;
 
 const SeasonStats = ({ user }) => {
     useEffect(() => { document.title = 'FCFB | Season Stats'; }, []);
 
+    const { team: teamSlug, season: seasonParam } = useParams();
+    const navigate = useNavigate();
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    
+
     // Data states
     const [teams, setTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
@@ -40,26 +47,33 @@ const SeasonStats = ({ user }) => {
                 setLoading(true);
                 const teamsData = await getAllTeams();
                 setTeams(teamsData);
-                
-                // Set default season to 11 (most recent season)
-                setSelectedSeason(11);
-                
-                // Set default team: user's team if they're a coach, otherwise first team alphabetically
+
+                // Determine team from URL param or user/default
                 let defaultTeam = null;
-                if (user?.team) {
-                    // User is a coach, find their team
+                const sortedTeams = teamsData.sort((a, b) => a.name.localeCompare(b.name));
+
+                if (teamSlug) {
+                    defaultTeam = slugToTeam(teamSlug, teamsData);
+                }
+                if (!defaultTeam && user?.team) {
                     defaultTeam = teamsData.find(team => team.name === user.team);
                 }
-                if (!defaultTeam && teamsData.length > 0) {
-                    // Fallback to first team alphabetically
-                    defaultTeam = teamsData.sort((a, b) => a.name.localeCompare(b.name))[0];
+                if (!defaultTeam && sortedTeams.length > 0) {
+                    defaultTeam = sortedTeams[0];
                 }
+
+                const defaultSeason = seasonParam ? parseInt(seasonParam) : 11;
+
                 setSelectedTeam(defaultTeam);
-                
-                
-                // If we have a default team, fetch their stats
+                setSelectedSeason(defaultSeason);
+
                 if (defaultTeam) {
-                    await fetchTeamStats(defaultTeam, 11);
+                    await fetchTeamStats(defaultTeam, defaultSeason);
+                }
+
+                // Navigate to URL with team/season if not already there
+                if (!teamSlug && defaultTeam) {
+                    navigate(`/season-stats/${teamToSlug(defaultTeam.name)}/${defaultSeason}`, { replace: true });
                 }
             } catch (err) {
                 setError('Failed to load initial data');
@@ -70,6 +84,7 @@ const SeasonStats = ({ user }) => {
         };
 
         fetchInitialData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchTeamStats = async (team, season) => {
@@ -99,7 +114,9 @@ const SeasonStats = ({ user }) => {
     const handleTeamChange = (event, newValue) => {
         setSelectedTeam(newValue);
         if (newValue) {
-            fetchTeamStats(newValue, selectedSeason);
+            const newSeason = selectedSeason || 11;
+            navigate(`/season-stats/${teamToSlug(newValue.name)}/${newSeason}`);
+            fetchTeamStats(newValue, newSeason);
         } else {
             setTeamSeasonStats(null);
         }
@@ -108,10 +125,8 @@ const SeasonStats = ({ user }) => {
     const handleSeasonChange = (event) => {
         const newSeason = event.target.value;
         setSelectedSeason(newSeason);
-        
-        
-        // If a team is selected, fetch their stats for the new season
         if (selectedTeam) {
+            navigate(`/season-stats/${teamToSlug(selectedTeam.name)}/${newSeason}`);
             fetchTeamStats(selectedTeam, newSeason);
         }
     };

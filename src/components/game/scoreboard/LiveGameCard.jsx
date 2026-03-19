@@ -383,9 +383,9 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                     )}
                 </Box>
 
-                {/* Center: Quarter + Clock + Down & Distance */}
+                {/* Center: Quarter + Clock + Down & Distance (ongoing) or Game Type (final) */}
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    {isOngoing && game.quarter && (
+                    {isOngoing && game.quarter ? (
                         <>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                                 <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: theme.palette.primary.main }}>
@@ -411,7 +411,9 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                                 </Typography>
                             )}
                         </>
-                    )}
+                    ) : isFinal ? (
+                        <GameTypeInfo game={game} homeTeamData={homeTeamData} isMobile={isMobile} />
+                    ) : null}
                 </Box>
 
                 {/* Right: Waiting On */}

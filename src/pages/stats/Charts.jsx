@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
     Container,
     Box,
@@ -8,9 +8,13 @@ import {
     Paper,
 } from '@mui/material';
 import { BarChart, ShowChart, TrendingUp } from '@mui/icons-material';
+import { useParams, useNavigate } from 'react-router-dom';
 import EloHistoryTab from '../../components/stats/charts/EloHistoryTab';
 import RankingsHistoryTab from '../../components/stats/charts/RankingsHistoryTab';
 import ScatterPlotsTab from '../../components/stats/charts/ScatterPlotsTab';
+
+const TAB_SLUGS = ['elo_history', 'rankings_history', 'stat_plots'];
+const TAB_FROM_SLUG = { elo_history: 0, rankings_history: 1, stat_plots: 2 };
 
 /**
  * Charts Page
@@ -19,10 +23,17 @@ import ScatterPlotsTab from '../../components/stats/charts/ScatterPlotsTab';
 const Charts = () => {
     useEffect(() => { document.title = 'FCFB | Charts'; }, []);
 
-    const [activeTab, setActiveTab] = useState(0);
+    const { tab } = useParams();
+    const navigate = useNavigate();
+
+    const activeTab = TAB_FROM_SLUG[tab] ?? 0;
+
+    useEffect(() => {
+        if (!tab) navigate('/charts/elo_history', { replace: true });
+    }, [tab, navigate]);
 
     const handleTabChange = (event, newValue) => {
-        setActiveTab(newValue);
+        navigate(`/charts/${TAB_SLUGS[newValue]}`);
     };
 
     const tabs = [

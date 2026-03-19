@@ -22,7 +22,7 @@ const TAB_SLUGS = ['live', 'past', 'scrimmages'];
 const TAB_FROM_SLUG = { live: 0, past: 1, scrimmages: 2 };
 
 const Scoreboard = () => {
-    const { tab } = useParams();
+    const { tab, season: urlSeason, week: urlWeek } = useParams();
     const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -38,7 +38,7 @@ const Scoreboard = () => {
 
     const tabs = [
         { label: 'Live Games', icon: <SportsFootball />, component: <OngoingGames /> },
-        { label: 'Past Games', icon: <History />, component: <PastGames /> },
+        { label: 'Past Games', icon: <History />, component: <PastGames urlSeason={urlSeason} urlWeek={urlWeek} /> },
         { label: 'Scrimmages', icon: <Schedule />, component: <Scrimmages /> }
     ];
 

@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Container, CircularProgress, Alert, FormControl, Select, MenuItem } from '@mui/material';
 import RankingsTable from '../../components/team/RankingsTable';
 import { getAllTeams } from '../../api/teamApi';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const Rankings = () => {
     useEffect(() => { document.title = 'FCFB | Rankings'; }, []);
+
+    const { type } = useParams();
+    const navigate = useNavigate();
 
     const [teams, setTeams] = useState([]);
     const [filteredTeams, setFilteredTeams] = useState([]);
@@ -24,10 +28,19 @@ const Rankings = () => {
     }, [teams]);
 
     useEffect(() => {
-        if (availableRankings.length > 0 && !selectedRanking) {
-            setSelectedRanking(availableRankings[0]);
+        if (availableRankings.length === 0) return;
+        if (type) {
+            const rankingValue = type.toUpperCase();
+            if (availableRankings.includes(rankingValue)) {
+                setSelectedRanking(rankingValue);
+            } else {
+                // Default to first available
+                navigate(`/rankings/${availableRankings[0].toLowerCase()}`, { replace: true });
+            }
+        } else {
+            navigate(`/rankings/${availableRankings[0].toLowerCase()}`, { replace: true });
         }
-    }, [availableRankings, selectedRanking]);
+    }, [type, availableRankings, navigate]);
 
     useEffect(() => {
         filterTeamsByRanking();
@@ -85,7 +98,7 @@ const Rankings = () => {
     };
 
     const handleRankingChange = (ranking) => {
-        setSelectedRanking(ranking);
+        navigate(`/rankings/${ranking.toLowerCase()}`);
     };
 
     const getRankingDisplayName = (ranking) => {

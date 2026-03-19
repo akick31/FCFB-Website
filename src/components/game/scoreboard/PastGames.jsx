@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getFilteredGames } from '../../../api/gameApi';
 import { getCurrentSeason, getCurrentWeek } from '../../../api/seasonApi';
 import ScoreboardList from './ScoreboardList';
@@ -6,19 +7,21 @@ import { Box } from '@mui/material';
 import SeasonDropdown from '../../dropdown/SeasonDropdown';
 import WeekDropdown from '../../dropdown/WeekDropdown';
 
-const PastGames = () => {
+const PastGames = ({ urlSeason, urlWeek }) => {
+    const navigate = useNavigate();
     const [games, setGames] = useState([]);
     const [totalGames, setTotalGames] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const initializedRef = useRef(false);
     const [filters, setFilters] = useState({
         filters: [],
         category: 'past',
         sort: 'MOST_TIME_REMAINING',
         conference: null,
-        season: null,
-        week: null,
+        season: urlSeason ? parseInt(urlSeason) : null,
+        week: urlWeek ? parseInt(urlWeek) : null,
         gameType: null,
         gameStatus: null,
         rankedGame: null,
@@ -26,33 +29,48 @@ const PastGames = () => {
         size: 10,
     });
 
-    // Set default season and week when component loads
+    // Set default season and week when no URL params provided
     useEffect(() => {
+        if (urlSeason && urlWeek) {
+            // URL params provided, already set in initial state
+            initializedRef.current = true;
+            return;
+        }
+        if (initializedRef.current) return;
+        initializedRef.current = true;
         const setDefaults = async () => {
             try {
                 const [currentSeason, currentWeek] = await Promise.all([
                     getCurrentSeason(),
                     getCurrentWeek()
                 ]);
-                
                 setFilters(prev => ({
                     ...prev,
                     season: currentSeason,
                     week: currentWeek
                 }));
+                navigate(`/scoreboard/past/${currentSeason}/${currentWeek}`, { replace: true });
             } catch (error) {
                 console.error('Failed to fetch current season/week:', error);
-                // Set fallback values if API fails
                 setFilters(prev => ({
                     ...prev,
-                    season: 11, // Fallback to season 11
-                    week: 1     // Fallback to week 1
+                    season: 11,
+                    week: 1
                 }));
             }
         };
-        
         setDefaults();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Sync from URL params when they change (e.g., back/forward navigation)
+    useEffect(() => {
+        if (!urlSeason || !urlWeek) return;
+        setFilters(prev => {
+            if (prev.season === parseInt(urlSeason) && prev.week === parseInt(urlWeek)) return prev;
+            return { ...prev, season: parseInt(urlSeason), week: parseInt(urlWeek), page: 0 };
+        });
+    }, [urlSeason, urlWeek]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -80,36 +98,30 @@ const PastGames = () => {
                 setLoading(false);
             }
         };
-        
-        // Fetch data when filters change, but only if we have season and week
+
         if (filters.season !== null && filters.week !== null) {
             fetchData();
         }
     }, [filters]);
 
     const handlePageChange = (newPage) => {
-        setFilters(prev => ({
-            ...prev,
-            page: newPage
-        }));
+        setFilters(prev => ({ ...prev, page: newPage }));
     };
 
     const handleSeasonChange = (event) => {
         const newValue = event.target.value === "" ? null : event.target.value;
-        setFilters(prev => ({
-            ...prev,
-            season: newValue,
-            page: 0 // Reset to first page when filters change
-        }));
+        setFilters(prev => ({ ...prev, season: newValue, page: 0 }));
+        if (newValue && filters.week) {
+            navigate(`/scoreboard/past/${newValue}/${filters.week}`, { replace: true });
+        }
     };
 
     const handleWeekChange = (event) => {
         const newValue = event.target.value === "" ? null : event.target.value;
-        setFilters(prev => ({
-            ...prev,
-            week: newValue,
-            page: 0 // Reset to first page when filters change
-        }));
+        setFilters(prev => ({ ...prev, week: newValue, page: 0 }));
+        if (filters.season && newValue) {
+            navigate(`/scoreboard/past/${filters.season}/${newValue}`, { replace: true });
+        }
     };
 
     return (
@@ -125,7 +137,6 @@ const PastGames = () => {
                 title="Past Games"
                 filters={filters}
                 setFilters={setFilters}
-                // Pass season/week filters to be displayed in the header
                 seasonFilter={
                     <SeasonDropdown
                         value={filters.season}

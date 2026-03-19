@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    Box, 
-    Typography, 
+import {
+    Box,
+    Typography,
     TablePagination,
     useTheme
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { getAllTeams } from '../../api/teamApi';
 import { formatConferenceName } from '../../utils/conferenceUtils';
 import { DEFAULT_TEAMS_PER_PAGE, TEAMS_PER_PAGE_OPTIONS, TEAM_STATUS } from '../../constants/teamConstants';
@@ -18,6 +18,7 @@ import ErrorMessage from '../../components/message/ErrorMessage';
 const Teams = () => {
     const theme = useTheme();
     const navigate = useNavigate();
+    const { conference: confParam, availability: availParam } = useParams();
 
     useEffect(() => { document.title = 'FCFB | Teams'; }, []);
     const [searchTerm, setSearchTerm] = useState('');
@@ -46,6 +47,33 @@ const Teams = () => {
         };
         fetchTeams();
     }, []);
+
+    useEffect(() => {
+        if (confParam && confParam !== 'all') {
+            setSelectedConference(confParam.toUpperCase());
+        } else if (confParam === 'all') {
+            setSelectedConference('');
+        }
+        if (availParam && availParam !== 'all') {
+            setSelectedAvailability(availParam);
+        } else if (availParam === 'all') {
+            setSelectedAvailability('');
+        }
+    }, [confParam, availParam]);
+
+    const handleConferenceChange = (value) => {
+        setSelectedConference(value);
+        const availSlug = selectedAvailability || 'all';
+        const confSlug = value ? value.toLowerCase() : 'all';
+        navigate(`/teams/${confSlug}/${availSlug}`);
+    };
+
+    const handleAvailabilityChange = (value) => {
+        setSelectedAvailability(value);
+        const confSlug = selectedConference ? selectedConference.toLowerCase() : 'all';
+        const availSlug = value || 'all';
+        navigate(`/teams/${confSlug}/${availSlug}`);
+    };
 
     useEffect(() => {
         let filtered = teams;
@@ -129,9 +157,9 @@ const Teams = () => {
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
                 selectedConference={selectedConference}
-                setSelectedConference={setSelectedConference}
+                setSelectedConference={handleConferenceChange}
                 selectedAvailability={selectedAvailability}
-                setSelectedAvailability={setSelectedAvailability}
+                setSelectedAvailability={handleAvailabilityChange}
                 teams={teams}
                 filteredTeams={filteredTeams}
                 theme={theme}

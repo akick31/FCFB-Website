@@ -244,16 +244,27 @@ const App = () => {
                             <Route path="/schedules/:tab" element={<Schedule />} />
                             <Route path="/schedules/:tab/:selection" element={<Schedule />} />
                             <Route path="/standings" element={<Standings />} />
+                            <Route path="/standings/:conference" element={<Standings />} />
                             <Route path="/rankings" element={<Rankings />} />
+                            <Route path="/rankings/:type" element={<Rankings />} />
                             <Route path="/scoreboard" element={<Scoreboard />} />
                             <Route path="/scoreboard/:tab" element={<Scoreboard />} />
+                            <Route path="/scoreboard/:tab/:season/:week" element={<Scoreboard />} />
                             <Route path="/teams" element={<Teams />} />
+                            <Route path="/teams/:conference/:availability" element={<Teams />} />
                             <Route path="/records" element={<Records />} />
+                            <Route path="/records/:tab" element={<Records />} />
+                            <Route path="/records/:tab/:record" element={<Records />} />
                             <Route path="/season-stats" element={<SeasonStats user={user} />} />
+                            <Route path="/season-stats/:team/:season" element={<SeasonStats user={user} />} />
                             <Route path="/league-stats" element={<LeagueStats />} />
+                            <Route path="/league-stats/:tab/:season" element={<LeagueStats />} />
+                            <Route path="/league-stats/:tab/:season/:p1" element={<LeagueStats />} />
+                            <Route path="/league-stats/:tab/:season/:p1/:p2" element={<LeagueStats />} />
                             <Route path="/leaderboard" element={<Leaderboard />} />
                             <Route path="/elo-history" element={<EloHistory />} />
                             <Route path="/charts" element={<Charts />} />
+                            <Route path="/charts/:tab" element={<Charts />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
 
                             <Route path="/error" element={<Error />} />
