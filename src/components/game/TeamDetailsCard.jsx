@@ -77,12 +77,15 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
         }}>
             {/* Header with team logo and name */}
             <Box
-                onClick={() => team?.id && navigate(`/team-details/${team.id}`)}
+                component={team?.id ? 'a' : 'div'}
+                href={team?.id ? `/team-details/${team.id}` : undefined}
+                onClick={(e) => { if (team?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${team.id}`); } } }}
                 sx={{
                     background: `linear-gradient(135deg, ${teamColors.primary} 0%, ${teamColors.secondary} 100%)`,
                     p: 1.9,
                     textAlign: 'center',
                     position: 'relative',
+                    textDecoration: 'none', color: 'inherit', display: 'block',
                     cursor: team?.id ? 'pointer' : 'default',
                     '&:hover': team?.id ? { opacity: 0.9 } : {},
                 }}
@@ -323,9 +326,14 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                                 <Typography
                                     key={idx}
                                     variant="body2"
+                                    component="a"
+                                    href={`/user-details/${encodeURIComponent(coach)}`}
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        navigate(`/user-details/${encodeURIComponent(coach)}`);
+                                        if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                                            e.preventDefault();
+                                            navigate(`/user-details/${encodeURIComponent(coach)}`);
+                                        }
                                     }}
                                     sx={{
                                         color: teamColors.primary,

@@ -120,14 +120,16 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
             { label: "Logout", onClick: handleLogout, icon: <Logout /> },
         ];
 
-    const handleNavigation = (path, onClick) => {
+    const handleNavigation = (e, path, onClick) => {
         if (onClick) {
             onClick();
-        } else {
-            navigate(path);
+            setMobileOpen(false);
+            return;
         }
+        if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+        e.preventDefault();
+        navigate(path);
         setMobileOpen(false);
-
     };
 
     const isActiveRoute = (path) => location.pathname === path;
@@ -157,7 +159,9 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 {navigationItems.map(({ label, path }) => (
                     <ListItem key={path} disablePadding>
                         <ListItemButton
-                            onClick={() => handleNavigation(path)}
+                            component="a"
+                            href={path}
+                            onClick={(e) => handleNavigation(e, path)}
                             selected={isActiveRoute(path)}
                             sx={{
                                 borderRadius: 1,
@@ -184,7 +188,9 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 {/* Stats Menu Items */}
                 <ListItem disablePadding>
                     <ListItemButton
-                        onClick={() => handleNavigation('/records')}
+                        component="a"
+                        href="/records"
+                        onClick={(e) => handleNavigation(e, '/records')}
                         selected={isActiveRoute('/records')}
                         sx={{
                             borderRadius: 1,
@@ -208,7 +214,9 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 </ListItem>
                 <ListItem disablePadding>
                     <ListItemButton
-                        onClick={() => handleNavigation('/season-stats')}
+                        component="a"
+                        href="/season-stats"
+                        onClick={(e) => handleNavigation(e, '/season-stats')}
                         selected={isActiveRoute('/season-stats')}
                         sx={{
                             borderRadius: 1,
@@ -232,7 +240,9 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 </ListItem>
                 <ListItem disablePadding>
                     <ListItemButton
-                        onClick={() => handleNavigation('/league-stats')}
+                        component="a"
+                        href="/league-stats"
+                        onClick={(e) => handleNavigation(e, '/league-stats')}
                         selected={isActiveRoute('/league-stats')}
                         sx={{
                             borderRadius: 1,
@@ -256,7 +266,9 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 </ListItem>
                 <ListItem disablePadding>
                     <ListItemButton
-                        onClick={() => handleNavigation('/leaderboard')}
+                        component="a"
+                        href="/leaderboard"
+                        onClick={(e) => handleNavigation(e, '/leaderboard')}
                         selected={isActiveRoute('/leaderboard')}
                         sx={{
                             borderRadius: 1,
@@ -280,7 +292,9 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 </ListItem>
                 <ListItem disablePadding>
                     <ListItemButton
-                        onClick={() => handleNavigation('/charts')}
+                        component="a"
+                        href="/charts"
+                        onClick={(e) => handleNavigation(e, '/charts')}
                         selected={isActiveRoute('/charts')}
                         sx={{
                             borderRadius: 1,
@@ -307,7 +321,9 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 {isAdmin && (
                     <ListItem disablePadding>
                         <ListItemButton
-                            onClick={() => handleNavigation('/admin')}
+                            component="a"
+                            href="/admin"
+                            onClick={(e) => handleNavigation(e, '/admin')}
                             sx={{
                                 borderRadius: 1,
                                 mx: 1,
@@ -328,9 +344,11 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
             
             <List sx={{ backgroundColor: 'primary.main' }}>
                 {authItems.map(({ label, path, onClick, icon }) => (
-                    <ListItem key={path} disablePadding>
+                    <ListItem key={label} disablePadding>
                         <ListItemButton
-                            onClick={() => handleNavigation(path, onClick)}
+                            component={onClick ? 'div' : 'a'}
+                            href={onClick ? undefined : path}
+                            onClick={(e) => handleNavigation(e, path, onClick)}
                             sx={{
                                 borderRadius: 1,
                                 mx: 1,
@@ -443,7 +461,9 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                             {navigationItems.map(({ label, path }) => (
                                 <Button
                                     key={path}
-                                    onClick={() => navigate(path)}
+                                    component="a"
+                                    href={path}
+                                    onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(path); } }}
                                     variant={isActiveRoute(path) ? "contained" : "text"}
                                     sx={{
                                         color: 'white',
@@ -508,7 +528,9 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                             {/* Admin Button */}
                             {isAdmin && (
                                 <Button
-                                    onClick={() => navigate('/admin')}
+                                    component="a"
+                                    href="/admin"
+                                    onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/admin'); } }}
                                     sx={{
                                         color: 'white',
                                         textTransform: 'none',
@@ -568,7 +590,9 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap' }}>
                                     <Button
                                         variant="outlined"
-                                        onClick={() => navigate('/login')}
+                                        component="a"
+                                        href="/login"
+                                        onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/login'); } }}
                                         sx={{
                                             color: 'white',
                                             borderColor: 'rgba(255, 255, 255, 0.5)',
@@ -590,7 +614,9 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                     </Button>
                                     <Button
                                         variant="contained"
-                                        onClick={() => navigate('/register')}
+                                        component="a"
+                                        href="/register"
+                                        onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/register'); } }}
                                         sx={{
                                             backgroundColor: 'white',
                                             color: 'primary.main',
@@ -722,81 +748,35 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     },
                 }}
             >
-                <MenuItem
-                    key="records"
-                    onClick={() => {
-                        navigate('/records');
-                        handleStatsMenuClose();
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        borderRadius: 0,
-                        backgroundColor: isActiveRoute('/records') ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
-                    }}
-                >
-                    <ListItemText primary="Records" />
-                </MenuItem>
-                <MenuItem
-                    key="season-stats"
-                    onClick={() => {
-                        navigate('/season-stats');
-                        handleStatsMenuClose();
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        borderRadius: 0,
-                        backgroundColor: isActiveRoute('/season-stats') ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
-                    }}
-                >
-                    <ListItemText primary="Season Stats" />
-                </MenuItem>
-                <MenuItem
-                    key="league-stats"
-                    onClick={() => {
-                        navigate('/league-stats');
-                        handleStatsMenuClose();
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        borderRadius: 0,
-                        backgroundColor: isActiveRoute('/league-stats') ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
-                    }}
-                >
-                    <ListItemText primary="League Stats" />
-                </MenuItem>
-                <MenuItem
-                    key="leaderboard"
-                    onClick={() => {
-                        navigate('/leaderboard');
-                        handleStatsMenuClose();
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        borderRadius: 0,
-                        backgroundColor: isActiveRoute('/leaderboard') ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
-                    }}
-                >
-                    <ListItemText primary="Leaderboard" />
-                </MenuItem>
-                <MenuItem
-                    key="charts"
-                    onClick={() => {
-                        navigate('/charts');
-                        handleStatsMenuClose();
-                    }}
-                    sx={{
-                        py: 1.5,
-                        px: 2,
-                        borderRadius: 0,
-                        backgroundColor: isActiveRoute('/charts') ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
-                    }}
-                >
-                    <ListItemText primary="Charts" />
-                </MenuItem>
+                {[
+                    { key: 'records', label: 'Records', path: '/records' },
+                    { key: 'season-stats', label: 'Season Stats', path: '/season-stats' },
+                    { key: 'league-stats', label: 'League Stats', path: '/league-stats' },
+                    { key: 'leaderboard', label: 'Leaderboard', path: '/leaderboard' },
+                    { key: 'charts', label: 'Charts', path: '/charts' },
+                ].map(item => (
+                    <MenuItem
+                        key={item.key}
+                        component="a"
+                        href={item.path}
+                        onClick={(e) => {
+                            if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                                e.preventDefault();
+                                navigate(item.path);
+                            }
+                            handleStatsMenuClose();
+                        }}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            borderRadius: 0,
+                            textDecoration: 'none', color: 'inherit',
+                            backgroundColor: isActiveRoute(item.path) ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
+                        }}
+                    >
+                        <ListItemText primary={item.label} />
+                    </MenuItem>
+                ))}
             </Menu>
 
             {/* User Menu */}
@@ -824,10 +804,14 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 {authItems.map(({ label, path, onClick, icon }) => (
                     <MenuItem
                         key={label}
-                        onClick={() => {
+                        component={onClick ? 'li' : 'a'}
+                        href={onClick ? undefined : path}
+                        onClick={(e) => {
                             if (onClick) {
                                 onClick();
                             } else {
+                                if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                                e.preventDefault();
                                 navigate(path);
                             }
                             handleUserMenuClose();

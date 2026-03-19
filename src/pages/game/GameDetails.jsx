@@ -18,9 +18,9 @@ import LoadingSpinner from "../../components/icons/LoadingSpinner";
 import { generateGameStats } from "../../api/gameStatsApi";
 import { endGameByGameId, chewGameByGameId } from "../../api/gameApi";
 import {
-    LineChart, Line, AreaChart, Area, XAxis, YAxis,
+    AreaChart, Area, LineChart, Line, XAxis, YAxis,
     CartesianGrid, Tooltip as RechartsTooltip,
-    ResponsiveContainer
+    ReferenceLine, ResponsiveContainer
 } from 'recharts';
 
 const GameDetails = ({ isAdmin }) => {
@@ -108,7 +108,6 @@ const GameDetails = ({ isAdmin }) => {
         const scoreData = [];
         const wpData = [];
 
-        let lastHomeWP = null;
         sorted.forEach((play, idx) => {
             const label = `P${play.play_number || idx + 1}`;
             const homeScore = play.home_score ?? play.homeScore ?? 0;
@@ -121,42 +120,13 @@ const GameDetails = ({ isAdmin }) => {
                 const poss = play.possession || '';
                 const homeWP = poss === 'HOME' ? wp * 100 : poss === 'AWAY' ? (1 - wp) * 100 : null;
                 if (homeWP != null) {
-                    const rounded = Math.round(homeWP);
-                    lastHomeWP = rounded;
-                    wpData.push({ play: label, homeWP: rounded });
+                    const awayWP = 100 - homeWP;
+                    wpData.push({ play: label, homeWP: Math.round(homeWP), awayWP: Math.round(awayWP) });
                 }
-            } else if (lastHomeWP != null) {
-                // Carry forward previous WP for plays without win_probability
-                // (e.g. delay of game penalties)
-                wpData.push({ play: label, homeWP: lastHomeWP });
             }
         });
 
-        // Insert interpolation points at 50% crossings and add clamped keys
-        const processedWp = [];
-        for (let i = 0; i < wpData.length; i++) {
-            const curr = wpData[i];
-            if (i > 0) {
-                const prev = wpData[i - 1];
-                if ((prev.homeWP - 50) * (curr.homeWP - 50) < 0) {
-                    // Crossing point: both line segments meet here
-                    processedWp.push({
-                        play: `${prev.play}x`, homeWP: 50,
-                        homeAbove: 50, homeBelow: 50,
-                        homeLineAbove: 50, homeLineBelow: 50,
-                    });
-                }
-            }
-            processedWp.push({
-                ...curr,
-                homeAbove: Math.max(curr.homeWP, 50),
-                homeBelow: Math.min(curr.homeWP, 50),
-                homeLineAbove: curr.homeWP >= 50 ? curr.homeWP : null,
-                homeLineBelow: curr.homeWP <= 50 ? curr.homeWP : null,
-            });
-        }
-
-        return { scoreData, wpData: processedWp };
+        return { scoreData, wpData };
     }, [plays]);
 
     const handleRequestSort = (property) => {
@@ -253,9 +223,8 @@ const GameDetails = ({ isAdmin }) => {
             subtitle=""
         >
             {/* Back Button */}
-            <Box sx={{ mb: 3 }}>
+            <Box component="a" href="/scoreboard" onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/scoreboard'); } }} sx={{ mb: 3, display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
                 <IconButton
-                    onClick={() => navigate('/scoreboard')}
                     sx={{
                         color: theme.palette.primary.main,
                         '&:hover': { backgroundColor: theme.palette.primary.light + '20' }
@@ -285,10 +254,12 @@ const GameDetails = ({ isAdmin }) => {
                     color: theme.palette.primary.main
                 }}>
                     <Box
-                        component="span"
-                        onClick={() => awayTeam?.id && navigate(`/team-details/${awayTeam.id}`)}
+                        component="a"
+                        href={awayTeam?.id ? `/team-details/${awayTeam.id}` : undefined}
+                        onClick={(e) => { if (awayTeam?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${awayTeam.id}`); } } }}
                         sx={{
                             cursor: awayTeam?.id ? 'pointer' : 'default',
+                            color: 'inherit', textDecoration: 'none',
                             '&:hover': awayTeam?.id ? { textDecoration: 'underline' } : {},
                         }}
                     >
@@ -296,10 +267,12 @@ const GameDetails = ({ isAdmin }) => {
                     </Box>
                     {' vs '}
                     <Box
-                        component="span"
-                        onClick={() => homeTeam?.id && navigate(`/team-details/${homeTeam.id}`)}
+                        component="a"
+                        href={homeTeam?.id ? `/team-details/${homeTeam.id}` : undefined}
+                        onClick={(e) => { if (homeTeam?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${homeTeam.id}`); } } }}
                         sx={{
                             cursor: homeTeam?.id ? 'pointer' : 'default',
+                            color: 'inherit', textDecoration: 'none',
                             '&:hover': homeTeam?.id ? { textDecoration: 'underline' } : {},
                         }}
                     >
@@ -359,7 +332,7 @@ const GameDetails = ({ isAdmin }) => {
                 {game?.postseason_game_logo && (game?.game_type === 'BOWL' || game?.game_type === 'PLAYOFFS' || game?.game_type === 'CONFERENCE_CHAMPIONSHIP' || game?.game_type === 'NATIONAL_CHAMPIONSHIP') && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
                         <Avatar
-                            src={game.postseason_game_logo.startsWith('http') ? game.postseason_game_logo : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${game.postseason_game_logo}`}
+                            src={`${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${game.postseason_game_logo}`}
                             sx={{ width: 120, height: 120 }}
                             variant="rounded"
                         />
@@ -543,40 +516,45 @@ const GameDetails = ({ isAdmin }) => {
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                     <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: homeColor }} />
-                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{homeTeam?.name || homeTeam?.abbreviation || game.home_team}</Typography>
+                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{homeTeam?.name || game.home_team}</Typography>
                                                 </Box>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                     <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: awayColor }} />
-                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{awayTeam?.name || awayTeam?.abbreviation || game.away_team}</Typography>
+                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{awayTeam?.name || game.away_team}</Typography>
                                                 </Box>
                                             </Box>
                                             <ResponsiveContainer width="100%" height={240}>
                                                 <AreaChart data={chartData.wpData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                                                    <defs>
+                                                        <linearGradient id="wpFillGradient" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="0%" stopColor={homeColor} stopOpacity={0.5} />
+                                                            <stop offset="50%" stopColor={homeColor} stopOpacity={0.15} />
+                                                            <stop offset="50%" stopColor={awayColor} stopOpacity={0.15} />
+                                                            <stop offset="100%" stopColor={awayColor} stopOpacity={0.5} />
+                                                        </linearGradient>
+                                                        <linearGradient id="wpStrokeGradient" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="0%" stopColor={homeColor} />
+                                                            <stop offset="50%" stopColor={homeColor} />
+                                                            <stop offset="50%" stopColor={awayColor} />
+                                                            <stop offset="100%" stopColor={awayColor} />
+                                                        </linearGradient>
+                                                    </defs>
                                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                                     <XAxis dataKey="play" tick={false} axisLine={false} />
                                                     <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={v => `${v}%`} fontSize={11} />
+                                                    <ReferenceLine y={50} stroke={theme.palette.text.disabled} strokeDasharray="4 4" strokeWidth={1.5} />
                                                     <RechartsTooltip
-                                                        content={({ active, payload, label }) => {
-                                                            if (!active || !payload?.length) return null;
-                                                            const wp = payload[0]?.payload?.homeWP;
-                                                            if (wp == null) return null;
-                                                            const isHome = wp >= 50;
-                                                            const name = isHome
-                                                                ? (homeTeam?.name || homeTeam?.abbreviation || game.home_team)
-                                                                : (awayTeam?.name || awayTeam?.abbreviation || game.away_team);
-                                                            const pct = isHome ? wp : 100 - wp;
-                                                            return (
-                                                                <Box sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 1, px: 1.5, py: 0.75 }}>
-                                                                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{`Play ${String(label).replace('P', '').replace(/x$/, '')}`}</Typography>
-                                                                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: isHome ? homeColor : awayColor }}>{`${name}: ${pct}%`}</Typography>
-                                                                </Box>
-                                                            );
+                                                        formatter={(value) => {
+                                                            const isHomeFavored = value >= 50;
+                                                            const teamName = isHomeFavored
+                                                                ? (homeTeam?.name || game.home_team)
+                                                                : (awayTeam?.name || game.away_team);
+                                                            const pct = isHomeFavored ? value : 100 - value;
+                                                            return [`${pct}%`, `${teamName} Win Prob`];
                                                         }}
+                                                        labelFormatter={(label) => `Play ${label?.replace('P', '')}`}
                                                     />
-                                                    <Area type="linear" dataKey="homeAbove" stroke="none" fill={homeColor} fillOpacity={0.25} baseValue={50} dot={false} activeDot={false} />
-                                                    <Area type="linear" dataKey="homeBelow" stroke="none" fill={awayColor} fillOpacity={0.25} baseValue={50} dot={false} activeDot={false} />
-                                                    <Line type="linear" dataKey="homeLineAbove" stroke={homeColor} strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />
-                                                    <Line type="linear" dataKey="homeLineBelow" stroke={awayColor} strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />
+                                                    <Area type="monotone" dataKey="homeWP" stroke="url(#wpStrokeGradient)" strokeWidth={2.5} fill="url(#wpFillGradient)" baseValue={50} dot={false} />
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                         </CardContent>

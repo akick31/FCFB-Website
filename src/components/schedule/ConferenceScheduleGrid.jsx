@@ -303,7 +303,9 @@ const ConferenceScheduleGrid = ({
                                                 <TableCell key={weekNum} sx={{ textAlign: 'center', p: 0.25 }}>
                                                     {cell ? (
                                                         <Box
-                                                            onClick={() => cellClickable && navigate(`/game-details/${cellGameId}`)}
+                                                            component={cellClickable ? 'a' : 'div'}
+                                                            href={cellClickable ? `/game-details/${cellGameId}` : undefined}
+                                                            onClick={(e) => { if (cellClickable) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/game-details/${cellGameId}`); } } }}
                                                             sx={{
                                                                 display: 'flex',
                                                                 alignItems: 'center',
@@ -312,6 +314,7 @@ const ConferenceScheduleGrid = ({
                                                                 py: 0.25,
                                                                 px: 0.25,
                                                                 borderRadius: 0.5,
+                                                                textDecoration: 'none', color: 'inherit',
                                                                 cursor: cellClickable ? 'pointer' : 'default',
                                                                 backgroundColor: hasScore
                                                                     ? (wonGame ? 'rgba(5, 150, 105, 0.1)' : 'rgba(220, 38, 38, 0.08)')

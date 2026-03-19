@@ -31,7 +31,9 @@ const UsersTable = ({
     const [selectedRole, setSelectedRole] = useState('');
     const navigate = useNavigate();
 
-    const handleRowClick = (username) => {
+    const handleRowClick = (e, username) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+        e.preventDefault();
         navigate(`/user-details/${username}`);
     };
 
@@ -98,8 +100,10 @@ const UsersTable = ({
                         {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => (
                             <TableRow
                                 key={user.username}
-                                onClick={() => handleRowClick(user.username)}
-                                style={{ cursor: 'pointer' }}
+                                component="a"
+                                href={`/user-details/${user.username}`}
+                                onClick={(e) => handleRowClick(e, user.username)}
+                                style={{ cursor: 'pointer', textDecoration: 'none', color: 'inherit', display: 'table-row' }}
                                 sx={{
                                     backgroundColor: index % 2 === 0 ? '#fafafa' : '#ffffff',
                                     '&:hover': {

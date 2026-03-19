@@ -75,8 +75,10 @@ const Teams = () => {
     }, [searchTerm, selectedConference, selectedAvailability, teams]);
 
     const handleTeamClick = (team) => {
-        navigate(`/team/${team.id}`);
+        navigate(`/team-details/${team.id}`);
     };
+
+    const getTeamHref = (team) => `/team-details/${team.id}`;
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -157,6 +159,7 @@ const Teams = () => {
                     columns={columns}
                     data={currentPageTeams}
                     onRowClick={handleTeamClick}
+                    getRowHref={getTeamHref}
                     sx={{ 
                         '& .MuiTableContainer-root': {
                             borderRadius: 0,

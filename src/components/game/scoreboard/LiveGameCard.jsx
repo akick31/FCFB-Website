@@ -23,94 +23,95 @@ const formatPreviousPlay = (play, homeTeamName, awayTeamName) => {
     if (!result) return null;
 
     const poss = play.possession;
-    const offenseTeam = poss === 'HOME'
-        ? (homeTeamName || 'Home')
-        : (awayTeamName || 'Away');
-    const defenseTeam = poss === 'HOME'
-        ? (awayTeamName || 'Away')
-        : (homeTeamName || 'Home');
+    const offenseTeam = poss === 'HOME' ? (homeTeamName || 'Home') : (awayTeamName || 'Away');
+    const defenseTeam = poss === 'HOME' ? (awayTeamName || 'Away') : (homeTeamName || 'Home');
     const yards = play.yards != null ? Math.abs(play.yards) : null;
-
-    // Normalize UPPER_SNAKE_CASE to a readable description
     const r = result.toUpperCase().replace(/\s+/g, '_');
+
+    const isFirstDown = r === 'GAIN' && play.yards != null && play.yards_to_go != null && Math.abs(play.yards) >= play.yards_to_go;
+
     switch (r) {
-        case 'GAIN':
-            return yards != null ? `${offenseTeam} gains ${yards} yard${yards !== 1 ? 's' : ''}` : `${offenseTeam} gains yards`;
-        case 'NO_GAIN':
-            return `${offenseTeam} runs for no gain`;
+        case 'GAIN': {
+            let text = yards != null ? `${offenseTeam} gains ${yards} yard${yards !== 1 ? 's' : ''}` : `${offenseTeam} gains yards`;
+            if (isFirstDown) text += ', first down';
+            return text;
+        }
         case 'LOSS':
             return yards != null ? `${offenseTeam} loses ${yards} yard${yards !== 1 ? 's' : ''}` : `${offenseTeam} loses yards`;
+        case 'FIRST_DOWN':
+            return yards != null ? `${offenseTeam} gains ${yards} yard${yards !== 1 ? 's' : ''}, first down` : `${offenseTeam} gets a first down`;
+        case 'NO_GAIN':
+            return `${offenseTeam} gains no yards`;
         case 'TOUCHDOWN':
-            return `Touchdown ${offenseTeam}!`;
+            return yards != null ? `${offenseTeam} ${yards} yard touchdown` : `Touchdown ${offenseTeam}!`;
         case 'FIELD_GOAL':
             return yards != null ? `${offenseTeam} ${yards} yard field goal is good` : `${offenseTeam} field goal is good`;
         case 'MISSED_FIELD_GOAL':
-            return `${offenseTeam} misses field goal`;
-        case 'PUNT':
-            return `${offenseTeam} punts`;
-        case 'TURNOVER_ON_DOWNS':
-            return 'Turnover on downs';
+            return yards != null ? `${offenseTeam} ${yards} yard field goal is no good` : `${offenseTeam} field goal is no good`;
+        case 'BLOCKED_FIELD_GOAL':
+            return yards != null ? `${offenseTeam} ${yards} yard field goal is blocked` : `${offenseTeam} field goal is blocked`;
+        case 'PAT':
+        case 'PAT_GOOD':
+        case 'EXTRA_POINT':
+            return `${offenseTeam} PAT is good`;
+        case 'PAT_FAIL':
+        case 'PAT_MISSED':
+        case 'MISSED_PAT':
+            return `${offenseTeam} PAT is no good`;
+        case 'TWO_POINT':
+        case 'TWO_POINT_GOOD':
+            return `${offenseTeam} two-point conversion is good`;
+        case 'TWO_POINT_FAIL':
+        case 'MISSED_TWO_POINT':
+            return `${offenseTeam} two-point conversion fails`;
         case 'FUMBLE':
             return `${offenseTeam} fumbles, recovered by ${defenseTeam}`;
         case 'INTERCEPTION':
-            return `${offenseTeam} intercepted by ${defenseTeam}`;
-        case 'INCOMPLETE':
-        case 'INCOMPLETE_PASS':
-            return 'Incomplete pass';
+            return yards != null ? `${offenseTeam} pass intercepted, returned ${yards} yards` : `${offenseTeam} pass intercepted`;
         case 'SACK':
-            return yards != null ? `${offenseTeam} sacked for ${yards} yard${yards !== 1 ? 's' : ''}` : `${offenseTeam} sacked`;
-        case 'SAFETY':
-            return `Safety! ${defenseTeam} scores`;
-        case 'KICKOFF':
-            return 'Kickoff';
-        case 'KICKOFF_RETURN_TOUCHDOWN':
-        case 'KICK_RETURN_TOUCHDOWN':
-            return `Kickoff return touchdown ${defenseTeam}!`;
+            return yards != null ? `${offenseTeam} sacked for ${yards} yard${yards !== 1 ? 's' : ''}` : `${offenseTeam} is sacked`;
+        case 'PUNT':
+            return yards != null ? `${offenseTeam} punts ${yards} yards` : `${offenseTeam} punts`;
         case 'PUNT_RETURN_TOUCHDOWN':
-            return `Punt return touchdown ${defenseTeam}!`;
+            return `${defenseTeam} returns the punt for a touchdown!`;
+        case 'KICK_RETURN_TOUCHDOWN':
+            return `${defenseTeam} returns the kickoff for a touchdown!`;
+        case 'SAFETY':
+            return `Safety! ${defenseTeam} scores 2 points`;
+        case 'KICKOFF':
+            return yards != null ? `${offenseTeam} kicks off ${yards} yards` : `${offenseTeam} kicks off`;
+        case 'TOUCHBACK':
+            return 'Touchback';
         case 'DELAY_OF_GAME':
-            return 'Delay of game penalty';
+            return `Delay of game on ${offenseTeam}`;
         case 'SPIKE':
             return `${offenseTeam} spikes the ball`;
         case 'KNEEL':
             return `${offenseTeam} kneels`;
-        case 'PAT':
-        case 'EXTRA_POINT':
-            return 'Extra point is good';
-        case 'MISSED_PAT':
-        case 'MISSED_EXTRA_POINT':
-            return 'Extra point missed';
-        case 'TWO_POINT':
-        case 'TWO_POINT_CONVERSION':
-            return 'Two-point conversion';
-        case 'DEFENSIVE_TOUCHDOWN':
-            return `Defensive touchdown ${defenseTeam}!`;
-        case 'TOUCHBACK':
-            return 'Touchback';
+        case 'INCOMPLETE':
+        case 'INCOMPLETE_PASS':
+            return `${offenseTeam} pass incomplete`;
         default: {
-            // Fallback: convert UPPER_SNAKE_CASE to Title Case
             const readable = result.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
             return readable;
         }
     }
 };
 
-// ── Game type badge ─────────────────────────────────────────────
-const GameTypeInfo = ({ game, homeTeamData }) => {
-    const theme = useTheme();
+// ── Game type badge ─────────────────────────────────────────
+const GameTypeInfo = ({ game, homeTeamData, isMobile }) => {
     const gameType = game.game_type;
-    const rawLogo = game.postseason_game_logo;
-    const postseasonLogo = rawLogo
-        ? (rawLogo.startsWith('http') ? rawLogo : `${API_BASE}/images/${rawLogo}`)
+    const postseasonLogo = game.postseason_game_logo
+        ? `${API_BASE}/images/${game.postseason_game_logo}`
         : null;
-    const bowlName = game.postseason_game_name;
+    const bowlName = game.bowl_game_name;
     const confData = homeTeamData?.conference
         ? conferences.find(c => c.value === homeTeamData.conference)
         : null;
 
     const logoBox = (src) =>
         src ? (
-            <Box sx={{ width: 18, height: 18, flexShrink: 0, display: 'flex', alignItems: 'center', backgroundColor: theme.palette.grey[100], borderRadius: 0.5 }}>
+            <Box sx={{ width: 18, height: 18, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                 <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </Box>
         ) : null;
@@ -123,6 +124,24 @@ const GameTypeInfo = ({ game, homeTeamData }) => {
             </Typography>
         </Box>
     );
+
+    // Mobile: shorter labels
+    if (isMobile) {
+        switch (gameType) {
+            case 'CONFERENCE_GAME': return label(confData?.label || 'Conf', confData?.logo);
+            case 'CONFERENCE_CHAMPIONSHIP': return label('CCG', confData?.logo);
+            case 'PLAYOFFS': {
+                const round = game.playoff_round || game.playoffRound;
+                const roundText = round === 1 ? 'R1' : round === 2 ? 'R2' : round === 3 ? 'QF' : round === 4 ? 'SF' : 'Playoff';
+                return label(roundText, postseasonLogo);
+            }
+            case 'NATIONAL_CHAMPIONSHIP': return label('NCG', postseasonLogo);
+            case 'BOWL': return label('Bowl', postseasonLogo);
+            case 'OUT_OF_CONFERENCE': return label('OOC', null);
+            case 'SCRIMMAGE': return label('Scrm', null);
+            default: return label(gameType?.substring(0, 4) || 'Game', null);
+        }
+    }
 
     switch (gameType) {
         case 'CONFERENCE_GAME': return label(confData?.label || 'Conference', confData?.logo);
@@ -147,37 +166,35 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
     const homeScore = game.homeScore || game.home_score || 0;
     const awayScore = game.awayScore || game.away_score || 0;
     const gameStatus = game.game_status;
-
     const isOngoing = isGameOngoing(gameStatus);
     const statusInfo = getGameStatusInfo(gameStatus);
     const possession = game.possession;
     const waitingOn = game.waiting_on;
     const gameId = game.game_id;
     const isChewMode = (game.game_mode === 'CHEW');
+    const gameUrl = gameId ? `/game-details/${gameId}` : null;
 
     const [homeWinProb, setHomeWinProb] = useState(null);
+    const [previousPlayText, setPreviousPlayText] = useState(null);
     const [homeStats, setHomeStats] = useState(null);
     const [awayStats, setAwayStats] = useState(null);
-    const [previousPlayText, setPreviousPlayText] = useState(null);
 
     // Win probability + previous play
     useEffect(() => {
         if (!gameId || !isOngoing) { setHomeWinProb(null); setPreviousPlayText(null); return; }
         getPreviousPlay(gameId)
             .then(play => {
+                setPreviousPlayText(formatPreviousPlay(play, homeTeamName, awayTeamName));
                 if (play?.win_probability != null) {
                     const wp = parseFloat(play.win_probability);
                     const p = play.possession || possession;
                     setHomeWinProb(p === 'HOME' ? wp : p === 'AWAY' ? 1 - wp : null);
                 }
-                // Build readable previous play description
-                const desc = formatPreviousPlay(play, homeTeamName, awayTeamName, homeTeamData, awayTeamData);
-                setPreviousPlayText(desc || null);
             })
             .catch(() => {});
-    }, [gameId, isOngoing, possession, homeScore, awayScore, homeTeamName, awayTeamName, homeTeamData, awayTeamData]);
+    }, [gameId, isOngoing, possession, homeTeamName, awayTeamName]);
 
-    // Quarter scores — re-fetch when score changes
+    // Quarter scores
     useEffect(() => {
         if (!gameId || !homeTeamName || !awayTeamName) return;
         Promise.all([
@@ -187,9 +204,15 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
             setHomeStats(h?.data || h || null);
             setAwayStats(a?.data || a || null);
         });
-    }, [gameId, homeTeamName, awayTeamName, homeScore, awayScore]);
+    }, [gameId, homeTeamName, awayTeamName]);
 
-    const handleClick = () => gameId && navigate(`/game-details/${gameId}`);
+    const handleClick = (e) => {
+        if (!gameUrl) return;
+        // Allow modifier keys to open in new tab natively
+        if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+        e.preventDefault();
+        navigate(gameUrl);
+    };
 
     const getWaitingOnInfo = () => {
         if (!waitingOn) return null;
@@ -210,8 +233,7 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                 borderColor: 'divider',
                 backgroundColor: 'transparent',
             }}>
-                {/* Left side: Team info */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: isMobile ? 0.5 : 0.75, width: showQuarters ? (isMobile ? '30%' : '35%') : 'auto', flex: showQuarters ? 'none' : 1, minWidth: 0, flexShrink: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0, minWidth: 0, maxWidth: showQuarters ? (isMobile ? 60 : 90) : 'none', flex: showQuarters ? '0 1 auto' : 1 }}>
                     <Box sx={{
                         width: 7, height: 7, borderRadius: '50%',
                         backgroundColor: hasPossession ? theme.palette.warning.main : 'transparent',
@@ -229,36 +251,35 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                             #{ranking}
                         </Typography>
                     )}
-                    <Typography sx={{
-                        fontSize: isMobile ? '0.75rem' : '1.0rem', fontWeight: 700,
-                        color: isWinner ? theme.palette.primary.main : 'text.primary',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}>
-                        {isMobile
-                            ? (teamData?.abbreviation || (teamName && teamName.length > 10 ? teamName.substring(0, 10) : teamName) || '')
-                            : (teamName && teamName.length > 12 ? teamData?.abbreviation || teamName.substring(0, 12) : teamName || '')
-                        }
-                    </Typography>
+                    {/* Hide team name on mobile to save space */}
+                    {!isMobile && (
+                        <Typography sx={{
+                            fontSize: '0.82rem', fontWeight: isWinner ? 700 : 500,
+                            color: isWinner ? theme.palette.primary.main : 'text.primary',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>
+                            {teamData?.abbreviation || teamName || ''}
+                        </Typography>
+                    )}
                 </Box>
-                {/* Middle: Quarter scores (if available) */}
+                {/* Inline quarter scores */}
                 {showQuarters && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, gap: 0.25 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
                         {quarterCols.map(key => (
                             <Typography key={key} sx={{
-                                fontSize: isMobile ? '0.65rem' : '0.8rem', fontWeight: 500,
+                                fontSize: isMobile ? '0.7rem' : '0.85rem', fontWeight: 500,
                                 color: 'text.secondary',
-                                textAlign: 'center', flex: 1, minWidth: 0,
+                                textAlign: 'center', flex: 1,
                             }}>
                                 {stats?.[key] != null ? stats[key] : '-'}
                             </Typography>
                         ))}
                     </Box>
                 )}
-                {/* Right: Total score */}
                 <Typography sx={{
-                    fontSize: isMobile ? '0.95rem' : '1.15rem', fontWeight: 800,
+                    fontSize: '1.15rem', fontWeight: 800,
                     color: isWinner ? theme.palette.primary.main : 'text.primary',
-                    minWidth: isMobile ? 28 : 40, textAlign: 'right', flexShrink: 0,
+                    minWidth: 34, textAlign: 'right', flexShrink: 0,
                 }}>
                     {score}
                 </Typography>
@@ -285,11 +306,15 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
 
     return (
         <Paper
-            elevation={2}
+            component={gameUrl ? 'a' : 'div'}
+            href={gameUrl || undefined}
             onClick={handleClick}
+            elevation={2}
             sx={{
                 borderRadius: 2, overflow: 'hidden',
                 cursor: gameId ? 'pointer' : 'default',
+                textDecoration: 'none', color: 'inherit',
+                display: 'block',
                 transition: 'transform 0.15s, box-shadow 0.15s',
                 '&:hover': gameId ? { transform: 'translateY(-2px)', boxShadow: theme.shadows[6] } : {},
                 border: '1px solid', borderColor: isOngoing ? theme.palette.primary.main + '40' : 'divider',
@@ -303,11 +328,11 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                 borderBottom: '1px solid',
                 borderColor: isOngoing ? theme.palette.primary.main + '30' : 'divider',
             }}>
-                <Box sx={{ width: showQuarters ? (isMobile ? '30%' : '35%') : 'auto', minWidth: 0, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ flexShrink: 0, minWidth: 0, maxWidth: showQuarters ? (isMobile ? 60 : 90) : 'none', flex: showQuarters ? '0 1 auto' : 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     {isFinal ? (
                         <Chip label={statusInfo.status} size="small" sx={{ backgroundColor: statusInfo.color, color: 'white', fontWeight: 600, fontSize: '0.65rem', height: 20, '& .MuiChip-label': { px: 0.75 } }} />
                     ) : (
-                        <GameTypeInfo game={game} homeTeamData={homeTeamData} />
+                        <GameTypeInfo game={game} homeTeamData={homeTeamData} isMobile={isMobile} />
                     )}
                     {isChewMode && (
                         <Chip label="CHEW" size="small" sx={{ backgroundColor: theme.palette.error.main, color: 'white', fontWeight: 700, fontSize: '0.6rem', height: 18, '& .MuiChip-label': { px: 0.5 } }} />
@@ -315,14 +340,16 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                 </Box>
                 {showQuarters && (
                     <>
-                        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, gap: 0.25 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
                             {quarterHeaders.map(h => (
-                                <Typography key={h} sx={{ fontSize: isMobile ? '0.55rem' : '0.7rem', fontWeight: 600, color: 'text.disabled', textAlign: 'center', flex: 1, minWidth: 0 }}>
+                                <Typography key={h} sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', fontWeight: 600, color: 'text.disabled', textAlign: 'center', flex: 1 }}>
                                     {h}
                                 </Typography>
                             ))}
                         </Box>
-                        <Box sx={{ minWidth: isMobile ? 28 : 40, flexShrink: 0 }} />
+                        <Typography sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', fontWeight: 600, color: 'text.disabled', textAlign: 'right', minWidth: 34 }}>
+                            T
+                        </Typography>
                     </>
                 )}
             </Box>
@@ -334,13 +361,13 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
             {/* ─── Bottom Bar: Spread | Game State | Waiting On ─── */}
             <Box sx={{
                 display: 'flex', alignItems: 'center',
-                px: isMobile ? 0.75 : 1.5, py: 0.5,
+                px: 1.5, py: 0.5,
                 backgroundColor: theme.palette.grey[50],
                 borderTop: '1px solid', borderColor: 'divider',
                 gap: 0.5, minHeight: 32,
             }}>
                 {/* Left: Spread */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: isMobile ? 36 : 48 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 48 }}>
                     {game.home_vegas_spread !== null && game.home_vegas_spread !== undefined && (
                         <>
                             <Box sx={{ width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -412,11 +439,11 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                     borderTop: '1px solid', borderColor: 'divider',
                     backgroundColor: theme.palette.grey[50],
                 }}>
-                    <Typography sx={{ fontSize: '0.65rem', color: 'text.secondary', textAlign: 'center' }}>
-                        <Typography component="span" sx={{ fontSize: '0.65rem', fontWeight: 700, color: 'text.secondary' }}>
-                            Previous Play:
-                        </Typography>
-                        {' '}{previousPlayText}
+                    <Typography sx={{
+                        fontSize: '0.68rem', color: 'text.secondary',
+                        fontStyle: 'italic', textAlign: 'center',
+                    }}>
+                        Previous Play: {previousPlayText}
                     </Typography>
                 </Box>
             )}
@@ -435,7 +462,6 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                             {homeWinPct}% {homeTeamData?.abbreviation || homeTeamName?.substring(0, 4)}
                         </Typography>
                     </Box>
-                    {/* Thin line with junction marker */}
                     <Box sx={{ position: 'relative', display: 'flex', height: 3, borderRadius: 2 }}>
                         <Box sx={{ width: `${awayWinPct}%`, height: '100%', backgroundColor: awayColor, borderRadius: '2px 0 0 2px', transition: 'width 0.5s ease' }} />
                         <Box sx={{ width: `${homeWinPct}%`, height: '100%', backgroundColor: homeColor, borderRadius: '0 2px 2px 0', transition: 'width 0.5s ease' }} />

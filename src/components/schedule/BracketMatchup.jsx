@@ -20,46 +20,59 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
     const homeWon = finished && homeScore != null && homeScore > awayScore;
     const awayWon = finished && awayScore != null && awayScore > homeScore;
     const clickable = !!gameId;
+    const gameUrl = gameId ? `/game-details/${gameId}` : null;
 
     // Game status info
     const quarter = field(game, 'quarter', 'quarter');
     const clock = field(game, 'clock', 'clock') || field(game, 'gameClock', 'game_clock');
     const status = field(game, 'status', 'status') || field(game, 'gameStatus', 'game_status');
 
-    const formatQuarter = (q) => {
+    const formatQuarterShort = (q) => {
         if (q >= 6) return `${q - 4}OT`;
         if (q === 5) return 'OT';
-        if (q === 4) return '4th';
-        if (q === 3) return '3rd';
-        if (q === 2) return '2nd';
-        if (q === 1) return '1st';
-        return '';
+        return `${q}Q`;
     };
 
     const getStatusText = () => {
         if (finished || status === 'FINAL' || status === 'COMPLETED') {
-            return null; // No "FINAL" text — finished games just show score
+            if (quarter >= 6) return `Final/${quarter - 4}OT`;
+            if (quarter === 5) return 'Final/OT';
+            return 'Final';
+        }
+        // Show quarter/time if game has quarter data (in progress)
+        if (quarter) {
+            const qtr = formatQuarterShort(quarter);
+            const time = (quarter >= 5) ? '' : (clock || '');
+            return time ? `${time} ${qtr}` : qtr;
         }
         if (started) {
-            const qtr = formatQuarter(quarter);
-            const time = (quarter >= 5) ? '' : (clock || '');
-            if (qtr && time) return `${qtr} ${time}`;
-            if (qtr) return qtr;
-            return null;
+            return 'In Progress';
         }
         return null;
     };
 
     const statusText = getStatusText();
+    const isLive = started && !finished && status !== 'FINAL' && status !== 'COMPLETED';
+
+    const handleClick = (e) => {
+        if (!clickable) return;
+        if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+        e.preventDefault();
+        navigate(gameUrl);
+    };
 
     return (
         <Paper
+            component={gameUrl ? 'a' : 'div'}
+            href={gameUrl || undefined}
+            onClick={handleClick}
             elevation={2}
-            onClick={() => clickable && navigate(`/game-details/${gameId}`)}
             sx={{
                 borderRadius: 1.5,
                 overflow: 'hidden',
                 cursor: clickable ? 'pointer' : 'default',
+                textDecoration: 'none', color: 'inherit',
+                display: 'block',
                 transition: 'transform 0.15s, box-shadow 0.15s',
                 '&:hover': clickable ? {
                     transform: 'scale(1.02)',
@@ -77,7 +90,7 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
                     gap: 0.75,
                     px: 1,
                     py: 0.5,
-                    backgroundColor: '#C9960C',
+                    background: 'linear-gradient(135deg, #8B6914 0%, #C9960C 50%, #8B6914 100%)',
                     borderBottom: '1px solid',
                     borderColor: 'divider',
                 }}>
@@ -180,12 +193,12 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
                     textAlign: 'center',
                     py: 0.3,
                     px: 1,
-                    backgroundColor: finished ? theme.palette.grey[100] : theme.palette.warning.light + '30',
+                    backgroundColor: isLive ? theme.palette.warning.light + '30' : (finished ? theme.palette.grey[100] : 'transparent'),
                 }}>
                     <Typography variant="caption" sx={{
                         fontWeight: 600,
                         fontSize: '0.65rem',
-                        color: finished ? 'text.secondary' : theme.palette.warning.dark,
+                        color: isLive ? theme.palette.warning.dark : 'text.secondary',
                         textTransform: 'uppercase',
                     }}>
                         {statusText}

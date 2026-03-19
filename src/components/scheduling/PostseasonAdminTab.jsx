@@ -34,7 +34,7 @@ import { createScheduleEntry, updateScheduleEntry, deleteScheduleEntry } from '.
 import { uploadPostseasonLogo } from '../../api/uploadApi';
 import { conferences } from '../constants/conferences';
 import Postseason from '../schedule/Postseason';
-import { R2_BYE_SEEDS, ROUND_LABELS, playoffWeekForRound, CFP_LOGO_URL } from '../constants/playoffBracket';
+import { R2_BYE_SEEDS, ROUND_LABELS, playoffWeekForRound } from '../constants/playoffBracket';
 import { field } from '../../utils/fieldHelper';
 
 // Conferences available for CCG (exclude FBS Independent)
@@ -225,11 +225,11 @@ const PostseasonAdminTab = ({
     // ── Edit bowl game name ──────────────────────────────────────────
     const handleEditBowlName = (game) => {
         setEditingBowlGame(game);
-        setEditingBowlName(field(game, 'postseasonGameName', 'postseason_game_name') || '');
+        setEditingBowlName(field(game, 'bowlGameName', 'bowl_game_name') || '');
         const logoUrl = field(game, 'postseasonGameLogo', 'postseason_game_logo');
         setEditingBowlLogo(logoUrl || null);
         if (logoUrl) {
-            setEditingBowlLogoPreview(logoUrl.startsWith('http') ? logoUrl : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${logoUrl}`);
+            setEditingBowlLogoPreview(`${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${logoUrl}`);
         } else {
             setEditingBowlLogoPreview(null);
         }
@@ -246,7 +246,7 @@ const PostseasonAdminTab = ({
                 homeTeam: field(editingBowlGame, 'homeTeam', 'home_team'),
                 awayTeam: field(editingBowlGame, 'awayTeam', 'away_team'),
                 gameType: field(editingBowlGame, 'gameType', 'game_type'),
-                postseasonGameName: editingBowlName || null,
+                bowlGameName: editingBowlName || null,
                 postseasonGameLogo: editingBowlLogo || null,
             });
             onShowSnackbar('Bowl game updated successfully');
@@ -300,8 +300,6 @@ const PostseasonAdminTab = ({
                     playoffRound: 1,
                     playoffHomeSeed: highSeed,
                     playoffAwaySeed: lowSeed,
-                    postseasonGameLogo: CFP_LOGO_URL,
-                    postseasonGameName: ROUND_LABELS[1],
                 });
             }
 
@@ -319,8 +317,6 @@ const PostseasonAdminTab = ({
                     playoffRound: 2,
                     playoffHomeSeed: byeSeed,
                     playoffAwaySeed: null,
-                    postseasonGameLogo: CFP_LOGO_URL,
-                    postseasonGameName: ROUND_LABELS[2],
                 });
             }
 
@@ -375,8 +371,6 @@ const PostseasonAdminTab = ({
                         playoffRound: 2,
                         playoffHomeSeed: byeSeed,
                         playoffAwaySeed: winnerSeed,
-                        postseasonGameLogo: CFP_LOGO_URL,
-                        postseasonGameName: ROUND_LABELS[2],
                     });
                     onShowSnackbar(`${advanceWinner} (#${winnerSeed}) advances to face #${byeSeed} in ${ROUND_LABELS[2]} (Week ${nextWeek})!`);
                     setAdvanceDialogOpen(false);
@@ -496,8 +490,6 @@ const PostseasonAdminTab = ({
                     playoffRound: nextRound,
                     playoffHomeSeed: isPlaceholder(h) ? winnerSeed : existingHomeSeed,
                     playoffAwaySeed: isPlaceholder(a) ? winnerSeed : existingAwaySeed,
-                    postseasonGameLogo: CFP_LOGO_URL,
-                    postseasonGameName: ROUND_LABELS[nextRound],
                 });
                 onShowSnackbar(`${advanceWinner} advanced to ${ROUND_LABELS[nextRound] || `Round ${nextRound}`} (Week ${nextWeek})!`);
             } else {
@@ -511,8 +503,6 @@ const PostseasonAdminTab = ({
                     playoffRound: nextRound,
                     playoffHomeSeed: winnerSeed,
                     playoffAwaySeed: null,
-                    postseasonGameLogo: CFP_LOGO_URL,
-                    postseasonGameName: ROUND_LABELS[nextRound],
                 });
                 onShowSnackbar(`${advanceWinner} advanced to ${ROUND_LABELS[nextRound] || `Round ${nextRound}`} (Week ${nextWeek})!`);
             }
@@ -595,7 +585,7 @@ const PostseasonAdminTab = ({
                                         {field(game, 'postseasonGameLogo', 'postseason_game_logo') && (
                                             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
                                                 <Avatar
-                                                    src={(() => { const logo = field(game, 'postseasonGameLogo', 'postseason_game_logo'); return logo.startsWith('http') ? logo : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${logo}`; })()}
+                                                    src={`${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${field(game, 'postseasonGameLogo', 'postseason_game_logo')}`}
                                                     sx={{ width: 80, height: 80 }}
                                                     variant="rounded"
                                                 />
@@ -672,7 +662,7 @@ const PostseasonAdminTab = ({
                                 const started = field(game, 'started', 'started');
                                 const homeScore = field(game, 'homeScore', 'home_score');
                                 const awayScore = field(game, 'awayScore', 'away_score');
-                                const bowlName = field(game, 'postseasonGameName', 'postseason_game_name');
+                                const bowlName = field(game, 'bowlGameName', 'bowl_game_name');
                                 const homeWon = finished && homeScore != null && homeScore > awayScore;
                                 const awayWon = finished && awayScore != null && awayScore > homeScore;
                                 return (
@@ -681,7 +671,7 @@ const PostseasonAdminTab = ({
                                         {field(game, 'postseasonGameLogo', 'postseason_game_logo') && (
                                             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
                                                 <Avatar
-                                                    src={(() => { const logo = field(game, 'postseasonGameLogo', 'postseason_game_logo'); return logo.startsWith('http') ? logo : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${logo}`; })()}
+                                                    src={`${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${field(game, 'postseasonGameLogo', 'postseason_game_logo')}`}
                                                     sx={{ width: 80, height: 80 }}
                                                     variant="rounded"
                                                 />

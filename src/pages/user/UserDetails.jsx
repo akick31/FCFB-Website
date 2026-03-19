@@ -281,12 +281,17 @@ const UserDetails = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {currentTeamData?.logo ? (
                             <Box
-                                component="img"
-                                src={currentTeamData.logo}
-                                alt={user.team}
-                                sx={{ width: 72, height: 72, objectFit: 'contain', cursor: 'pointer' }}
-                                onClick={() => currentTeamData?.id && navigate(`/team-details/${currentTeamData.id}`)}
-                            />
+                                component="a"
+                                href={currentTeamData?.id ? `/team-details/${currentTeamData.id}` : undefined}
+                                onClick={(e) => { if (currentTeamData?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${currentTeamData.id}`); } } }}
+                                sx={{ display: 'inline-block', cursor: 'pointer' }}
+                            >
+                                <img
+                                    src={currentTeamData.logo}
+                                    alt={user.team}
+                                    style={{ width: 72, height: 72, objectFit: 'contain' }}
+                                />
+                            </Box>
                         ) : (
                             <Avatar sx={{
                                 width: 72, height: 72,
@@ -312,12 +317,15 @@ const UserDetails = () => {
                         <Chip icon={<Person sx={{ fontSize: 16 }} />} label={formatPosition(user.position)} size="small" />
                         {user.team && (
                             <Chip
+                                component={currentTeamData?.id ? 'a' : 'div'}
+                                href={currentTeamData?.id ? `/team-details/${currentTeamData.id}` : undefined}
                                 icon={currentTeamData?.logo ? (
                                     <Avatar src={currentTeamData.logo} sx={{ width: 18, height: 18 }} />
                                 ) : <School sx={{ fontSize: 16 }} />}
                                 label={user.team}
                                 size="small"
-                                onClick={() => currentTeamData?.id && navigate(`/team-details/${currentTeamData.id}`)}
+                                clickable={!!currentTeamData?.id}
+                                onClick={(e) => { if (currentTeamData?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${currentTeamData.id}`); } } }}
                                 sx={{ cursor: currentTeamData?.id ? 'pointer' : 'default' }}
                             />
                         )}
@@ -482,11 +490,15 @@ const UserDetails = () => {
                                                 <TableRow
                                                     key={idx}
                                                     hover
+                                                    component={td?.id ? 'a' : undefined}
+                                                    href={td?.id ? `/team-details/${td.id}` : undefined}
                                                     sx={{
                                                         cursor: td?.id ? 'pointer' : 'default',
                                                         backgroundColor: isActive ? theme.palette.success.main + '08' : 'inherit',
+                                                        textDecoration: 'none', color: 'inherit',
+                                                        display: td?.id ? 'table-row' : undefined,
                                                     }}
-                                                    onClick={() => td?.id && navigate(`/team-details/${td.id}`)}
+                                                    onClick={(e) => { if (td?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${td.id}`); } } }}
                                                 >
                                                     <TableCell>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

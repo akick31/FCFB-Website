@@ -152,19 +152,13 @@ const ScoreboardList = ({
         }
     };
 
-    const handleRowClick = (game) => {
+    const handleRowClick = (e, game) => {
         const gameId = game.game_id;
-        
-        if (gameId) {
-            try {
-                navigate(`/game-details/${gameId}`);
-            } catch (error) {
-                console.error('Navigation error:', error);
-            }
-        } else {
-            console.warn('No game ID found:', game);
-            console.warn('Available fields:', Object.keys(game));
-        }
+        if (!gameId) return;
+        // Allow modifier keys to open in new tab natively
+        if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+        e.preventDefault();
+        navigate(`/game-details/${gameId}`);
     };
 
 
@@ -383,10 +377,18 @@ const ScoreboardList = ({
                     const homeTeamName = game.homeTeam || game.home_team;
                     const awayTeamData = teamsData[awayTeamName];
                     const homeTeamData = teamsData[homeTeamName];
+                    const hScore = game.homeScore || game.home_score || 0;
+                    const aScore = game.awayScore || game.away_score || 0;
+                    const homeWon = hScore > aScore;
+                    const awayWon = aScore > hScore;
+                    const gameId = game.game_id;
+                    const gameUrl = gameId ? `/game-details/${gameId}` : null;
 
                     return (
                         <Box
                             key={game.gameId || game.id}
+                            component={gameUrl ? 'a' : 'div'}
+                            href={gameUrl || undefined}
                             sx={{
                                 display: 'grid',
                                 gridTemplateColumns: getGridColumns(),
@@ -397,11 +399,13 @@ const ScoreboardList = ({
                                 transition: 'background-color 0.2s',
                                 backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa',
                                 minWidth: getMinWidth(),
+                                textDecoration: 'none',
+                                color: 'inherit',
                                 '&:hover': {
                                     backgroundColor: theme.palette.primary.light + '20'
                                 }
                             }}
-                            onClick={() => handleRowClick(game)}
+                            onClick={(e) => handleRowClick(e, game)}
                         >
                             {/* Team Matchup Column */}
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -433,9 +437,9 @@ const ScoreboardList = ({
                                     </Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                         <Typography sx={{
-                                            color: 'text.primary',
+                                            color: homeWon ? theme.palette.primary.main : 'text.primary',
                                             fontSize: { xs: '0.7rem', sm: '1rem' },
-                                            fontWeight: 600,
+                                            fontWeight: homeWon ? 700 : 500,
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap'
@@ -493,9 +497,9 @@ const ScoreboardList = ({
                                     </Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                         <Typography sx={{
-                                            color: 'text.primary',
+                                            color: awayWon ? theme.palette.primary.main : 'text.primary',
                                             fontSize: { xs: '0.7rem', sm: '1rem' },
-                                            fontWeight: 600,
+                                            fontWeight: awayWon ? 700 : 500,
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap'
@@ -524,7 +528,7 @@ const ScoreboardList = ({
                                 </Box>
                             </Box>
 
-                            {/* Score Column */}
+                            {/* Score Column - highlight winner */}
                             <Box sx={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -532,13 +536,13 @@ const ScoreboardList = ({
                                 gap: 0.5
                             }}>
                                 <Typography sx={{
-                                    color: 'text.primary',
+                                    color: homeWon ? theme.palette.primary.main : 'text.primary',
                                     fontSize: '0.9rem',
-                                    fontWeight: 700,
+                                    fontWeight: homeWon ? 800 : 600,
                                     minWidth: 20,
                                     textAlign: 'center'
                                 }}>
-                                    {game.homeScore || game.home_score || 0}
+                                    {hScore}
                                 </Typography>
                                 <Typography sx={{
                                     color: 'text.secondary',
@@ -547,13 +551,13 @@ const ScoreboardList = ({
                                     -
                                 </Typography>
                                 <Typography sx={{
-                                    color: 'text.primary',
+                                    color: awayWon ? theme.palette.primary.main : 'text.primary',
                                     fontSize: '0.9rem',
-                                    fontWeight: 700,
+                                    fontWeight: awayWon ? 800 : 600,
                                     minWidth: 20,
                                     textAlign: 'center'
                                 }}>
-                                    {game.awayScore || game.away_score || 0}
+                                    {aScore}
                                 </Typography>
                             </Box>
 

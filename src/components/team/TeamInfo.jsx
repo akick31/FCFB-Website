@@ -231,7 +231,9 @@ const TeamInfo = ({ team, user }) => {
                             <Button
                                 variant="contained"
                                 color="primary"
-                                onClick={() => navigate(`/modify-team/${team.id}`)}
+                                component="a"
+                                href={`/modify-team/${team.id}`}
+                                onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/modify-team/${team.id}`); } }}
                                 fullWidth
                             >
                                 Modify Team

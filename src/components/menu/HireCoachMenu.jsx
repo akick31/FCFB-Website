@@ -80,7 +80,9 @@ export const HireCoachByTeamMenu = ({
                     variant="outlined"
                     color="primary"
                     fullWidth
-                    onClick={() => navigate(`/team-details/${selectedTeam}`)}
+                    component={selectedTeam ? 'a' : 'button'}
+                    href={selectedTeam ? `/team-details/${selectedTeam}` : undefined}
+                    onClick={(e) => { if (selectedTeam && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${selectedTeam}`); } }}
                     disabled={!selectedTeam}
                 >
                     Go to Team Page
@@ -213,7 +215,9 @@ export const HireCoachByUserMenu = ({
                     variant="outlined"
                     color="primary"
                     fullWidth
-                    onClick={() => navigate(`/team-details/${selectedTeam.id}`)}
+                    component={selectedTeam ? 'a' : 'button'}
+                    href={selectedTeam ? `/team-details/${selectedTeam.id}` : undefined}
+                    onClick={(e) => { if (selectedTeam && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${selectedTeam.id}`); } }}
                     disabled={!selectedTeam}
                 >
                     Go to Team Page

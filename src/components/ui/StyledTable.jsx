@@ -13,27 +13,31 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const StyledTable = ({ 
-    columns, 
-    data, 
+const StyledTable = ({
+    columns,
+    data,
     title,
     subtitle,
     maxHeight = 400,
     stickyHeader = true,
     showHeader = true,
     onRowClick,
+    getRowHref,
     sx = {},
     compact = false,
     headerBackground = 'transparent',
     headerTextColor = 'text.primary',
-    ...props 
+    ...props
 }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-    const handleRowClick = (row, index) => {
+    const handleRowClick = (e, row, index) => {
         if (onRowClick) {
-            onRowClick(row, index);
+            // If getRowHref is set, allow modifier keys for native link behavior
+            if (getRowHref && (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0)) return;
+            if (getRowHref) e.preventDefault();
+            onRowClick(row, index, e);
         }
     };
 
@@ -114,15 +118,21 @@ const StyledTable = ({
                         </TableHead>
                     )}
                     <TableBody>
-                        {data.map((row, index) => (
+                        {data.map((row, index) => {
+                            const rowHref = getRowHref ? getRowHref(row) : null;
+                            return (
                             <TableRow
                                 key={index}
-                                onClick={() => handleRowClick(row, index)}
+                                component={rowHref ? 'a' : undefined}
+                                href={rowHref || undefined}
+                                onClick={(e) => handleRowClick(e, row, index)}
                                 sx={{
                                     cursor: onRowClick ? 'pointer' : 'default',
+                                    textDecoration: 'none', color: 'inherit',
+                                    display: rowHref ? 'table-row' : undefined,
                                     transition: 'all 0.2s ease',
                                     '&:hover': {
-                                        backgroundColor: onRowClick 
+                                        backgroundColor: onRowClick
                                             ? `${theme.palette.primary.main}08`
                                             : 'transparent',
                                         transform: onRowClick ? 'scale(1.01)' : 'none',
@@ -148,7 +158,8 @@ const StyledTable = ({
                                     </TableCell>
                                 ))}
                             </TableRow>
-                        ))}
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </TableContainer>
@@ -172,6 +183,7 @@ StyledTable.propTypes = {
     stickyHeader: PropTypes.bool,
     showHeader: PropTypes.bool,
     onRowClick: PropTypes.func,
+    getRowHref: PropTypes.func,
     sx: PropTypes.object,
     compact: PropTypes.bool,
     headerBackground: PropTypes.string,

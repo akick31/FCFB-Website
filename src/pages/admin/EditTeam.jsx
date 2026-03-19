@@ -116,7 +116,9 @@ const EditTeam = () => {
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                     <IconButton
-                        onClick={() => navigate('/admin/team-management')}
+                        component="a"
+                        href="/admin/team-management"
+                        onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/admin/team-management'); } }}
                         sx={{ color: 'primary.main', mr: 2 }}
                     >
                         <ArrowBack />

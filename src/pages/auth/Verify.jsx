@@ -75,8 +75,10 @@ const Verify = ({ userId }) => {
                             <Alert severity="success" sx={{ mt: 2 }}>Successfully verified user!</Alert>
                             <Button
                                 variant="contained"
+                                component="a"
+                                href="/login"
                                 backgroundColor="#004260"
-                                onClick={() => navigate('/login')}
+                                onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/login'); } }}
                                 sx={{
                                     display: 'flex',
                                     mt: 2,
