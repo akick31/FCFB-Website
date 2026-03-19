@@ -10,6 +10,6 @@ export const conferences = [
     { value: "SEC", label: "SEC", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/8.png" },
     { value: "SUN_BELT", label: "Sun Belt", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/37.png" },
     { value: "MISSOURI_VALLEY", label: "Missouri Valley", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/21.png" },
-    { value: "COLONIAL", label: "Colonial", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/48.png" },
+    { value: "COLONIAL", label: "Colonial", logo: "https://images.seeklogo.com/logo-png/49/2/colonial-athletic-association-logo-png_seeklogo-490062.png" },
     { value: "NEC", label: "NEC", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/25.png" },
 ];

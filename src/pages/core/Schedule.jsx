@@ -33,7 +33,7 @@ const teamToSlug = (name) => name?.toLowerCase().replace(/\s+/g, '_') || '';
 const confToSlug = (conf) => conf?.toLowerCase() || '';
 
 const Schedule = () => {
-    const { tab, selection } = useParams();
+    const { tab, selection, seasonParam } = useParams();
     const navigate = useNavigate();
     useEffect(() => { document.title = 'FCFB | Schedules'; }, []);
 
@@ -127,10 +127,12 @@ const Schedule = () => {
                 const seasonNumbers = seasonsData.map(s => s.season_number || s.seasonNumber);
                 setAllSeasons(seasonNumbers);
 
-                // Restore season from localStorage, or default to current
-                const savedSeason = localStorage.getItem(LS_SEASON);
-                if (savedSeason && seasonNumbers.includes(parseInt(savedSeason))) {
-                    setSeason(parseInt(savedSeason));
+                // Use season from URL if provided, otherwise default to current season
+                // For postseason tab, season is in `selection` param; for others it's in `seasonParam`
+                const rawUrlSeason = tab === 'postseason' ? selection : seasonParam;
+                const urlSeason = rawUrlSeason ? parseInt(rawUrlSeason) : null;
+                if (urlSeason && !isNaN(urlSeason) && seasonNumbers.includes(urlSeason)) {
+                    setSeason(urlSeason);
                 } else {
                     setSeason(currentSeason);
                 }
@@ -296,7 +298,18 @@ const Schedule = () => {
                         <Select
                             value={season || ''}
                             label="Season"
-                            onChange={(e) => setSeason(e.target.value)}
+                            onChange={(e) => {
+                                const newSeason = e.target.value;
+                                setSeason(newSeason);
+                                const slug = TAB_SLUGS[tabIndex] || 'team';
+                                if (slug === 'team') {
+                                    navigate(`/schedules/team${selectedTeam ? '/' + teamToSlug(selectedTeam.name) + '/' + newSeason : ''}`, { replace: true });
+                                } else if (slug === 'conference') {
+                                    navigate(`/schedules/conference${selectedConference ? '/' + confToSlug(selectedConference) + '/' + newSeason : ''}`, { replace: true });
+                                } else {
+                                    navigate(`/schedules/postseason/${newSeason}`, { replace: true });
+                                }
+                            }}
                         >
                             {allSeasons.map(s => (
                                 <MenuItem key={s} value={s}>Season {s}</MenuItem>
@@ -309,12 +322,13 @@ const Schedule = () => {
                 <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'center' }}>
                     <Tabs value={tabIndex} onChange={(_, v) => {
                         const slug = TAB_SLUGS[v];
+                        const s = season || '';
                         if (slug === 'team') {
-                            navigate(`/schedules/team${selectedTeam ? '/' + teamToSlug(selectedTeam.name) : ''}`);
+                            navigate(`/schedules/team${selectedTeam ? '/' + teamToSlug(selectedTeam.name) + '/' + s : ''}`);
                         } else if (slug === 'conference') {
-                            navigate(`/schedules/conference${selectedConference ? '/' + confToSlug(selectedConference) : ''}`);
+                            navigate(`/schedules/conference${selectedConference ? '/' + confToSlug(selectedConference) + '/' + s : ''}`);
                         } else {
-                            navigate('/schedules/postseason');
+                            navigate(`/schedules/postseason/${s}`);
                         }
                     }}>
                         <Tab label="Team Schedule" />
@@ -334,7 +348,7 @@ const Schedule = () => {
                         selectedTeam={selectedTeam}
                         onTeamChange={(team) => {
                             setSelectedTeam(team);
-                            navigate(`/schedules/team${team ? '/' + teamToSlug(team.name) : ''}`, { replace: true });
+                            navigate(`/schedules/team${team ? '/' + teamToSlug(team.name) + '/' + (season || '') : ''}`, { replace: true });
                         }}
                         schedule={schedule}
                         season={season}
@@ -349,7 +363,7 @@ const Schedule = () => {
                         selectedConference={selectedConference}
                         onConferenceChange={(conf) => {
                             setSelectedConference(conf);
-                            navigate(`/schedules/conference/${confToSlug(conf)}`, { replace: true });
+                            navigate(`/schedules/conference/${confToSlug(conf)}/${season || ''}`, { replace: true });
                         }}
                         conferenceTeams={conferenceTeams}
                         conferenceSchedule={conferenceSchedule}

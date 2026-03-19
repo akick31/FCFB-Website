@@ -100,10 +100,11 @@ const TeamScheduleTable = ({
 
     const handleGameClick = (e, game) => {
         const gameId = field(game, 'gameId', 'game_id');
-        if (!gameId) return;
-        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-        e.preventDefault();
-        navigate(`/game-details/${gameId}`);
+        if (gameId) {
+            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+            e.preventDefault();
+            navigate(`/game-details/${gameId}`);
+        }
     };
 
     return (
@@ -214,23 +215,27 @@ const TeamScheduleTable = ({
                                 const gameType = field(game, 'gameType', 'game_type');
                                 const clickable = isGameClickable(game);
 
-                                const gameId = field(game, 'gameId', 'game_id');
-                                const gameUrl = gameId ? `/game-details/${gameId}` : null;
                                 return (
                                     <TableRow
                                         key={game.id || index}
-                                        component={clickable ? 'a' : undefined}
-                                        href={clickable ? gameUrl : undefined}
-                                        onClick={(e) => clickable && handleGameClick(e, game)}
+                                        component={clickable ? 'a' : 'tr'}
+                                        href={clickable ? `/game-details/${field(game, 'gameId', 'game_id')}` : undefined}
+                                        onClick={(e) => {
+                                            if (!clickable) return;
+                                            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                                            e.preventDefault();
+                                            handleGameClick(e, game);
+                                        }}
                                         sx={{
                                             '&:nth-of-type(odd)': { backgroundColor: 'rgba(0,0,0,0.02)' },
                                             '&:hover': {
                                                 backgroundColor: clickable ? 'rgba(25, 118, 210, 0.08)' : 'rgba(0,0,0,0.04)',
                                             },
                                             cursor: clickable ? 'pointer' : 'default',
-                                            textDecoration: 'none', color: 'inherit',
-                                            display: clickable ? 'table-row' : undefined,
                                             transition: 'background-color 0.2s',
+                                            textDecoration: 'none',
+                                            color: 'inherit',
+                                            display: 'table-row',
                                         }}
                                     >
                                         <TableCell>
@@ -245,7 +250,7 @@ const TeamScheduleTable = ({
                                                   field(game, 'postseasonGameLogo', 'postseason_game_logo') && (
                                                     <Box sx={{ display: 'flex', justifyContent: 'center', mb: 0.5 }}>
                                                         <Avatar
-                                                            src={`${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${field(game, 'postseasonGameLogo', 'postseason_game_logo')}`}
+                                                            src={(() => { const logo = field(game, 'postseasonGameLogo', 'postseason_game_logo'); return logo.startsWith('http') ? logo : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${logo}`; })()}
                                                             sx={{ width: 40, height: 40 }}
                                                             variant="rounded"
                                                         />
@@ -259,7 +264,8 @@ const TeamScheduleTable = ({
                                                         alignItems: 'center',
                                                         gap: 1.5,
                                                         cursor: opponentData?.id ? 'pointer' : 'default',
-                                                        textDecoration: 'none', color: 'inherit',
+                                                        textDecoration: 'none',
+                                                        color: 'inherit',
                                                         '&:hover': opponentData?.id ? {
                                                             textDecoration: 'underline',
                                                             opacity: 0.8,
@@ -268,10 +274,9 @@ const TeamScheduleTable = ({
                                                     onClick={(e) => {
                                                         if (opponentData?.id) {
                                                             e.stopPropagation();
-                                                            if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
-                                                                e.preventDefault();
-                                                                navigate(`/team-details/${opponentData.id}`);
-                                                            }
+                                                            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                                                            e.preventDefault();
+                                                            navigate(`/team-details/${opponentData.id}`);
                                                         }
                                                     }}
                                                 >

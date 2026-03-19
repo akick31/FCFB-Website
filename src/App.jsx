@@ -243,6 +243,7 @@ const App = () => {
                             <Route path="/schedules" element={<Schedule />} />
                             <Route path="/schedules/:tab" element={<Schedule />} />
                             <Route path="/schedules/:tab/:selection" element={<Schedule />} />
+                            <Route path="/schedules/:tab/:selection/:seasonParam" element={<Schedule />} />
                             <Route path="/standings" element={<Standings />} />
                             <Route path="/standings/:conference" element={<Standings />} />
                             <Route path="/rankings" element={<Rankings />} />

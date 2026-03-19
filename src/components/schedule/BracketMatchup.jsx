@@ -35,19 +35,19 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
 
     const getStatusText = () => {
         if (finished || status === 'FINAL' || status === 'COMPLETED') {
-            if (quarter >= 6) return `Final/${quarter - 4}OT`;
-            if (quarter === 5) return 'Final/OT';
-            return 'Final';
+            // No "Final" label — winning team is already bolded.
+            // Only annotate overtime games.
+            if (quarter >= 6) return `${quarter - 4}OT`;
+            if (quarter === 5) return 'OT';
+            return null;
         }
-        // Show quarter/time if game has quarter data (in progress)
+        // Show clock + quarter for in-progress games, e.g. "2:33 3Q"
         if (quarter) {
             const qtr = formatQuarterShort(quarter);
             const time = (quarter >= 5) ? '' : (clock || '');
             return time ? `${time} ${qtr}` : qtr;
         }
-        if (started) {
-            return 'In Progress';
-        }
+        if (started) return 'In Progress';
         return null;
     };
 
@@ -90,7 +90,7 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
                     gap: 0.75,
                     px: 1,
                     py: 0.5,
-                    background: 'linear-gradient(135deg, #8B6914 0%, #C9960C 50%, #8B6914 100%)',
+                    backgroundColor: '#C9960C',
                     borderBottom: '1px solid',
                     borderColor: 'divider',
                 }}>
