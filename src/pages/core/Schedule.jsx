@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
     Box,
     Typography,
@@ -23,11 +24,20 @@ import Postseason from '../../components/schedule/Postseason';
 // localStorage keys
 const LS_TEAM = 'schedule_selectedTeam';
 const LS_SEASON = 'schedule_season';
-const LS_TAB = 'schedule_tab';
 const LS_CONFERENCE = 'schedule_conference';
 
+const TAB_SLUGS = ['team', 'conference', 'postseason'];
+const TAB_FROM_SLUG = { team: 0, conference: 1, postseason: 2 };
+
+const teamToSlug = (name) => name?.toLowerCase().replace(/\s+/g, '_') || '';
+const confToSlug = (conf) => conf?.toLowerCase() || '';
+
 const Schedule = () => {
+    const { tab, selection } = useParams();
+    const navigate = useNavigate();
     useEffect(() => { document.title = 'FCFB | Schedules'; }, []);
+
+    const tabIndex = TAB_FROM_SLUG[tab] ?? 0;
 
     const [teams, setTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
@@ -37,10 +47,6 @@ const Schedule = () => {
     const [loading, setLoading] = useState(true);
     const [scheduleLoading, setScheduleLoading] = useState(false);
     const [error, setError] = useState('');
-    const [tabIndex, setTabIndex] = useState(() => {
-        const saved = localStorage.getItem(LS_TAB);
-        return saved != null ? parseInt(saved) : 0;
-    });
 
     // Postseason state
     const [postseasonSchedule, setPostseasonSchedule] = useState([]);
@@ -66,10 +72,25 @@ const Schedule = () => {
         return map;
     }, [teams]);
 
-    // Save tab to localStorage whenever it changes
+    // Redirect bare /schedules to /schedules/team
     useEffect(() => {
-        localStorage.setItem(LS_TAB, String(tabIndex));
-    }, [tabIndex]);
+        if (!tab && !loading) {
+            navigate('/schedules/team', { replace: true });
+        }
+    }, [tab, loading, navigate]);
+
+    // Sync URL selection → state (for deep links and direct URL changes)
+    useEffect(() => {
+        if (!teams.length) return;
+        const activeTeams = teams.filter(t => t.active);
+        if (tab === 'team' && selection) {
+            const found = activeTeams.find(t => teamToSlug(t.name) === selection);
+            if (found) setSelectedTeam(found);
+        } else if (tab === 'conference' && selection) {
+            setSelectedConference(selection.toUpperCase());
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tab, selection, teams]);
 
     // Save conference to localStorage whenever it changes
     useEffect(() => {
@@ -114,21 +135,30 @@ const Schedule = () => {
                     setSeason(currentSeason);
                 }
 
-                // Restore selected team from localStorage, or default to first alphabetical
-                const savedTeam = localStorage.getItem(LS_TEAM);
+                // Restore selected team from URL, localStorage, or default to first alphabetical
                 const activeTeams = teamsData.filter(t => t.active).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-                if (savedTeam) {
-                    const found = activeTeams.find(t => t.name === savedTeam);
+                if (tab === 'team' && selection) {
+                    const found = activeTeams.find(t => teamToSlug(t.name) === selection);
                     setSelectedTeam(found || activeTeams[0] || null);
                 } else {
-                    setSelectedTeam(activeTeams[0] || null);
+                    const savedTeam = localStorage.getItem(LS_TEAM);
+                    if (savedTeam) {
+                        const found = activeTeams.find(t => t.name === savedTeam);
+                        setSelectedTeam(found || activeTeams[0] || null);
+                    } else {
+                        setSelectedTeam(activeTeams[0] || null);
+                    }
                 }
 
-                // Default conference to first alphabetical if not saved
-                const savedConf = localStorage.getItem(LS_CONFERENCE);
-                if (!savedConf) {
-                    const sortedConfs = [...conferences].sort((a, b) => a.label.localeCompare(b.label));
-                    setSelectedConference(sortedConfs[0]?.value || 'ACC');
+                // Restore conference from URL, localStorage, or default to first alphabetical
+                if (tab === 'conference' && selection) {
+                    setSelectedConference(selection.toUpperCase());
+                } else {
+                    const savedConf = localStorage.getItem(LS_CONFERENCE);
+                    if (!savedConf) {
+                        const sortedConfs = [...conferences].sort((a, b) => a.label.localeCompare(b.label));
+                        setSelectedConference(sortedConfs[0]?.value || 'ACC');
+                    }
                 }
             } catch (err) {
                 console.error('Error initializing schedule page:', err);
@@ -277,7 +307,16 @@ const Schedule = () => {
 
                 {/* Tabs: Team Schedule / Conference / Playoff Bracket (conditional) */}
                 <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'center' }}>
-                    <Tabs value={tabIndex} onChange={(_, v) => setTabIndex(v)}>
+                    <Tabs value={tabIndex} onChange={(_, v) => {
+                        const slug = TAB_SLUGS[v];
+                        if (slug === 'team') {
+                            navigate(`/schedules/team${selectedTeam ? '/' + teamToSlug(selectedTeam.name) : ''}`);
+                        } else if (slug === 'conference') {
+                            navigate(`/schedules/conference${selectedConference ? '/' + confToSlug(selectedConference) : ''}`);
+                        } else {
+                            navigate('/schedules/postseason');
+                        }
+                    }}>
                         <Tab label="Team Schedule" />
                         <Tab label="Conference" />
                         {hasPostseason && <Tab label="Postseason" />}
@@ -293,7 +332,10 @@ const Schedule = () => {
                     <TeamScheduleTable
                         teams={teams}
                         selectedTeam={selectedTeam}
-                        onTeamChange={setSelectedTeam}
+                        onTeamChange={(team) => {
+                            setSelectedTeam(team);
+                            navigate(`/schedules/team${team ? '/' + teamToSlug(team.name) : ''}`, { replace: true });
+                        }}
                         schedule={schedule}
                         season={season}
                         teamMap={teamMap}
@@ -305,7 +347,10 @@ const Schedule = () => {
                 {tabIndex === 1 && (
                     <ConferenceScheduleGrid
                         selectedConference={selectedConference}
-                        onConferenceChange={setSelectedConference}
+                        onConferenceChange={(conf) => {
+                            setSelectedConference(conf);
+                            navigate(`/schedules/conference/${confToSlug(conf)}`, { replace: true });
+                        }}
                         conferenceTeams={conferenceTeams}
                         conferenceSchedule={conferenceSchedule}
                         allSeasonSchedule={allSeasonSchedule}

@@ -241,9 +241,12 @@ const App = () => {
                                 </ProtectedRoute>
                             } />
                             <Route path="/schedules" element={<Schedule />} />
+                            <Route path="/schedules/:tab" element={<Schedule />} />
+                            <Route path="/schedules/:tab/:selection" element={<Schedule />} />
                             <Route path="/standings" element={<Standings />} />
                             <Route path="/rankings" element={<Rankings />} />
                             <Route path="/scoreboard" element={<Scoreboard />} />
+                            <Route path="/scoreboard/:tab" element={<Scoreboard />} />
                             <Route path="/teams" element={<Teams />} />
                             <Route path="/records" element={<Records />} />
                             <Route path="/season-stats" element={<SeasonStats user={user} />} />
