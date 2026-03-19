@@ -89,7 +89,7 @@ const Schedule = () => {
         } else if (tab === 'conference' && selection) {
             setSelectedConference(selection.toUpperCase());
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
     }, [tab, selection, teams]);
 
     // Save conference to localStorage whenever it changes

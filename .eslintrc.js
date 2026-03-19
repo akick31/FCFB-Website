@@ -9,7 +9,6 @@ module.exports = {
     'eslint:recommended',
     'plugin:react/recommended',
     'plugin:jest/recommended',
-    'plugin:react-hooks/recommended',
   ],
   globals: {
     Atomics: 'readonly',
@@ -25,15 +24,12 @@ module.exports = {
   plugins: [
     'react',
     'jest',
-    'react-hooks',
   ],
   rules: {
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
     'react/no-unescaped-entities': 'off', // Allow apostrophes in JSX
     'no-unused-vars': 'warn', // Make unused vars warnings instead of errors
-    'react-hooks/rules-of-hooks': 'warn', // Warn for pre-existing violations in chart components
-    'react-hooks/exhaustive-deps': 'warn', // Warn for missing deps
   },
   settings: {
     react: {

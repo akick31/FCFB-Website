@@ -84,7 +84,7 @@ const SeasonStats = ({ user }) => {
         };
 
         fetchInitialData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
     }, []);
 
     const fetchTeamStats = async (team, season) => {

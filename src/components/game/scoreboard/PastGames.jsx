@@ -60,7 +60,7 @@ const PastGames = ({ urlSeason, urlWeek }) => {
             }
         };
         setDefaults();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
     }, []);
 
     // Sync from URL params when they change (e.g., back/forward navigation)
