@@ -276,12 +276,17 @@ const Profile = ({ user }) => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {teamData?.logo ? (
                             <Box
-                                component="img"
-                                src={teamData.logo}
-                                alt={user?.team}
-                                sx={{ width: 72, height: 72, objectFit: 'contain', cursor: 'pointer' }}
-                                onClick={() => teamData?.id && navigate(`/team-details/${teamData.id}`)}
-                            />
+                                component="a"
+                                href={teamData?.id ? `/team-details/${teamData.id}` : undefined}
+                                onClick={(e) => { if (teamData?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${teamData.id}`); } } }}
+                                sx={{ display: 'inline-block', cursor: 'pointer' }}
+                            >
+                                <img
+                                    src={teamData.logo}
+                                    alt={user?.team}
+                                    style={{ width: 72, height: 72, objectFit: 'contain' }}
+                                />
+                            </Box>
                         ) : (
                             <Avatar sx={{
                                 width: 72, height: 72,
@@ -307,12 +312,15 @@ const Profile = ({ user }) => {
                         <Chip icon={<Person sx={{ fontSize: 16 }} />} label={formatPosition(user?.position)} size="small" />
                         {user?.team && (
                             <Chip
+                                component={teamData?.id ? 'a' : 'div'}
+                                href={teamData?.id ? `/team-details/${teamData.id}` : undefined}
                                 icon={teamData?.logo ? (
                                     <Avatar src={teamData.logo} sx={{ width: 18, height: 18 }} />
                                 ) : <School sx={{ fontSize: 16 }} />}
                                 label={user.team}
                                 size="small"
-                                onClick={() => teamData?.id && navigate(`/team-details/${teamData.id}`)}
+                                clickable={!!teamData?.id}
+                                onClick={(e) => { if (teamData?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${teamData.id}`); } } }}
                                 sx={{ cursor: teamData?.id ? 'pointer' : 'default' }}
                             />
                         )}

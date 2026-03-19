@@ -233,13 +233,21 @@ const Postseason = ({
 
         return (
             <Paper
+                component={clickable ? 'a' : 'div'}
+                href={clickable ? `/game-details/${gid}` : undefined}
                 elevation={1}
-                onClick={() => clickable && navigate(`/game-details/${gid}`)}
+                onClick={(e) => {
+                    if (!clickable) return;
+                    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                    e.preventDefault();
+                    navigate(`/game-details/${gid}`);
+                }}
                 sx={{
                     borderRadius: 1, overflow: 'hidden', width,
                     cursor: clickable ? 'pointer' : 'default',
                     border: '1px solid', borderColor: 'divider',
                     transition: 'box-shadow 0.15s',
+                    textDecoration: 'none', color: 'inherit',
                     '&:hover': clickable ? { boxShadow: theme.shadows[4] } : {},
                 }}
             >

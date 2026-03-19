@@ -21,8 +21,11 @@ import { conferences as conferencesList } from '../constants/conferences';
 const RankingsTable = ({ teams, rankingType }) => {
     const navigate = useNavigate();
 
-    const handleRowClick = (team) => {
-        navigate(`/team-details/${team.id}`);
+    const handleRowClick = (e, team) => {
+        const url = `/team-details/${team.id}`;
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+        e.preventDefault();
+        navigate(url);
     };
 
     const getRankingDisplayName = (type) => {
@@ -105,9 +108,12 @@ const RankingsTable = ({ teams, rankingType }) => {
                             return (
                                 <TableRow
                                     key={team.id}
-                                    onClick={() => handleRowClick(team)}
+                                    component="a"
+                                    href={`/team-details/${team.id}`}
+                                    onClick={(e) => handleRowClick(e, team)}
                                     sx={{
                                         cursor: 'pointer',
+                                        textDecoration: 'none', color: 'inherit',
                                         '&:hover': {
                                             backgroundColor: 'action.hover',
                                             transform: 'scale(1.01)',

@@ -93,7 +93,7 @@ const ScoreboardList = ({
     }, [selectedTeam, games]);
 
     // Check if this is showing past games
-    const isPastGames = title === "Past Games" || title === "Scrimmages";
+    const isPastGames = false; // All game types now use LiveGameCard layout
 
     // Get responsive column definitions
     const getGridColumns = () => {
@@ -152,10 +152,12 @@ const ScoreboardList = ({
         }
     };
 
-    const handleRowClick = (game) => {
+    const handleRowClick = (e, game) => {
         const gameId = game.game_id;
-        
+
         if (gameId) {
+            if (e.metaKey || e.ctrlKey || e.shiftKey) return; // let browser handle new tab
+            e.preventDefault();
             try {
                 navigate(`/game-details/${gameId}`);
             } catch (error) {
@@ -386,6 +388,8 @@ const ScoreboardList = ({
 
                     return (
                         <Box
+                            component="a"
+                            href={game.game_id ? `/game-details/${game.game_id}` : '#'}
                             key={game.gameId || game.id}
                             sx={{
                                 display: 'grid',
@@ -397,11 +401,13 @@ const ScoreboardList = ({
                                 transition: 'background-color 0.2s',
                                 backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa',
                                 minWidth: getMinWidth(),
+                                textDecoration: 'none',
+                                color: 'inherit',
                                 '&:hover': {
                                     backgroundColor: theme.palette.primary.light + '20'
                                 }
                             }}
-                            onClick={() => handleRowClick(game)}
+                            onClick={(e) => handleRowClick(e, game)}
                         >
                             {/* Team Matchup Column */}
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

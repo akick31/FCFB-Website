@@ -253,9 +253,8 @@ const GameDetails = ({ isAdmin }) => {
             subtitle=""
         >
             {/* Back Button */}
-            <Box sx={{ mb: 3 }}>
+            <Box component="a" href="/scoreboard" onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/scoreboard'); } }} sx={{ mb: 3, display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
                 <IconButton
-                    onClick={() => navigate('/scoreboard')}
                     sx={{
                         color: theme.palette.primary.main,
                         '&:hover': { backgroundColor: theme.palette.primary.light + '20' }
@@ -285,10 +284,12 @@ const GameDetails = ({ isAdmin }) => {
                     color: theme.palette.primary.main
                 }}>
                     <Box
-                        component="span"
-                        onClick={() => awayTeam?.id && navigate(`/team-details/${awayTeam.id}`)}
+                        component="a"
+                        href={awayTeam?.id ? `/team-details/${awayTeam.id}` : undefined}
+                        onClick={(e) => { if (awayTeam?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${awayTeam.id}`); } } }}
                         sx={{
                             cursor: awayTeam?.id ? 'pointer' : 'default',
+                            color: 'inherit', textDecoration: 'none',
                             '&:hover': awayTeam?.id ? { textDecoration: 'underline' } : {},
                         }}
                     >
@@ -296,10 +297,12 @@ const GameDetails = ({ isAdmin }) => {
                     </Box>
                     {' vs '}
                     <Box
-                        component="span"
-                        onClick={() => homeTeam?.id && navigate(`/team-details/${homeTeam.id}`)}
+                        component="a"
+                        href={homeTeam?.id ? `/team-details/${homeTeam.id}` : undefined}
+                        onClick={(e) => { if (homeTeam?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${homeTeam.id}`); } } }}
                         sx={{
                             cursor: homeTeam?.id ? 'pointer' : 'default',
+                            color: 'inherit', textDecoration: 'none',
                             '&:hover': homeTeam?.id ? { textDecoration: 'underline' } : {},
                         }}
                     >

@@ -3,7 +3,6 @@ import { Box, Typography, Paper, Chip, useTheme, useMediaQuery } from '@mui/mate
 import { useNavigate } from 'react-router-dom';
 import {
     formatBallLocationWithTeam,
-    getGameStatusInfo,
     isGameOngoing
 } from './utils/scoreboardFormatters';
 import {
@@ -149,7 +148,6 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
     const gameStatus = game.game_status;
 
     const isOngoing = isGameOngoing(gameStatus);
-    const statusInfo = getGameStatusInfo(gameStatus);
     const possession = game.possession;
     const waitingOn = game.waiting_on;
     const gameId = game.game_id;
@@ -230,8 +228,9 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                         </Typography>
                     )}
                     <Typography sx={{
-                        fontSize: isMobile ? '0.75rem' : '1.0rem', fontWeight: 700,
-                        color: isWinner ? theme.palette.primary.main : 'text.primary',
+                        fontSize: isMobile ? '0.75rem' : '1.0rem',
+                        fontWeight: isWinner ? 800 : 500,
+                        color: isWinner ? 'text.primary' : 'text.secondary',
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
                         {isMobile
@@ -256,8 +255,9 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                 )}
                 {/* Right: Total score */}
                 <Typography sx={{
-                    fontSize: isMobile ? '0.95rem' : '1.15rem', fontWeight: 800,
-                    color: isWinner ? theme.palette.primary.main : 'text.primary',
+                    fontSize: isMobile ? '0.95rem' : '1.15rem',
+                    fontWeight: isWinner ? 900 : 600,
+                    color: isWinner ? 'text.primary' : 'text.secondary',
                     minWidth: isMobile ? 28 : 40, textAlign: 'right', flexShrink: 0,
                 }}>
                     {score}
@@ -304,11 +304,7 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
                 borderColor: isOngoing ? theme.palette.primary.main + '30' : 'divider',
             }}>
                 <Box sx={{ width: showQuarters ? (isMobile ? '30%' : '35%') : 'auto', minWidth: 0, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    {isFinal ? (
-                        <Chip label={statusInfo.status} size="small" sx={{ backgroundColor: statusInfo.color, color: 'white', fontWeight: 600, fontSize: '0.65rem', height: 20, '& .MuiChip-label': { px: 0.75 } }} />
-                    ) : (
-                        <GameTypeInfo game={game} homeTeamData={homeTeamData} />
-                    )}
+                    <GameTypeInfo game={game} homeTeamData={homeTeamData} />
                     {isChewMode && (
                         <Chip label="CHEW" size="small" sx={{ backgroundColor: theme.palette.error.main, color: 'white', fontWeight: 700, fontSize: '0.6rem', height: 18, '& .MuiChip-label': { px: 0.5 } }} />
                     )}
@@ -332,78 +328,85 @@ const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
             {renderTeamRow(homeTeamName, homeTeamData, homeScore, true, isFinal ? isHomeWinning : false, homeStats)}
 
             {/* ─── Bottom Bar: Spread | Game State | Waiting On ─── */}
-            <Box sx={{
-                display: 'flex', alignItems: 'center',
-                px: isMobile ? 0.75 : 1.5, py: 0.5,
-                backgroundColor: theme.palette.grey[50],
-                borderTop: '1px solid', borderColor: 'divider',
-                gap: 0.5, minHeight: 32,
-            }}>
-                {/* Left: Spread */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: isMobile ? 36 : 48 }}>
-                    {game.home_vegas_spread !== null && game.home_vegas_spread !== undefined && (
-                        <>
-                            <Box sx={{ width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                {homeTeamData?.logo
-                                    ? <img src={homeTeamData.logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                    : <Typography sx={{ fontSize: '0.55rem', fontWeight: 600 }}>{homeTeamName?.charAt(0)}</Typography>
-                                }
-                            </Box>
-                            <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: 'text.secondary' }}>
-                                {game.home_vegas_spread > 0 ? '+' : ''}{game.home_vegas_spread}
-                            </Typography>
-                        </>
-                    )}
-                </Box>
-
-                {/* Center: Quarter + Clock + Down & Distance */}
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    {isOngoing && game.quarter && (
-                        <>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                                <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: theme.palette.primary.main }}>
-                                    {formatScoreboardQuarter(game.quarter)}
+            {/* For final games: only render if a spread exists; hide center/right sections */}
+            {(isOngoing || game.home_vegas_spread != null) && (
+                <Box sx={{
+                    display: 'flex', alignItems: 'center',
+                    px: isMobile ? 0.75 : 1.5, py: 0.5,
+                    backgroundColor: theme.palette.grey[50],
+                    borderTop: '1px solid', borderColor: 'divider',
+                    gap: 0.5, minHeight: isOngoing ? 32 : 24,
+                }}>
+                    {/* Left: Spread */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: isMobile ? 36 : 48 }}>
+                        {game.home_vegas_spread != null && (
+                            <>
+                                <Box sx={{ width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {homeTeamData?.logo
+                                        ? <img src={homeTeamData.logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                        : <Typography sx={{ fontSize: '0.55rem', fontWeight: 600 }}>{homeTeamName?.charAt(0)}</Typography>
+                                    }
+                                </Box>
+                                <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: 'text.secondary' }}>
+                                    {game.home_vegas_spread > 0 ? '+' : ''}{game.home_vegas_spread}
                                 </Typography>
-                                {game.quarter < 5 && (
-                                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: 'text.primary', backgroundColor: theme.palette.primary.main + '18', px: 0.6, py: 0.1, borderRadius: 0.75 }}>
-                                        {game.clock || game.game_clock || '0:00'}
-                                    </Typography>
-                                )}
-                            </Box>
-                            {game.down && (
-                                <Typography sx={{ fontSize: '0.68rem', fontWeight: 500, color: 'text.secondary', textAlign: 'center' }}>
-                                    {formatDownAndDistance(game.down, game.yards_to_go || game.yardsToGo || 0)}
-                                    {game.ball_location && (
-                                        <Typography component="span" sx={{ fontSize: '0.68rem', color: 'text.disabled', mx: 0.35 }}>
-                                            {' at '}
+                            </>
+                        )}
+                    </Box>
+
+                    {/* Center: Quarter + Clock + Down & Distance (live only) */}
+                    {isOngoing && (
+                        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            {game.quarter && (
+                                <>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                        <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: theme.palette.primary.main }}>
+                                            {formatScoreboardQuarter(game.quarter)}
+                                        </Typography>
+                                        {game.quarter < 5 && (
+                                            <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: 'text.primary', backgroundColor: theme.palette.primary.main + '18', px: 0.6, py: 0.1, borderRadius: 0.75 }}>
+                                                {game.clock || game.game_clock || '0:00'}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                    {game.down && (
+                                        <Typography sx={{ fontSize: '0.68rem', fontWeight: 500, color: 'text.secondary', textAlign: 'center' }}>
+                                            {formatDownAndDistance(game.down, game.yards_to_go || game.yardsToGo || 0)}
+                                            {game.ball_location && (
+                                                <Typography component="span" sx={{ fontSize: '0.68rem', color: 'text.disabled', mx: 0.35 }}>
+                                                    {' at '}
+                                                </Typography>
+                                            )}
+                                            {game.ball_location && formatBallLocationWithTeam(
+                                                game.ball_location, game.possession, homeTeamName, awayTeamName, homeTeamData, awayTeamData
+                                            )}
                                         </Typography>
                                     )}
-                                    {game.ball_location && formatBallLocationWithTeam(
-                                        game.ball_location, game.possession, homeTeamName, awayTeamName, homeTeamData, awayTeamData
-                                    )}
-                                </Typography>
+                                </>
                             )}
-                        </>
+                        </Box>
                     )}
-                </Box>
 
-                {/* Right: Waiting On */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 48, justifyContent: 'flex-end' }}>
-                    {waitInfo && (
-                        <>
-                            <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', fontWeight: 500 }}>
-                                Waiting On:
-                            </Typography>
-                            {waitInfo.logo
-                                ? <Box sx={{ width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <img src={waitInfo.logo} alt="Waiting On" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                  </Box>
-                                : <Typography sx={{ fontSize: '0.62rem', fontWeight: 700, color: theme.palette.primary.main }}>{waitInfo.name}</Typography>
-                            }
-                        </>
+                    {/* Right: Waiting On (live only) */}
+                    {isOngoing && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 48, justifyContent: 'flex-end' }}>
+                            {waitInfo && (
+                                <>
+                                    <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', fontWeight: 500 }}>
+                                        Waiting On:
+                                    </Typography>
+                                    {waitInfo.logo
+                                        ? <Box sx={{ width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <img src={waitInfo.logo} alt="Waiting On" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                          </Box>
+                                        : <Typography sx={{ fontSize: '0.62rem', fontWeight: 700, color: theme.palette.primary.main }}>{waitInfo.name}</Typography>
+                                    }
+                                </>
+                            )}
+                        </Box>
                     )}
                 </Box>
-            </Box>
+            )}
 
             {/* ─── Previous Play ─── */}
             {isOngoing && previousPlayText && (

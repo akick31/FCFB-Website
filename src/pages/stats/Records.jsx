@@ -21,24 +21,31 @@ import {
     Card,
     CardContent
 } from '@mui/material';
-import { 
+import {
     getFilteredRecords,
 } from '../../api/recordsApi';
 import { getAllTeams } from '../../api/teamApi';
+import { useParams, useNavigate } from 'react-router-dom';
+
+const TAB_SLUGS = ['single_game', 'single_season'];
+const TAB_FROM_SLUG = { single_game: 0, single_season: 1 };
 
 const Records = () => {
     useEffect(() => { document.title = 'FCFB | Records'; }, []);
 
-    const [activeTab, setActiveTab] = useState(0);
+    const { tab, record: recordSlug } = useParams();
+    const navigate = useNavigate();
+    const activeTab = TAB_FROM_SLUG[tab] ?? 0;
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    
+
     // Data states
     const [singleGameRecords, setSingleGameRecords] = useState([]);
     const [singleSeasonRecords, setSingleSeasonRecords] = useState([]);
     const [teams, setTeams] = useState([]);
     const [availableRecords, setAvailableRecords] = useState([]);
-    
+
     // Filter states
     const [selectedRecord, setSelectedRecord] = useState(null);
 
@@ -52,7 +59,12 @@ const Records = () => {
     };
 
     useEffect(() => {
+        if (!tab) navigate('/records/single_game', { replace: true });
+    }, [tab, navigate]);
+
+    useEffect(() => {
         fetchInitialData();
+    // eslint-disable-next-line
     }, []);
 
     const fetchInitialData = async () => {
@@ -63,12 +75,12 @@ const Records = () => {
                 getFilteredRecords(null, null, 'SINGLE_SEASON', null, 0, 1000), // Get all single season records
                 getAllTeams()
             ]);
-            
+
             // Extract content from paginated responses
             setSingleGameRecords(gameResponse.content || []);
             setSingleSeasonRecords(seasonResponse.content || []);
             setTeams(teamsData);
-            
+
             // Extract unique record names and format them
             const allRecordNames = [...new Set([...(gameResponse.content || []), ...(seasonResponse.content || [])].map(record => record.record_name))];
             const formattedRecords = allRecordNames.map(recordName => ({
@@ -84,13 +96,23 @@ const Records = () => {
         }
     };
 
+    useEffect(() => {
+        if (!availableRecords.length) return;
+        if (recordSlug) {
+            const found = availableRecords.find(r => r.value.toLowerCase() === recordSlug.toLowerCase());
+            if (found) setSelectedRecord(found);
+        } else {
+            setSelectedRecord(null);
+        }
+    }, [recordSlug, availableRecords]);
+
     const handleTabChange = (event, newValue) => {
-        setActiveTab(newValue);
+        navigate(`/records/${TAB_SLUGS[newValue]}${recordSlug ? `/${recordSlug}` : ''}`);
         setError('');
     };
 
     const handleRecordChange = (event, newValue) => {
-        setSelectedRecord(newValue);
+        navigate(`/records/${TAB_SLUGS[activeTab]}${newValue ? `/${newValue.value.toLowerCase()}` : ''}`);
     };
 
 
@@ -99,10 +121,10 @@ const Records = () => {
         if (!singleGameRecords.length) return null;
 
         // Filter records based on selected record
-        let filteredRecords = selectedRecord 
+        let filteredRecords = selectedRecord
             ? singleGameRecords.filter(record => record.record_name === selectedRecord.value)
             : singleGameRecords;
-        
+
         // For offensive diff, prioritize LOWEST record over HIGHEST
         if (selectedRecord?.value === 'AVERAGE_OFFENSIVE_DIFF') {
             const lowestRecords = filteredRecords.filter(r => r.record_type === 'SINGLE_GAME_LOWEST');
@@ -192,10 +214,10 @@ const Records = () => {
         if (!singleSeasonRecords.length) return null;
 
         // Filter records based on selected record
-        let filteredRecords = selectedRecord 
+        let filteredRecords = selectedRecord
             ? singleSeasonRecords.filter(record => record.record_name === selectedRecord.value)
             : singleSeasonRecords;
-        
+
         // For offensive diff, prioritize LOWEST record over HIGHEST
         if (selectedRecord?.value === 'AVERAGE_OFFENSIVE_DIFF') {
             const lowestRecords = filteredRecords.filter(r => r.record_type === 'SINGLE_SEASON_LOWEST');
@@ -301,7 +323,7 @@ const Records = () => {
 
     return (
         <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
-            <Box sx={{ 
+            <Box sx={{
                 pt: { xs: 8, md: 10 },
                 pb: { xs: 4, md: 6 }
             }}>
@@ -368,7 +390,7 @@ const Records = () => {
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <Typography variant="body2" color="text.secondary">
-                                    {selectedRecord 
+                                    {selectedRecord
                                         ? `Showing records for: ${selectedRecord.label}`
                                         : 'Showing all records'
                                     }

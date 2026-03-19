@@ -98,9 +98,11 @@ const TeamScheduleTable = ({
         return gameId && started;
     };
 
-    const handleGameClick = (game) => {
+    const handleGameClick = (e, game) => {
         const gameId = field(game, 'gameId', 'game_id');
         if (gameId) {
+            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+            e.preventDefault();
             navigate(`/game-details/${gameId}`);
         }
     };
@@ -216,7 +218,14 @@ const TeamScheduleTable = ({
                                 return (
                                     <TableRow
                                         key={game.id || index}
-                                        onClick={() => clickable && handleGameClick(game)}
+                                        component={clickable ? 'a' : 'tr'}
+                                        href={clickable ? `/game-details/${field(game, 'gameId', 'game_id')}` : undefined}
+                                        onClick={(e) => {
+                                            if (!clickable) return;
+                                            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                                            e.preventDefault();
+                                            handleGameClick(e, game);
+                                        }}
                                         sx={{
                                             '&:nth-of-type(odd)': { backgroundColor: 'rgba(0,0,0,0.02)' },
                                             '&:hover': {
@@ -224,6 +233,9 @@ const TeamScheduleTable = ({
                                             },
                                             cursor: clickable ? 'pointer' : 'default',
                                             transition: 'background-color 0.2s',
+                                            textDecoration: 'none',
+                                            color: 'inherit',
+                                            display: 'table-row',
                                         }}
                                     >
                                         <TableCell>
@@ -245,11 +257,15 @@ const TeamScheduleTable = ({
                                                     </Box>
                                                 )}
                                                 <Box
+                                                    component={opponentData?.id ? 'a' : 'div'}
+                                                    href={opponentData?.id ? `/team-details/${opponentData.id}` : undefined}
                                                     sx={{
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         gap: 1.5,
                                                         cursor: opponentData?.id ? 'pointer' : 'default',
+                                                        textDecoration: 'none',
+                                                        color: 'inherit',
                                                         '&:hover': opponentData?.id ? {
                                                             textDecoration: 'underline',
                                                             opacity: 0.8,
@@ -258,6 +274,8 @@ const TeamScheduleTable = ({
                                                     onClick={(e) => {
                                                         if (opponentData?.id) {
                                                             e.stopPropagation();
+                                                            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                                                            e.preventDefault();
                                                             navigate(`/team-details/${opponentData.id}`);
                                                         }
                                                     }}

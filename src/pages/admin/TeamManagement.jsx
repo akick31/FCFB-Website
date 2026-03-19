@@ -98,8 +98,10 @@ const TeamManagement = () => {
         navigate(item.path);
     };
 
-    const handleTeamClick = (team) => {
-                        navigate(`/admin/edit-team/${team.id}`);
+    const handleTeamClick = (team, index, e) => {
+        if (e && (e.metaKey || e.ctrlKey || e.shiftKey)) return;
+        if (e) e.preventDefault();
+        navigate(`/admin/edit-team/${team.id}`);
     };
 
     const handleCreateTeam = () => {
@@ -175,8 +177,12 @@ const TeamManagement = () => {
             <Tooltip title="Edit Team">
                 <IconButton
                     size="small"
+                    component="a"
+                    href={`/admin/edit-team/${team.id}`}
                     onClick={(e) => {
                         e.stopPropagation();
+                        if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                        e.preventDefault();
                         navigate(`/admin/edit-team/${team.id}`);
                     }}
                     sx={{ color: 'primary.main' }}
@@ -311,6 +317,7 @@ const TeamManagement = () => {
                     data={tableData}
                     maxHeight={600}
                     onRowClick={handleTeamClick}
+                    getRowHref={(team) => `/admin/edit-team/${team.id}`}
                     headerBackground="primary.main"
                     headerTextColor="white"
                 />

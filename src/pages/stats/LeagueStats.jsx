@@ -32,24 +32,37 @@ import { conferences } from '../../components/constants/conferences';
 import { offensivePlaybooks } from '../../components/constants/offensivePlaybooks';
 import { defensivePlaybooks } from '../../components/constants/defensivePlaybooks';
 import { formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
+import { useParams, useNavigate } from 'react-router-dom';
+
+const TAB_SLUGS = ['conference', 'league', 'playbook'];
+const TAB_FROM_SLUG = { conference: 0, league: 1, playbook: 2 };
 
 const LeagueStats = () => {
     useEffect(() => { document.title = 'FCFB | League Stats'; }, []);
 
+    const { tab, season: seasonParam, p1, p2 } = useParams();
+    const navigate = useNavigate();
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState(0);
-    
+    const activeTab = TAB_FROM_SLUG[tab] ?? 1; // Default to 'league' tab
+
     // Data states
     const [conferenceStats, setConferenceStats] = useState([]);
     const [leagueStats, setLeagueStats] = useState([]);
     const [playbookStats, setPlaybookStats] = useState([]);
-    
+
     // Filter states
-    const [selectedSeason, setSelectedSeason] = useState(11);
-    const [selectedConference, setSelectedConference] = useState('');
-    const [selectedOffensivePlaybook, setSelectedOffensivePlaybook] = useState('');
-    const [selectedDefensivePlaybook, setSelectedDefensivePlaybook] = useState('');
+    const [selectedSeason, setSelectedSeason] = useState(seasonParam ? parseInt(seasonParam) : 11);
+    const [selectedConference, setSelectedConference] = useState(
+        tab === 'conference' && p1 ? p1.toUpperCase() : ''
+    );
+    const [selectedOffensivePlaybook, setSelectedOffensivePlaybook] = useState(
+        tab === 'playbook' && p1 ? p1.toUpperCase() : ''
+    );
+    const [selectedDefensivePlaybook, setSelectedDefensivePlaybook] = useState(
+        tab === 'playbook' && p2 ? p2.toUpperCase() : ''
+    );
     
     // Sorting states
     const [conferenceSortField, setConferenceSortField] = useState('');
@@ -63,16 +76,25 @@ const LeagueStats = () => {
     const seasons = [11, 10];
 
     useEffect(() => {
+        if (!tab) navigate('/league-stats/league/11', { replace: true });
+    }, [tab, navigate]);
+
+    useEffect(() => {
+        if (seasonParam) setSelectedSeason(parseInt(seasonParam));
+        if (tab === 'conference' && p1) setSelectedConference(p1.toUpperCase());
+        if (tab === 'playbook' && p1) setSelectedOffensivePlaybook(p1.toUpperCase());
+        if (tab === 'playbook' && p2) setSelectedDefensivePlaybook(p2.toUpperCase());
+    }, [tab, seasonParam, p1, p2]);
+
+    useEffect(() => {
         const fetchInitialData = async () => {
             try {
                 setLoading(true);
                 await getCurrentSeason();
-                
-                // Set default season to 11 (most recent season)
-                setSelectedSeason(11);
-                
+
                 // Load all data for the default season
-                await fetchAllData(11);
+                const initialSeason = seasonParam ? parseInt(seasonParam) : 11;
+                await fetchAllData(initialSeason);
             } catch (err) {
                 setError('Failed to load initial data');
                 console.error('Error fetching initial data:', err);
@@ -82,6 +104,7 @@ const LeagueStats = () => {
         };
 
         fetchInitialData();
+    // eslint-disable-next-line
     }, []);
 
     const fetchAllData = async (season) => {
@@ -107,22 +130,44 @@ const LeagueStats = () => {
         }
     };
 
+    const buildLeagueStatsUrl = (newTab, newSeason, conference, offPlaybook, defPlaybook) => {
+        const tabSlug = TAB_SLUGS[newTab] || 'league';
+        if (tabSlug === 'conference' && conference) {
+            return `/league-stats/${tabSlug}/${newSeason}/${conference.toLowerCase()}`;
+        }
+        if (tabSlug === 'playbook' && offPlaybook && defPlaybook) {
+            return `/league-stats/${tabSlug}/${newSeason}/${offPlaybook.toLowerCase()}/${defPlaybook.toLowerCase()}`;
+        }
+        return `/league-stats/${tabSlug}/${newSeason}`;
+    };
+
     const handleSeasonChange = (event) => {
         const newSeason = event.target.value;
         setSelectedSeason(newSeason);
+        navigate(buildLeagueStatsUrl(activeTab, newSeason, selectedConference, selectedOffensivePlaybook, selectedDefensivePlaybook));
         fetchAllData(newSeason);
     };
 
+    const handleTabChange = (event, newValue) => {
+        navigate(buildLeagueStatsUrl(newValue, selectedSeason, selectedConference, selectedOffensivePlaybook, selectedDefensivePlaybook));
+    };
+
     const handleConferenceFilter = (event) => {
-        setSelectedConference(event.target.value);
+        const newConf = event.target.value;
+        setSelectedConference(newConf);
+        navigate(buildLeagueStatsUrl(activeTab, selectedSeason, newConf, selectedOffensivePlaybook, selectedDefensivePlaybook));
     };
 
     const handleOffensivePlaybookFilter = (event) => {
-        setSelectedOffensivePlaybook(event.target.value);
+        const newOff = event.target.value;
+        setSelectedOffensivePlaybook(newOff);
+        navigate(buildLeagueStatsUrl(activeTab, selectedSeason, selectedConference, newOff, selectedDefensivePlaybook));
     };
 
     const handleDefensivePlaybookFilter = (event) => {
-        setSelectedDefensivePlaybook(event.target.value);
+        const newDef = event.target.value;
+        setSelectedDefensivePlaybook(newDef);
+        navigate(buildLeagueStatsUrl(activeTab, selectedSeason, selectedConference, selectedOffensivePlaybook, newDef));
     };
 
     const formatStatValue = (value) => {
@@ -851,7 +896,7 @@ const LeagueStats = () => {
                 <Card sx={{ mb: 3 }}>
                     <Tabs
                         value={activeTab}
-                        onChange={(e, newValue) => setActiveTab(newValue)}
+                        onChange={handleTabChange}
                         variant="fullWidth"
                         sx={{ borderBottom: 1, borderColor: 'divider' }}
                     >

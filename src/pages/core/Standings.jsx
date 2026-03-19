@@ -4,13 +4,17 @@ import ConferenceDropdown from '../../components/dropdown/ConferenceDropdown';
 import StandingsTable from '../../components/team/StandingsTable';
 import { getAllTeams } from '../../api/teamApi';
 import { formatTeamStats } from '../../utils/teamDataUtils';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const Standings = () => {
     useEffect(() => { document.title = 'FCFB | Standings'; }, []);
 
+    const { conference: confParam } = useParams();
+    const navigate = useNavigate();
+
     const [teams, setTeams] = useState([]);
     const [filteredTeams, setFilteredTeams] = useState([]);
-    const [selectedConference, setSelectedConference] = useState('ACC');
+    const [selectedConference, setSelectedConference] = useState(confParam?.toUpperCase() || 'ACC');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -21,6 +25,14 @@ const Standings = () => {
     useEffect(() => {
         filterTeamsByConference();
     }, [teams, selectedConference]);
+
+    useEffect(() => {
+        if (confParam) {
+            setSelectedConference(confParam.toUpperCase());
+        } else {
+            navigate('/standings/ACC', { replace: true });
+        }
+    }, [confParam, navigate]);
 
     const fetchTeams = async () => {
         try {
@@ -48,7 +60,7 @@ const Standings = () => {
     };
 
     const handleConferenceChange = (conference) => {
-        setSelectedConference(conference);
+        navigate(`/standings/${conference}`);
     };
 
     const sortTeamsByStandings = (teamsToSort) => {

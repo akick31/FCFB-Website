@@ -201,11 +201,14 @@ const Admin = ({ user }) => {
                                     <Grid item xs={12} sm={6} md={3}>
                                         <StyledCard
                                             hover
-                                            onClick={() => navigate('/admin/game-management')}
-                                            sx={{ 
-                                                textAlign: 'center', 
+                                            component="a"
+                                            href="/admin/game-management"
+                                            onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/admin/game-management'); } }}
+                                            sx={{
+                                                textAlign: 'center',
                                                 p: 2,
-                                                cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                textDecoration: 'none', color: 'inherit',
                                             }}
                                         >
                                             <SportsFootball sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
@@ -215,11 +218,14 @@ const Admin = ({ user }) => {
                                     <Grid item xs={12} sm={6} md={3}>
                                         <StyledCard
                                             hover
-                                            onClick={() => navigate('/admin/team-management')}
-                                            sx={{ 
-                                                textAlign: 'center', 
+                                            component="a"
+                                            href="/admin/team-management"
+                                            onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/admin/team-management'); } }}
+                                            sx={{
+                                                textAlign: 'center',
                                                 p: 2,
-                                                cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                textDecoration: 'none', color: 'inherit',
                                             }}
                                         >
                                             <EmojiEvents sx={{ fontSize: 40, color: 'secondary.main', mb: 1 }} />
@@ -229,11 +235,14 @@ const Admin = ({ user }) => {
                                     <Grid item xs={12} sm={6} md={3}>
                                         <StyledCard
                                             hover
-                                            onClick={() => navigate('/admin/user-management')}
-                                            sx={{ 
-                                                textAlign: 'center', 
+                                            component="a"
+                                            href="/admin/user-management"
+                                            onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/admin/user-management'); } }}
+                                            sx={{
+                                                textAlign: 'center',
                                                 p: 2,
-                                                cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                textDecoration: 'none', color: 'inherit',
                                             }}
                                         >
                                             <People sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
@@ -243,11 +252,14 @@ const Admin = ({ user }) => {
                                     <Grid item xs={12} sm={6} md={2.4}>
                                         <StyledCard
                                             hover
-                                            onClick={() => navigate('/admin/coach-management')}
-                                            sx={{ 
-                                                textAlign: 'center', 
+                                            component="a"
+                                            href="/admin/coach-management"
+                                            onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/admin/coach-management'); } }}
+                                            sx={{
+                                                textAlign: 'center',
                                                 p: 2,
-                                                cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                textDecoration: 'none', color: 'inherit',
                                             }}
                                         >
                                             <Headset sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />

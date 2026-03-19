@@ -119,14 +119,17 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     {/* Logo and Team Name Row */}
                     <Box
+                        component={awayTeam?.id ? 'a' : 'div'}
+                        href={awayTeam?.id ? `/team-details/${awayTeam.id}` : undefined}
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
                             mb: 0.5,
                             cursor: awayTeam?.id ? 'pointer' : 'default',
+                            textDecoration: 'none', color: 'inherit',
                             '&:hover': awayTeam?.id ? { opacity: 0.8 } : {},
                         }}
-                        onClick={() => awayTeam?.id && navigate(`/team-details/${awayTeam.id}`)}
+                        onClick={(e) => { if (awayTeam?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${awayTeam.id}`); } } }}
                     >
                         {/* Logo */}
                         <Box sx={{
@@ -231,14 +234,17 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     {/* Logo and Team Name Row */}
                     <Box
+                        component={homeTeam?.id ? 'a' : 'div'}
+                        href={homeTeam?.id ? `/team-details/${homeTeam.id}` : undefined}
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
                             mb: 0.5,
                             cursor: homeTeam?.id ? 'pointer' : 'default',
+                            textDecoration: 'none', color: 'inherit',
                             '&:hover': homeTeam?.id ? { opacity: 0.8 } : {},
                         }}
-                        onClick={() => homeTeam?.id && navigate(`/team-details/${homeTeam.id}`)}
+                        onClick={(e) => { if (homeTeam?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${homeTeam.id}`); } } }}
                     >
                         {/* Logo */}
                         <Box sx={{

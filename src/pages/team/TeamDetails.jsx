@@ -224,9 +224,8 @@ const TeamDetails = () => {
     return (
         <PageLayout title="" subtitle="">
             {/* Back Button */}
-            <Box sx={{ mb: 3 }}>
+            <Box component="a" href="/teams" onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/teams'); } }} sx={{ mb: 3, display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
                 <IconButton
-                    onClick={() => navigate('/teams')}
                     sx={{
                         color: theme.palette.primary.main,
                         '&:hover': { backgroundColor: theme.palette.primary.light + '20' }
@@ -315,14 +314,17 @@ const TeamDetails = () => {
                         {coaches.map((coach, index) => (
                             <Box
                                 key={index}
+                                component="a"
+                                href={`/user-details/${encodeURIComponent(coach.name)}`}
                                 sx={{
                                     display: 'flex', alignItems: 'center', gap: 1,
                                     cursor: 'pointer',
+                                    textDecoration: 'none', color: 'inherit',
                                     '&:hover': { opacity: 0.7 },
                                 }}
-                                onClick={() => {
-                                    // Navigate to user details if we can find user by coach name
-                                    // For now, this is wired up - the UserDetails route will handle lookup
+                                onClick={(e) => {
+                                    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                                    e.preventDefault();
                                     navigate(`/user-details/${encodeURIComponent(coach.name)}`);
                                 }}
                             >
