@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { 
+import React, { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
     Box,
-    Tabs, 
-    Tab, 
+    Tabs,
+    Tab,
     useTheme,
     useMediaQuery
 } from '@mui/material';
-import { 
-    SportsFootball, 
-    Schedule, 
+import {
+    SportsFootball,
+    Schedule,
     History
 } from '@mui/icons-material';
 import PageLayout from '../../components/layout/PageLayout';
@@ -17,12 +18,23 @@ import OngoingGames from '../../components/game/scoreboard/OngoingGames';
 import PastGames from '../../components/game/scoreboard/PastGames';
 import Scrimmages from '../../components/game/scoreboard/Scrimmages';
 
+const TAB_SLUGS = ['live', 'past', 'scrimmages'];
+const TAB_FROM_SLUG = { live: 0, past: 1, scrimmages: 2 };
+
 const Scoreboard = () => {
+    const { tab } = useParams();
+    const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const [activeTab, setActiveTab] = useState(0);
+
+    const activeTab = TAB_FROM_SLUG[tab] ?? 0;
 
     useEffect(() => { document.title = 'FCFB | Scoreboard'; }, []);
+
+    // Redirect bare /scoreboard to /scoreboard/live
+    useEffect(() => {
+        if (!tab) navigate('/scoreboard/live', { replace: true });
+    }, [tab, navigate]);
 
     const tabs = [
         { label: 'Live Games', icon: <SportsFootball />, component: <OngoingGames /> },
@@ -31,7 +43,7 @@ const Scoreboard = () => {
     ];
 
     const handleTabChange = (event, newValue) => {
-        setActiveTab(newValue);
+        navigate(`/scoreboard/${TAB_SLUGS[newValue]}`);
     };
 
     return (
@@ -68,11 +80,11 @@ const Scoreboard = () => {
                             },
                         }}
                     >
-                        {tabs.map((tab, index) => (
+                        {tabs.map((tabDef, index) => (
                             <Tab
                                 key={index}
-                                label={tab.label}
-                                icon={tab.icon}
+                                label={tabDef.label}
+                                icon={tabDef.icon}
                                 iconPosition="start"
                                 sx={{
                                     '& .MuiTab-iconWrapper': {
