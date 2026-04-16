@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
     Box,
     Typography,
@@ -339,184 +339,168 @@ const PostseasonAdminTab = ({
         }
     };
 
-    // ── Advance team ─────────────────────────────────────────────────
+    // ── Core advance logic (used by dialog and auto-advance) ─────────
+    const advanceTeamToNextRound = async (game, winner, schedule) => {
+        const sched = schedule || postseasonSchedule;
+        const currentRound = field(game, 'playoffRound', 'playoff_round') || 1;
+        const nextRound = currentRound + 1;
+        const home = field(game, 'homeTeam', 'home_team');
+        const homeSeed = field(game, 'playoffHomeSeed', 'playoff_home_seed');
+        const awaySeed = field(game, 'playoffAwaySeed', 'playoff_away_seed');
+        const winnerSeed = winner === home ? homeSeed : awaySeed;
+        const gameType = nextRound >= 5 ? 'NATIONAL_CHAMPIONSHIP' : 'PLAYOFFS';
+        const nextWeek = playoffWeekForRound(nextRound);
+
+        // R1 → R2: find existing R2 placeholder with matching bye seed
+        if (currentRound === 1 && homeSeed) {
+            const byeSeed = 17 - homeSeed;
+            const r2Placeholder = sched.find(g => {
+                const pr = field(g, 'playoffRound', 'playoff_round');
+                const hs = field(g, 'playoffHomeSeed', 'playoff_home_seed');
+                return pr === 2 && hs === byeSeed;
+            });
+
+            if (r2Placeholder) {
+                await updateScheduleEntry(r2Placeholder.id, {
+                    season,
+                    week: nextWeek,
+                    subdivision: 'FBS',
+                    homeTeam: field(r2Placeholder, 'homeTeam', 'home_team'),
+                    awayTeam: winner,
+                    gameType: 'PLAYOFFS',
+                    playoffRound: 2,
+                    playoffHomeSeed: byeSeed,
+                    playoffAwaySeed: winnerSeed,
+                    postseasonGameLogo: CFP_LOGO_URL,
+                    postseasonGameName: ROUND_LABELS[2],
+                });
+                return `${winner} (#${winnerSeed}) advances to face #${byeSeed} in ${ROUND_LABELS[2]} (Week ${nextWeek})!`;
+            }
+        }
+
+        // Later rounds: determine bracket position and find the correct game
+        const nextRoundGames = sched.filter(g => {
+            const gt = field(g, 'gameType', 'game_type');
+            const pr = field(g, 'playoffRound', 'playoff_round');
+            return (gt === 'PLAYOFFS' || gt === 'NATIONAL_CHAMPIONSHIP') && pr === nextRound;
+        });
+
+        const currentRoundGames = sched.filter(g => {
+            const gt = field(g, 'gameType', 'game_type');
+            const pr = field(g, 'playoffRound', 'playoff_round');
+            return (gt === 'PLAYOFFS' || gt === 'NATIONAL_CHAMPIONSHIP') && pr === currentRound;
+        });
+
+        let sortedCurrentGames;
+        if (currentRound === 2) {
+            sortedCurrentGames = [...currentRoundGames].sort((a, b) => {
+                const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed');
+                const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed');
+                const idxA = R2_BYE_SEEDS.indexOf(sa);
+                const idxB = R2_BYE_SEEDS.indexOf(sb);
+                if (idxA === -1) return 1;
+                if (idxB === -1) return -1;
+                return idxA - idxB;
+            });
+        } else {
+            sortedCurrentGames = [...currentRoundGames].sort((a, b) => {
+                const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                return sa - sb;
+            });
+        }
+
+        const currentGameIndex = sortedCurrentGames.findIndex(g => g.id === game.id);
+        if (currentGameIndex === -1) {
+            throw new Error('Could not find current game in bracket');
+        }
+
+        let targetNextRoundIndex;
+        if (currentRound === 2) {
+            targetNextRoundIndex = Math.floor(currentGameIndex / 2);
+        } else if (currentRound === 3) {
+            targetNextRoundIndex = Math.floor(currentGameIndex / 2);
+        } else if (currentRound === 4) {
+            targetNextRoundIndex = 0;
+        } else {
+            targetNextRoundIndex = null;
+        }
+
+        const isPlaceholder = (name) => !name || name === 'TBD' || name === 'OPEN';
+        let targetGame = null;
+
+        if (targetNextRoundIndex !== null) {
+            const sortedNextRoundGames = [...nextRoundGames].sort((a, b) => {
+                const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+                return sa - sb;
+            });
+
+            if (targetNextRoundIndex < sortedNextRoundGames.length) {
+                const candidateGame = sortedNextRoundGames[targetNextRoundIndex];
+                const h = field(candidateGame, 'homeTeam', 'home_team');
+                const a = field(candidateGame, 'awayTeam', 'away_team');
+                if (isPlaceholder(h) || isPlaceholder(a)) {
+                    targetGame = candidateGame;
+                }
+            }
+        }
+
+        if (!targetGame) {
+            targetGame = nextRoundGames.find(g => {
+                const h = field(g, 'homeTeam', 'home_team');
+                const a = field(g, 'awayTeam', 'away_team');
+                return isPlaceholder(h) || isPlaceholder(a);
+            });
+        }
+
+        if (targetGame) {
+            const h = field(targetGame, 'homeTeam', 'home_team');
+            const a = field(targetGame, 'awayTeam', 'away_team');
+            const existingHomeSeed = field(targetGame, 'playoffHomeSeed', 'playoff_home_seed');
+            const existingAwaySeed = field(targetGame, 'playoffAwaySeed', 'playoff_away_seed');
+
+            await updateScheduleEntry(targetGame.id, {
+                season,
+                week: nextWeek,
+                subdivision: 'FBS',
+                homeTeam: isPlaceholder(h) ? winner : h,
+                awayTeam: isPlaceholder(a) ? winner : a,
+                gameType,
+                playoffRound: nextRound,
+                playoffHomeSeed: isPlaceholder(h) ? winnerSeed : existingHomeSeed,
+                playoffAwaySeed: isPlaceholder(a) ? winnerSeed : existingAwaySeed,
+                postseasonGameLogo: CFP_LOGO_URL,
+                postseasonGameName: ROUND_LABELS[nextRound],
+            });
+        } else {
+            await createScheduleEntry({
+                season,
+                week: nextWeek,
+                subdivision: 'FBS',
+                homeTeam: winner,
+                awayTeam: 'OPEN',
+                gameType,
+                playoffRound: nextRound,
+                playoffHomeSeed: winnerSeed,
+                playoffAwaySeed: null,
+                postseasonGameLogo: CFP_LOGO_URL,
+                postseasonGameName: ROUND_LABELS[nextRound],
+            });
+        }
+
+        return `${winner} advanced to ${ROUND_LABELS[nextRound] || `Round ${nextRound}`} (Week ${nextWeek})!`;
+    };
+
+    // ── Dialog-driven advance ─────────────────────────────────────────
     const handleAdvanceTeam = async () => {
         if (!advanceGame || !advanceWinner) {
             onShowSnackbar('Please select a winner', 'error');
             return;
         }
         try {
-            const currentRound = field(advanceGame, 'playoffRound', 'playoff_round') || 1;
-            const nextRound = currentRound + 1;
-            const home = field(advanceGame, 'homeTeam', 'home_team');
-            const homeSeed = field(advanceGame, 'playoffHomeSeed', 'playoff_home_seed');
-            const awaySeed = field(advanceGame, 'playoffAwaySeed', 'playoff_away_seed');
-            const winnerSeed = advanceWinner === home ? homeSeed : awaySeed;
-            const gameType = nextRound >= 5 ? 'NATIONAL_CHAMPIONSHIP' : 'PLAYOFFS';
-            const nextWeek = playoffWeekForRound(nextRound);
-
-            // R1 → R2: find existing R2 placeholder with matching bye seed
-            if (currentRound === 1 && homeSeed) {
-                const byeSeed = 17 - homeSeed;
-                const r2Placeholder = postseasonSchedule.find(g => {
-                    const pr = field(g, 'playoffRound', 'playoff_round');
-                    const hs = field(g, 'playoffHomeSeed', 'playoff_home_seed');
-                    return pr === 2 && hs === byeSeed;
-                });
-
-                if (r2Placeholder) {
-                    await updateScheduleEntry(r2Placeholder.id, {
-                        season,
-                        week: nextWeek,
-                        subdivision: 'FBS',
-                        homeTeam: field(r2Placeholder, 'homeTeam', 'home_team'),
-                        awayTeam: advanceWinner,
-                        gameType: 'PLAYOFFS',
-                        playoffRound: 2,
-                        playoffHomeSeed: byeSeed,
-                        playoffAwaySeed: winnerSeed,
-                        postseasonGameLogo: CFP_LOGO_URL,
-                        postseasonGameName: ROUND_LABELS[2],
-                    });
-                    onShowSnackbar(`${advanceWinner} (#${winnerSeed}) advances to face #${byeSeed} in ${ROUND_LABELS[2]} (Week ${nextWeek})!`);
-                    setAdvanceDialogOpen(false);
-                    setAdvanceGame(null);
-                    setAdvanceWinner('');
-                    onRefresh();
-                    return;
-                }
-            }
-
-            // Later rounds: determine bracket position and find the correct game
-            const nextRoundGames = postseasonSchedule.filter(g => {
-                const gt = field(g, 'gameType', 'game_type');
-                const pr = field(g, 'playoffRound', 'playoff_round');
-                return (gt === 'PLAYOFFS' || gt === 'NATIONAL_CHAMPIONSHIP') && pr === nextRound;
-            });
-
-            // Determine the bracket position of the current game
-            const currentRoundGames = postseasonSchedule.filter(g => {
-                const gt = field(g, 'gameType', 'game_type');
-                const pr = field(g, 'playoffRound', 'playoff_round');
-                return (gt === 'PLAYOFFS' || gt === 'NATIONAL_CHAMPIONSHIP') && pr === currentRound;
-            });
-
-            // Sort games by bracket position (not by seed value)
-            let sortedCurrentGames;
-            if (currentRound === 2) {
-                // R2: Sort by position in R2_BYE_SEEDS array (bracket order)
-                sortedCurrentGames = [...currentRoundGames].sort((a, b) => {
-                    const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed');
-                    const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed');
-                    const idxA = R2_BYE_SEEDS.indexOf(sa);
-                    const idxB = R2_BYE_SEEDS.indexOf(sb);
-                    // If seed not found in R2_BYE_SEEDS, put at end
-                    if (idxA === -1) return 1;
-                    if (idxB === -1) return -1;
-                    return idxA - idxB;
-                });
-            } else {
-                // Other rounds: Sort by home seed (ascending)
-                sortedCurrentGames = [...currentRoundGames].sort((a, b) => {
-                    const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed') || 99;
-                    const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed') || 99;
-                    return sa - sb;
-                });
-            }
-
-            const currentGameIndex = sortedCurrentGames.findIndex(g => g.id === advanceGame.id);
-            if (currentGameIndex === -1) {
-                throw new Error('Could not find current game in bracket');
-            }
-
-            // Calculate target bracket position in next round
-            // R2 (8 games) → QF (4 games): bracket positions 0,1 → QF 0; 2,3 → QF 1; 4,5 → QF 2; 6,7 → QF 3
-            // QF (4 games) → SF (2 games): games 0,1 → SF 0; 2,3 → SF 1
-            // SF (2 games) → NCG (1 game): both games → NCG 0
-            let targetNextRoundIndex;
-            if (currentRound === 2) {
-                // R2 → QF: pair bracket positions 0,1 → QF 0; 2,3 → QF 1; 4,5 → QF 2; 6,7 → QF 3
-                targetNextRoundIndex = Math.floor(currentGameIndex / 2);
-            } else if (currentRound === 3) {
-                // QF → SF: pair games 0,1 → SF 0; 2,3 → SF 1
-                targetNextRoundIndex = Math.floor(currentGameIndex / 2);
-            } else if (currentRound === 4) {
-                // SF → NCG: both games → NCG 0
-                targetNextRoundIndex = 0;
-            } else {
-                // Fallback: use first available placeholder
-                targetNextRoundIndex = null;
-            }
-
-            const isPlaceholder = (name) => !name || name === 'TBD' || name === 'OPEN';
-            let targetGame = null;
-
-            if (targetNextRoundIndex !== null) {
-                // Sort next round games by home seed (ascending) to match bracket order
-                const sortedNextRoundGames = [...nextRoundGames].sort((a, b) => {
-                    const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed') || 99;
-                    const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed') || 99;
-                    return sa - sb;
-                });
-
-                // Find the game at the target bracket position
-                if (targetNextRoundIndex < sortedNextRoundGames.length) {
-                    const candidateGame = sortedNextRoundGames[targetNextRoundIndex];
-                    const h = field(candidateGame, 'homeTeam', 'home_team');
-                    const a = field(candidateGame, 'awayTeam', 'away_team');
-                    // Only use this game if it has a placeholder slot
-                    if (isPlaceholder(h) || isPlaceholder(a)) {
-                        targetGame = candidateGame;
-                    }
-                }
-            }
-
-            // Fallback: if we couldn't find the correct bracket position, use first available placeholder
-            if (!targetGame) {
-                targetGame = nextRoundGames.find(g => {
-                    const h = field(g, 'homeTeam', 'home_team');
-                    const a = field(g, 'awayTeam', 'away_team');
-                    return isPlaceholder(h) || isPlaceholder(a);
-                });
-            }
-
-            if (targetGame) {
-                const h = field(targetGame, 'homeTeam', 'home_team');
-                const a = field(targetGame, 'awayTeam', 'away_team');
-                const existingHomeSeed = field(targetGame, 'playoffHomeSeed', 'playoff_home_seed');
-                const existingAwaySeed = field(targetGame, 'playoffAwaySeed', 'playoff_away_seed');
-
-                await updateScheduleEntry(targetGame.id, {
-                    season,
-                    week: nextWeek,
-                    subdivision: 'FBS',
-                    homeTeam: isPlaceholder(h) ? advanceWinner : h,
-                    awayTeam: isPlaceholder(a) ? advanceWinner : a,
-                    gameType,
-                    playoffRound: nextRound,
-                    playoffHomeSeed: isPlaceholder(h) ? winnerSeed : existingHomeSeed,
-                    playoffAwaySeed: isPlaceholder(a) ? winnerSeed : existingAwaySeed,
-                    postseasonGameLogo: CFP_LOGO_URL,
-                    postseasonGameName: ROUND_LABELS[nextRound],
-                });
-                onShowSnackbar(`${advanceWinner} advanced to ${ROUND_LABELS[nextRound] || `Round ${nextRound}`} (Week ${nextWeek})!`);
-            } else {
-                await createScheduleEntry({
-                    season,
-                    week: nextWeek,
-                    subdivision: 'FBS',
-                    homeTeam: advanceWinner,
-                    awayTeam: 'OPEN',
-                    gameType,
-                    playoffRound: nextRound,
-                    playoffHomeSeed: winnerSeed,
-                    playoffAwaySeed: null,
-                    postseasonGameLogo: CFP_LOGO_URL,
-                    postseasonGameName: ROUND_LABELS[nextRound],
-                });
-                onShowSnackbar(`${advanceWinner} advanced to ${ROUND_LABELS[nextRound] || `Round ${nextRound}`} (Week ${nextWeek})!`);
-            }
-
+            const msg = await advanceTeamToNextRound(advanceGame, advanceWinner);
+            onShowSnackbar(msg);
             setAdvanceDialogOpen(false);
             setAdvanceGame(null);
             setAdvanceWinner('');
@@ -526,6 +510,67 @@ const PostseasonAdminTab = ({
             onShowSnackbar('Failed to advance team: ' + err.message, 'error');
         }
     };
+
+    // ── Auto-advance finished playoff games ───────────────────────────
+    const autoAdvancedRef = useRef(new Set());
+
+    useEffect(() => {
+        const runAutoAdvance = async () => {
+            const finishedPlayoffGames = postseasonSchedule.filter(g => {
+                const gt = field(g, 'gameType', 'game_type');
+                const finished = field(g, 'finished', 'finished');
+                return (gt === 'PLAYOFFS' || gt === 'NATIONAL_CHAMPIONSHIP') && finished;
+            });
+
+            let advanced = false;
+            for (const game of finishedPlayoffGames) {
+                if (autoAdvancedRef.current.has(game.id)) continue;
+
+                const homeTeam = field(game, 'homeTeam', 'home_team');
+                const awayTeam = field(game, 'awayTeam', 'away_team');
+                const homeScore = field(game, 'homeScore', 'home_score');
+                const awayScore = field(game, 'awayScore', 'away_score');
+                const currentRound = field(game, 'playoffRound', 'playoff_round') || 1;
+                const nextRound = currentRound + 1;
+
+                if (homeScore == null || awayScore == null || homeScore === awayScore) continue;
+
+                const winner = homeScore > awayScore ? homeTeam : awayTeam;
+
+                // Skip if winner is already in a next-round game
+                const alreadyAdvanced = postseasonSchedule.some(g => {
+                    const pr = field(g, 'playoffRound', 'playoff_round');
+                    const ht = field(g, 'homeTeam', 'home_team');
+                    const at = field(g, 'awayTeam', 'away_team');
+                    return pr === nextRound && (ht === winner || at === winner);
+                });
+
+                if (alreadyAdvanced) {
+                    autoAdvancedRef.current.add(game.id);
+                    continue;
+                }
+
+                autoAdvancedRef.current.add(game.id);
+                try {
+                    const msg = await advanceTeamToNextRound(game, winner, postseasonSchedule);
+                    onShowSnackbar(msg);
+                    advanced = true;
+                } catch (err) {
+                    console.error('Auto-advance failed for game', game.id, err);
+                    // Remove from processed set so it can be retried or done manually
+                    autoAdvancedRef.current.delete(game.id);
+                }
+            }
+
+            if (advanced) {
+                onRefresh();
+            }
+        };
+
+        if (postseasonSchedule.length > 0) {
+            runAutoAdvance();
+        }
+    }, [postseasonSchedule]);
 
     // ── Render ───────────────────────────────────────────────────────
     return (

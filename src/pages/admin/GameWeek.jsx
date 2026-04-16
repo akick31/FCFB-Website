@@ -19,6 +19,10 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
 } from '@mui/material';
 import {
     PlayArrow as StartIcon,
@@ -45,6 +49,7 @@ const GameWeek = () => {
     const navigate = useNavigate();
     const [season, setSeason] = useState(null);
     const [week, setWeek] = useState(null);
+    const [selectedWeek, setSelectedWeek] = useState(null);
     const [loading, setLoading] = useState(true);
     const [weekSchedule, setWeekSchedule] = useState([]);
     const [scheduleLoading, setScheduleLoading] = useState(false);
@@ -69,6 +74,7 @@ const GameWeek = () => {
                 ]);
                 setSeason(currentSeason);
                 setWeek(currentWeek);
+                setSelectedWeek(currentWeek);
             } catch (err) {
                 console.error('Error initializing game week page:', err);
             } finally {
@@ -78,12 +84,12 @@ const GameWeek = () => {
         init();
     }, []);
 
-    // Fetch week schedule when season/week available
+    // Fetch week schedule when season/selectedWeek available
     useEffect(() => {
-        if (season && week) {
+        if (season && selectedWeek) {
             fetchWeekSchedule();
         }
-    }, [season, week]);
+    }, [season, selectedWeek]);
 
     // Auto-scroll log container when new logs arrive
     useEffect(() => {
@@ -104,7 +110,7 @@ const GameWeek = () => {
     const fetchWeekSchedule = async () => {
         try {
             setScheduleLoading(true);
-            const data = await getScheduleBySeasonAndWeek(season, week);
+            const data = await getScheduleBySeasonAndWeek(season, selectedWeek);
             setWeekSchedule(data || []);
         } catch (err) {
             console.error('Error fetching week schedule:', err);
@@ -151,7 +157,7 @@ const GameWeek = () => {
         // Poll immediately, then at interval
         poll();
         pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
-    }, [season, week]);
+    }, [season, selectedWeek]);
 
     // Handle starting the week
     const handleStartWeek = async () => {
@@ -160,7 +166,7 @@ const GameWeek = () => {
         setJobData(null);
 
         try {
-            const result = await startGameWeek(season, week);
+            const result = await startGameWeek(season, selectedWeek);
             const jobId = result.jobId;
             setActiveJobId(jobId);
             startPolling(jobId);
@@ -266,12 +272,27 @@ const GameWeek = () => {
                         <StyledCard hover={false}>
                             <Box sx={{ textAlign: 'center' }}>
                                 <GameIcon sx={{ fontSize: 40, color: 'secondary.main', mb: 1 }} />
-                                <Typography variant="h3" sx={{ fontWeight: 700, color: 'secondary.main' }}>
-                                    {week || '—'}
+                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                    Current Week: <strong>{week || '—'}</strong>
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                    Current Week
-                                </Typography>
+                                <FormControl size="small" fullWidth>
+                                    <InputLabel>View Week</InputLabel>
+                                    <Select
+                                        value={selectedWeek || ''}
+                                        label="View Week"
+                                        onChange={(e) => {
+                                            setSelectedWeek(e.target.value);
+                                            setJobData(null);
+                                            setActiveJobId(null);
+                                        }}
+                                    >
+                                        {Array.from({ length: 18 }, (_, i) => i + 1).map(w => (
+                                            <MenuItem key={w} value={w}>
+                                                Week {w}{w === week ? ' (current)' : ''}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
                             </Box>
                         </StyledCard>
                     </Grid>
@@ -308,7 +329,7 @@ const GameWeek = () => {
                                         fontWeight: 700,
                                     }}
                                 >
-                                    {isStarting ? 'Starting...' : stats.notStarted === 0 ? 'All Games Started' : `Start Week ${week}`}
+                                    {isStarting ? 'Starting...' : stats.notStarted === 0 ? 'All Games Started' : `Start Week ${selectedWeek}`}
                                 </Button>
                                 {hasFailedGames && (
                                     <Button
@@ -384,8 +405,8 @@ const GameWeek = () => {
                                     sx={{ mb: 2 }}
                                 >
                                     {jobData.failedGames > 0
-                                        ? `Week ${week} processing complete. ${jobData.startedGames} started, ${jobData.failedGames} failed. You can retry the failed games.`
-                                        : `Week ${week} started successfully! All ${jobData.startedGames} games started.`
+                                        ? `Week ${selectedWeek} processing complete. ${jobData.startedGames} started, ${jobData.failedGames} failed. You can retry the failed games.`
+                                        : `Week ${selectedWeek} started successfully! All ${jobData.startedGames} games started.`
                                     }
                                 </Alert>
                             )}
@@ -461,7 +482,7 @@ const GameWeek = () => {
                 <StyledCard hover={false}>
                     <Box sx={{ p: 3 }}>
                         <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', mb: 2 }}>
-                            Week {week} Games
+                            Week {selectedWeek} Games
                         </Typography>
 
                         {scheduleLoading ? (
@@ -531,7 +552,7 @@ const GameWeek = () => {
                                         {weekSchedule.length === 0 && (
                                             <TableRow>
                                                 <TableCell colSpan={4} sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-                                                    No games scheduled for Week {week}
+                                                    No games scheduled for Week {selectedWeek}
                                                 </TableCell>
                                             </TableRow>
                                         )}
@@ -544,10 +565,10 @@ const GameWeek = () => {
 
                 {/* Confirm Dialog */}
                 <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
-                    <DialogTitle>Start Game Week {week}?</DialogTitle>
+                    <DialogTitle>Start Game Week {selectedWeek}?</DialogTitle>
                     <DialogContent>
                         <Typography variant="body1" sx={{ mb: 2 }}>
-                            This will start all {stats.notStarted} unstarted games for Week {week}, Season {season}.
+                            This will start all {stats.notStarted} unstarted games for Week {selectedWeek}, Season {season}.
                         </Typography>
                         <Alert severity="info" sx={{ mb: 1 }}>
                             Games will be started with smart pacing (~3s between each game, 60s cooldown every 25 games) to respect Discord rate limits.
@@ -559,7 +580,7 @@ const GameWeek = () => {
                     <DialogActions>
                         <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
                         <Button variant="contained" color="success" onClick={handleStartWeek}>
-                            Start Week {week}
+                            Start Week {selectedWeek}
                         </Button>
                     </DialogActions>
                 </Dialog>
