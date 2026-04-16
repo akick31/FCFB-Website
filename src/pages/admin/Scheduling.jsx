@@ -1024,8 +1024,33 @@ const Scheduling = () => {
                                 />
                             )}
 
-                            {/* Postseason Game Logo - shown for BOWL, PLAYOFFS, CONFERENCE_CHAMPIONSHIP, and NATIONAL_CHAMPIONSHIP */}
-                            {(addGameType === 'BOWL' || addGameType === 'PLAYOFFS' || addGameType === 'CONFERENCE_CHAMPIONSHIP' || addGameType === 'NATIONAL_CHAMPIONSHIP') && (
+                            {/* Postseason Game Logo - URL input for BOWL, file upload for others */}
+                            {addGameType === 'BOWL' && (
+                                <Box>
+                                    <TextField
+                                        label="Bowl Game Logo URL"
+                                        size="small"
+                                        fullWidth
+                                        value={addGameLogo || ''}
+                                        onChange={(e) => {
+                                            setAddGameLogo(e.target.value);
+                                            setAddGameLogoPreview(e.target.value);
+                                        }}
+                                        placeholder="https://example.com/bowl-logo.png"
+                                        helperText="Paste a direct link to the bowl game logo (PNG recommended)"
+                                    />
+                                    {addGameLogoPreview && (
+                                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                                            <Avatar
+                                                src={addGameLogoPreview}
+                                                sx={{ width: 100, height: 100 }}
+                                                variant="rounded"
+                                            />
+                                        </Box>
+                                    )}
+                                </Box>
+                            )}
+                            {(addGameType === 'PLAYOFFS' || addGameType === 'CONFERENCE_CHAMPIONSHIP' || addGameType === 'NATIONAL_CHAMPIONSHIP') && (
                                 <Box>
                                     <input
                                         accept="image/*"
@@ -1039,7 +1064,6 @@ const Scheduling = () => {
                                                 try {
                                                     const result = await uploadPostseasonLogo(file);
                                                     setAddGameLogo(result.url);
-                                                    // Create preview URL
                                                     const reader = new FileReader();
                                                     reader.onloadend = () => {
                                                         setAddGameLogoPreview(reader.result);
