@@ -109,7 +109,8 @@ const GameManagement = () => {
 
     // Start Game Week state
     const [currentSeason, setCurrentSeason] = useState(null);
-    const [currentWeek, setCurrentWeek] = useState(null);
+    const [selectedStartSeason, setSelectedStartSeason] = useState(null);
+    const [selectedStartWeek, setSelectedStartWeek] = useState(null);
     const [weekSchedule, setWeekSchedule] = useState([]);
     const [activeJobId, setActiveJobId] = useState(null);
     const [jobData, setJobData] = useState(null);
@@ -144,8 +145,9 @@ const GameManagement = () => {
                 
                 // Set state for Start Game Week
                 setCurrentSeason(season);
-                setCurrentWeek(week);
-                
+                setSelectedStartSeason(season);
+                setSelectedStartWeek(week);
+
                 // Load schedule for Start Game Week
                 if (season && week) {
                     const schedule = await getScheduleBySeasonAndWeek(season, week);
@@ -279,7 +281,7 @@ const GameManagement = () => {
                     clearInterval(pollIntervalRef.current);
                     pollIntervalRef.current = null;
                     setIsStarting(false);
-                    const schedule = await getScheduleBySeasonAndWeek(currentSeason, currentWeek);
+                    const schedule = await getScheduleBySeasonAndWeek(selectedStartSeason, selectedStartWeek);
                     setWeekSchedule(schedule || []);
                 }
             } catch (err) {
@@ -289,7 +291,7 @@ const GameManagement = () => {
 
         poll();
         pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
-    }, [currentSeason, currentWeek]);
+    }, [selectedStartSeason, selectedStartWeek]);
 
     const handleStartWeek = async () => {
         setConfirmDialogOpen(false);
@@ -297,7 +299,7 @@ const GameManagement = () => {
         setJobData(null);
 
         try {
-            const result = await startGameWeek(currentSeason, currentWeek);
+            const result = await startGameWeek(selectedStartSeason, selectedStartWeek);
             const jobId = result.jobId;
             setActiveJobId(jobId);
             startPolling(jobId);
@@ -305,6 +307,16 @@ const GameManagement = () => {
             console.error('Error starting week:', err);
             setIsStarting(false);
             setError(`Failed to start week: ${err.message}`);
+        }
+    };
+
+    const handleStartWeekSelectionChange = async (season, week) => {
+        if (!season || !week) return;
+        try {
+            const schedule = await getScheduleBySeasonAndWeek(season, week);
+            setWeekSchedule(schedule || []);
+        } catch (err) {
+            console.error('Failed to load schedule:', err);
         }
     };
 
@@ -593,17 +605,48 @@ const GameManagement = () => {
                 )}
 
                 {/* Start Game Week Section */}
-                {currentSeason && currentWeek && (
+                {selectedStartSeason && selectedStartWeek && (
                     <Card sx={{ mb: 4, backgroundColor: 'rgba(25, 118, 210, 0.05)', border: '1px solid', borderColor: 'primary.main' }}>
                         <CardContent>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                <Box>
-                                    <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main', mb: 0.5 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                                    <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
                                         Start Game Week
                                     </Typography>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                        Season {currentSeason}, Week {currentWeek}
-                                    </Typography>
+                                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                                        <InputLabel sx={{ color: 'primary.main' }}>Season</InputLabel>
+                                        <Select
+                                            value={selectedStartSeason || ''}
+                                            label="Season"
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setSelectedStartSeason(val);
+                                                handleStartWeekSelectionChange(val, selectedStartWeek);
+                                            }}
+                                            sx={{ color: 'primary.main', '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.3)' } }}
+                                        >
+                                            {Array.from({ length: currentSeason || 1 }, (_, i) => i + 1).map(s => (
+                                                <MenuItem key={s} value={s}>Season {s}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                    <FormControl size="small" sx={{ minWidth: 100 }}>
+                                        <InputLabel sx={{ color: 'primary.main' }}>Week</InputLabel>
+                                        <Select
+                                            value={selectedStartWeek || ''}
+                                            label="Week"
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setSelectedStartWeek(val);
+                                                handleStartWeekSelectionChange(selectedStartSeason, val);
+                                            }}
+                                            sx={{ color: 'primary.main', '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.3)' } }}
+                                        >
+                                            {Array.from({ length: 15 }, (_, i) => i + 1).map(w => (
+                                                <MenuItem key={w} value={w}>Week {w}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
                                 </Box>
                                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                                     {(() => {
@@ -628,7 +671,7 @@ const GameManagement = () => {
                                     disabled={isStarting}
                                     sx={{ minWidth: 200 }}
                                 >
-                                    {isStarting ? 'Starting...' : `Start Week ${currentWeek}`}
+                                    {isStarting ? 'Starting...' : `Start Week ${selectedStartWeek}`}
                                 </Button>
                                 {(() => {
                                     const stats = getGameStats();
@@ -672,7 +715,7 @@ const GameManagement = () => {
 
                 {/* Confirm Start Week Dialog */}
                 <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
-                    <DialogTitle>Start Game Week {currentWeek}?</DialogTitle>
+                    <DialogTitle>Start Game Week {selectedStartWeek}?</DialogTitle>
                     <DialogContent>
                         {(() => {
                             const stats = getGameStats();
@@ -680,7 +723,7 @@ const GameManagement = () => {
                                 return (
                                     <>
                                         <Typography variant="body1" sx={{ mb: 2 }}>
-                                            All games for Week {currentWeek}, Season {currentSeason} have already been started.
+                                            All games for Week {selectedStartWeek}, Season {selectedStartSeason} have already been started.
                                         </Typography>
                                         <Alert severity="info">
                                             Clicking "Start Week" will attempt to start any games that may have failed previously or were missed.
@@ -691,7 +734,7 @@ const GameManagement = () => {
                             return (
                                 <>
                                     <Typography variant="body1" sx={{ mb: 2 }}>
-                                        This will start all {stats.notStarted} unstarted games for Week {currentWeek}, Season {currentSeason}.
+                                        This will start all {stats.notStarted} unstarted games for Week {selectedStartWeek}, Season {selectedStartSeason}.
                                     </Typography>
                                     <Alert severity="info" sx={{ mb: 1 }}>
                                         Games will be started with smart pacing (~3s between each game, 60s cooldown every 25 games) to respect Discord rate limits.
@@ -703,7 +746,7 @@ const GameManagement = () => {
                     <DialogActions>
                         <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
                         <Button variant="contained" color="success" onClick={handleStartWeek}>
-                            Start Week {currentWeek}
+                            Start Week {selectedStartWeek}
                         </Button>
                     </DialogActions>
                 </Dialog>
