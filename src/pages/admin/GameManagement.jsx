@@ -109,7 +109,6 @@ const GameManagement = () => {
 
     // Start Game Week state
     const [currentSeason, setCurrentSeason] = useState(null);
-    const [currentWeek, setCurrentWeek] = useState(null);
     const [selectedStartSeason, setSelectedStartSeason] = useState(null);
     const [selectedStartWeek, setSelectedStartWeek] = useState(null);
     const [weekSchedule, setWeekSchedule] = useState([]);
@@ -146,7 +145,6 @@ const GameManagement = () => {
                 
                 // Set state for Start Game Week
                 setCurrentSeason(season);
-                setCurrentWeek(week);
                 setSelectedStartSeason(season);
                 setSelectedStartWeek(week);
 
