@@ -25,6 +25,13 @@ export const R2_OPPONENT_R1 = [
     { h: 14, l: 19 }, { h: 11, l: 22 }, { h: 15, l: 18 }, { h: 10, l: 23 },
 ];
 
+// QF bracket position groups: each sub-array contains the R2 bye seeds that feed into that QF slot.
+// Order matches R2_BYE_SEEDS pairs: [0+1], [2+3], [4+5], [6+7]
+export const QF_SEED_GROUPS = [[1, 8], [4, 5], [3, 6], [2, 7]];
+
+// SF bracket position groups: each sub-array covers two QF slots
+export const SF_SEED_GROUPS = [[1, 8, 4, 5], [3, 6, 2, 7]];
+
 // Round labels
 export const ROUND_LABELS = {
     1: 'First Round',
