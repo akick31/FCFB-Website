@@ -3,7 +3,7 @@ import { Box, Typography, Paper, Avatar, CircularProgress, useTheme, IconButton,
 import { ArrowForward as ArrowForwardIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import BracketMatchup from './BracketMatchup';
-import { R2_BYE_SEEDS, R1_GAMES, R2_OPPONENT_R1, playoffWeekForRound } from '../constants/playoffBracket';
+import { R2_BYE_SEEDS, R1_GAMES, R2_OPPONENT_R1, playoffWeekForRound, QF_SEED_GROUPS, SF_SEED_GROUPS } from '../constants/playoffBracket';
 import { field } from '../../utils/fieldHelper';
 import { conferences } from '../constants/conferences';
 import { formatConferenceName } from '../../utils/conferenceUtils';
@@ -75,12 +75,28 @@ const Postseason = ({
             return hs === byeSeed || as_ === byeSeed;
         });
 
-    const getGamesForRound = (round, expectedCount) => {
-        const games = [...(gamesByRound[round] || [])].sort((a, b) => {
-            const sa = field(a, 'playoffHomeSeed', 'playoff_home_seed') || 99;
-            const sb = field(b, 'playoffHomeSeed', 'playoff_home_seed') || 99;
-            return sa - sb;
-        });
+    // Sort games by bracket position using seed groups.
+    // Finds the minimum seed in a game and returns its group index (bracket slot).
+    // Falls back to 99 for upset teams whose seed isn't in any group.
+    const getGameBracketPos = (game, seedGroups) => {
+        const hs = field(game, 'playoffHomeSeed', 'playoff_home_seed') || 99;
+        const as_ = field(game, 'playoffAwaySeed', 'playoff_away_seed') || 99;
+        const minSeed = Math.min(hs, as_);
+        for (let i = 0; i < seedGroups.length; i++) {
+            if (seedGroups[i].includes(minSeed)) return i;
+        }
+        // Fallback for double-upset: try max seed as well
+        const maxSeed = Math.max(hs === 99 ? 0 : hs, as_ === 99 ? 0 : as_);
+        for (let i = 0; i < seedGroups.length; i++) {
+            if (seedGroups[i].includes(maxSeed)) return i;
+        }
+        return 99;
+    };
+
+    const getGamesForRound = (round, expectedCount, seedGroups) => {
+        const games = [...(gamesByRound[round] || [])].sort((a, b) =>
+            getGameBracketPos(a, seedGroups) - getGameBracketPos(b, seedGroups)
+        );
         const result = [];
         for (let i = 0; i < expectedCount; i++) result.push(games[i] || null);
         return result;
@@ -94,9 +110,9 @@ const Postseason = ({
         })),
         [gamesByRound]);
 
-    const qfData = useMemo(() => getGamesForRound(3, 4), [gamesByRound]);
-    const sfData = useMemo(() => getGamesForRound(4, 2), [gamesByRound]);
-    const ncgData = useMemo(() => getGamesForRound(5, 1), [gamesByRound]);
+    const qfData = useMemo(() => getGamesForRound(3, 4, QF_SEED_GROUPS), [gamesByRound]);
+    const sfData = useMemo(() => getGamesForRound(4, 2, SF_SEED_GROUPS), [gamesByRound]);
+    const ncgData = useMemo(() => getGamesForRound(5, 1, [[1, 2, 3, 4, 5, 6, 7, 8]]), [gamesByRound]);
 
     // ── Helper to get team display name ───────────────────────────────
     const getTeamDisplayName = (teamName) => {
