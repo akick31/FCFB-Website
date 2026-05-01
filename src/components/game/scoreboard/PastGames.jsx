@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { getFilteredGames } from '../../../api/gameApi';
 import { getCurrentSeason, getCurrentWeek } from '../../../api/seasonApi';
 import ScoreboardList from './ScoreboardList';
-import { Box, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Box } from '@mui/material';
 import SeasonDropdown from '../../dropdown/SeasonDropdown';
 import WeekDropdown from '../../dropdown/WeekDropdown';
 
-const POSTSEASON_MIN_WEEK = 14;
+const PLAYOFF_GAME_TYPES = ['PLAYOFFS', 'NATIONAL_CHAMPIONSHIP'];
 
 const PastGames = ({ urlSeason, urlWeek }) => {
     const navigate = useNavigate();
@@ -27,7 +27,8 @@ const PastGames = ({ urlSeason, urlWeek }) => {
         gameType: null,
         gameStatus: null,
         rankedGame: null,
-        postseason: false,
+        postseason: false,   // true = minWeek 14, no gameType restriction
+        playoffsOnly: false, // true = PLAYOFFS + NATIONAL_CHAMPIONSHIP game types only
         page: 0,
         size: 10,
     });
@@ -81,11 +82,11 @@ const PastGames = ({ urlSeason, urlWeek }) => {
             try {
                 const response = await getFilteredGames({
                     filters: filters.filters,
-                    week: filters.postseason ? null : filters.week,
-                    minWeek: filters.postseason ? POSTSEASON_MIN_WEEK : null,
+                    week: (filters.postseason || filters.playoffsOnly) ? null : filters.week,
+                    minWeek: filters.postseason ? 14 : null,
                     season: filters.season,
                     conference: filters.conference,
-                    gameType: filters.postseason ? null : filters.gameType,
+                    gameType: filters.playoffsOnly ? PLAYOFF_GAME_TYPES : null,
                     gameStatus: filters.gameStatus,
                     rankedGame: filters.rankedGame,
                     category: 'PAST',
@@ -103,7 +104,7 @@ const PastGames = ({ urlSeason, urlWeek }) => {
             }
         };
 
-        if (filters.season !== null && (filters.week !== null || filters.postseason)) {
+        if (filters.season !== null && (filters.week !== null || filters.postseason || filters.playoffsOnly)) {
             fetchData();
         }
     }, [filters]);
@@ -121,24 +122,18 @@ const PastGames = ({ urlSeason, urlWeek }) => {
     };
 
     const handleWeekChange = (event) => {
-        const newValue = event.target.value === "" ? null : event.target.value;
-        setFilters(prev => ({ ...prev, week: newValue, page: 0 }));
-        if (filters.season && newValue) {
-            navigate(`/scoreboard/past/${filters.season}/${newValue}`, { replace: true });
+        const newValue = event.target.value;
+        if (newValue === 'POSTSEASON') {
+            setFilters(prev => ({ ...prev, postseason: true, playoffsOnly: false, week: null, gameType: null, page: 0 }));
+        } else if (newValue === 'PLAYOFFS') {
+            setFilters(prev => ({ ...prev, playoffsOnly: true, postseason: false, week: null, gameType: null, page: 0 }));
+        } else {
+            const parsed = newValue === '' ? null : newValue;
+            setFilters(prev => ({ ...prev, week: parsed, postseason: false, playoffsOnly: false, gameType: null, page: 0 }));
+            if (filters.season && parsed) {
+                navigate(`/scoreboard/past/${filters.season}/${parsed}`, { replace: true });
+            }
         }
-    };
-
-    const handleGameTypeChange = (event) => {
-        const newValue = event.target.value === "" ? null : event.target.value;
-        const isPostseason = newValue === 'POSTSEASON';
-        setFilters(prev => ({
-            ...prev,
-            postseason: isPostseason,
-            gameType: isPostseason ? null : newValue,
-            // Clear week when switching to postseason so minWeek takes over
-            week: isPostseason ? null : prev.week,
-            page: 0,
-        }));
     };
 
     return (
@@ -161,31 +156,11 @@ const PastGames = ({ urlSeason, urlWeek }) => {
                     />
                 }
                 weekFilter={
-                    !filters.postseason && (
-                        <WeekDropdown
-                            value={filters.week}
-                            onChange={handleWeekChange}
-                        />
-                    )
-                }
-                gameTypeFilter={
-                    <FormControl size="small" sx={{ minWidth: 175 }}>
-                        <InputLabel>Game Type</InputLabel>
-                        <Select
-                            value={filters.postseason ? 'POSTSEASON' : (filters.gameType || '')}
-                            label="Game Type"
-                            onChange={handleGameTypeChange}
-                        >
-                            <MenuItem value="">All Types</MenuItem>
-                            <MenuItem value="POSTSEASON">Postseason (Wk 14+)</MenuItem>
-                            <MenuItem value="PLAYOFFS">Playoffs</MenuItem>
-                            <MenuItem value="NATIONAL_CHAMPIONSHIP">National Championship</MenuItem>
-                            <MenuItem value="BOWL">Bowl Games</MenuItem>
-                            <MenuItem value="CONFERENCE_CHAMPIONSHIP">Conf. Championships</MenuItem>
-                            <MenuItem value="CONFERENCE_GAME">Conference Games</MenuItem>
-                            <MenuItem value="OUT_OF_CONFERENCE">Out of Conference</MenuItem>
-                        </Select>
-                    </FormControl>
+                    <WeekDropdown
+                        value={filters.postseason ? 'POSTSEASON' : filters.playoffsOnly ? 'PLAYOFFS' : filters.week}
+                        onChange={handleWeekChange}
+                        showPostseasonOptions
+                    />
                 }
             />
         </Box>
