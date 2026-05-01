@@ -1,7 +1,7 @@
 import React from 'react';
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, Divider } from '@mui/material';
 
-const WeekDropdown = ({ value, onChange }) => {
+const WeekDropdown = ({ value, onChange, showPostseasonOptions = false }) => {
     return (
         <FormControl fullWidth margin="normal">
             <InputLabel shrink>Week</InputLabel>
@@ -18,7 +18,10 @@ const WeekDropdown = ({ value, onChange }) => {
                     </MenuItem>
                 ))}
                 <MenuItem value="13">Conference Championship</MenuItem>
-                <MenuItem value="14">Postseason</MenuItem>
+                <MenuItem value="14">Week 14</MenuItem>
+                {showPostseasonOptions && <Divider />}
+                {showPostseasonOptions && <MenuItem value="POSTSEASON">Postseason (All)</MenuItem>}
+                {showPostseasonOptions && <MenuItem value="PLAYOFFS">Playoffs Only</MenuItem>}
             </Select>
         </FormControl>
     );

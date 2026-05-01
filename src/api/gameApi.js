@@ -76,7 +76,10 @@ export const getFilteredGames = async (params) => {
         if (params.season) searchParams.append('season', params.season);
         if (params.conference) searchParams.append('conference', params.conference);
         if (params.gameMode) searchParams.append('gameMode', params.gameMode);
-        if (params.gameType) searchParams.append('gameType', params.gameType);
+        if (params.gameType) {
+            const types = Array.isArray(params.gameType) ? params.gameType : [params.gameType];
+            types.forEach(t => searchParams.append('gameType', t));
+        }
         if (params.gameStatus) searchParams.append('gameStatus', params.gameStatus);
         if (params.category) searchParams.append('category', params.category);
         if (params.sort) searchParams.append('sort', params.sort);
