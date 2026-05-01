@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import cfpLogo from '../../assets/images/playoff.png';
 import { Box, Typography, Paper, Avatar, CircularProgress, useTheme, IconButton, Tooltip } from '@mui/material';
 import { ArrowForward as ArrowForwardIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +12,7 @@ import { formatConferenceName } from '../../utils/conferenceUtils';
 // ─── Component ──────────────────────────────────────────────────────
 const Postseason = ({
     postseasonSchedule = [],
+    ongoingGames = [],
     teamMap = {},
     loading = false,
     adminMode = false,
@@ -20,20 +22,45 @@ const Postseason = ({
     const navigate = useNavigate();
     const theme = useTheme();
 
+    // ── Merge live quarter/clock from ongoing games into schedule entries ──
+    const enrichedSchedule = useMemo(() => {
+        if (!ongoingGames.length) return postseasonSchedule;
+        const liveById = {};
+        ongoingGames.forEach(g => {
+            const id = g.game_id || g.gameId;
+            if (id) liveById[id] = g;
+        });
+        return postseasonSchedule.map(g => {
+            const id = field(g, 'gameId', 'game_id');
+            const live = id ? liveById[id] : null;
+            if (!live) return g;
+            return {
+                ...g,
+                quarter: live.quarter ?? g.quarter,
+                clock: live.clock ?? g.clock,
+                game_status: live.game_status ?? g.game_status,
+                started: live.started ?? g.started,
+                finished: live.finished ?? g.finished,
+                home_score: live.home_score ?? g.home_score,
+                away_score: live.away_score ?? g.away_score,
+            };
+        });
+    }, [postseasonSchedule, ongoingGames]);
+
     // ── Categorize games ────────────────────────────────────────────
     const playoffGames = useMemo(() =>
-        postseasonSchedule.filter(g => {
+        enrichedSchedule.filter(g => {
             const gt = field(g, 'gameType', 'game_type');
             return gt === 'PLAYOFFS' || gt === 'NATIONAL_CHAMPIONSHIP';
-        }), [postseasonSchedule]);
+        }), [enrichedSchedule]);
 
     const ccgGames = useMemo(() =>
-        postseasonSchedule.filter(g => field(g, 'gameType', 'game_type') === 'CONFERENCE_CHAMPIONSHIP'),
-        [postseasonSchedule]);
+        enrichedSchedule.filter(g => field(g, 'gameType', 'game_type') === 'CONFERENCE_CHAMPIONSHIP'),
+        [enrichedSchedule]);
 
     const bowlGames = useMemo(() =>
-        postseasonSchedule.filter(g => field(g, 'gameType', 'game_type') === 'BOWL'),
-        [postseasonSchedule]);
+        enrichedSchedule.filter(g => field(g, 'gameType', 'game_type') === 'BOWL'),
+        [enrichedSchedule]);
 
     // ── Group playoff games by round ────────────────────────────────
     const gamesByRound = useMemo(() => {
@@ -236,7 +263,7 @@ const Postseason = ({
         const gid = field(game, 'gameId', 'game_id');
         const quarter = field(game, 'quarter', 'quarter');
         const clock = field(game, 'clock', 'clock') || field(game, 'gameClock', 'game_clock');
-        const status = field(game, 'status', 'status') || field(game, 'gameStatus', 'game_status');
+        const status = game.game_status || field(game, 'gameStatus', 'game_status') || field(game, 'status', 'status');
         const homeWon = fin && hsc != null && hsc > asc;
         const awayWon = fin && asc != null && asc > hsc;
         const clickable = !adminMode && gid && (started || fin);

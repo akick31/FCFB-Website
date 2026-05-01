@@ -16,6 +16,7 @@ import {
 import { getAllTeams } from '../../api/teamApi';
 import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedule, getScheduleBySeason } from '../../api/scheduleApi';
 import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
+import { getAllOngoingGames } from '../../api/gameApi';
 import { conferences } from '../../components/constants/conferences';
 import TeamScheduleTable from '../../components/schedule/TeamScheduleTable';
 import ConferenceScheduleGrid from '../../components/schedule/ConferenceScheduleGrid';
@@ -51,6 +52,7 @@ const Schedule = () => {
     // Postseason state
     const [postseasonSchedule, setPostseasonSchedule] = useState([]);
     const [postseasonLoading, setPostseasonLoading] = useState(false);
+    const [ongoingGames, setOngoingGames] = useState([]);
 
     // Conference tab state
     const [selectedConference, setSelectedConference] = useState(() => {
@@ -261,6 +263,19 @@ const Schedule = () => {
         if (season) checkPostseason();
     }, [season]);
 
+    // Fetch ongoing games so the bracket can show live quarter/clock
+    useEffect(() => {
+        const fetchOngoing = async () => {
+            try {
+                const res = await getAllOngoingGames();
+                setOngoingGames(res?.data || []);
+            } catch {
+                setOngoingGames([]);
+            }
+        };
+        fetchOngoing();
+    }, []);
+
     // Determine if postseason data exists for the bracket tab
     const hasPostseason = postseasonSchedule.length > 0;
 
@@ -377,6 +392,7 @@ const Schedule = () => {
                 {tabIndex === 2 && hasPostseason && (
                     <Postseason
                         postseasonSchedule={postseasonSchedule}
+                        ongoingGames={ongoingGames}
                         teamMap={teamMap}
                         loading={postseasonLoading}
                     />

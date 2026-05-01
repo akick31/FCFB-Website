@@ -12,6 +12,7 @@ import {
 import { getPreviousPlay } from '../../../api/playApi';
 import { getGameStatsByIdAndTeam } from '../../../api/gameStatsApi.jsx';
 import { conferences } from '../../constants/conferences';
+import cfpLogo from '../../../assets/images/playoff.png';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:1313';
 
@@ -126,7 +127,7 @@ const GameTypeInfo = ({ game, homeTeamData }) => {
     switch (gameType) {
         case 'CONFERENCE_GAME': return label(confData?.label || 'Conference', confData?.logo);
         case 'CONFERENCE_CHAMPIONSHIP': return label(`${confData?.label || 'Conf'} Championship`, confData?.logo);
-        case 'PLAYOFFS': return label(bowlName || 'Playoffs', postseasonLogo);
+        case 'PLAYOFFS': return label(bowlName || 'Playoffs', cfpLogo);
         case 'NATIONAL_CHAMPIONSHIP': return label('Natl Championship', postseasonLogo);
         case 'BOWL': return label(bowlName || 'Bowl Game', postseasonLogo);
         case 'OUT_OF_CONFERENCE': return label('Out of Conference', null);
