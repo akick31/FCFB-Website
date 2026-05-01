@@ -22,6 +22,7 @@ import {
     CartesianGrid, Tooltip as RechartsTooltip,
     ResponsiveContainer
 } from 'recharts';
+import cfpLogo from '../../assets/images/playoff.png';
 
 const GameDetails = ({ isAdmin }) => {
     const theme = useTheme();
@@ -281,8 +282,9 @@ const GameDetails = ({ isAdmin }) => {
                 {(game?.game_type === 'BOWL' || game?.game_type === 'PLAYOFFS' || game?.game_type === 'CONFERENCE_CHAMPIONSHIP' || game?.game_type === 'NATIONAL_CHAMPIONSHIP') && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
                         {(() => {
-                            const logoSrc = game?.game_type === 'PLAYOFFS' && !game?.postseason_game_logo
-                                ? 'https://cfbuniform.com/wp-content/uploads/2025/03/Logo_of_college_football_playoff.svg.png'
+                            const isPlayoff = game?.game_type === 'PLAYOFFS' || game?.game_type === 'NATIONAL_CHAMPIONSHIP';
+                            const logoSrc = isPlayoff
+                                ? cfpLogo
                                 : game?.postseason_game_logo
                                     ? (game.postseason_game_logo.startsWith('http') ? game.postseason_game_logo : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${game.postseason_game_logo}`)
                                     : null;
