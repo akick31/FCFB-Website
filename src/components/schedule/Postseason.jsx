@@ -94,11 +94,14 @@ const Postseason = ({
     };
 
     const getGamesForRound = (round, expectedCount, seedGroups) => {
-        const games = [...(gamesByRound[round] || [])].sort((a, b) =>
-            getGameBracketPos(a, seedGroups) - getGameBracketPos(b, seedGroups)
-        );
-        const result = [];
-        for (let i = 0; i < expectedCount; i++) result.push(games[i] || null);
+        const roundGames = gamesByRound[round] || [];
+        const result = Array(expectedCount).fill(null);
+        for (const game of roundGames) {
+            const pos = getGameBracketPos(game, seedGroups);
+            if (pos >= 0 && pos < expectedCount) {
+                result[pos] = game;
+            }
+        }
         return result;
     };
 

@@ -45,7 +45,8 @@ const ScoreboardList = ({
     filters,
     setFilters,
     seasonFilter,
-    weekFilter
+    weekFilter,
+    gameTypeFilter,
 }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -246,6 +247,11 @@ const ScoreboardList = ({
                         {weekFilter && (
                             <Box sx={{ minWidth: 150 }}>
                                 {weekFilter}
+                            </Box>
+                        )}
+                        {gameTypeFilter && (
+                            <Box sx={{ minWidth: 160 }}>
+                                {gameTypeFilter}
                             </Box>
                         )}
                     </Box>
@@ -670,7 +676,8 @@ ScoreboardList.propTypes = {
     filters: PropTypes.object,
     setFilters: PropTypes.func,
     seasonFilter: PropTypes.node,
-    weekFilter: PropTypes.node
+    weekFilter: PropTypes.node,
+    gameTypeFilter: PropTypes.node,
 };
 
 export default ScoreboardList; 

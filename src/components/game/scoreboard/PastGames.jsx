@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { getFilteredGames } from '../../../api/gameApi';
 import { getCurrentSeason, getCurrentWeek } from '../../../api/seasonApi';
 import ScoreboardList from './ScoreboardList';
-import { Box } from '@mui/material';
+import { Box, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import SeasonDropdown from '../../dropdown/SeasonDropdown';
 import WeekDropdown from '../../dropdown/WeekDropdown';
+
+const POSTSEASON_MIN_WEEK = 14;
 
 const PastGames = ({ urlSeason, urlWeek }) => {
     const navigate = useNavigate();
@@ -25,6 +27,7 @@ const PastGames = ({ urlSeason, urlWeek }) => {
         gameType: null,
         gameStatus: null,
         rankedGame: null,
+        postseason: false,
         page: 0,
         size: 10,
     });
@@ -78,10 +81,11 @@ const PastGames = ({ urlSeason, urlWeek }) => {
             try {
                 const response = await getFilteredGames({
                     filters: filters.filters,
-                    week: filters.week,
+                    week: filters.postseason ? null : filters.week,
+                    minWeek: filters.postseason ? POSTSEASON_MIN_WEEK : null,
                     season: filters.season,
                     conference: filters.conference,
-                    gameType: filters.gameType,
+                    gameType: filters.postseason ? null : filters.gameType,
                     gameStatus: filters.gameStatus,
                     rankedGame: filters.rankedGame,
                     category: 'PAST',
@@ -99,7 +103,7 @@ const PastGames = ({ urlSeason, urlWeek }) => {
             }
         };
 
-        if (filters.season !== null && filters.week !== null) {
+        if (filters.season !== null && (filters.week !== null || filters.postseason)) {
             fetchData();
         }
     }, [filters]);
@@ -124,6 +128,19 @@ const PastGames = ({ urlSeason, urlWeek }) => {
         }
     };
 
+    const handleGameTypeChange = (event) => {
+        const newValue = event.target.value === "" ? null : event.target.value;
+        const isPostseason = newValue === 'POSTSEASON';
+        setFilters(prev => ({
+            ...prev,
+            postseason: isPostseason,
+            gameType: isPostseason ? null : newValue,
+            // Clear week when switching to postseason so minWeek takes over
+            week: isPostseason ? null : prev.week,
+            page: 0,
+        }));
+    };
+
     return (
         <Box>
             <ScoreboardList
@@ -144,10 +161,31 @@ const PastGames = ({ urlSeason, urlWeek }) => {
                     />
                 }
                 weekFilter={
-                    <WeekDropdown
-                        value={filters.week}
-                        onChange={handleWeekChange}
-                    />
+                    !filters.postseason && (
+                        <WeekDropdown
+                            value={filters.week}
+                            onChange={handleWeekChange}
+                        />
+                    )
+                }
+                gameTypeFilter={
+                    <FormControl size="small" sx={{ minWidth: 175 }}>
+                        <InputLabel>Game Type</InputLabel>
+                        <Select
+                            value={filters.postseason ? 'POSTSEASON' : (filters.gameType || '')}
+                            label="Game Type"
+                            onChange={handleGameTypeChange}
+                        >
+                            <MenuItem value="">All Types</MenuItem>
+                            <MenuItem value="POSTSEASON">Postseason (Wk 14+)</MenuItem>
+                            <MenuItem value="PLAYOFFS">Playoffs</MenuItem>
+                            <MenuItem value="NATIONAL_CHAMPIONSHIP">National Championship</MenuItem>
+                            <MenuItem value="BOWL">Bowl Games</MenuItem>
+                            <MenuItem value="CONFERENCE_CHAMPIONSHIP">Conf. Championships</MenuItem>
+                            <MenuItem value="CONFERENCE_GAME">Conference Games</MenuItem>
+                            <MenuItem value="OUT_OF_CONFERENCE">Out of Conference</MenuItem>
+                        </Select>
+                    </FormControl>
                 }
             />
         </Box>
