@@ -213,6 +213,7 @@ const TeamScheduleTable = ({
                                 const home = isHomeGame(game);
                                 const result = getGameResult(game);
                                 const gameType = field(game, 'gameType', 'game_type');
+                                const postseasonName = field(game, 'postseasonGameName', 'postseason_game_name');
                                 const clickable = isGameClickable(game);
 
                                 return (
@@ -307,7 +308,11 @@ const TeamScheduleTable = ({
                                         </TableCell>
                                         <TableCell>
                                             <Chip
-                                                label={formatGameType(gameType)}
+                                                label={
+                                                    (gameType === 'PLAYOFFS' || gameType === 'BOWL' || gameType === 'CONFERENCE_CHAMPIONSHIP' || gameType === 'NATIONAL_CHAMPIONSHIP') && postseasonName
+                                                        ? postseasonName
+                                                        : formatGameType(gameType)
+                                                }
                                                 size="small"
                                                 color={GAME_TYPE_CHIP_COLORS[gameType] || 'default'}
                                                 variant="filled"
