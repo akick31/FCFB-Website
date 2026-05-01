@@ -229,7 +229,7 @@ const PostseasonAdminTab = ({
         const logoUrl = field(game, 'postseasonGameLogo', 'postseason_game_logo');
         setEditingBowlLogo(logoUrl || null);
         if (logoUrl) {
-            setEditingBowlLogoPreview(logoUrl.startsWith('http') ? logoUrl : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${logoUrl}`);
+            setEditingBowlLogoPreview(logoUrl.startsWith('http') ? logoUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${logoUrl}`);
         } else {
             setEditingBowlLogoPreview(null);
         }
@@ -640,7 +640,7 @@ const PostseasonAdminTab = ({
                                         {field(game, 'postseasonGameLogo', 'postseason_game_logo') && (
                                             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
                                                 <Avatar
-                                                    src={(() => { const logo = field(game, 'postseasonGameLogo', 'postseason_game_logo'); return logo.startsWith('http') ? logo : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${logo}`; })()}
+                                                    src={(() => { const logo = field(game, 'postseasonGameLogo', 'postseason_game_logo'); return logo.startsWith('http') ? logo : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${logo}`; })()}
                                                     sx={{ width: 80, height: 80 }}
                                                     variant="rounded"
                                                 />
@@ -726,7 +726,7 @@ const PostseasonAdminTab = ({
                                         {field(game, 'postseasonGameLogo', 'postseason_game_logo') && (
                                             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
                                                 <Avatar
-                                                    src={(() => { const logo = field(game, 'postseasonGameLogo', 'postseason_game_logo'); return logo.startsWith('http') ? logo : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${logo}`; })()}
+                                                    src={(() => { const logo = field(game, 'postseasonGameLogo', 'postseason_game_logo'); return logo.startsWith('http') ? logo : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${logo}`; })()}
                                                     sx={{ width: 80, height: 80 }}
                                                     variant="rounded"
                                                 />

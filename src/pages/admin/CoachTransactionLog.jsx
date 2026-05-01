@@ -15,7 +15,7 @@ import { Search, History } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
 import StyledTable from '../../components/ui/StyledTable';
-import { adminNavigationItems } from '../../config/adminNavigation';
+import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 import { useNavigate } from 'react-router-dom';
 
 const CoachTransactionLog = () => {

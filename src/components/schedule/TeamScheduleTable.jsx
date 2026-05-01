@@ -250,7 +250,7 @@ const TeamScheduleTable = ({
                                                   field(game, 'postseasonGameLogo', 'postseason_game_logo') && (
                                                     <Box sx={{ display: 'flex', justifyContent: 'center', mb: 0.5 }}>
                                                         <Avatar
-                                                            src={(() => { const logo = field(game, 'postseasonGameLogo', 'postseason_game_logo'); return logo.startsWith('http') ? logo : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${logo}`; })()}
+                                                            src={(() => { const logo = field(game, 'postseasonGameLogo', 'postseason_game_logo'); return logo.startsWith('http') ? logo : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${logo}`; })()}
                                                             sx={{ width: 40, height: 40 }}
                                                             variant="rounded"
                                                         />

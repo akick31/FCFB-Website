@@ -26,8 +26,8 @@ const Registration = () => {
     const handleDiscordOAuth = () => {
         setLoading(true);
         // Redirect to Discord OAuth
-        const clientId = process.env.REACT_APP_CLIENT_ID;
-        const redirectUri = process.env.REACT_APP_BASE_URL;
+        const clientId = import.meta.env.VITE_CLIENT_ID;
+        const redirectUri = import.meta.env.VITE_BASE_URL;
         
         if (!clientId) {
             setError('Discord OAuth not configured. Please contact an administrator.');

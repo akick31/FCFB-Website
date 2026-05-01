@@ -21,7 +21,7 @@ import { ArrowBack, Save, Cancel } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getTeamById, updateTeam } from '../../api/teamApi';
-import { adminNavigationItems } from '../../config/adminNavigation';
+import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS, CONFERENCES, SUBDIVISIONS } from '../../constants/teamEnums';
 import { formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 

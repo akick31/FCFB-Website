@@ -8,14 +8,14 @@ import { getLatestScorebugByGameId } from "../../api/scorebugApi";
 import PlaysTable from "../../components/game/plays/PlaysTable";
 import ErrorMessage from "../../components/message/ErrorMessage";
 import GameInfo from "../../components/game/GameInfo";
-import {getGameStatsByIdAndTeam} from "../../api/gameStatsApi";
+import {getGameStatsByIdAndTeam} from "../../api/gameStatsApi.jsx";
 import GameStatsTable from "../../components/game/stats/GameStatsTable";
 import {getTeamByName} from "../../api/teamApi";
 import CustomScorebug from "../../components/game/CustomScorebug";
 import { formatGameType } from "../../utils/gameUtils";
 import PageLayout from "../../components/layout/PageLayout";
 import LoadingSpinner from "../../components/icons/LoadingSpinner";
-import { generateGameStats } from "../../api/gameStatsApi";
+import { generateGameStats } from "../../api/gameStatsApi.jsx";
 import { endGameByGameId, chewGameByGameId } from "../../api/gameApi";
 import {
     LineChart, Line, AreaChart, Area, XAxis, YAxis,
@@ -362,7 +362,7 @@ const GameDetails = ({ isAdmin }) => {
                 {game?.postseason_game_logo && (game?.game_type === 'BOWL' || game?.game_type === 'PLAYOFFS' || game?.game_type === 'CONFERENCE_CHAMPIONSHIP' || game?.game_type === 'NATIONAL_CHAMPIONSHIP') && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
                         <Avatar
-                            src={game.postseason_game_logo.startsWith('http') ? game.postseason_game_logo : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${game.postseason_game_logo}`}
+                            src={game.postseason_game_logo.startsWith('http') ? game.postseason_game_logo : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${game.postseason_game_logo}`}
                             sx={{ width: 120, height: 120 }}
                             variant="rounded"
                         />

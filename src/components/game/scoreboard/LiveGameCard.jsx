@@ -10,10 +10,10 @@ import {
     formatDownAndDistance,
 } from '../../../utils/gameUtils';
 import { getPreviousPlay } from '../../../api/playApi';
-import { getGameStatsByIdAndTeam } from '../../../api/gameStatsApi';
+import { getGameStatsByIdAndTeam } from '../../../api/gameStatsApi.jsx';
 import { conferences } from '../../constants/conferences';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:1313';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:1313';
 
 // ── Format previous play into readable text ─────────────────────
 const formatPreviousPlay = (play, homeTeamName, awayTeamName) => {

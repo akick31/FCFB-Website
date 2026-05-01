@@ -565,7 +565,7 @@ const Postseason = ({
         const bowlName = field(game, 'postseasonGameName', 'postseason_game_name');
         const gameLogo = field(game, 'postseasonGameLogo', 'postseason_game_logo');
         const logoUrl = gameLogo
-            ? (gameLogo.startsWith('http') ? gameLogo : `${process.env.REACT_APP_API_URL || 'http://localhost:1313'}/images/${gameLogo}`)
+            ? (gameLogo.startsWith('http') ? gameLogo : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${gameLogo}`)
             : null;
         return {
             logo: logoUrl,

@@ -23,7 +23,7 @@ import { getNewSignups } from '../../api/newSignupsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { formatPosition, formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 import { conferences as conferencesList } from '../../components/constants/conferences';
-import { adminNavigationItems } from '../../config/adminNavigation';
+import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 
 const Admin = ({ user }) => {
     const navigate = useNavigate();

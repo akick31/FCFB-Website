@@ -4,8 +4,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 import {Person} from "@mui/icons-material";
 
-const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
-const BASE_URL = process.env.REACT_APP_BASE_URL;
+const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 const REDIRECT_URI = `${BASE_URL}`;
 
 const RegisterWithDiscordForm = () => {

@@ -29,7 +29,7 @@ import { useNavigate } from 'react-router-dom';
 import StyledTable from '../../components/ui/StyledTable';
 import { formatConference } from '../../utils/formatText';
 import { conferences as conferencesList } from '../../components/constants/conferences';
-import { adminNavigationItems } from '../../config/adminNavigation';
+import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 import { CONFERENCES } from '../../constants/teamEnums';
 
 const CoachManagement = ({ user }) => {

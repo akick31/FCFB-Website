@@ -2,9 +2,9 @@ const express = require("express");
 const axios = require("axios");
 
 const app = express();
-const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
-const CLIENT_SECRET = process.env.REACT_APP_CLIENT_SECRET;
-const REDIRECT_URI = process.env.REACT_APP_EXPRESS_BASE_URL + "/register/complete";
+const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
+const CLIENT_SECRET = import.meta.env.VITE_CLIENT_SECRET;
+const REDIRECT_URI = import.meta.env.VITE_EXPRESS_BASE_URL + "/register/complete";
 
 app.get("/discord/redirect", async (req, res) => {
     const { code } = req.query;

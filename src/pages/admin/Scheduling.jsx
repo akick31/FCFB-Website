@@ -50,7 +50,7 @@ import { getCurrentSeason, getAllSeasons, isScheduleLocked, lockSchedule, unlock
 import { uploadPostseasonLogo } from '../../api/uploadApi';
 import { conferences } from '../../components/constants/conferences';
 import { formatGameType, formatConference } from '../../utils/formatText';
-import { adminNavigationItems } from '../../config/adminNavigation';
+import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 import PostseasonAdminTab from '../../components/scheduling/PostseasonAdminTab';
 import ConferenceScheduleAdminTab from '../../components/scheduling/ConferenceScheduleAdminTab';
 import OOCScheduleAdminTab from '../../components/scheduling/OOCScheduleAdminTab';
