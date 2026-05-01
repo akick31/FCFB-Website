@@ -288,14 +288,21 @@ const Postseason = ({
                 {renderTeamRow(away, as_, (fin || started) ? asc : null, awayWon, false, '0.72rem', customAwayLabel)}
                 {statusText && (
                     <Box sx={{
-                        textAlign: 'center', py: 0.2, px: 0.5,
-                        backgroundColor: isFinal ? theme.palette.grey[200] : theme.palette.warning.light + '30',
-                        borderTop: '1px solid', borderColor: 'divider',
+                        textAlign: 'center',
+                        lineHeight: 1,
+                        px: 0.5,
+                        py: '2px',
+                        backgroundColor: isFinal
+                            ? theme.palette.grey[100]
+                            : theme.palette.warning.light + '40',
                     }}>
-                        <Typography variant="caption" sx={{
-                            fontWeight: 600, fontSize: '0.6rem',
-                            color: isFinal ? theme.palette.text.secondary : theme.palette.warning.dark,
+                        <Typography sx={{
+                            fontWeight: 700,
+                            fontSize: '0.55rem',
+                            lineHeight: 1,
+                            color: isFinal ? theme.palette.text.disabled : theme.palette.warning.dark,
                             textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
                         }}>
                             {statusText}
                         </Typography>
