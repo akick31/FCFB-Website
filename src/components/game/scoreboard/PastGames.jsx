@@ -7,7 +7,7 @@ import { Box } from '@mui/material';
 import SeasonDropdown from '../../dropdown/SeasonDropdown';
 import WeekDropdown from '../../dropdown/WeekDropdown';
 
-const PLAYOFF_GAME_TYPES = ['PLAYOFFS', 'NATIONAL_CHAMPIONSHIP'];
+const POSTSEASON_WEEKS = [14, 15, 16, 17, 18];
 
 const PastGames = ({ urlSeason, urlWeek }) => {
     const navigate = useNavigate();
@@ -80,23 +80,44 @@ const PastGames = ({ urlSeason, urlWeek }) => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await getFilteredGames({
-                    filters: filters.filters,
-                    week: (filters.postseason || filters.playoffsOnly) ? null : filters.week,
-                    minWeek: filters.postseason ? 14 : null,
-                    season: filters.season,
-                    conference: filters.conference,
-                    gameType: filters.playoffsOnly ? PLAYOFF_GAME_TYPES : null,
-                    gameStatus: filters.gameStatus,
-                    rankedGame: filters.rankedGame,
-                    category: 'PAST',
-                    sort: filters.sort,
-                    page: filters.page,
-                    size: filters.size,
-                });
-                setGames(response.content);
-                setTotalPages(response["total_pages"]);
-                setTotalGames(response["total_elements"]);
+                if (filters.postseason || filters.playoffsOnly) {
+                    // Fetch each postseason week in parallel and combine results.
+                    // For Playoffs: week 14 filters by PLAYOFFS game type; weeks 15+ are all playoffs.
+                    const results = await Promise.all(
+                        POSTSEASON_WEEKS.map(week =>
+                            getFilteredGames({
+                                filters: filters.filters,
+                                week,
+                                season: filters.season,
+                                gameType: (filters.playoffsOnly && week === 14) ? 'PLAYOFFS' : null,
+                                category: 'PAST',
+                                sort: filters.sort,
+                                page: 0,
+                                size: 100,
+                            }).catch(() => ({ content: [] }))
+                        )
+                    );
+                    const allGames = results.flatMap(r => r.content || []);
+                    setGames(allGames);
+                    setTotalGames(allGames.length);
+                    setTotalPages(1);
+                } else {
+                    const response = await getFilteredGames({
+                        filters: filters.filters,
+                        week: filters.week,
+                        season: filters.season,
+                        conference: filters.conference,
+                        gameStatus: filters.gameStatus,
+                        rankedGame: filters.rankedGame,
+                        category: 'PAST',
+                        sort: filters.sort,
+                        page: filters.page,
+                        size: filters.size,
+                    });
+                    setGames(response.content);
+                    setTotalPages(response["total_pages"]);
+                    setTotalGames(response["total_elements"]);
+                }
             } catch (err) {
                 setError(`Failed to fetch games: ${err.message}`);
             } finally {
@@ -159,7 +180,6 @@ const PastGames = ({ urlSeason, urlWeek }) => {
                     <WeekDropdown
                         value={filters.postseason ? 'POSTSEASON' : filters.playoffsOnly ? 'PLAYOFFS' : filters.week}
                         onChange={handleWeekChange}
-                        showPostseasonOptions
                     />
                 }
             />
