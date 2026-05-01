@@ -8,6 +8,7 @@ import SeasonDropdown from '../../dropdown/SeasonDropdown';
 import WeekDropdown from '../../dropdown/WeekDropdown';
 
 const POSTSEASON_WEEKS = [14, 15, 16, 17, 18];
+const PLAYOFFS_GAME_TYPES = new Set(['PLAYOFFS', 'NATIONAL_CHAMPIONSHIP']);
 
 const PastGames = ({ urlSeason, urlWeek }) => {
     const navigate = useNavigate();
@@ -48,12 +49,21 @@ const PastGames = ({ urlSeason, urlWeek }) => {
                     getCurrentSeason(),
                     getCurrentWeek()
                 ]);
-                setFilters(prev => ({
-                    ...prev,
-                    season: currentSeason,
-                    week: currentWeek
-                }));
-                navigate(`/scoreboard/past/${currentSeason}/${currentWeek}`, { replace: true });
+                if (currentWeek >= 14) {
+                    setFilters(prev => ({
+                        ...prev,
+                        season: currentSeason,
+                        postseason: true,
+                        week: null,
+                    }));
+                } else {
+                    setFilters(prev => ({
+                        ...prev,
+                        season: currentSeason,
+                        week: currentWeek,
+                    }));
+                    navigate(`/scoreboard/past/${currentSeason}/${currentWeek}`, { replace: true });
+                }
             } catch (error) {
                 console.error('Failed to fetch current season/week:', error);
                 setFilters(prev => ({
@@ -97,7 +107,12 @@ const PastGames = ({ urlSeason, urlWeek }) => {
                             }).catch(() => ({ content: [] }))
                         )
                     );
-                    const allGames = results.flatMap(r => r.content || []);
+                    let allGames = results.flatMap(r => r.content || []);
+                    if (filters.playoffsOnly) {
+                        allGames = allGames.filter(g =>
+                            PLAYOFFS_GAME_TYPES.has(g.gameType || g.game_type)
+                        );
+                    }
                     setGames(allGames);
                     setTotalGames(allGames.length);
                     setTotalPages(1);
