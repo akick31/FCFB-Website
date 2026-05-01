@@ -89,7 +89,7 @@ const PastGames = ({ urlSeason, urlWeek }) => {
                                 filters: filters.filters,
                                 week,
                                 season: filters.season,
-                                gameType: (filters.playoffsOnly && week === 14) ? 'PLAYOFFS' : null,
+                                gameType: filters.playoffsOnly ? 'PLAYOFFS' : null,
                                 category: 'PAST',
                                 sort: filters.sort,
                                 page: 0,
