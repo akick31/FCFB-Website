@@ -277,6 +277,26 @@ const GameDetails = ({ isAdmin }) => {
                 boxShadow: theme.shadows[2],
                 textAlign: 'center'
             }}>
+                {/* Postseason logo + name above title */}
+                {(game?.game_type === 'BOWL' || game?.game_type === 'PLAYOFFS' || game?.game_type === 'CONFERENCE_CHAMPIONSHIP' || game?.game_type === 'NATIONAL_CHAMPIONSHIP') && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                        {(() => {
+                            const logoSrc = game?.game_type === 'PLAYOFFS' && !game?.postseason_game_logo
+                                ? 'https://cfbuniform.com/wp-content/uploads/2025/03/Logo_of_college_football_playoff.svg.png'
+                                : game?.postseason_game_logo
+                                    ? (game.postseason_game_logo.startsWith('http') ? game.postseason_game_logo : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${game.postseason_game_logo}`)
+                                    : null;
+                            return logoSrc ? (
+                                <Box component="img" src={logoSrc} alt="" sx={{ width: 48, height: 48, objectFit: 'contain' }} />
+                            ) : null;
+                        })()}
+                        {game?.postseason_game_name && (
+                            <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '1.1rem' }}>
+                                {game.postseason_game_name}
+                            </Typography>
+                        )}
+                    </Box>
+                )}
                 <Typography variant="h3" sx={{
                     fontWeight: 700,
                     mb: 1,
@@ -328,7 +348,11 @@ const GameDetails = ({ isAdmin }) => {
                     )}
                     {game.game_type && (
                         <Chip
-                            label={formatGameType(game.game_type)}
+                            label={
+                                (game.game_type === 'PLAYOFFS' || game.game_type === 'BOWL' || game.game_type === 'CONFERENCE_CHAMPIONSHIP' || game.game_type === 'NATIONAL_CHAMPIONSHIP') && game.postseason_game_name
+                                    ? game.postseason_game_name
+                                    : formatGameType(game.game_type)
+                            }
                             variant="outlined"
                             sx={{ fontWeight: 600, borderColor: theme.palette.primary.main, color: theme.palette.primary.main }}
                         />
@@ -358,16 +382,6 @@ const GameDetails = ({ isAdmin }) => {
                     )}
                 </Box>
 
-                {/* Postseason Game Logo - shown for bowl/playoff/conference championship/national championship games */}
-                {game?.postseason_game_logo && (game?.game_type === 'BOWL' || game?.game_type === 'PLAYOFFS' || game?.game_type === 'CONFERENCE_CHAMPIONSHIP' || game?.game_type === 'NATIONAL_CHAMPIONSHIP') && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                        <Avatar
-                            src={game.postseason_game_logo.startsWith('http') ? game.postseason_game_logo : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${game.postseason_game_logo}`}
-                            sx={{ width: 120, height: 120 }}
-                            variant="rounded"
-                        />
-                    </Box>
-                )}
 
                 {/* Game ID and Number of Plays */}
                 <Box sx={{ 

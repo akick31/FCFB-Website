@@ -126,7 +126,7 @@ const GameTypeInfo = ({ game, homeTeamData }) => {
     switch (gameType) {
         case 'CONFERENCE_GAME': return label(confData?.label || 'Conference', confData?.logo);
         case 'CONFERENCE_CHAMPIONSHIP': return label(`${confData?.label || 'Conf'} Championship`, confData?.logo);
-        case 'PLAYOFFS': return label('Playoffs', postseasonLogo);
+        case 'PLAYOFFS': return label(bowlName || 'Playoffs', postseasonLogo);
         case 'NATIONAL_CHAMPIONSHIP': return label('Natl Championship', postseasonLogo);
         case 'BOWL': return label(bowlName || 'Bowl Game', postseasonLogo);
         case 'OUT_OF_CONFERENCE': return label('Out of Conference', null);

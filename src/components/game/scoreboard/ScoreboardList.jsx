@@ -572,7 +572,13 @@ const ScoreboardList = ({
                             {/* Game Type */}
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <Typography sx={{ color: 'text.primary', fontSize: '0.8rem', fontWeight: 500 }}>
-                                    {formatGameType(game.gameType || game.game_type)}
+                                    {(() => {
+                                        const gt = game.gameType || game.game_type;
+                                        const psName = game.postseason_game_name || game.postseasonGameName;
+                                        return (gt === 'PLAYOFFS' || gt === 'BOWL' || gt === 'CONFERENCE_CHAMPIONSHIP' || gt === 'NATIONAL_CHAMPIONSHIP') && psName
+                                            ? psName
+                                            : formatGameType(gt);
+                                    })()}
                                 </Typography>
                             </Box>
 

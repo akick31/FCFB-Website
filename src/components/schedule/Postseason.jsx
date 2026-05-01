@@ -241,13 +241,27 @@ const Postseason = ({
         const awayWon = fin && asc != null && asc > hsc;
         const clickable = !adminMode && gid && (started || fin);
 
-        // Build status text for in-progress games only (no "FINAL" for finished)
         let statusText = null;
-        if (started && !fin && status !== 'FINAL' && status !== 'COMPLETED') {
-            const qtr = formatBracketQuarter(quarter);
-            const time = (quarter >= 5) ? '' : (clock || '');
-            if (qtr && time) statusText = `${qtr} ${time}`;
-            else if (qtr) statusText = qtr;
+        let isFinal = false;
+        if (fin || status === 'FINAL' || status === 'COMPLETED') {
+            isFinal = true;
+            statusText = 'Final';
+        } else if (started) {
+            if (status === 'HALFTIME') {
+                statusText = 'Halftime';
+            } else if (status === 'OPENING_KICKOFF') {
+                statusText = 'Kickoff';
+            } else if (status === 'END_OF_REGULATION') {
+                statusText = 'End of Reg';
+            } else if (status === 'OVERTIME') {
+                statusText = 'OT';
+            } else {
+                const qtr = formatBracketQuarter(quarter);
+                const time = (quarter >= 5) ? '' : (clock || '');
+                if (qtr && time) statusText = `${qtr} | ${time}`;
+                else if (qtr) statusText = qtr;
+                else if (status) statusText = status.replace(/_/g, ' ');
+            }
         }
 
         return (
@@ -275,12 +289,12 @@ const Postseason = ({
                 {statusText && (
                     <Box sx={{
                         textAlign: 'center', py: 0.2, px: 0.5,
-                        backgroundColor: theme.palette.warning.light + '30',
+                        backgroundColor: isFinal ? theme.palette.grey[200] : theme.palette.warning.light + '30',
                         borderTop: '1px solid', borderColor: 'divider',
                     }}>
                         <Typography variant="caption" sx={{
                             fontWeight: 600, fontSize: '0.6rem',
-                            color: theme.palette.warning.dark,
+                            color: isFinal ? theme.palette.text.secondary : theme.palette.warning.dark,
                             textTransform: 'uppercase',
                         }}>
                             {statusText}
