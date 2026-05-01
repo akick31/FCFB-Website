@@ -9,7 +9,7 @@ import {
 import { getAllTeams } from '../../../api/teamApi';
 import { getAllSeasons } from '../../../api/seasonApi';
 import { getCurrentSeason } from '../../../api/seasonApi';
-import { getRankingsHistory } from '../../../api/rankingsHistoryApi';
+import { getRankingsHistory } from '../../../api/rankingsHistoryApi.jsx';
 import RankingsHistoryChart from '../RankingsHistoryChart';
 import RankingsHistoryFilters from '../RankingsHistoryFilters';
 

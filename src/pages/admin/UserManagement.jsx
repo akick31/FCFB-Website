@@ -17,7 +17,7 @@ import { Edit, Search } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getAllUsers } from '../../api/userApi';
 import { useNavigate } from 'react-router-dom';
-import { adminNavigationItems } from '../../config/adminNavigation';
+import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 import StyledTable from '../../components/ui/StyledTable';
 
 const UserManagement = ({ user }) => {

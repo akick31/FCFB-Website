@@ -13,7 +13,7 @@ import {
     Tab,
     Grid,
 } from '@mui/material';
-import { getGameStatsBySeasonAndWeek } from '../../../api/gameStatsApi';
+import { getGameStatsBySeasonAndWeek } from '../../../api/gameStatsApi.jsx';
 import { getFilteredSeasonStats } from '../../../api/seasonStatsApi';
 import { getAllTeams } from '../../../api/teamApi';
 import { getAllSeasons } from '../../../api/seasonApi';

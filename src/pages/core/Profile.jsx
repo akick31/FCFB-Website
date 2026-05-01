@@ -40,7 +40,7 @@ import { formatOffensivePlaybook, formatDefensivePlaybook, formatPosition } from
 import { formatResponseTime } from '../../utils/timeUtils';
 import { getTeamByName } from '../../api/teamApi';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
-import { getEloHistory } from '../../api/eloHistoryApi';
+import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
 import { useNavigate } from 'react-router-dom';
 

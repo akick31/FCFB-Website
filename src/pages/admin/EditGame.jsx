@@ -26,10 +26,10 @@ import {
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { adminNavigationItems } from '../../config/adminNavigation';
+import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 import { getGameById, updateGame, restartGame } from '../../api/gameApi';
 import { getAllPlaysByGameId, rollbackPlay } from '../../api/playApi';
-import { generateGameStats } from '../../api/gameStatsApi';
+import { generateGameStats } from '../../api/gameStatsApi.jsx';
 import StyledTable from '../../components/ui/StyledTable';
 import { 
     TV_CHANNELS, 

@@ -41,7 +41,7 @@ import {
     getGameWeekJobStatus,
     retryFailedGames,
 } from '../../api/scheduleApi';
-import { adminNavigationItems } from '../../config/adminNavigation';
+import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 
 const POLL_INTERVAL_MS = 3000; // Poll every 3 seconds
 

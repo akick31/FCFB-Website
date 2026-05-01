@@ -34,7 +34,7 @@ import {
     Replay as RetryIcon,
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { adminNavigationItems } from '../../config/adminNavigation';
+import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 import { useNavigate } from 'react-router-dom';
 import { 
     startGame, 

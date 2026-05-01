@@ -28,8 +28,8 @@ import {
     Tooltip as RechartsTooltip, ResponsiveContainer, Legend as RechartsLegend
 } from 'recharts';
 import { getAllTeams } from '../../api/teamApi';
-import { getEloHistory } from '../../api/eloHistoryApi';
-import { getRankingsHistory } from '../../api/rankingsHistoryApi';
+import { getEloHistory } from '../../api/eloHistoryApi.jsx';
+import { getRankingsHistory } from '../../api/rankingsHistoryApi.jsx';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
 import { conferences as conferencesList } from '../../components/constants/conferences';

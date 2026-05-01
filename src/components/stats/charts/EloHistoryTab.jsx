@@ -6,7 +6,7 @@ import {
     Alert,
     Paper,
 } from '@mui/material';
-import { getEloHistory } from '../../../api/eloHistoryApi';
+import { getEloHistory } from '../../../api/eloHistoryApi.jsx';
 import { getAllTeams } from '../../../api/teamApi';
 import { getAllSeasons } from '../../../api/seasonApi';
 import { getCurrentSeason } from '../../../api/seasonApi';

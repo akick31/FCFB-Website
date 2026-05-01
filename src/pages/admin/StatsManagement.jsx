@@ -25,7 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { adminNavigationItems } from '../../config/adminNavigation';
+import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 import { generateAllRecords } from '../../api/recordsApi';
 import { generateAllSeasonStats } from '../../api/seasonStatsApi';
 import { generateAllLeagueStats } from '../../api/leagueStatsApi';
