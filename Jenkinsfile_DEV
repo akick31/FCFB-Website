@@ -33,37 +33,29 @@ pipeline {
             }
         }
 
-        stage('Stop and Remove Existing Container') {
-            steps {
-                script {
-                    echo 'Stopping and removing the existing container...'
-                    sh """
-                        docker stop ${CONTAINER_NAME} || echo "No running container found."
-                        docker rm ${CONTAINER_NAME} || echo "No container to remove."
-                    """
-                }
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
-                echo 'Building Docker image for FCFB Website...'
+                echo 'Building Docker image for FCFB Website (old container still running)...'
                 sh """
-                    docker build --no-cache -f ${DOCKERFILE} -t ${IMAGE_NAME}:latest .
+                    docker build --no-cache -f ${DOCKERFILE} -t ${IMAGE_NAME}:new .
                 """
             }
         }
 
-        stage('Run New Container') {
+        stage('Swap Container') {
             steps {
                 script {
-                    echo 'Running the new container...'
+                    echo 'Stopping old container and starting new one...'
                     sh """
+                        docker stop ${CONTAINER_NAME} || echo "No running container found."
+                        docker rm ${CONTAINER_NAME} || echo "No container to remove."
+                        docker tag ${IMAGE_NAME}:new ${IMAGE_NAME}:latest
                         docker run -d --name ${CONTAINER_NAME} \
                             -v /var/images:/app/images \
                             -p 462:462 \
                             --env-file .env \
                             ${IMAGE_NAME}:latest
+                        docker rmi ${IMAGE_NAME}:new || true
                     """
                 }
             }
@@ -94,6 +86,7 @@ pipeline {
         }
         failure {
             echo 'FCFB Website deployment failed.'
+            sh 'rm -f .env || true'
         }
     }
 }
