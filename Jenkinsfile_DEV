@@ -61,6 +61,40 @@ pipeline {
             }
         }
 
+        stage('Health Check') {
+            steps {
+                script {
+                    sleep(time: 10, unit: 'SECONDS')
+                    def healthy = false
+                    def attempts = 0
+                    def maxAttempts = 24
+                    while (!healthy && attempts < maxAttempts) {
+                        attempts++
+                        try {
+                            def status = sh(
+                                script: "docker exec ${env.CONTAINER_NAME} wget -q -O /dev/null http://127.0.0.1:461/ && echo OK || echo FAIL",
+                                returnStdout: true
+                            ).trim()
+                            if (status == 'OK') {
+                                healthy = true
+                                echo "Container health OK (attempt ${attempts})"
+                            }
+                        } catch (e) {
+                            // not ready yet
+                        }
+                        if (!healthy) {
+                            echo "Waiting for health check... attempt ${attempts}/${maxAttempts}"
+                            sleep 5
+                        }
+                    }
+                    if (!healthy) {
+                        sh "docker logs ${env.CONTAINER_NAME} --tail=80"
+                        error('FCFB Website DEV container failed health check after deploy')
+                    }
+                }
+            }
+        }
+
         stage('Cleanup') {
             steps {
                 script {
