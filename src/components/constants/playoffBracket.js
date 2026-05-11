@@ -47,8 +47,8 @@ export const SF_SEED_GROUPS = [
 export const ROUND_LABELS = {
     1: 'First Round',
     2: 'Second Round',
-    3: 'Quarterfinals',
-    4: 'Semifinals',
+    3: 'Quarterfinal',
+    4: 'Semifinal',
     5: 'National Championship',
 };
 
