@@ -109,6 +109,7 @@ const GameManagement = () => {
 
     // Start Game Week state
     const [currentSeason, setCurrentSeason] = useState(null);
+    const [currentWeek, setCurrentWeek] = useState(null);
     const [selectedStartSeason, setSelectedStartSeason] = useState(null);
     const [selectedStartWeek, setSelectedStartWeek] = useState(null);
     const [weekSchedule, setWeekSchedule] = useState([]);
@@ -145,6 +146,7 @@ const GameManagement = () => {
                 
                 // Set state for Start Game Week
                 setCurrentSeason(season);
+                setCurrentWeek(week);
                 setSelectedStartSeason(season);
                 setSelectedStartWeek(week);
 
@@ -642,7 +644,7 @@ const GameManagement = () => {
                                             }}
                                             sx={{ color: 'primary.main', '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.3)' } }}
                                         >
-                                            {Array.from({ length: 15 }, (_, i) => i + 1).map(w => (
+                                            {Array.from({ length: currentWeek || 18 }, (_, i) => i + 1).map(w => (
                                                 <MenuItem key={w} value={w}>Week {w}</MenuItem>
                                             ))}
                                         </Select>
@@ -965,7 +967,7 @@ const GameManagement = () => {
                                             }}
                                         >
                                             <MenuItem value="">All Weeks</MenuItem>
-                                            {Array.from({ length: 15 }, (_, i) => i + 1).map(week => (
+                                            {Array.from({ length: currentWeek || 18 }, (_, i) => i + 1).map(week => (
                                                 <MenuItem key={week} value={week}>
                                                     Week {week}
                                                 </MenuItem>
