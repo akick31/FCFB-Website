@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import Header from './components/header/Header';
+import Footer from './components/layout/Footer';
 import {
     Home,
     GameDetails,
@@ -272,6 +273,7 @@ const App = () => {
                             <Route path="*" element={<NotFound />} />
                         </Routes>
                     </Box>
+                    <Footer />
                 </Box>
             </Router>
         </ThemeProvider>
