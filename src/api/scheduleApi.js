@@ -1,6 +1,6 @@
 import apiClient from './apiClient';
 
-// ===== GET Endpoints =====
+// GET Endpoints
 
 export const getScheduleBySeasonAndTeam = async (season, team) => {
     try {
@@ -86,7 +86,7 @@ export const isTeamAvailable = async (season, week, team) => {
     }
 };
 
-// ===== POST Endpoints =====
+// POST Endpoints
 
 export const createScheduleEntry = async (entry) => {
     try {
@@ -278,7 +278,7 @@ export const getConferenceRules = async (conference) => {
     }
 };
 
-// ===== PUT Endpoints =====
+// PUT Endpoints
 
 export const updateScheduleEntry = async (id, entry) => {
     try {
@@ -306,7 +306,7 @@ export const moveGame = async (scheduleId, newWeek) => {
     }
 };
 
-// ===== DELETE Endpoints =====
+// DELETE Endpoints
 
 export const deleteScheduleEntry = async (id) => {
     try {

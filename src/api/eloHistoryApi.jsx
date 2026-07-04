@@ -1,11 +1,5 @@
 import apiClient from './apiClient';
 
-/**
- * Get ELO history for a team
- * @param {string} team - Team name
- * @param {number|null} season - Season number (optional, null for all-time)
- * @returns {Promise<Array>} Array of ELO history entries
- */
 export const getEloHistory = async (team, season = null) => {
     try {
         const params = { team };

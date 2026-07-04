@@ -28,11 +28,7 @@ const Verify = ({ userId }) => {
                 const params = new URLSearchParams(location.search);
                 const token = params.get("token");
                 const response = await verifyEmail(token);
-                if (response === true) {
-                    setVerificationSuccess(true);
-                } else {
-                    setVerificationSuccess(false);
-                }
+                setVerificationSuccess(response === true);
             } catch (error) {
                 setVerificationSuccess(false);
             } finally {

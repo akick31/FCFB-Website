@@ -30,7 +30,6 @@ import {
     CloudUpload as UploadIcon,
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { useNavigate } from 'react-router-dom';
 import { getAllTeams } from '../../api/teamApi';
 import {
     getScheduleBySeasonAndTeam,
@@ -51,6 +50,7 @@ import { uploadPostseasonLogo } from '../../api/uploadApi';
 import { conferences } from '../../components/constants/conferences';
 import { formatGameType, formatConference } from '../../utils/formatText';
 import { adminNavigationItems } from '../../config/adminNavigation.jsx';
+import { field } from '../../utils/fieldHelper';
 import PostseasonAdminTab from '../../components/scheduling/PostseasonAdminTab';
 import ConferenceScheduleAdminTab from '../../components/scheduling/ConferenceScheduleAdminTab';
 import OOCScheduleAdminTab from '../../components/scheduling/OOCScheduleAdminTab';
@@ -61,11 +61,7 @@ const DEFAULT_CONFERENCE_GAMES = 9;
 // Conferences that should NOT appear in the admin Conference Schedule tab
 const EXCLUDED_ADMIN_CONFERENCES = ['FBS_INDEPENDENT'];
 
-// Helper to safely read schedule fields
-const field = (game, camel, snake) => game[camel] !== undefined ? game[camel] : game[snake];
-
 const Scheduling = () => {
-    const navigate = useNavigate();
     const [season, setSeason] = useState(null);
     const [allSeasons, setAllSeasons] = useState([]);
     const [scheduleLocked, setScheduleLocked] = useState(false);
@@ -229,8 +225,8 @@ const Scheduling = () => {
         if (season) {
             const fetchAll = async () => {
                 try {
-                    const data = await getScheduleBySeason(season);
-                    setAllSeasonSchedule(data || []);
+                    const schedule = await getScheduleBySeason(season);
+                    setAllSeasonSchedule(schedule || []);
                 } catch (err) {
                     console.error('Error fetching full season schedule:', err);
                     setAllSeasonSchedule([]);
@@ -286,8 +282,8 @@ const Scheduling = () => {
     // Refresh the full season schedule for occupancy map
     const refreshAllSeasonSchedule = async () => {
         try {
-            const data = await getScheduleBySeason(season);
-            setAllSeasonSchedule(data || []);
+            const schedule = await getScheduleBySeason(season);
+            setAllSeasonSchedule(schedule || []);
         } catch (err) {
             console.error('Error refreshing full season schedule:', err);
         }
@@ -296,8 +292,8 @@ const Scheduling = () => {
     const fetchConferenceSchedule = async () => {
         try {
             setConfLoading(true);
-            const data = await getConferenceSchedule(season, selectedConference);
-            setConferenceSchedule(data || []);
+            const schedule = await getConferenceSchedule(season, selectedConference);
+            setConferenceSchedule(schedule || []);
         } catch (err) {
             console.error('Error fetching conference schedule:', err);
             setConferenceSchedule([]);
@@ -309,8 +305,8 @@ const Scheduling = () => {
     const fetchOOCSchedule = async () => {
         try {
             setOocLoading(true);
-            const data = await getScheduleBySeasonAndTeam(season, selectedOOCTeam.name);
-            setOocFullSchedule((data || []).sort((a, b) => (a.week || 0) - (b.week || 0)));
+            const schedule = await getScheduleBySeasonAndTeam(season, selectedOOCTeam.name);
+            setOocFullSchedule((schedule || []).sort((a, b) => (a.week || 0) - (b.week || 0)));
         } catch (err) {
             console.error('Error fetching schedule:', err);
             setOocFullSchedule([]);
@@ -322,8 +318,8 @@ const Scheduling = () => {
     const fetchPostseasonSchedule = async () => {
         try {
             setPostseasonLoading(true);
-            const data = await getPostseasonSchedule(season);
-            setPostseasonSchedule(data || []);
+            const schedule = await getPostseasonSchedule(season);
+            setPostseasonSchedule(schedule || []);
         } catch (err) {
             console.error('Error fetching postseason schedule:', err);
             setPostseasonSchedule([]);
@@ -612,7 +608,6 @@ const Scheduling = () => {
     };
 
     const navigationItems = adminNavigationItems;
-    const handleNavigationChange = (item) => navigate(item.path);
 
     // Build a set of "team|week" pairs from the FULL season schedule for occupancy checks.
     // `teamWeekOccupiedAll` includes ALL games (used for duplicate prevention in add-game dialogs).
@@ -658,7 +653,7 @@ const Scheduling = () => {
         return allSeasonSchedule.some(game => {
             const started = field(game, 'started', 'started');
             const finished = field(game, 'finished', 'finished');
-            return started === true || finished === true;
+            return started || finished;
         });
     }, [allSeasonSchedule]);
 
@@ -689,7 +684,6 @@ const Scheduling = () => {
             <DashboardLayout
                 title="Scheduling"
                 navigationItems={navigationItems}
-                onNavigationChange={handleNavigationChange}
                 hideHeader={true}
                 textColor="primary.main"
             >
@@ -704,7 +698,6 @@ const Scheduling = () => {
         <DashboardLayout
             title="Scheduling"
             navigationItems={navigationItems}
-            onNavigationChange={handleNavigationChange}
             hideHeader={true}
             textColor="primary.main"
         >
@@ -740,7 +733,7 @@ const Scheduling = () => {
                             >
                                 New Season
                             </Button>
-                            <Tooltip title={scheduleLocked ? 'Schedule is locked — click to unlock' : 'Schedule is unlocked — click to lock'}>
+                            <Tooltip title={scheduleLocked ? 'Schedule is locked (click to unlock)' : 'Schedule is unlocked (click to lock)'}>
                                 <Button
                                     variant={scheduleLocked ? 'contained' : 'outlined'}
                                     color={scheduleLocked ? 'error' : 'success'}
@@ -754,7 +747,7 @@ const Scheduling = () => {
                         </Box>
                     </Box>
                     <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                        Season {season} — Manage conference, out-of-conference, and postseason schedules
+                        Season {season}: manage conference, out-of-conference, and postseason schedules
                         {scheduleLocked && (
                             <Chip
                                 icon={<LockIcon />}
@@ -879,7 +872,7 @@ const Scheduling = () => {
                 {/* ======================== CELL CLICK DIALOG (Conference Grid) ======================== */}
                 <Dialog open={cellDialogOpen} onClose={() => setCellDialogOpen(false)} maxWidth="sm" fullWidth>
                     <DialogTitle>
-                        Schedule Game — {cellDialogTeam}, Week {cellDialogWeek}
+                        Schedule Game: {cellDialogTeam}, Week {cellDialogWeek}
                     </DialogTitle>
                     <DialogContent>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -1219,7 +1212,7 @@ const Scheduling = () => {
                                     </Typography>
                                     {isRivalry && (
                                         <Alert severity="info" sx={{ mb: 2 }}>
-                                            This is a protected rivalry and cannot be deleted — only moved to a different week.
+                                            This is a protected rivalry and cannot be deleted, only moved to a different week.
                                         </Alert>
                                     )}
                                     <FormControl size="small" fullWidth>

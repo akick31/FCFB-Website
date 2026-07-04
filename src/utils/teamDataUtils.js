@@ -1,58 +1,23 @@
-/**
- * Team data utilities for consistent parsing and formatting across the application
- */
-
-/**
- * Formats a team record from wins and losses
- * @param {number} wins - Number of wins
- * @param {number} losses - Number of losses
- * @returns {string} - Formatted record (e.g., "5-3")
- */
 export const formatTeamRecord = (wins, losses) => {
     return `${wins || 0}-${losses || 0}`;
 };
 
-/**
- * Gets the count of available teams from a list
- * @param {Array} teams - Array of team objects
- * @returns {number} - Count of available teams
- */
 export const getAvailableTeamsCount = (teams) => {
     return teams.filter(team => !team.is_taken).length;
 };
 
-/**
- * Checks if a team is available (not taken)
- * @param {Object} team - Team object
- * @returns {boolean} - True if team is available
- */
 export const isTeamAvailable = (team) => {
     return !team.is_taken;
 };
 
-/**
- * Gets team status display text
- * @param {Object} team - Team object
- * @returns {string} - "Available" or "Taken"
- */
 export const getTeamStatusText = (team) => {
     return team.is_taken ? 'Taken' : 'Available';
 };
 
-/**
- * Gets team status color for UI components
- * @param {Object} team - Team object
- * @returns {string} - Color name for Material-UI
- */
 export const getTeamStatusColor = (team) => {
     return team.is_taken ? 'secondary' : 'success';
 };
 
-/**
- * Formats team statistics for display
- * @param {Object} team - Team object
- * @returns {Object} - Formatted stats object
- */
 export const formatTeamStats = (team) => {
     return {
         currentRecord: formatTeamRecord(team.current_wins, team.current_losses),
@@ -66,11 +31,6 @@ export const formatTeamStats = (team) => {
     };
 };
 
-/**
- * Gets team coaches information for display
- * @param {Object} team - Team object
- * @returns {Array} - Array of coach objects with formatted data
- */
 export const getTeamCoaches = (team) => {
     if (!team.coach_names || team.coach_names.length === 0) {
         return [];
@@ -84,11 +44,6 @@ export const getTeamCoaches = (team) => {
     }));
 };
 
-/**
- * Gets team playbook information with proper formatting
- * @param {Object} team - Team object
- * @returns {Object} - Playbook information with formatted names
- */
 export const getTeamPlaybooks = (team) => {
     const formatPlaybookName = (playbook) => {
         if (!playbook) return 'N/A';
@@ -119,11 +74,6 @@ export const getTeamPlaybooks = (team) => {
     };
 };
 
-/**
- * Gets team ranking information
- * @param {Object} team - Team object
- * @returns {Object} - Ranking information
- */
 export const getTeamRankings = (team) => {
     return {
         coachesPoll: team.coaches_poll_ranking,
@@ -131,11 +81,6 @@ export const getTeamRankings = (team) => {
     };
 };
 
-/**
- * Gets team colors for UI theming
- * @param {Object} team - Team object
- * @returns {Object} - Color information
- */
 export const getTeamColors = (team) => {
     return {
         primary: team.primary_color || '#004260',

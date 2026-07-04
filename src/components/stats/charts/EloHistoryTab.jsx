@@ -78,8 +78,8 @@ const EloHistoryTab = () => {
                 : parseInt(selectedSeason);
             
             const teamParam = showAllTeams ? 'all' : selectedTeam.name;
-            const data = await getEloHistory(teamParam, season);
-            setEloData(data);
+            const eloHistory = await getEloHistory(teamParam, season);
+            setEloData(eloHistory);
         } catch (err) {
             console.error('Error fetching ELO history:', err);
             setError(err.message || 'Failed to fetch ELO history');

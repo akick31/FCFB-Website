@@ -91,8 +91,8 @@ const ScatterPlotsTab = () => {
                     setSeasonStatsData([]);
                     return;
                 }
-                const data = await getGameStatsBySeasonAndWeek(selectedSeason, week);
-                setGameStatsData(data);
+                const gameStats = await getGameStatsBySeasonAndWeek(selectedSeason, week);
+                setGameStatsData(gameStats);
                 setSeasonStatsData([]);
             }
         } catch (err) {

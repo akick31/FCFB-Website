@@ -25,6 +25,7 @@ import {
     Group,
     Person
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 const drawerWidth = 280;
@@ -40,6 +41,7 @@ const DashboardLayout = ({
 }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const navigate = useNavigate();
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const defaultNavigationItems = [
@@ -61,6 +63,8 @@ const DashboardLayout = ({
     const handleNavigationClick = (item) => {
         if (onNavigationChange) {
             onNavigationChange(item);
+        } else if (item?.path) {
+            navigate(item.path);
         }
         if (isMobile) {
             setMobileOpen(false);

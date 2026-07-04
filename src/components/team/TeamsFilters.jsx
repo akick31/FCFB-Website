@@ -20,20 +20,6 @@ import { conferences as conferencesList } from '../constants/conferences';
 import { getAvailableTeamsCount } from '../../utils/teamDataUtils';
 import { TEAM_STATUS, TEAM_STATUS_LABELS, FILTER_LABELS } from '../../constants/teamConstants';
 
-/**
- * Teams filters component
- * @param {Object} props - Component props
- * @param {string} props.searchTerm - Current search term
- * @param {Function} props.setSearchTerm - Function to update search term
- * @param {string} props.selectedConference - Currently selected conference
- * @param {Function} props.setSelectedConference - Function to update selected conference
- * @param {string} props.selectedAvailability - Currently selected availability
- * @param {Function} props.setSelectedAvailability - Function to update selected availability
- * @param {Array} props.teams - Array of all teams
- * @param {Array} props.filteredTeams - Array of filtered teams
- * @param {Object} props.theme - Material-UI theme object
- * @returns {JSX.Element} - Teams filters component
- */
 const TeamsFilters = ({
     searchTerm,
     setSearchTerm,

@@ -5,11 +5,6 @@ import { formatTeamRecord, getTeamStatusText, getTeamStatusColor } from '../../u
 import { TABLE_COLUMN_WIDTHS } from '../../constants/teamConstants';
 import { conferences as conferencesList } from '../constants/conferences';
 
-/**
- * Team table columns configuration
- * @param {Object} theme - Material-UI theme object
- * @returns {Array} - Array of column configurations
- */
 export const getTeamsTableColumns = (theme) => [
     { 
         id: 'logo', 

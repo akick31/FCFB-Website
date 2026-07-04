@@ -8,15 +8,7 @@ import {
 } from '@mui/material';
 import { getTeamPlaybooks } from '../../utils/teamDataUtils';
 
-/**
- * Reusable PlaybooksSection component for displaying team playbook information
- * @param {Object} props - Component props
- * @param {Object} props.team - Team object
- * @param {string} props.title - Section title (default: "Team Strategy")
- * @param {Object} props.sx - Additional styles
- * @returns {JSX.Element} - PlaybooksSection component
- */
-const PlaybooksSection = ({ 
+const PlaybooksSection = ({
     team, 
     title = "Team Strategy",
     sx = {}

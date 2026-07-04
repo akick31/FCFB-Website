@@ -33,7 +33,6 @@ import {
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import StyledCard from '../../components/ui/StyledCard';
-import { useNavigate } from 'react-router-dom';
 import { getCurrentSeason, getCurrentWeek } from '../../api/seasonApi';
 import {
     getScheduleBySeasonAndWeek,
@@ -46,7 +45,6 @@ import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 const POLL_INTERVAL_MS = 3000; // Poll every 3 seconds
 
 const GameWeek = () => {
-    const navigate = useNavigate();
     const [season, setSeason] = useState(null);
     const [week, setWeek] = useState(null);
     const [selectedWeek, setSelectedWeek] = useState(null);
@@ -110,8 +108,8 @@ const GameWeek = () => {
     const fetchWeekSchedule = async () => {
         try {
             setScheduleLoading(true);
-            const data = await getScheduleBySeasonAndWeek(season, selectedWeek);
-            setWeekSchedule(data || []);
+            const schedule = await getScheduleBySeasonAndWeek(season, selectedWeek);
+            setWeekSchedule(schedule || []);
         } catch (err) {
             console.error('Error fetching week schedule:', err);
             setWeekSchedule([]);
@@ -209,7 +207,6 @@ const GameWeek = () => {
     };
 
     const navigationItems = adminNavigationItems;
-    const handleNavigationChange = (item) => navigate(item.path);
     const stats = getGameStats();
 
     const isJobComplete = jobData && (jobData.status === 'COMPLETED' || jobData.status === 'FAILED');
@@ -223,7 +220,6 @@ const GameWeek = () => {
             <DashboardLayout
                 title="Game Week"
                 navigationItems={navigationItems}
-                onNavigationChange={handleNavigationChange}
                 hideHeader={true}
                 textColor="primary.main"
             >
@@ -238,7 +234,6 @@ const GameWeek = () => {
         <DashboardLayout
             title="Game Week"
             navigationItems={navigationItems}
-            onNavigationChange={handleNavigationChange}
             hideHeader={true}
             textColor="primary.main"
         >
@@ -445,7 +440,7 @@ const GameWeek = () => {
                                             [{log.index}/{jobData.totalGames}]
                                         </Box>
                                         {log.status === 'SUCCESS' ? '[OK]' : '[FAIL]'}{' '}
-                                        {log.homeTeam} vs {log.awayTeam} — {log.message}
+                                        {log.homeTeam} vs {log.awayTeam}: {log.message}
                                     </Typography>
                                 ))}
                                 {jobData.status === 'IN_PROGRESS' && (

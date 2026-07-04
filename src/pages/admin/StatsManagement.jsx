@@ -23,7 +23,6 @@ import {
     CheckCircle,
     Error
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 import { generateAllRecords } from '../../api/recordsApi';
@@ -38,14 +37,7 @@ const StatsManagement = () => {
     const [results, setResults] = useState({});
     const [error, setError] = useState(null);
     const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, title: '' });
-    const navigate = useNavigate();
     const navigationItems = adminNavigationItems;
-
-    const handleNavigationChange = (item) => {
-        if (item && item.path) {
-            navigate(item.path);
-        }
-    };
 
     const statsActions = [
         {
@@ -90,7 +82,7 @@ const StatsManagement = () => {
         },
     ];
 
-    const handleGenerate = async (actionId, actionFunction, title) => {
+    const handleGenerate = (actionId, actionFunction, title) => {
         setConfirmDialog({
             open: true,
             action: () => executeGeneration(actionId, actionFunction),
@@ -158,7 +150,6 @@ const StatsManagement = () => {
         <DashboardLayout
             title="Stats Management"
             navigationItems={navigationItems}
-            onNavigationChange={handleNavigationChange}
             hideHeader={true}
             textColor="primary.main"
         >

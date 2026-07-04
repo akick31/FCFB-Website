@@ -573,7 +573,7 @@ const GameDetails = ({ isAdmin }) => {
                                                 <AreaChart data={chartData.wpData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
                                                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                                                     <XAxis dataKey="play" tick={false} axisLine={false} />
-                                                    <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={v => `${v}%`} fontSize={11} />
+                                                    <YAxis reversed domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={v => `${v}%`} fontSize={11} />
                                                     <RechartsTooltip
                                                         content={({ active, payload, label }) => {
                                                             if (!active || !payload?.length) return null;

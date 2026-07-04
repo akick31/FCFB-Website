@@ -1,12 +1,6 @@
 import apiClient from './apiClient';
 
-/**
- * Get rankings history for teams
- * Fetches games with rankings (home_team_rank and away_team_rank)
- * @param {string} team - Team name or 'all' for all teams
- * @param {number|null} season - Season number or null for all-time
- * @returns {Promise<Array>} Array of games with ranking data
- */
+// Fetches games with rankings (home_team_rank and away_team_rank)
 export const getRankingsHistory = async (team, season = null) => {
     try {
         const params = { team, ...(season && { season }) };

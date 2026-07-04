@@ -90,10 +90,6 @@ const EditGame = () => {
         }
     };
 
-    const handleNavigationChange = (item) => {
-        navigate(item.path);
-    };
-
     const handleInputChange = (field, value) => {
         setGame(prev => ({
             ...prev,
@@ -254,7 +250,6 @@ const EditGame = () => {
         <DashboardLayout
             title="Edit Game"
             navigationItems={navigationItems}
-            onNavigationChange={handleNavigationChange}
             hideHeader={true}
             textColor="primary.main"
         >

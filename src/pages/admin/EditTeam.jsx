@@ -54,10 +54,6 @@ const EditTeam = () => {
         }
     }, [teamId]);
 
-    const handleNavigationChange = (item) => {
-        navigate(item.path);
-    };
-
     const handleInputChange = (field, value) => {
         setTeam(prev => ({
             ...prev,
@@ -108,7 +104,6 @@ const EditTeam = () => {
         <DashboardLayout
             title={`Edit Team: ${team.name}`}
             navigationItems={navigationItems}
-            onNavigationChange={handleNavigationChange}
             hideHeader={true}
             textColor="primary.main"
         >

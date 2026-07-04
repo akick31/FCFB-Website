@@ -65,22 +65,19 @@ const UserManagement = ({ user }) => {
     // Filter users based on search and filter criteria
     useEffect(() => {
         let filtered = users;
-        
-        // Filter by search term (username or team)
+
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
-            filtered = filtered.filter(user => 
+            filtered = filtered.filter(user =>
                 user.username?.toLowerCase().includes(searchLower) ||
                 user.team?.toLowerCase().includes(searchLower)
             );
         }
-        
-        // Filter by role
+
         if (roleFilter !== 'ALL') {
             filtered = filtered.filter(user => user.role === roleFilter);
         }
-        
-        // Filter by status
+
         if (statusFilter !== 'ALL') {
             if (statusFilter === 'ACTIVE') {
                 filtered = filtered.filter(user => user.isActive !== false);
@@ -93,10 +90,6 @@ const UserManagement = ({ user }) => {
         
         setFilteredUsers(filtered);
     }, [users, searchTerm, roleFilter, statusFilter]);
-
-    const handleNavigationChange = (item) => {
-        navigate(item.path);
-    };
 
     const handleUserClick = () => {
     };
@@ -179,7 +172,6 @@ const UserManagement = ({ user }) => {
         <DashboardLayout
             title="User Management"
             navigationItems={navigationItems}
-            onNavigationChange={handleNavigationChange}
             hideHeader={true}
             textColor="primary.main"
         >

@@ -96,13 +96,11 @@ const CoachManagement = ({ user }) => {
     // Filter teams based on all criteria
     useEffect(() => {
         let filtered = teams;
-        
-        // Filter by conference
+
         if (conferenceFilter !== 'ALL') {
             filtered = filtered.filter(team => team.conference === conferenceFilter);
         }
-        
-        // Filter by taken status
+
         if (takenFilter !== 'ALL') {
             if (takenFilter === 'TAKEN') {
                 filtered = filtered.filter(team => team.is_taken);
@@ -110,8 +108,7 @@ const CoachManagement = ({ user }) => {
                 filtered = filtered.filter(team => !team.is_taken);
             }
         }
-        
-        // Filter by active status
+
         if (activeFilter !== 'ALL') {
             if (activeFilter === 'ACTIVE') {
                 filtered = filtered.filter(team => team.active);
@@ -122,10 +119,6 @@ const CoachManagement = ({ user }) => {
         
         setFilteredTeams(filtered);
     }, [teams, conferenceFilter, takenFilter, activeFilter]);
-
-    const handleNavigationChange = (item) => {
-        navigate(item.path);
-    };
 
     const handleHireCoach = (team) => {
         setSelectedTeam(team);
@@ -305,7 +298,6 @@ const CoachManagement = ({ user }) => {
         <DashboardLayout
             title="Coach Management"
             navigationItems={navigationItems}
-            onNavigationChange={handleNavigationChange}
             hideHeader={true}
             textColor="primary.main"
         >

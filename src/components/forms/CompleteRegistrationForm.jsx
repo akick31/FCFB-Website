@@ -79,8 +79,11 @@ const CompleteRegistrationForm = () => {
             try {
                 const teams = await getOpenTeams();
                 setOpenTeams(teams);
-            } catch (error) {
-                console.error("Error fetching open teams:", error);
+            } catch {
+                setValidation((prev) => ({
+                    ...prev,
+                    errorMessage: "Failed to load available teams. Please refresh the page.",
+                }));
             }
         };
         fetchOpenTeams();

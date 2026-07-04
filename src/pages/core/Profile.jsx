@@ -44,7 +44,7 @@ import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
 import { useNavigate } from 'react-router-dom';
 
-// ── Stat row helper ────────────────────────────────────────────
+// Stat row helper
 const StatRow = ({ label, value, suffix = '', decimals = 0, highlight = false }) => {
     if (value === null || value === undefined) return null;
     const displayValue = decimals > 0 ? Number(value).toFixed(decimals) : value;
@@ -61,7 +61,7 @@ const StatRow = ({ label, value, suffix = '', decimals = 0, highlight = false })
     );
 };
 
-// ── Aggregate multiple season stat rows into one ───────────────
+// Aggregate multiple season stat rows into one
 const aggregateSeasonStats = (statsList) => {
     if (!statsList || statsList.length === 0) return null;
     if (statsList.length === 1) return statsList[0];
@@ -193,12 +193,8 @@ const Profile = ({ user }) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSave = async () => {
-        try {
-            setIsEditing(false);
-        } catch (error) {
-            console.error('Error updating profile:', error);
-        }
+    const handleSave = () => {
+        setIsEditing(false);
     };
 
     const handleCancel = () => {
@@ -209,7 +205,7 @@ const Profile = ({ user }) => {
     const winPercentage = user?.win_percentage ? (user.win_percentage * 100).toFixed(1) : '0.0';
     const totalGames = (user?.wins || 0) + (user?.losses || 0);
 
-    // ── Stat pill helper ───────────────────────────────────────────
+    // Stat pill helper
     const StatBox = ({ label, value, icon, color = 'primary' }) => (
         <Paper elevation={0} sx={{
             p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider',
@@ -233,7 +229,7 @@ const Profile = ({ user }) => {
         </Paper>
     );
 
-    // ── Record row helper ──────────────────────────────────────────
+    // Record row helper
     const RecordRow = ({ label, wins, losses, icon }) => (
         <Box sx={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',

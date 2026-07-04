@@ -77,8 +77,8 @@ const RankingsHistoryTab = () => {
                 : parseInt(selectedSeason);
             
             const teamParam = showAllTeams ? 'all' : selectedTeam.name;
-            const data = await getRankingsHistory(teamParam, season);
-            setRankingsData(data);
+            const rankingsHistory = await getRankingsHistory(teamParam, season);
+            setRankingsData(rankingsHistory);
         } catch (err) {
             console.error('Error fetching rankings history:', err);
             setError(err.message || 'Failed to fetch rankings history');

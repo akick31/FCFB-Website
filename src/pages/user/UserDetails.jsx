@@ -38,7 +38,7 @@ import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { formatOffensivePlaybook, formatDefensivePlaybook, formatPosition } from '../../utils/formatText';
 import { formatResponseTime } from '../../utils/timeUtils';
 
-// ── Stat row helper (same as TeamDetails) ─────────────────────
+// Stat row helper (same as TeamDetails)
 const StatRow = ({ label, value, suffix = '', decimals = 0, highlight = false }) => {
     if (value === null || value === undefined) return null;
     const displayValue = decimals > 0 ? Number(value).toFixed(decimals) : value;
@@ -180,7 +180,7 @@ const UserDetails = () => {
     const winPercentage = user?.win_percentage ? (user.win_percentage * 100).toFixed(1) : '0.0';
     const totalGames = (user?.wins || 0) + (user?.losses || 0);
 
-    // ── Stat pill helper ───────────────────────────────────────────
+    // Stat pill helper
     const StatBox = ({ label, value, icon, color = 'primary' }) => (
         <Paper elevation={0} sx={{
             p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider',
@@ -204,7 +204,7 @@ const UserDetails = () => {
         </Paper>
     );
 
-    // ── Record row helper ──────────────────────────────────────────
+    // Record row helper
     const RecordRow = ({ label, wins, losses, icon }) => (
         <Box sx={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -389,7 +389,7 @@ const UserDetails = () => {
                                     <Avatar src={currentTeamData.logo} sx={{ width: 22, height: 22 }} />
                                 )}
                                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                    {user.team} — All-Time
+                                    {user.team} (All-Time)
                                 </Typography>
                             </Box>
                             {statsLoading ? (

@@ -159,14 +159,9 @@ const ScoreboardList = ({
         if (gameId) {
             if (e.metaKey || e.ctrlKey || e.shiftKey) return; // let browser handle new tab
             e.preventDefault();
-            try {
-                navigate(`/game-details/${gameId}`);
-            } catch (error) {
-                console.error('Navigation error:', error);
-            }
+            navigate(`/game-details/${gameId}`);
         } else {
-            console.warn('No game ID found:', game);
-            console.warn('Available fields:', Object.keys(game));
+            console.warn('No game ID found for game:', game);
         }
     };
 

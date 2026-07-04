@@ -14,10 +14,6 @@ import {
     FormControlLabel,
 } from '@mui/material';
 
-/**
- * ELO History Filters Component
- * Handles team selection, season filtering, and view mode
- */
 const EloHistoryFilters = ({
     selectedTeam,
     setSelectedTeam,
