@@ -266,7 +266,10 @@ const DashboardLayout = ({
                     flexGrow: 1,
                     p: 3,
                     width: { md: `calc(100% - ${drawerWidth}px)` },
-                    mt: hideHeader ? 0 : 10,
+                    // A fixed AppBar renders on mobile regardless of hideHeader (it's the only
+                    // way to open the nav drawer there), so content needs top clearance for it
+                    // even when the desktop header is hidden.
+                    mt: (isMobile || !hideHeader) ? 10 : 0,
                 }}
             >
                 {children}

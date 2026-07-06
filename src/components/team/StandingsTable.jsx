@@ -141,10 +141,11 @@ const StandingsTable = ({ teams, conference }) => {
 
                                     {/* Team (Logo + Name) */}
                                     <TableCell>
-                                        <Box sx={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            gap: 2
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 2,
+                                            minWidth: 0,
                                         }}>
                                             {team.logo ? (
                                                 <img 
@@ -171,8 +172,8 @@ const StandingsTable = ({ teams, conference }) => {
                                                     </Typography>
                                                 </Box>
                                             )}
-                                            <Box>
-                                                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                            <Box sx={{ minWidth: 0 }}>
+                                                <Typography variant="body1" noWrap sx={{ fontWeight: 'bold', maxWidth: 200 }}>
                                                     {team.name}
                                                 </Typography>
                                                 {team.abbreviation && (

@@ -327,16 +327,16 @@ const ConferenceScheduleAdminTab = ({
                             <Table stickyHeader size="small">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 700, minWidth: 160, position: 'sticky', left: 0, backgroundColor: 'background.paper', zIndex: 3 }}>
+                                        <TableCell sx={{ fontWeight: 700, minWidth: 140, position: 'sticky', left: 0, backgroundColor: 'background.paper', zIndex: 3 }}>
                                             Team
                                         </TableCell>
                                         {Array.from({ length: TOTAL_WEEKS }, (_, i) => (
-                                            <TableCell key={i + 1} sx={{ fontWeight: 700, textAlign: 'center', minWidth: 120 }}>
+                                            <TableCell key={i + 1} sx={{ fontWeight: 700, textAlign: 'center', minWidth: 104 }}>
                                                 Wk {i + 1}
                                             </TableCell>
                                         ))}
-                                        <TableCell sx={{ fontWeight: 700, textAlign: 'center', minWidth: 80 }}>H</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, textAlign: 'center', minWidth: 80 }}>A</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, textAlign: 'center', minWidth: 64 }}>H</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, textAlign: 'center', minWidth: 64 }}>A</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>

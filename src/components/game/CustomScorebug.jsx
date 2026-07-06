@@ -116,7 +116,7 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                 borderRight: game.possession === 'AWAY' && !isGameFinal ? '4px solid #FFD700' : 'none'
             }}>
                 {/* Team Info - Left Side */}
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                     {/* Logo and Team Name Row */}
                     <Box
                         component={awayTeam?.id ? 'a' : 'div'}
@@ -124,6 +124,7 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
+                            minWidth: 0,
                             mb: 0.5,
                             cursor: awayTeam?.id ? 'pointer' : 'default',
                             textDecoration: 'none', color: 'inherit',
@@ -192,11 +193,15 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                         })()}
 
                         {/* Team Name */}
-                        <Typography sx={{
-                            color: 'white',
-                            fontSize: '1.2rem',
-                            fontWeight: 600
-                        }}>
+                        <Typography
+                            noWrap
+                            sx={{
+                                color: 'white',
+                                fontSize: '1.2rem',
+                                fontWeight: 600,
+                                minWidth: 0,
+                            }}
+                        >
                             {awayTeam?.name || game.away_team}
                         </Typography>
                     </Box>
@@ -231,7 +236,7 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                 borderRight: game.possession === 'HOME' && !isGameFinal ? '4px solid #FFD700' : 'none'
             }}>
                 {/* Team Info - Left Side */}
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                     {/* Logo and Team Name Row */}
                     <Box
                         component={homeTeam?.id ? 'a' : 'div'}
@@ -239,6 +244,7 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
+                            minWidth: 0,
                             mb: 0.5,
                             cursor: homeTeam?.id ? 'pointer' : 'default',
                             textDecoration: 'none', color: 'inherit',
@@ -307,11 +313,15 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                         })()}
 
                         {/* Team Name */}
-                        <Typography sx={{
-                            color: 'white',
-                            fontSize: '1.2rem',
-                            fontWeight: 600
-                        }}>
+                        <Typography
+                            noWrap
+                            sx={{
+                                color: 'white',
+                                fontSize: '1.2rem',
+                                fontWeight: 600,
+                                minWidth: 0,
+                            }}
+                        >
                             {homeTeam?.name || game.home_team}
                         </Typography>
                     </Box>
