@@ -276,9 +276,14 @@ const GameWeek = () => {
                                         value={selectedWeek || ''}
                                         label="View Week"
                                         onChange={(e) => {
+                                            if (pollIntervalRef.current) {
+                                                clearInterval(pollIntervalRef.current);
+                                                pollIntervalRef.current = null;
+                                            }
                                             setSelectedWeek(e.target.value);
                                             setJobData(null);
                                             setActiveJobId(null);
+                                            setIsStarting(false);
                                         }}
                                     >
                                         {Array.from({ length: 18 }, (_, i) => i + 1).map(w => (

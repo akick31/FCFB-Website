@@ -145,12 +145,13 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
                 </IconButton>
             </DialogTitle>
             
+            <Box component="form" onSubmit={handleSubmit}>
             <DialogContent>
                 <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
                     Create a new FAKE subdivision team. All fields marked with * are required.
                 </Typography>
 
-                <Box component="form" onSubmit={handleSubmit}>
+                <Box>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                         <TextField
                             label="Team Name *"
@@ -296,9 +297,10 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
                     </Box>
                 </Box>
             </DialogContent>
-            
+
             <DialogActions sx={{ px: 3, pb: 2 }}>
                 <StyledButton
+                    type="button"
                     variant="outlined"
                     onClick={handleClose}
                     sx={{ mr: 1 }}
@@ -306,12 +308,13 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
                     Cancel
                 </StyledButton>
                 <StyledButton
-                    onClick={handleSubmit}
+                    type="submit"
                     disabled={loading}
                 >
                     {loading ? 'Creating...' : 'Create Team'}
                 </StyledButton>
             </DialogActions>
+            </Box>
         </Dialog>
     );
 };

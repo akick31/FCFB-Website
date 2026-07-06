@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
     Box,
     Typography,
@@ -62,6 +62,11 @@ const DEFAULT_CONFERENCE_GAMES = 9;
 const EXCLUDED_ADMIN_CONFERENCES = ['FBS_INDEPENDENT'];
 
 const Scheduling = () => {
+    const isMountedRef = useRef(true);
+    useEffect(() => {
+        return () => { isMountedRef.current = false; };
+    }, []);
+
     const [season, setSeason] = useState(null);
     const [allSeasons, setAllSeasons] = useState([]);
     const [scheduleLocked, setScheduleLocked] = useState(false);
@@ -520,6 +525,7 @@ const Scheduling = () => {
         try {
             // 1. Create the season
             await createSeasonForScheduling(num);
+            if (!isMountedRef.current) return;
             setCreateSeasonProgress('Season created. Starting conference schedule generation…');
 
             // 2. Fire-and-forget: start async generation and poll for progress
@@ -527,12 +533,14 @@ const Scheduling = () => {
                 const jobResponse = await generateAllConferenceSchedules(num);
                 const jobId = jobResponse.jobId;
 
-                // Poll until complete
+                // Poll until complete (or until this component unmounts)
                 let done = false;
-                while (!done) {
+                while (!done && isMountedRef.current) {
                     await new Promise(r => setTimeout(r, 2000)); // Poll every 2s
+                    if (!isMountedRef.current) break;
                     try {
                         const status = await pollScheduleGenJobStatus(jobId);
+                        if (!isMountedRef.current) break;
                         const completed = status.completedConferences || 0;
                         const total = status.totalConferences || 0;
                         const failed = status.failedConferences || 0;
@@ -558,26 +566,36 @@ const Scheduling = () => {
                     } catch (pollErr) {
                         console.error('Error polling generation status:', pollErr);
                         done = true;
-                        showSnackbar(`Season ${num} created, but lost track of generation progress. Check the conference tab.`, 'warning');
+                        if (isMountedRef.current) {
+                            showSnackbar(`Season ${num} created, but lost track of generation progress. Check the conference tab.`, 'warning');
+                        }
                     }
                 }
             } catch (genErr) {
                 console.error('Error starting conference schedule generation:', genErr);
-                showSnackbar(`Season ${num} created, but auto-generation failed: ${genErr.message}. You can generate schedules manually.`, 'warning');
+                if (isMountedRef.current) {
+                    showSnackbar(`Season ${num} created, but auto-generation failed: ${genErr.message}. You can generate schedules manually.`, 'warning');
+                }
             }
 
+            if (!isMountedRef.current) return;
             setCreateSeasonDialogOpen(false);
             setNewSeasonNumber('');
             const seasonsData = await getAllSeasons();
+            if (!isMountedRef.current) return;
             const seasonNumbers = seasonsData.map(s => s.season_number || s.seasonNumber);
             setAllSeasons(seasonNumbers);
             setSeason(num);
         } catch (err) {
             console.error('Error creating season:', err);
-            showSnackbar('Failed to create season: ' + err.message, 'error');
+            if (isMountedRef.current) {
+                showSnackbar('Failed to create season: ' + err.message, 'error');
+            }
         } finally {
-            setCreatingSeasonLoading(false);
-            setCreateSeasonProgress('');
+            if (isMountedRef.current) {
+                setCreatingSeasonLoading(false);
+                setCreateSeasonProgress('');
+            }
         }
     };
 

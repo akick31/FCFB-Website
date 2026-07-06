@@ -167,7 +167,7 @@ const App = () => {
                             <Route path="/register/success" element={<RegistrationSuccess />} />
                             <Route path="/profile" element={
                                 <ProtectedRoute requireAuth={true} requireAdmin={false} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                    <Profile user={user} />
+                                    <Profile user={user} setUser={setUser} />
                                 </ProtectedRoute>
                             } />
                             <Route path="/admin" element={

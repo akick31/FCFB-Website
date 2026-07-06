@@ -16,6 +16,7 @@ import {
     InputLabel,
     Select,
     MenuItem,
+    Alert,
     useTheme,
 } from '@mui/material';
 import {
@@ -42,6 +43,7 @@ import { getTeamByName } from '../../api/teamApi';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
+import { updateUserDetails } from '../../api/userApi';
 import { useNavigate } from 'react-router-dom';
 
 // Stat row helper
@@ -89,13 +91,15 @@ const aggregateSeasonStats = (statsList) => {
     return result;
 };
 
-const Profile = ({ user }) => {
+const Profile = ({ user, setUser }) => {
     const theme = useTheme();
     const navigate = useNavigate();
 
     useEffect(() => { document.title = 'FCFB | Profile'; }, []);
 
     const [isEditing, setIsEditing] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState(null);
     const [formData, setFormData] = useState({
         username: user?.username || '',
         email: '',
@@ -193,12 +197,50 @@ const Profile = ({ user }) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSave = () => {
-        setIsEditing(false);
+    const handleSave = async () => {
+        if (formData.password && formData.password !== formData.confirmPassword) {
+            setSaveError('Passwords do not match.');
+            return;
+        }
+
+        const updates = {};
+        if (formData.username && formData.username !== user?.username) {
+            updates.newUsername = formData.username;
+        }
+        if (formData.email) {
+            updates.newEmail = formData.email;
+        }
+        if (formData.password) {
+            updates.newPassword = formData.password;
+        }
+
+        if (Object.keys(updates).length === 0) {
+            setIsEditing(false);
+            setSaveError(null);
+            return;
+        }
+
+        setSaving(true);
+        setSaveError(null);
+        try {
+            await updateUserDetails(user.id, updates);
+            setUser?.(prev => ({
+                ...prev,
+                ...(updates.newUsername && { username: updates.newUsername }),
+                ...(updates.newEmail && { email: updates.newEmail }),
+            }));
+            setFormData(prev => ({ ...prev, email: '', password: '', confirmPassword: '' }));
+            setIsEditing(false);
+        } catch (error) {
+            setSaveError(error.message || 'Failed to update profile. Please try again.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleCancel = () => {
         setFormData({ username: user?.username || '', email: '', password: '', confirmPassword: '' });
+        setSaveError(null);
         setIsEditing(false);
     };
 
@@ -503,11 +545,18 @@ const Profile = ({ user }) => {
                                 <Button size="small" startIcon={<Edit />} onClick={() => setIsEditing(true)}>Edit</Button>
                             ) : (
                                 <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                    <Button size="small" variant="contained" startIcon={<Save />} onClick={handleSave}>Save</Button>
-                                    <Button size="small" variant="outlined" startIcon={<Cancel />} onClick={handleCancel}>Cancel</Button>
+                                    <Button size="small" variant="contained" startIcon={<Save />} onClick={handleSave} disabled={saving}>
+                                        {saving ? 'Saving…' : 'Save'}
+                                    </Button>
+                                    <Button size="small" variant="outlined" startIcon={<Cancel />} onClick={handleCancel} disabled={saving}>Cancel</Button>
                                 </Box>
                             )}
                         </Box>
+                        {saveError && (
+                            <Alert severity="error" sx={{ mx: 2.5, mt: 2 }} onClose={() => setSaveError(null)}>
+                                {saveError}
+                            </Alert>
+                        )}
                         <Divider />
                         <Box sx={{ p: 2.5 }}>
                             <Box sx={{ mb: 2.5 }}>

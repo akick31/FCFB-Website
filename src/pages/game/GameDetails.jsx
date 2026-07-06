@@ -49,16 +49,22 @@ const GameDetails = ({ isAdmin }) => {
     const [gameControlError, setGameControlError] = useState(null);
 
     useEffect(() => {
+        let cancelled = false;
         const fetchGame = async () => {
+            setLoading(true);
+            setError(null);
             try {
                 const gameResponse = await getGameById(gameId);
+                if (cancelled) return;
                 setGame(gameResponse);
 
                 const scorebugResponse = await getLatestScorebugByGameId(gameId);
+                if (cancelled) return;
                 setScorebug(scorebugResponse);
 
                 const homeTeamResponse = await getTeamByName(gameResponse.home_team);
                 const awayTeamResponse = await getTeamByName(gameResponse.away_team);
+                if (cancelled) return;
                 setHomeTeam(homeTeamResponse);
                 setAwayTeam(awayTeamResponse);
                 document.title = `FCFB | ${gameResponse.away_team} vs ${gameResponse.home_team}`;
@@ -67,6 +73,7 @@ const GameDetails = ({ isAdmin }) => {
                     getGameStatsByIdAndTeam(gameId, gameResponse.home_team),
                     getGameStatsByIdAndTeam(gameId, gameResponse.away_team)
                 ]);
+                if (cancelled) return;
                 setGameStats({
                     home: homeStats.data,
                     away: awayStats.data
@@ -74,30 +81,35 @@ const GameDetails = ({ isAdmin }) => {
 
                 setLoading(false);
             } catch (error) {
+                if (cancelled) return;
                 setError(error.message);
                 setLoading(false);
             }
         };
         fetchGame();
+        return () => { cancelled = true; };
     }, [gameId]);
 
     // Fetch plays for the game
     useEffect(() => {
+        let cancelled = false;
         const fetchPlays = async () => {
             if (game) {
                 try {
                     const response = await getAllPlaysByGameId(gameId);
+                    if (cancelled) return;
                     const sortedPlays = response.sort((a, b) =>
                         a[orderBy] > b[orderBy] ? (order === 'asc' ? 1 : -1) :
                             a[orderBy] < b[orderBy] ? (order === 'asc' ? -1 : 1) : 0
                     );
                     setPlays(sortedPlays);
                 } catch (error) {
-                    console.error("Failed to load plays:", error);
+                    if (!cancelled) console.error("Failed to load plays:", error);
                 }
             }
         };
         fetchPlays();
+        return () => { cancelled = true; };
     }, [game, gameId, orderBy, order]);
 
     // Compute chart data from plays (sorted ascending by play_number)

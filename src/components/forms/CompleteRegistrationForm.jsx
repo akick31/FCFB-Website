@@ -206,7 +206,7 @@ const CompleteRegistrationForm = () => {
         }
     };
 
-
+    const teamChoiceError = !validation.teamChoicesValid;
 
     return (
         <Box sx={{ 
@@ -380,7 +380,7 @@ const CompleteRegistrationForm = () => {
 
                                 {/* Team Choice 1 */}
                                 <Grid item xs={12} sm={4}>
-                                    <FormControl fullWidth error={!validation.teamChoicesValid && !formData.team_choice_one}>
+                                    <FormControl fullWidth error={teamChoiceError}>
                                         <InputLabel sx={{ color: 'text.primary' }}>1st Choice</InputLabel>
                                         <Select
                                             name="team_choice_one"
@@ -422,7 +422,7 @@ const CompleteRegistrationForm = () => {
 
                                 {/* Team Choice 2 */}
                                 <Grid item xs={12} sm={4}>
-                                    <FormControl fullWidth>
+                                    <FormControl fullWidth error={teamChoiceError}>
                                         <InputLabel>2nd Choice</InputLabel>
                                         <Select
                                             name="team_choice_two"
@@ -433,11 +433,11 @@ const CompleteRegistrationForm = () => {
                                             <MenuItem value="">No Selection</MenuItem>
                                             {openTeams.length > 0 ? (
                                                 openTeams.map((team) => (
-                                                    <MenuItem 
+                                                    <MenuItem
                                                         key={team}
                                                         value={team}
                                                         disabled={
-                                                            team === formData.team_choice_two || 
+                                                            team === formData.team_choice_one ||
                                                             team === formData.team_choice_three
                                                         }
                                                     >
@@ -455,7 +455,7 @@ const CompleteRegistrationForm = () => {
 
                                 {/* Team Choice 3 */}
                                 <Grid item xs={12} sm={4}>
-                                    <FormControl fullWidth>
+                                    <FormControl fullWidth error={teamChoiceError}>
                                         <InputLabel>3rd Choice</InputLabel>
                                         <Select
                                             name="team_choice_three"

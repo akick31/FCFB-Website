@@ -91,7 +91,10 @@ const UserManagement = ({ user }) => {
         setFilteredUsers(filtered);
     }, [users, searchTerm, roleFilter, statusFilter]);
 
-    const handleUserClick = () => {
+    const handleUserClick = (row) => {
+        if (row?.username) {
+            navigate(`/user-details/${row.username}`);
+        }
     };
 
     const getRoleColor = (role) => {
@@ -151,6 +154,7 @@ const UserManagement = ({ user }) => {
                     size="small"
                     onClick={(e) => {
                         e.stopPropagation();
+                        navigate(`/user-details/${user.username}`);
                     }}
                     sx={{ color: 'primary.main' }}
                 >
