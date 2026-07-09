@@ -39,7 +39,6 @@ export const getAllSeasons = async () => {
     }
 };
 
-// /season/current 500s between seasons, so fall back to the most recent entry in /season/all.
 const getLatestSeason = async () => {
     const allSeasons = await getAllSeasons();
     return allSeasons.reduce((latest, s) => {
