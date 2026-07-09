@@ -96,7 +96,6 @@ const Postseason = ({
             return hs === byeSeed || as_ === byeSeed;
         });
 
-    // Returns the bracket slot index for a game's lowest seed, or 99 if it doesn't match any group (upset)
     const getGameBracketPos = (game, seedGroups) => {
         const hs = field(game, 'playoffHomeSeed', 'playoff_home_seed') || 99;
         const as_ = field(game, 'playoffAwaySeed', 'playoff_away_seed') || 99;
@@ -104,7 +103,6 @@ const Postseason = ({
         for (let i = 0; i < seedGroups.length; i++) {
             if (seedGroups[i].includes(minSeed)) return i;
         }
-        // Fallback for double-upset: try max seed as well
         const maxSeed = Math.max(hs === 99 ? 0 : hs, as_ === 99 ? 0 : as_);
         for (let i = 0; i < seedGroups.length; i++) {
             if (seedGroups[i].includes(maxSeed)) return i;
@@ -407,7 +405,7 @@ const Postseason = ({
 
     const renderFullBracket = () => {
         const W = 195;
-        const ROW_H = 84; // 8 rows now that bye badges are gone (was 16)
+        const ROW_H = 84;
         const totalHeight = 8 * ROW_H;
 
         return (

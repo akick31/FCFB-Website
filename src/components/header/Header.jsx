@@ -408,7 +408,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     
                     <Box sx={{ 
                         position: 'relative', 
-                        left: '2.8%', // Fixed percentage for consistent positioning
+                        left: '2.8%',
                         zIndex: 4 
                     }}>
                         <LogoAndTitle />
@@ -458,13 +458,13 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                         color: 'white',
                                         textTransform: 'none',
                                         px: 2,
-                                        py: 0.75, // Reduced padding for smaller highlights
+                                        py: 0.75,
                                         fontWeight: isActiveRoute(path) ? 600 : 400,
                                         fontSize: '0.95rem',
                                         borderRadius: 2,
                                         fontFamily: 'Exo, sans-serif',
                                         whiteSpace: 'nowrap',
-                                        minHeight: 32, // Reduced height for smaller highlights
+                                        minHeight: 32,
                                         minWidth: 'auto',
                                         '&:hover': {
                                             backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -522,12 +522,12 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                         color: 'white',
                                         textTransform: 'none',
                                         px: 2,
-                                        py: 0.75, // Reduced padding for smaller highlights
+                                        py: 0.75,
                                         fontWeight: 400,
                                         fontSize: '0.95rem',
                                         borderRadius: 2,
                                         fontFamily: 'Exo, sans-serif',
-                                        minHeight: 32, // Reduced height for smaller highlights
+                                        minHeight: 32,
                                         '&:hover': {
                                             backgroundColor: 'rgba(255, 255, 255, 0.1)',
                                         },

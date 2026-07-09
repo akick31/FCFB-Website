@@ -106,7 +106,7 @@ const Leaderboard = () => {
                         const data = await getLeaderboard(
                             stat.value,
                             selectedSeason || null,
-                            null, // subdivision parameter (not used in this component)
+                            null,
                             selectedConference || null,
                             limit,
                             ascending
@@ -146,7 +146,7 @@ const Leaderboard = () => {
                 const data = await getLeaderboard(
                     selectedStat,
                     selectedSeason || null,
-                    null, // subdivision parameter (not used in this component)
+                    null,
                     selectedConference || null,
                     limit,
                     ascending

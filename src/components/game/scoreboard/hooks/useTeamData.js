@@ -17,7 +17,6 @@ export const useTeamData = (games) => {
                 if (game.homeTeam || game.home_team) teamNames.add(game.homeTeam || game.home_team);
             });
 
-            // Only fetch teams we haven't already tried (successes AND cached failures)
             const teamsToFetch = Array.from(teamNames).filter(teamName => !(teamName in teamsDataRef.current));
 
             if (teamsToFetch.length === 0) return;
@@ -37,7 +36,6 @@ export const useTeamData = (games) => {
 
                 const results = await Promise.all(teamPromises);
 
-                // Cache failures (as null) too, so they aren't silently retried on every re-render
                 results.forEach(({ teamName, data }) => {
                     teams[teamName] = data;
                 });

@@ -144,7 +144,6 @@ const GameDetails = ({ isAdmin }) => {
                     wpData.push({ play: label, homeWP: rounded });
                 }
             } else if (lastHomeWP != null) {
-                // Plays with no win_probability (e.g. delay of game penalties) carry forward the last known value.
                 wpData.push({ play: label, homeWP: lastHomeWP });
             }
         });
@@ -155,7 +154,6 @@ const GameDetails = ({ isAdmin }) => {
             if (i > 0) {
                 const prev = wpData[i - 1];
                 if ((prev.homeWP - 50) * (curr.homeWP - 50) < 0) {
-                    // Interpolated point where the WP line crosses 50%, so both chart segments meet exactly at the midline.
                     processedWp.push({
                         play: `${prev.play}x`, homeWP: 50,
                         homeAbove: 50, homeBelow: 50,

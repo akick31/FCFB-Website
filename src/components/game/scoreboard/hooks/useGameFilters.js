@@ -3,7 +3,6 @@ import { useState } from 'react';
 export const useGameFilters = (initialFilters, setParentFilters) => {
     const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
-    // No-op: FilterMenu manages its own state for individual filter changes
     const handleFilterChange = () => {};
 
     const handleFilterApply = (newFilters) => {

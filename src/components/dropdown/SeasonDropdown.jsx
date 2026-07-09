@@ -2,7 +2,6 @@ import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
 const SeasonDropdown = ({value, onChange}) => {
-    // Only show seasons 10 and 11 for now
     const availableSeasons = [10, 11];
 
     return (

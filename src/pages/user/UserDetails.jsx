@@ -106,7 +106,7 @@ const UserDetails = () => {
                         if (statsResponse?.content?.length > 0) {
                             setSeasonStats(statsResponse.content[0]);
                         }
-                    } catch { /* ignore */ } finally {
+                    } catch { } finally {
                         setStatsLoading(false);
                     }
                 }

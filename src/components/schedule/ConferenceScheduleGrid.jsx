@@ -30,7 +30,7 @@ const ConferenceScheduleGrid = ({
     onConferenceChange,
     conferenceTeams = [],
     conferenceSchedule = [],
-    allSeasonSchedule = [], // Full schedule including OOC games
+    allSeasonSchedule = [],
     teamMap = {},
     loading = false,
 }) => {
@@ -51,7 +51,6 @@ const ConferenceScheduleGrid = ({
         return keys;
     }, [conferenceSchedule]);
 
-    // Rows = teams, columns = weeks; includes both conference and OOC games for each team
     const confGrid = useMemo(() => {
         const grid = {};
         const teamNames = conferenceTeams.map(t => t.name);
@@ -309,8 +308,8 @@ const ConferenceScheduleGrid = ({
                                                                         ? (cell.isHome
                                                                             ? 'rgba(5, 150, 105, 0.06)'
                                                                             : 'rgba(217, 119, 6, 0.06)')
-                                                                        : 'rgba(156, 163, 175, 0.08)'), // Gray for OOC games
-                                                                border: cell.isConferenceGame ? 'none' : '1px dashed rgba(156, 163, 175, 0.4)', // Dashed border for OOC
+                                                                        : 'rgba(156, 163, 175, 0.08)'),
+                                                                border: cell.isConferenceGame ? 'none' : '1px dashed rgba(156, 163, 175, 0.4)',
                                                                 '&:hover': cellClickable ? {
                                                                     backgroundColor: 'rgba(25, 118, 210, 0.12)',
                                                                 } : {},
@@ -345,7 +344,7 @@ const ConferenceScheduleGrid = ({
                                                         </Box>
                                                     ) : (
                                                         <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.6rem' }}>
-                                                            —
+                                                            -
                                                         </Typography>
                                                     )}
                                                 </TableCell>

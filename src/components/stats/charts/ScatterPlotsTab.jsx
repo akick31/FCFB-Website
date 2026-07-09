@@ -164,7 +164,6 @@ const ScatterPlotsTab = () => {
                     };
                 });
         } else {
-            // Week-by-week view - not implemented yet
             return [];
         }
     }, [gameStatsData, seasonStatsData, viewMode]);

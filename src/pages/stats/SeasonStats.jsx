@@ -83,7 +83,6 @@ const SeasonStats = ({ user }) => {
         };
 
         fetchInitialData();
-    // eslint-disable-next-line
     }, []);
 
     const fetchTeamStats = async (team, season) => {

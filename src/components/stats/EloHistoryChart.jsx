@@ -33,7 +33,6 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         return map;
     }, [teams]);
 
-    // Only Season 11 Week 5 onward is shown
     const filteredData = useMemo(() => {
         if (!data || data.length === 0) return [];
         
@@ -127,7 +126,6 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         }
     }, [filteredData, showAllTeams]);
 
-    // No initial zoom - users see the full timeline and can use the brush/zoom buttons to focus in
     if (!filteredData || filteredData.length === 0) {
         return (
             <Paper sx={{ p: 3, textAlign: 'center' }}>
@@ -147,8 +145,6 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
 
         if (validPayloads.length === 0) return null;
 
-        // Recharts sets activeDot: true on the hovered line; falls back to the first valid payload
-        // since showAllTeams mode with shared=false should only ever have one anyway
         let hoveredPayload = validPayloads.find(p => p.dataKey && p.name) || validPayloads[0];
 
         const teamName = hoveredPayload.dataKey.replace('_elo', '');

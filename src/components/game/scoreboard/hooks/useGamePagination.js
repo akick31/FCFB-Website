@@ -6,7 +6,7 @@ export const useGamePagination = (initialRowsPerPage = 10) => {
     const handleRowsPerPageChange = (event) => {
         const newRowsPerPage = parseInt(event.target.value, 10);
         setRowsPerPage(newRowsPerPage);
-        return newRowsPerPage; // Return for parent component to update filters
+        return newRowsPerPage;
     };
 
     const getTotalPages = (totalElements) => {

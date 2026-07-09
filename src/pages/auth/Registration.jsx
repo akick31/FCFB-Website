@@ -55,7 +55,7 @@ const Registration = () => {
         >
             <Grid container spacing={4} alignItems="center" justifyContent="center" sx={{ 
                 minHeight: '80vh',
-                pt: { xs: 8, md: 10 } // Add top padding to account for the fixed header
+                pt: { xs: 8, md: 10 }
             }}>
                 <Grid item xs={12} md={6} lg={5}>
                     <StyledCard

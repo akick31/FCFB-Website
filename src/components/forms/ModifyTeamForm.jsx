@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { ChromePicker } from 'react-color';
 import { updateTeam } from '../../api/teamApi';
-import {Header} from "../../styles/GamesStyles"; // Assuming the updateTeam function is in the 'teamApi.js' file.
+import {Header} from "../../styles/GamesStyles";
 
 const ModifyTeamForm = ({ team }) => {
     const theme = useTheme();

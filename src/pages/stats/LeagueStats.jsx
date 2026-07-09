@@ -47,7 +47,7 @@ const LeagueStats = () => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const activeTab = TAB_FROM_SLUG[tab] ?? 1; // Default to 'league' tab
+    const activeTab = TAB_FROM_SLUG[tab] ?? 1;
 
     const [conferenceStats, setConferenceStats] = useState([]);
     const [leagueStats, setLeagueStats] = useState([]);
@@ -101,7 +101,6 @@ const LeagueStats = () => {
         };
 
         fetchInitialData();
-    // eslint-disable-next-line
     }, []);
 
     const fetchAllData = async (season) => {
@@ -176,7 +175,6 @@ const LeagueStats = () => {
 
     const formatPercentage = (value) => {
         if (value === null || value === undefined) return 'N/A';
-        // The values from the API are already in percentage format (e.g., 55.15 for 55.15%)
         return value.toFixed(1) + '%';
     };
 

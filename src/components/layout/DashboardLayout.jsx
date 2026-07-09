@@ -224,7 +224,7 @@ const DashboardLayout = ({
                     open={mobileOpen}
                     onClose={handleDrawerToggle}
                     ModalProps={{
-                        keepMounted: true, // Better open performance on mobile.
+                        keepMounted: true,
                     }}
                     sx={{
                         display: { xs: 'block', md: 'none' },
@@ -261,7 +261,6 @@ const DashboardLayout = ({
                     flexGrow: 1,
                     p: 3,
                     width: { md: `calc(100% - ${drawerWidth}px)` },
-                    // Mobile always renders a fixed AppBar (it's the only way to open the nav drawer there)
                     mt: (isMobile || !hideHeader) ? 10 : 0,
                 }}
             >

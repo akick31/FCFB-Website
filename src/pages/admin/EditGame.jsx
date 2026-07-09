@@ -127,7 +127,7 @@ const EditGame = () => {
         try {
             await restartGame(gameId);
             setSuccess('Game restarted successfully!');
-            fetchGame(); // Refresh game data
+            fetchGame();
         } catch (error) {
             setError(`Failed to restart game: ${error.message}`);
         } finally {
@@ -145,8 +145,8 @@ const EditGame = () => {
         try {
             await rollbackPlay(gameId);
             setSuccess('Play rolled back successfully!');
-            fetchGame(); // Refresh game data
-            fetchPlays(); // Refresh plays
+            fetchGame();
+            fetchPlays();
         } catch (error) {
             setError(`Failed to rollback play: ${error.message}`);
         } finally {

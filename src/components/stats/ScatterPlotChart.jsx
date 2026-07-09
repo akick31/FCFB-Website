@@ -160,7 +160,6 @@ const ScatterPlotChart = ({
         const finalXDomain = zoomDomain.x || [xResult.domainMin, xResult.domainMax];
         const finalYDomain = zoomDomain.y || [yResult.domainMin, yResult.domainMax];
 
-        // Ticks are filtered strictly to the domain since recharts renders ticks outside it otherwise
         const xDomainMin = Math.min(...finalXDomain);
         const xDomainMax = Math.max(...finalXDomain);
         const yDomainMin = Math.min(...finalYDomain);
@@ -225,7 +224,6 @@ const ScatterPlotChart = ({
         const yRange = currentYDomain[1] - currentYDomain[0];
 
         const panX = (deltaX / containerWidth) * xRange;
-        // Drag down (+deltaY) pans the viewport up (+panY) to reveal higher values
         const panY = (deltaY / containerHeight) * yRange;
         
         const newXDomain = [currentXDomain[0] + panX, currentXDomain[1] + panX];
