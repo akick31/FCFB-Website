@@ -28,8 +28,8 @@ const PastGames = ({ urlSeason, urlWeek }) => {
         gameType: null,
         gameStatus: null,
         rankedGame: null,
-        postseason: false,   // true = minWeek 14, no gameType restriction
-        playoffsOnly: false, // true = PLAYOFFS + NATIONAL_CHAMPIONSHIP game types only
+        postseason: false,
+        playoffsOnly: false,
         page: 0,
         size: 10,
     });
@@ -72,10 +72,8 @@ const PastGames = ({ urlSeason, urlWeek }) => {
             }
         };
         setDefaults();
-    // eslint-disable-next-line
     }, []);
 
-    // Sync from URL params when they change (e.g., back/forward navigation)
     useEffect(() => {
         if (!urlSeason || !urlWeek) return;
         setFilters(prev => {
@@ -89,7 +87,6 @@ const PastGames = ({ urlSeason, urlWeek }) => {
             setLoading(true);
             try {
                 if (filters.postseason || filters.playoffsOnly) {
-                    // Week 14 filters by PLAYOFFS game type; weeks 15+ are all playoffs
                     const results = await Promise.all(
                         POSTSEASON_WEEKS.map(week =>
                             getFilteredGames({

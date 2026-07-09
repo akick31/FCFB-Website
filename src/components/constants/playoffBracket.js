@@ -1,6 +1,5 @@
 export const CFP_LOGO_URL = 'https://cfbuniform.com/wp-content/uploads/2025/03/Logo_of_college_football_playoff.svg.png';
 
-// Bye seeds in bracket position order; each bye team faces the R1 winner where byeSeed + r1HighSeed = 17
 export const R2_BYE_SEEDS = [1, 8, 4, 5, 3, 6, 2, 7];
 
 export const R1_GAMES = [
@@ -19,11 +18,6 @@ export const R2_OPPONENT_R1 = [
     { h: 14, l: 19 }, { h: 11, l: 22 }, { h: 15, l: 18 }, { h: 10, l: 23 },
 ];
 
-// QF bracket position groups: all seeds that can appear in each QF slot (bye + their R1 opponents).
-// QF 0 (top):    1 vs 8 region  → seeds 1,16,17 and 8,9,24
-// QF 1:          4 vs 5 region  → seeds 4,13,20 and 5,12,21
-// QF 2:          3 vs 6 region  → seeds 3,14,19 and 6,11,22
-// QF 3 (bottom): 2 vs 7 region  → seeds 2,15,18 and 7,10,23
 export const QF_SEED_GROUPS = [
     [1, 16, 17, 8, 9, 24],
     [4, 13, 20, 5, 12, 21],
@@ -31,7 +25,6 @@ export const QF_SEED_GROUPS = [
     [2, 15, 18, 7, 10, 23],
 ];
 
-// SF bracket position groups: union of two QF regions each
 export const SF_SEED_GROUPS = [
     [1, 16, 17, 8, 9, 24, 4, 13, 20, 5, 12, 21],
     [3, 14, 19, 6, 11, 22, 2, 15, 18, 7, 10, 23],
@@ -45,5 +38,4 @@ export const ROUND_LABELS = {
     5: 'National Championship',
 };
 
-// Compute playoff week from round number: Round 1 = Week 14, Round 2 = Week 15, etc.
 export const playoffWeekForRound = (round) => 13 + round;

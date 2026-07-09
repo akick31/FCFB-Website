@@ -34,7 +34,6 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
 
     const getStatusText = () => {
         if (finished || status === 'FINAL' || status === 'COMPLETED') {
-            // No "Final" label - the winning team is already bolded; only annotate overtime
             if (quarter >= 6) return `${quarter - 4}OT`;
             if (quarter === 5) return 'OT';
             return null;

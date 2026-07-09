@@ -113,7 +113,7 @@ export const createBulkScheduleEntries = async (entries) => {
 export const generateConferenceSchedule = async (request) => {
     try {
         const response = await apiClient.post('/schedule/generate-conference', request, {
-            timeout: 120000, // 2 minutes — backtracking may take time
+            timeout: 120000,
         });
         return response.data;
     } catch (error) {
@@ -125,7 +125,6 @@ export const generateConferenceSchedule = async (request) => {
     }
 };
 
-// Fire-and-forget: returns a jobId to poll for progress rather than waiting on the full generation.
 export const generateAllConferenceSchedules = async (season) => {
     try {
         const response = await apiClient.post(`/schedule/generate-all-conferences/${season}`);
@@ -152,13 +151,12 @@ export const pollScheduleGenJobStatus = async (jobId) => {
     }
 };
 
-// Async: returns a jobId immediately, track progress via getGameWeekJobStatus().
 export const startGameWeek = async (season, week) => {
     try {
         const response = await apiClient.post('/game/week', null, {
             params: { season, week },
         });
-        return response.data; // { jobId, message }
+        return response.data;
     } catch (error) {
         console.error("Failed to start game week:", error);
         if (error.response) {
@@ -197,7 +195,7 @@ export const getAllGameWeekJobs = async () => {
 export const retryFailedGames = async (jobId) => {
     try {
         const response = await apiClient.post(`/game/week/retry/${jobId}`);
-        return response.data; // { jobId, message }
+        return response.data;
     } catch (error) {
         console.error("Failed to retry failed games:", error);
         if (error.response) {
@@ -246,7 +244,6 @@ export const getConferenceRules = async (conference) => {
     } catch (error) {
         console.error("Failed to fetch conference rules:", error);
         if (error.response) {
-            // 404 is expected if rules don't exist yet
             if (error.response.status === 404) {
                 return null;
             }

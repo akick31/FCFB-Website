@@ -50,7 +50,7 @@ const ResetPassword = () => {
     const handleNewPasswordChange = (e) => {
         const value = e.target.value;
         setNewPassword(value);
-        setPasswordValid(isStrongPassword(value)); // Validate password strength
+        setPasswordValid(isStrongPassword(value));
     };
 
     const handleSubmit = async (e) => {
@@ -87,7 +87,7 @@ const ResetPassword = () => {
     return (
         <Grid container spacing={4} alignItems="center" justifyContent="center" sx={{ 
             minHeight: '80vh',
-            pt: { xs: 8, md: 10 } // Add top padding to account for the fixed header
+            pt: { xs: 8, md: 10 }
         }}>
             <Grid item xs={12} md={6} lg={5}>
                 <StyledCard

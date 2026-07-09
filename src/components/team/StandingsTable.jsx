@@ -64,9 +64,9 @@ const StandingsTable = ({ teams, conference }) => {
                     marginTop: 2,
                     boxShadow: 3,
                     borderRadius: 2,
-                    overflowX: 'auto', // Enable horizontal scrolling
+                    overflowX: 'auto',
                     '& .MuiTable-root': {
-                        minWidth: 600, // Minimum table width to prevent squishing
+                        minWidth: 600,
                     }
                 }}
             >

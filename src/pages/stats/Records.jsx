@@ -64,7 +64,6 @@ const Records = () => {
 
     useEffect(() => {
         fetchInitialData();
-    // eslint-disable-next-line
     }, []);
 
     const fetchInitialData = async () => {
@@ -120,7 +119,6 @@ const Records = () => {
             ? singleGameRecords.filter(record => record.record_name === selectedRecord.value)
             : singleGameRecords;
 
-        // AVERAGE_OFFENSIVE_DIFF is unusual: a lower value is the better record, so prefer the LOWEST entries over HIGHEST when both exist.
         if (selectedRecord?.value === 'AVERAGE_OFFENSIVE_DIFF') {
             const lowestRecords = filteredRecords.filter(r => r.record_type === 'SINGLE_GAME_LOWEST');
             const highestRecords = filteredRecords.filter(r => r.record_type === 'SINGLE_GAME');

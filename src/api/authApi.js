@@ -32,7 +32,6 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
 
         const auth = response.data;
 
-        // Backend response field names for these have varied, so check known aliases.
         const token =
             auth?.token ?? auth?.session?.token ?? auth?.accessToken ?? auth?.jwt ?? null;
         const userId =

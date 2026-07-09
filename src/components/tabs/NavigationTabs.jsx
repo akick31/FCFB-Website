@@ -11,10 +11,10 @@ const NavigationTabs = ({ location, navigationItems }) => (
             "& .MuiTab-root": {
                 minWidth: "auto",
                 px: 2,
-                color: "white", // Text color white
+                color: "white",
                 "&.Mui-selected": {
-                    color: "white", // Text color white for selected tab
-                    backgroundColor: "grey.500", // Grey background for selected tab
+                    color: "white",
+                    backgroundColor: "grey.500",
                 },
             },
         }}

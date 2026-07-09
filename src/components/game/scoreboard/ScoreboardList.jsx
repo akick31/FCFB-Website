@@ -56,7 +56,6 @@ const ScoreboardList = ({
     const [allTeams, setAllTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [filteredGames, setFilteredGames] = useState(games);
-    // Track the page size before a team search expands it so we can restore it on clear
     const preSearchSizeRef = useRef(null);
 
     const { teamsData, loading: teamsLoading } = useTeamData(filteredGames);
@@ -89,7 +88,7 @@ const ScoreboardList = ({
         }
     }, [selectedTeam, games]);
 
-    const isPastGames = false; // all game types now use the LiveGameCard layout
+    const isPastGames = false;
 
     const getGridColumns = () => {
         const size = isSmallScreen ? 'small' : 'large';
@@ -102,7 +101,7 @@ const ScoreboardList = ({
         if (isPastGames) {
             return isSmallScreen ? '490px' : '100%';
         } else {
-            return isSmallScreen ? '705px' : '1605px'; // Adjusted width to cover all columns without extending too far
+            return isSmallScreen ? '705px' : '1605px';
         }
     };
 
@@ -134,7 +133,6 @@ const ScoreboardList = ({
     const handleRowsPerPageChangeLocal = (event) => {
         const newRowsPerPage = handleRowsPerPageChange(event);
         if (selectedTeam) {
-            // While searching by team, save the new preference for when search is cleared
             preSearchSizeRef.current = newRowsPerPage;
         } else {
             setFilters(prev => ({ ...prev, size: newRowsPerPage, page: 0 }));
@@ -145,7 +143,7 @@ const ScoreboardList = ({
         const gameId = game.game_id;
 
         if (gameId) {
-            if (e.metaKey || e.ctrlKey || e.shiftKey) return; // let browser handle new tab
+            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
             e.preventDefault();
             navigate(`/game-details/${gameId}`);
         } else {
@@ -179,8 +177,6 @@ const ScoreboardList = ({
                                 value={selectedTeam}
                                 onChange={(event, newValue) => {
                                     setSelectedTeam(newValue);
-                                    // Expand fetch size so search spans all games for this tab,
-                                    // not just those on the current page
                                     if (setFilters) {
                                         if (newValue) {
                                             preSearchSizeRef.current = filters?.size || rowsPerPage;

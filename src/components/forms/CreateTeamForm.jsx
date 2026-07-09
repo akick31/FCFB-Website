@@ -34,7 +34,7 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
         scorebug_logo: '',
         primary_color: '#1976d2',
         secondary_color: '#ffffff',
-        subdivision: 'FAKE', // Fixed to FAKE subdivision
+        subdivision: 'FAKE',
         offensive_playbook: '',
         defensive_playbook: '',
         conference: '',

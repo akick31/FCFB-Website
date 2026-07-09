@@ -38,7 +38,6 @@ import { R2_BYE_SEEDS, QF_SEED_GROUPS, SF_SEED_GROUPS, ROUND_LABELS, playoffWeek
 import { field } from '../../utils/fieldHelper';
 import { isRealTeam } from '../../utils/teamDataUtils';
 
-// FBS Independent has no conference championship game
 const CCG_CONFERENCES = conferences.filter(c => c.value !== 'FBS_INDEPENDENT');
 
 const PostseasonAdminTab = ({
@@ -86,7 +85,6 @@ const PostseasonAdminTab = ({
         [postseasonSchedule]
     );
 
-    // Bracket component only needs playoff games, not CCG/Bowl, to avoid duplicate rendering
     const playoffOnlySchedule = postseasonPlayoffs;
 
     const selectedPlayoffTeamNames = useMemo(() =>
@@ -112,7 +110,6 @@ const PostseasonAdminTab = ({
         if (!playoffTeams.some(t => t !== null)) return [];
         const entries = [];
 
-        // R1 seeding: 9v24, 10v23, …, 16v17
         for (let i = 0; i < 8; i++) {
             const highSeed = 9 + i;
             const lowSeed = 24 - i;
@@ -128,7 +125,6 @@ const PostseasonAdminTab = ({
             });
         }
 
-        // R2 placeholder games: bye teams vs OPEN
         for (let i = 0; i < 8; i++) {
             const byeSeed = R2_BYE_SEEDS[i];
             entries.push({
@@ -271,7 +267,6 @@ const PostseasonAdminTab = ({
             const firstRoundWeek = playoffWeekForRound(1);
             const secondRoundWeek = playoffWeekForRound(2);
 
-            // R1 games (seeds 9-16 vs 24-17)
             const firstRoundGames = [];
             for (let i = 0; i < 8; i++) {
                 const highSeed = 9 + i;
@@ -291,7 +286,6 @@ const PostseasonAdminTab = ({
                 });
             }
 
-            // R2 placeholder games (bye teams vs OPEN)
             const secondRoundGames = [];
             for (let i = 0; i < 8; i++) {
                 const byeSeed = R2_BYE_SEEDS[i];
@@ -325,7 +319,6 @@ const PostseasonAdminTab = ({
         }
     };
 
-    // Core advance logic (used by dialog and auto-advance)
     const advanceTeamToNextRound = async (game, winner, schedule) => {
         const sched = schedule || postseasonSchedule;
         const currentRound = field(game, 'playoffRound', 'playoff_round') || 1;
@@ -337,7 +330,6 @@ const PostseasonAdminTab = ({
         const gameType = nextRound >= 5 ? 'NATIONAL_CHAMPIONSHIP' : 'PLAYOFFS';
         const nextWeek = playoffWeekForRound(nextRound);
 
-        // R1 → R2: find existing R2 placeholder with matching bye seed
         if (currentRound === 1 && homeSeed) {
             const byeSeed = 17 - homeSeed;
             const r2Placeholder = sched.find(g => {
@@ -364,7 +356,6 @@ const PostseasonAdminTab = ({
             }
         }
 
-        // Later rounds: find the correct next-round game by seed group membership
         const nextRoundGames = sched.filter(g => {
             const gt = field(g, 'gameType', 'game_type');
             const pr = field(g, 'playoffRound', 'playoff_round');
@@ -375,7 +366,6 @@ const PostseasonAdminTab = ({
         let targetGame = null;
 
         if (currentRound === 2) {
-            // R2 → QF: use QF_SEED_GROUPS to find the game for this bracket region
             const qfGroupIndex = QF_SEED_GROUPS.findIndex(group => group.includes(winnerSeed));
             if (qfGroupIndex !== -1) {
                 const groupSeeds = QF_SEED_GROUPS[qfGroupIndex];
@@ -389,7 +379,6 @@ const PostseasonAdminTab = ({
                 });
             }
         } else if (currentRound === 3) {
-            // QF → SF: use SF_SEED_GROUPS to find the game for this bracket region
             const sfGroupIndex = SF_SEED_GROUPS.findIndex(group => group.includes(winnerSeed));
             if (sfGroupIndex !== -1) {
                 const groupSeeds = SF_SEED_GROUPS[sfGroupIndex];
@@ -403,7 +392,6 @@ const PostseasonAdminTab = ({
                 });
             }
         } else if (currentRound === 4) {
-            // SF → NCG: single game, find the one with an open slot
             targetGame = nextRoundGames.find(g => {
                 const h = field(g, 'homeTeam', 'home_team');
                 const a = field(g, 'awayTeam', 'away_team');
@@ -477,7 +465,6 @@ const PostseasonAdminTab = ({
                 return (gt === 'PLAYOFFS' || gt === 'NATIONAL_CHAMPIONSHIP') && finished;
             });
 
-            // Local copy updated after each advance so same-cycle advances see previously placed teams
             let localSchedule = [...postseasonSchedule];
             let advanced = false;
             for (const game of finishedPlayoffGames) {
@@ -512,7 +499,6 @@ const PostseasonAdminTab = ({
                     onShowSnackbar(msg);
                     advanced = true;
 
-                    // Add a synthetic entry so subsequent advances this cycle see the placed team
                     const homeSeed = field(game, 'playoffHomeSeed', 'playoff_home_seed');
                     const awaySeed = field(game, 'playoffAwaySeed', 'playoff_away_seed');
                     const winnerSeed = winner === homeTeam ? homeSeed : awaySeed;
@@ -528,7 +514,6 @@ const PostseasonAdminTab = ({
                     }];
                 } catch (err) {
                     console.error('Auto-advance failed for game', game.id, err);
-                    // Remove from processed set so it can be retried or done manually
                     autoAdvancedRef.current.delete(game.id);
                 }
             }

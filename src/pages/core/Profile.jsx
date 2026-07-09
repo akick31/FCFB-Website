@@ -138,7 +138,7 @@ const Profile = ({ user, setUser }) => {
                     .filter(Boolean)
                     .sort((a, b) => b - a);
                 setSeasons(nums);
-            } catch { /* ignore */ }
+            } catch { }
         };
         fetchSeasons();
     }, []);
@@ -178,7 +178,7 @@ const Profile = ({ user, setUser }) => {
                 } else {
                     setEloData([]);
                 }
-            } catch { /* ignore */ } finally {
+            } catch { } finally {
                 setStatsLoading(false);
             }
         };

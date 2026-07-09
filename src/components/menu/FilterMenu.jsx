@@ -54,7 +54,7 @@ const FilterMenu = ({ onApply, category }) => {
             filters,
             gameStatus,
             gameType,
-            gameMode: gameMode === "CHEW" ? null : (gameMode || null), // Fix old CHEW value and ensure gameMode defaults to null
+            gameMode: gameMode === "CHEW" ? null : (gameMode || null),
         };
         return result;
     };
@@ -78,7 +78,7 @@ const FilterMenu = ({ onApply, category }) => {
 
     const handleChange = (field) => (event) => {
         let newValue = event.target.value;
-        if (newValue === "") newValue = null; // Convert "All" to null
+        if (newValue === "") newValue = null;
 
         setPendingFilters(prev => ({
             ...prev,

@@ -18,7 +18,7 @@ module.exports = {
     ecmaFeatures: {
       jsx: true,
     },
-    ecmaVersion: 2020, // Support for optional chaining and nullish coalescing
+    ecmaVersion: 2020,
     sourceType: 'module',
   },
   plugins: [
@@ -28,8 +28,9 @@ module.exports = {
   rules: {
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
-    'react/no-unescaped-entities': 'off', // Allow apostrophes in JSX
-    'no-unused-vars': 'warn', // Make unused vars warnings instead of errors
+    'react/no-unescaped-entities': 'off',
+    'no-unused-vars': 'warn',
+    'no-empty': ['error', { allowEmptyCatch: true }],
   },
   settings: {
     react: {

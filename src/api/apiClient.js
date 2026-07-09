@@ -4,7 +4,7 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1313/api/
 
 const apiClient = axios.create({
     baseURL: baseURL,
-    timeout: 60000, // Increased to 60 seconds for large queries like ELO history
+    timeout: 60000,
 });
 
 apiClient.interceptors.request.use(config => {

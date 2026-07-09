@@ -51,7 +51,7 @@ const RankingsTable = ({ teams, rankingType }) => {
     };
 
     const getRankingColor = () => {
-        return '#004260'; // Main blue color for all rankings
+        return '#004260';
     };
 
     return (
@@ -71,9 +71,9 @@ const RankingsTable = ({ teams, rankingType }) => {
                     marginTop: 2,
                     boxShadow: 3,
                     borderRadius: 2,
-                    overflowX: 'auto', // Enable horizontal scrolling
+                    overflowX: 'auto',
                     '& .MuiTable-root': {
-                        minWidth: 500, // Minimum table width to prevent squishing
+                        minWidth: 500,
                     }
                 }}
             >

@@ -53,6 +53,7 @@ const ConferenceScheduleAdminTab = ({
     onGenerateSchedule,
     onEmptyCellClick,
     onFilledCellClick,
+    onGameDrop,
     numConferenceGames,
     onNumConferenceGamesChange,
     protectedRivalries,
@@ -64,6 +65,7 @@ const ConferenceScheduleAdminTab = ({
 }) => {
     const [rulesExpanded, setRulesExpanded] = useState(false);
     const [savingRules, setSavingRules] = useState(false);
+    const [dragSource, setDragSource] = useState(null);
 
     const grid = useMemo(() => {
         const g = {};
@@ -196,7 +198,7 @@ const ConferenceScheduleAdminTab = ({
                                     </Button>
                                 </Box>
                                 <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
-                                    Protected rivalries are always scheduled when auto-generating. They cannot be deleted, only moved across weeks.
+                                    Protected rivalries are always scheduled when auto-generating.
                                     The schedule cannot be finalized if any protected rivalry is missing.
                                 </Typography>
 
@@ -207,7 +209,6 @@ const ConferenceScheduleAdminTab = ({
                                 )}
 
                                 {protectedRivalries.map((rivalry, index) => {
-                                    // Once both teams are set, the rivalry is "locked" and cannot be removed
                                     const isLocked = rivalry.team1 && rivalry.team2;
                                     return (
                                         <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
@@ -249,19 +250,9 @@ const ConferenceScheduleAdminTab = ({
                                                     ))}
                                                 </Select>
                                             </FormControl>
-                                            {isLocked ? (
-                                                <Tooltip title="Protected rivalries cannot be deleted, only moved">
-                                                    <span>
-                                                        <IconButton size="small" disabled>
-                                                            <DeleteIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </span>
-                                                </Tooltip>
-                                            ) : (
-                                                <IconButton size="small" color="error" onClick={() => onRemoveRivalry(index)}>
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
-                                            )}
+                                            <IconButton size="small" color="error" onClick={() => onRemoveRivalry(index)}>
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
                                         </Box>
                                     );
                                 })}
@@ -369,14 +360,20 @@ const ConferenceScheduleAdminTab = ({
                                                     return (
                                                         <TableCell key={weekNum} sx={{ textAlign: 'center', p: 0.5 }}>
                                                             {cell ? (
-                                                                <Tooltip title={`${cell.isHome ? 'vs' : '@'} ${cell.opponent} (click to move/delete)`}>
+                                                                <Tooltip title={`${cell.isHome ? 'vs' : '@'} ${cell.opponent} (click to move/delete, or drag to another week)`}>
                                                                     <Box
+                                                                        draggable={!scheduleLocked}
+                                                                        onDragStart={(e) => {
+                                                                            e.dataTransfer.effectAllowed = 'move';
+                                                                            setDragSource({ team: team.name, week: weekNum, cell });
+                                                                        }}
+                                                                        onDragEnd={() => setDragSource(null)}
                                                                         sx={{
                                                                             display: 'flex',
                                                                             alignItems: 'center',
                                                                             justifyContent: 'center',
                                                                             gap: 0.5,
-                                                                            cursor: 'pointer',
+                                                                            cursor: scheduleLocked ? 'pointer' : 'grab',
                                                                             p: 0.5,
                                                                             borderRadius: 1,
                                                                             backgroundColor: cell.isHome
@@ -418,25 +415,40 @@ const ConferenceScheduleAdminTab = ({
                                                                             </Typography>
                                                                         </Box>
                                                                     </Tooltip>
-                                                                ) : (
-                                                                    <Box
-                                                                        onClick={() => !scheduleLocked && onEmptyCellClick(team.name, weekNum)}
-                                                                        sx={{
-                                                                            cursor: scheduleLocked ? 'default' : 'pointer',
-                                                                            p: 1,
-                                                                            borderRadius: 1,
-                                                                            '&:hover': scheduleLocked ? {} : {
-                                                                                backgroundColor: 'rgba(0,0,0,0.04)',
-                                                                                outline: '1px dashed',
-                                                                                outlineColor: 'primary.main',
-                                                                            }
-                                                                        }}
-                                                                    >
-                                                                        <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                                                                            ---
-                                                                        </Typography>
-                                                                    </Box>
-                                                                );
+                                                                ) : (() => {
+                                                                    const isDropTarget = !scheduleLocked && dragSource && dragSource.team === team.name && dragSource.week !== weekNum;
+                                                                    return (
+                                                                        <Box
+                                                                            onClick={() => !scheduleLocked && onEmptyCellClick(team.name, weekNum)}
+                                                                            onDragOver={(e) => {
+                                                                                if (isDropTarget) e.preventDefault();
+                                                                            }}
+                                                                            onDrop={(e) => {
+                                                                                if (!isDropTarget) return;
+                                                                                e.preventDefault();
+                                                                                onGameDrop(dragSource.cell, weekNum);
+                                                                                setDragSource(null);
+                                                                            }}
+                                                                            sx={{
+                                                                                cursor: scheduleLocked ? 'default' : 'pointer',
+                                                                                p: 1,
+                                                                                borderRadius: 1,
+                                                                                outline: isDropTarget ? '2px dashed' : 'none',
+                                                                                outlineColor: 'success.main',
+                                                                                backgroundColor: isDropTarget ? 'rgba(5, 150, 105, 0.08)' : 'transparent',
+                                                                                '&:hover': scheduleLocked ? {} : {
+                                                                                    backgroundColor: isDropTarget ? 'rgba(5, 150, 105, 0.15)' : 'rgba(0,0,0,0.04)',
+                                                                                    outline: '1px dashed',
+                                                                                    outlineColor: isDropTarget ? 'success.main' : 'primary.main',
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                                                                                ---
+                                                                            </Typography>
+                                                                        </Box>
+                                                                    );
+                                                                })();
                                                             })()}
                                                         </TableCell>
                                                     );

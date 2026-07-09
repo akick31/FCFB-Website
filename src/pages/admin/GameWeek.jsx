@@ -240,7 +240,7 @@ const GameWeek = () => {
                             <Box sx={{ textAlign: 'center' }}>
                                 <ScheduleIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
                                 <Typography variant="h3" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                                    {season || '—'}
+                                    {season || '-'}
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                                     Current Season
@@ -253,7 +253,7 @@ const GameWeek = () => {
                             <Box sx={{ textAlign: 'center' }}>
                                 <GameIcon sx={{ fontSize: 40, color: 'secondary.main', mb: 1 }} />
                                 <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Current Week: <strong>{week || '—'}</strong>
+                                    Current Week: <strong>{week || '-'}</strong>
                                 </Typography>
                                 <FormControl size="small" fullWidth>
                                     <InputLabel>View Week</InputLabel>
@@ -500,7 +500,7 @@ const GameWeek = () => {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Typography variant="body2">
-                                                        {game.gameType || game.game_type || '—'}
+                                                        {game.gameType || game.game_type || '-'}
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell sx={{ textAlign: 'center' }}>

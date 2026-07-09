@@ -87,7 +87,6 @@ const Schedule = () => {
         } else if (tab === 'conference' && selection) {
             setSelectedConference(selection.toUpperCase());
         }
-    // eslint-disable-next-line
     }, [tab, selection, teams]);
 
     useEffect(() => {

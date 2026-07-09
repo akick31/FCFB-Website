@@ -118,8 +118,6 @@ const Scheduling = () => {
     const [createSeasonDialogOpen, setCreateSeasonDialogOpen] = useState(false);
     const [newSeasonNumber, setNewSeasonNumber] = useState('');
 
-    // Playoff bracket and advance team state is managed in PostseasonAdminTab.
-
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
     const teamMap = useMemo(() => {
@@ -430,13 +428,19 @@ const Scheduling = () => {
         }
     };
 
-    const handleMoveGame = async () => {
-        if (!moveGameData || !moveToWeek) return;
+    const moveGameToWeek = async (gameData, targetWeek) => {
+        if (!gameData || !targetWeek) return;
+        const home = field(gameData, 'homeTeam', 'home_team') || gameData.opponent;
+        const away = field(gameData, 'awayTeam', 'away_team') || '';
+        const homeOccupied = home && teamWeekOccupiedAll.has(`${home}|${targetWeek}`);
+        const awayOccupied = away && teamWeekOccupiedAll.has(`${away}|${targetWeek}`);
+        if ((homeOccupied || awayOccupied) && targetWeek !== gameData.week) {
+            showSnackbar(`Cannot move: a team already has a game scheduled in Week ${targetWeek}`, 'warning');
+            return;
+        }
         try {
-            await moveGame(moveGameData.id, moveToWeek);
-            showSnackbar(`Game moved to Week ${moveToWeek}`);
-            setMoveDialogOpen(false);
-            setMoveGameData(null);
+            await moveGame(gameData.id, targetWeek);
+            showSnackbar(`Game moved to Week ${targetWeek}`);
             refreshAllSeasonSchedule();
             if (tabIndex === 0) fetchConferenceSchedule();
             else if (tabIndex === 1 && selectedOOCTeam) fetchOOCSchedule();
@@ -445,6 +449,17 @@ const Scheduling = () => {
             console.error('Error moving game:', err);
             showSnackbar('Failed to move game: ' + err.message, 'error');
         }
+    };
+
+    const handleMoveGame = async () => {
+        if (!moveGameData || !moveToWeek) return;
+        await moveGameToWeek(moveGameData, moveToWeek);
+        setMoveDialogOpen(false);
+        setMoveGameData(null);
+    };
+
+    const handleGameDrop = (gameData, targetWeek) => {
+        moveGameToWeek(gameData, targetWeek);
     };
 
     const handleGenerateConferenceSchedule = async () => {
@@ -496,7 +511,6 @@ const Scheduling = () => {
                 const jobResponse = await generateAllConferenceSchedules(num);
                 const jobId = jobResponse.jobId;
 
-                // Bail out of the poll loop if the component unmounts mid-generation.
                 let done = false;
                 while (!done && isMountedRef.current) {
                     await new Promise(r => setTimeout(r, 2000));
@@ -566,8 +580,23 @@ const Scheduling = () => {
         setProtectedRivalries([...protectedRivalries, { team1: '', team2: '', week: null }]);
     };
 
-    const removeRivalry = (index) => {
-        setProtectedRivalries(protectedRivalries.filter((_, i) => i !== index));
+    const removeRivalry = async (index) => {
+        const rivalry = protectedRivalries[index];
+        const updated = protectedRivalries.filter((_, i) => i !== index);
+
+        if (!rivalry.team1 && !rivalry.team2) {
+            setProtectedRivalries(updated);
+            return;
+        }
+
+        try {
+            await saveConferenceRules(selectedConference, numConferenceGames, updated);
+            setProtectedRivalries(updated);
+            showSnackbar('Rivalry removed');
+        } catch (err) {
+            console.error('Error removing rivalry:', err);
+            showSnackbar('Failed to remove rivalry: ' + err.message, 'error');
+        }
     };
 
     const updateRivalry = (index, fieldName, value) => {
@@ -588,7 +617,6 @@ const Scheduling = () => {
 
     const navigationItems = adminNavigationItems;
 
-    // Includes every game, used to prevent double-booking in add-game dialogs.
     const teamWeekOccupiedAll = useMemo(() => {
         const occupied = new Set();
         allSeasonSchedule.forEach(game => {
@@ -601,7 +629,6 @@ const Scheduling = () => {
         return occupied;
     }, [allSeasonSchedule]);
 
-    // Excludes this conference's own games so they aren't mislabeled as OOC in the grid.
     const teamWeekOccupiedNonConf = useMemo(() => {
         const confKeys = new Set();
         conferenceSchedule.forEach(game => {
@@ -768,6 +795,7 @@ const Scheduling = () => {
                             setMoveToWeek(weekNum);
                             setMoveDialogOpen(true);
                         }}
+                        onGameDrop={handleGameDrop}
                         numConferenceGames={numConferenceGames}
                         onNumConferenceGamesChange={setNumConferenceGames}
                         protectedRivalries={protectedRivalries}
@@ -1150,24 +1178,11 @@ const Scheduling = () => {
                         {moveGameData && (() => {
                             const home = field(moveGameData, 'homeTeam', 'home_team') || moveGameData.opponent;
                             const away = field(moveGameData, 'awayTeam', 'away_team') || '';
-                            const isRivalry = protectedRivalries.some(r =>
-                                r.team1 && r.team2 && (
-                                    (r.team1 === home && r.team2 === away) ||
-                                    (r.team1 === away && r.team2 === home) ||
-                                    (r.team1 === home && r.team2 === moveGameData.opponent) ||
-                                    (r.team1 === moveGameData.opponent && r.team2 === home)
-                                )
-                            );
                             return (
                                 <Box sx={{ mt: 1 }}>
                                     <Typography variant="body2" sx={{ mb: 2 }}>
                                         {home} vs {away || moveGameData.opponent} (Week {moveGameData.week})
                                     </Typography>
-                                    {isRivalry && (
-                                        <Alert severity="info" sx={{ mb: 2 }}>
-                                            This is a protected rivalry and cannot be deleted, only moved to a different week.
-                                        </Alert>
-                                    )}
                                     <FormControl size="small" fullWidth>
                                         <InputLabel>Move to Week</InputLabel>
                                         <Select
@@ -1202,37 +1217,20 @@ const Scheduling = () => {
                         })()}
                     </DialogContent>
                     <DialogActions>
-                        {moveGameData && (() => {
-                            const home = field(moveGameData, 'homeTeam', 'home_team') || moveGameData.opponent;
-                            const away = field(moveGameData, 'awayTeam', 'away_team') || '';
-                            const isRivalry = protectedRivalries.some(r =>
-                                r.team1 && r.team2 && (
-                                    (r.team1 === home && r.team2 === away) ||
-                                    (r.team1 === away && r.team2 === home) ||
-                                    (r.team1 === home && r.team2 === moveGameData.opponent) ||
-                                    (r.team1 === moveGameData.opponent && r.team2 === home)
-                                )
-                            );
-                            return (
-                                <Tooltip title={isRivalry ? 'Protected rivalries cannot be deleted' : ''}>
-                                    <span>
-                                        <Button
-                                            color="error"
-                                            disabled={isRivalry}
-                                            onClick={() => {
-                                                if (moveGameData?.id) {
-                                                    handleDeleteGame(moveGameData.id);
-                                                    setMoveDialogOpen(false);
-                                                    setMoveGameData(null);
-                                                }
-                                            }}
-                                        >
-                                            Delete Game
-                                        </Button>
-                                    </span>
-                                </Tooltip>
-                            );
-                        })()}
+                        {moveGameData && (
+                            <Button
+                                color="error"
+                                onClick={() => {
+                                    if (moveGameData?.id) {
+                                        handleDeleteGame(moveGameData.id);
+                                        setMoveDialogOpen(false);
+                                        setMoveGameData(null);
+                                    }
+                                }}
+                            >
+                                Delete Game
+                            </Button>
+                        )}
                         <Button onClick={() => setMoveDialogOpen(false)}>Cancel</Button>
                         <Button variant="contained" onClick={handleMoveGame}>Move</Button>
                     </DialogActions>

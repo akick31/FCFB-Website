@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getFilteredGames } from '../../../api/gameApi';
 import ScoreboardList from './ScoreboardList';
 
-const POLL_INTERVAL_MS = 15000; // 15 seconds
+const POLL_INTERVAL_MS = 15000;
 
 const OngoingGames = () => {
     const [games, setGames] = useState([]);
@@ -62,7 +62,6 @@ const OngoingGames = () => {
         fetchData(showLoading);
     }, [fetchData]);
 
-    // Auto-poll every 15 seconds (silent refresh, no loading spinner)
     useEffect(() => {
         pollTimerRef.current = setInterval(() => {
             fetchData(false);
