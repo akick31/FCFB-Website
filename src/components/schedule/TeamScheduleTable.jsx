@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     Box,
     Typography,
@@ -42,6 +42,19 @@ const TeamScheduleTable = ({
 }) => {
     const theme = useTheme();
     const navigate = useNavigate();
+
+    const displaySchedule = useMemo(() => {
+        if (schedule.length === 0) return schedule;
+        const weeks = schedule.map(g => field(g, 'week', 'week'));
+        const minWeek = Math.min(...weeks);
+        const maxWeek = Math.max(...weeks);
+        const byWeek = new Map(schedule.map(g => [field(g, 'week', 'week'), g]));
+        const rows = [];
+        for (let w = minWeek; w <= maxWeek; w++) {
+            rows.push(byWeek.get(w) || { week: w, unscheduled: true });
+        }
+        return rows;
+    }, [schedule]);
 
     const getOpponentName = (game) => {
         if (!selectedTeam) return '';
@@ -205,7 +218,26 @@ const TeamScheduleTable = ({
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {schedule.map((game, index) => {
+                            {displaySchedule.map((game, index) => {
+                                if (game.unscheduled) {
+                                    return (
+                                        <TableRow
+                                            key={`unscheduled-${game.week}`}
+                                            sx={{ '&:nth-of-type(odd)': { backgroundColor: 'rgba(0,0,0,0.02)' } }}
+                                        >
+                                            <TableCell>
+                                                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                                    {game.week}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell colSpan={4}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Unscheduled
+                                                </Typography>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                }
                                 const opponentName = getOpponentName(game);
                                 const opponentData = teamMap[opponentName];
                                 const home = isHomeGame(game);
