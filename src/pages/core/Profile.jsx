@@ -45,8 +45,8 @@ import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { updateUserDetails } from '../../api/userApi';
 import { useNavigate } from 'react-router-dom';
+import { useSeo } from '../../hooks/useSeo';
 
-// Stat row helper
 const StatRow = ({ label, value, suffix = '', decimals = 0, highlight = false }) => {
     if (value === null || value === undefined) return null;
     const displayValue = decimals > 0 ? Number(value).toFixed(decimals) : value;
@@ -63,7 +63,6 @@ const StatRow = ({ label, value, suffix = '', decimals = 0, highlight = false })
     );
 };
 
-// Aggregate multiple season stat rows into one
 const aggregateSeasonStats = (statsList) => {
     if (!statsList || statsList.length === 0) return null;
     if (statsList.length === 1) return statsList[0];
@@ -95,7 +94,7 @@ const Profile = ({ user, setUser }) => {
     const theme = useTheme();
     const navigate = useNavigate();
 
-    useEffect(() => { document.title = 'FCFB | Profile'; }, []);
+    useSeo({ title: 'Profile | Fake College Football', description: 'Manage your Fake College Football coach profile.' });
 
     const [isEditing, setIsEditing] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -108,7 +107,6 @@ const Profile = ({ user, setUser }) => {
     });
     const [teamData, setTeamData] = useState(null);
 
-    // Season / stats / elo state
     const [seasons, setSeasons] = useState([]);
     const [currentSeason, setCurrentSeason] = useState(null);
     const [selectedSeason, setSelectedSeason] = useState('current');
@@ -116,7 +114,6 @@ const Profile = ({ user, setUser }) => {
     const [eloData, setEloData] = useState([]);
     const [statsLoading, setStatsLoading] = useState(false);
 
-    // Fetch team data once
     useEffect(() => {
         const fetchTeamData = async () => {
             if (user?.team) {
@@ -131,7 +128,6 @@ const Profile = ({ user, setUser }) => {
         fetchTeamData();
     }, [user?.team]);
 
-    // Fetch available seasons once
     useEffect(() => {
         const fetchSeasons = async () => {
             try {
@@ -142,12 +138,11 @@ const Profile = ({ user, setUser }) => {
                     .filter(Boolean)
                     .sort((a, b) => b - a);
                 setSeasons(nums);
-            } catch { /* silently fail */ }
+            } catch { /* ignore */ }
         };
         fetchSeasons();
     }, []);
 
-    // Fetch stats + ELO when team or season changes
     useEffect(() => {
         if (!user?.team || currentSeason === null) return;
         const fetchStats = async () => {
@@ -163,7 +158,6 @@ const Profile = ({ user, setUser }) => {
                     getEloHistory(user.team, seasonParam).catch(() => []),
                 ]);
 
-                // Stats
                 if (statsResponse?.content?.length > 0) {
                     setSeasonStats(
                         isAllTime && statsResponse.content.length > 1
@@ -174,7 +168,6 @@ const Profile = ({ user, setUser }) => {
                     setSeasonStats(null);
                 }
 
-                // ELO history chart
                 if (elo && elo.length > 0) {
                     setEloData(elo.map(entry => ({
                         week: isAllTime
@@ -185,7 +178,7 @@ const Profile = ({ user, setUser }) => {
                 } else {
                     setEloData([]);
                 }
-            } catch { /* silently fail */ } finally {
+            } catch { /* ignore */ } finally {
                 setStatsLoading(false);
             }
         };
@@ -247,7 +240,6 @@ const Profile = ({ user, setUser }) => {
     const winPercentage = user?.win_percentage ? (user.win_percentage * 100).toFixed(1) : '0.0';
     const totalGames = (user?.wins || 0) + (user?.losses || 0);
 
-    // Stat pill helper
     const StatBox = ({ label, value, icon, color = 'primary' }) => (
         <Paper elevation={0} sx={{
             p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider',
@@ -271,7 +263,6 @@ const Profile = ({ user, setUser }) => {
         </Paper>
     );
 
-    // Record row helper
     const RecordRow = ({ label, wins, losses, icon }) => (
         <Box sx={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -299,9 +290,7 @@ const Profile = ({ user, setUser }) => {
             title="My Profile"
             subtitle="View your FCFB coaching statistics and profile information"
         >
-            {/* ═══ HEADER CARD ═══ */}
             <Paper elevation={2} sx={{ borderRadius: 3, overflow: 'hidden', mb: 3 }}>
-                {/* Color banner */}
                 <Box sx={{
                     height: 8,
                     background: teamData?.primary_color
@@ -310,7 +299,6 @@ const Profile = ({ user, setUser }) => {
                 }} />
 
                 <Box sx={{ p: { xs: 2, md: 3 }, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, alignItems: { md: 'center' } }}>
-                    {/* Logo / Avatar */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {teamData?.logo ? (
                             <Box
@@ -345,7 +333,6 @@ const Profile = ({ user, setUser }) => {
                         </Box>
                     </Box>
 
-                    {/* Chips */}
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, ml: { md: 'auto' } }}>
                         <Chip icon={<Person sx={{ fontSize: 16 }} />} label={formatPosition(user?.position)} size="small" />
                         {user?.team && (
@@ -373,9 +360,7 @@ const Profile = ({ user, setUser }) => {
             </Paper>
 
             <Grid container spacing={3}>
-                {/* ═══ LEFT: Stats & Records ═══ */}
                 <Grid item xs={12} lg={8}>
-                    {/* Quick Stats Row */}
                     <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
                         <StatBox label="Total Games" value={totalGames} icon={<SportsFootball />} color="primary" />
                         <StatBox label="Win Rate" value={`${winPercentage}%`} icon={<TrendingUp />} color="success" />
@@ -383,7 +368,6 @@ const Profile = ({ user, setUser }) => {
                         <StatBox label="DOG Count" value={user?.delay_of_game_instances || 0} icon={<Warning />} color="warning" />
                     </Box>
 
-                    {/* Records Card */}
                     <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden', mb: 3 }}>
                         <Box sx={{ px: 2.5, py: 1.5, backgroundColor: theme.palette.primary.main + '08' }}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Coaching Records</Typography>
@@ -402,10 +386,8 @@ const Profile = ({ user, setUser }) => {
                         </Box>
                     </Paper>
 
-                    {/* Season Stats + ELO (if user has a team) */}
                     {user?.team && (
                         <>
-                            {/* Season selector */}
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                     <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Team Stats</Typography>
@@ -428,7 +410,6 @@ const Profile = ({ user, setUser }) => {
                                 </Box>
                             ) : (
                                 <>
-                                    {/* ELO Chart */}
                                     {eloData.length > 0 && (
                                         <Card sx={{ boxShadow: theme.shadows[1], borderRadius: 2, mb: 3 }}>
                                             <CardContent>
@@ -446,7 +427,6 @@ const Profile = ({ user, setUser }) => {
                                         </Card>
                                     )}
 
-                                    {/* Season Stats Cards */}
                                     {seasonStats ? (
                                         <Grid container spacing={2} sx={{ mb: 3 }}>
                                             <Grid item xs={12} md={4}>
@@ -507,7 +487,6 @@ const Profile = ({ user, setUser }) => {
                         </>
                     )}
 
-                    {/* Playbooks Card */}
                     <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
                         <Box sx={{ px: 2.5, py: 1.5, backgroundColor: theme.palette.primary.main + '08' }}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Coaching Strategy</Typography>
@@ -532,7 +511,6 @@ const Profile = ({ user, setUser }) => {
                     </Paper>
                 </Grid>
 
-                {/* ═══ RIGHT: Account Details ═══ */}
                 <Grid item xs={12} lg={4}>
                     <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden', position: 'sticky', top: 80 }}>
                         <Box sx={{

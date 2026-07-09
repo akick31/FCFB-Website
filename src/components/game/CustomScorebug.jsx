@@ -106,7 +106,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
             position: 'relative',
             ...sx
         }}>
-            {/* Away Team Row */}
             <Box sx={{
                 display: 'flex',
                 alignItems: 'flex-start',
@@ -115,9 +114,7 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 borderRight: game.possession === 'AWAY' && !isGameFinal ? '4px solid #FFD700' : 'none'
             }}>
-                {/* Team Info - Left Side */}
                 <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                    {/* Logo and Team Name Row */}
                     <Box
                         component={awayTeam?.id ? 'a' : 'div'}
                         href={awayTeam?.id ? `/team-details/${awayTeam.id}` : undefined}
@@ -132,7 +129,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                         }}
                         onClick={(e) => { if (awayTeam?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${awayTeam.id}`); } } }}
                     >
-                        {/* Logo */}
                         <Box sx={{
                             width: 32,
                             height: 32,
@@ -173,7 +169,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                             )}
                         </Box>
 
-                        {/* Ranking - LEFT side in front of team name */}
                         {(() => {
                             const rank = game.away_team_rank || game.awayTeam?.rank;
                             if (rank && rank > 0) {
@@ -192,7 +187,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                             return null;
                         })()}
 
-                        {/* Team Name */}
                         <Typography
                             noWrap
                             sx={{
@@ -206,13 +200,11 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                         </Typography>
                     </Box>
 
-                    {/* Timeouts - aligned with start of rank/team name text */}
                     <Box sx={{ display: 'flex', alignItems: 'center', pl: 5.5 }}>
                         {renderTimeoutBoxes(game.away_timeouts || 0)}
                     </Box>
                 </Box>
 
-                {/* Score - Right Side with space from possession bar */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
                     <Typography sx={{
                         color: 'white',
@@ -226,7 +218,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                 </Box>
             </Box>
 
-            {/* Home Team Row */}
             <Box sx={{
                 display: 'flex',
                 alignItems: 'flex-start',
@@ -235,9 +226,7 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 borderRight: game.possession === 'HOME' && !isGameFinal ? '4px solid #FFD700' : 'none'
             }}>
-                {/* Team Info - Left Side */}
                 <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                    {/* Logo and Team Name Row */}
                     <Box
                         component={homeTeam?.id ? 'a' : 'div'}
                         href={homeTeam?.id ? `/team-details/${homeTeam.id}` : undefined}
@@ -252,7 +241,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                         }}
                         onClick={(e) => { if (homeTeam?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${homeTeam.id}`); } } }}
                     >
-                        {/* Logo */}
                         <Box sx={{
                             width: 32,
                             height: 32,
@@ -293,7 +281,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                             )}
                         </Box>
 
-                        {/* Ranking - LEFT side in front of team name */}
                         {(() => {
                             const rank = game.home_team_rank || game.homeTeam?.rank;
                             if (rank && rank > 0) {
@@ -312,7 +299,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                             return null;
                         })()}
 
-                        {/* Team Name */}
                         <Typography
                             noWrap
                             sx={{
@@ -326,13 +312,11 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                         </Typography>
                     </Box>
 
-                    {/* Timeouts - aligned with start of rank/team name text */}
                     <Box sx={{ display: 'flex', alignItems: 'center', pl: 5.5 }}>
                         {renderTimeoutBoxes(game.home_timeouts || 0)}
                     </Box>
                 </Box>
 
-                {/* Score - Right Side with space from possession bar */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
                     <Typography sx={{
                         color: 'white',
@@ -346,7 +330,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                 </Box>
             </Box>
 
-            {/* Game Status Row */}
             {!isGameFinal ? (
                 <Box sx={{
                     display: 'flex',
@@ -354,7 +337,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                     p: 1,
                     backgroundColor: 'rgba(255, 255, 255, 0.05)'
                 }}>
-                    {/* Quarter */}
                     <Box sx={{ flex: 1, textAlign: 'center' }}>
                         <Typography sx={{
                             color: 'rgba(255, 255, 255, 0.7)',
@@ -373,7 +355,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                         </Typography>
                     </Box>
 
-                    {/* Clock */}
                     <Box sx={{ flex: 1, textAlign: 'center' }}>
                         <Typography sx={{
                             color: 'rgba(255, 255, 255, 0.7)',
@@ -392,7 +373,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                         </Typography>
                     </Box>
 
-                    {/* Ball Location */}
                     <Box sx={{ flex: 1, textAlign: 'center' }}>
                         <Typography sx={{
                             color: 'rgba(255, 255, 255, 0.7)',
@@ -411,7 +391,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                         </Typography>
                     </Box>
 
-                    {/* Down & Yards to Go */}
                     <Box sx={{ flex: 1.5, textAlign: 'center' }}>
                         <Typography sx={{
                             color: 'rgba(255, 255, 255, 0.7)',
@@ -431,7 +410,6 @@ const CustomScorebug = ({ game, homeTeam, awayTeam, sx = {} }) => {
                     </Box>
                 </Box>
             ) : (
-                /* Final Status */
                 <Box sx={{
                     p: 1,
                     backgroundColor: 'rgba(255, 255, 255, 0.05)',

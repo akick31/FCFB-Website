@@ -37,8 +37,8 @@ import { getAllTeams } from '../../api/teamApi';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { formatOffensivePlaybook, formatDefensivePlaybook, formatPosition } from '../../utils/formatText';
 import { formatResponseTime } from '../../utils/timeUtils';
+import { useSeo } from '../../hooks/useSeo';
 
-// Stat row helper (same as TeamDetails)
 const StatRow = ({ label, value, suffix = '', decimals = 0, highlight = false }) => {
     if (value === null || value === undefined) return null;
     const displayValue = decimals > 0 ? Number(value).toFixed(decimals) : value;
@@ -68,9 +68,10 @@ const UserDetails = () => {
     const [statsLoading, setStatsLoading] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        document.title = `FCFB | ${decodedName || 'User Details'}`;
-    }, [decodedName]);
+    useSeo({
+        title: `${decodedName || 'User Details'} | Fake College Football`,
+        description: `Coach profile, stats, and transaction history for ${decodedName || 'this coach'} in Fake College Football.`,
+    });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -82,17 +83,14 @@ const UserDetails = () => {
                     getAllTeams(),
                 ]);
 
-                // Find user by coach_name or username
                 const foundUser = allUsers.find(u =>
                     u.coach_name === decodedName || u.username === decodedName
                 );
                 setUser(foundUser || null);
 
-                // Filter transactions for this coach
                 const coachTransactions = allTransactions.filter(t =>
                     t.coach_name === decodedName || t.coach === decodedName
                 );
-                // Sort by date descending (most recent first)
                 coachTransactions.sort((a, b) => {
                     const dateA = a.date || a.created_at || '';
                     const dateB = b.date || b.created_at || '';
@@ -101,7 +99,6 @@ const UserDetails = () => {
                 setTransactions(coachTransactions);
                 setTeams(allTeams);
 
-                // Fetch season stats for current team (all-time)
                 if (foundUser?.team) {
                     setStatsLoading(true);
                     try {
@@ -109,9 +106,7 @@ const UserDetails = () => {
                         if (statsResponse?.content?.length > 0) {
                             setSeasonStats(statsResponse.content[0]);
                         }
-                    } catch {
-                        // silently fail
-                    } finally {
+                    } catch { /* ignore */ } finally {
                         setStatsLoading(false);
                     }
                 }
@@ -130,15 +125,12 @@ const UserDetails = () => {
         return map;
     }, [teams]);
 
-    // Compute team history from transactions (group into stints)
     const teamHistory = useMemo(() => {
         if (!transactions.length) return [];
 
-        // Track stints: each hire starts a stint, each fire/resignation ends it
         const stints = [];
-        const openStints = {}; // key: team name
+        const openStints = {};
 
-        // Sort chronologically for processing
         const sorted = [...transactions].sort((a, b) => {
             const dateA = a.date || a.created_at || '';
             const dateB = b.date || b.created_at || '';
@@ -167,12 +159,10 @@ const UserDetails = () => {
             }
         });
 
-        // Close any open stints (currently active)
         Object.values(openStints).forEach(stint => {
             stints.push({ ...stint, endDate: null, endType: null });
         });
 
-        // Sort by start date descending
         stints.sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
         return stints;
     }, [transactions]);
@@ -180,7 +170,6 @@ const UserDetails = () => {
     const winPercentage = user?.win_percentage ? (user.win_percentage * 100).toFixed(1) : '0.0';
     const totalGames = (user?.wins || 0) + (user?.losses || 0);
 
-    // Stat pill helper
     const StatBox = ({ label, value, icon, color = 'primary' }) => (
         <Paper elevation={0} sx={{
             p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider',
@@ -204,7 +193,6 @@ const UserDetails = () => {
         </Paper>
     );
 
-    // Record row helper
     const RecordRow = ({ label, wins, losses, icon }) => (
         <Box sx={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -266,9 +254,7 @@ const UserDetails = () => {
             title={user.coach_name || user.username}
             subtitle="Coach Profile"
         >
-            {/* ═══ HEADER CARD ═══ */}
             <Paper elevation={2} sx={{ borderRadius: 3, overflow: 'hidden', mb: 3 }}>
-                {/* Color banner */}
                 <Box sx={{
                     height: 8,
                     background: currentTeamData?.primary_color
@@ -277,7 +263,6 @@ const UserDetails = () => {
                 }} />
 
                 <Box sx={{ p: { xs: 2, md: 3 }, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, alignItems: { md: 'center' } }}>
-                    {/* Logo / Avatar */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {currentTeamData?.logo ? (
                             <Box
@@ -312,7 +297,6 @@ const UserDetails = () => {
                         </Box>
                     </Box>
 
-                    {/* Chips */}
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, ml: { md: 'auto' } }}>
                         <Chip icon={<Person sx={{ fontSize: 16 }} />} label={formatPosition(user.position)} size="small" />
                         {user.team && (
@@ -347,9 +331,7 @@ const UserDetails = () => {
             </Paper>
 
             <Grid container spacing={3}>
-                {/* ═══ LEFT: Stats & Records ═══ */}
                 <Grid item xs={12} lg={8}>
-                    {/* Quick Stats Row */}
                     <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
                         <StatBox label="Total Games" value={totalGames} icon={<SportsFootball />} color="primary" />
                         <StatBox label="Win Rate" value={`${winPercentage}%`} icon={<TrendingUp />} color="success" />
@@ -357,7 +339,6 @@ const UserDetails = () => {
                         <StatBox label="DOG Count" value={user.delay_of_game_instances || 0} icon={<Warning />} color="warning" />
                     </Box>
 
-                    {/* Records Card */}
                     <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden', mb: 3 }}>
                         <Box sx={{ px: 2.5, py: 1.5, backgroundColor: theme.palette.primary.main + '08' }}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
@@ -378,7 +359,6 @@ const UserDetails = () => {
                         </Box>
                     </Paper>
 
-                    {/* Season Stats Cards (current team, all-time) */}
                     {user.team && (
                         <Box sx={{ mb: 3 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
@@ -398,7 +378,6 @@ const UserDetails = () => {
                                 </Box>
                             ) : seasonStats ? (
                                 <Grid container spacing={2}>
-                                    {/* Offense */}
                                     <Grid item xs={12} md={4}>
                                         <Card sx={{ height: '100%', boxShadow: theme.shadows[1] }}>
                                             <CardContent>
@@ -416,7 +395,6 @@ const UserDetails = () => {
                                             </CardContent>
                                         </Card>
                                     </Grid>
-                                    {/* Defense */}
                                     <Grid item xs={12} md={4}>
                                         <Card sx={{ height: '100%', boxShadow: theme.shadows[1] }}>
                                             <CardContent>
@@ -434,7 +412,6 @@ const UserDetails = () => {
                                             </CardContent>
                                         </Card>
                                     </Grid>
-                                    {/* Turnovers & Special */}
                                     <Grid item xs={12} md={4}>
                                         <Card sx={{ height: '100%', boxShadow: theme.shadows[1] }}>
                                             <CardContent>
@@ -463,7 +440,6 @@ const UserDetails = () => {
                         </Box>
                     )}
 
-                    {/* Team History Card */}
                     <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden', mb: 3 }}>
                         <Box sx={{ px: 2.5, py: 1.5, backgroundColor: theme.palette.primary.main + '08' }}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
@@ -543,7 +519,6 @@ const UserDetails = () => {
                         )}
                     </Paper>
 
-                    {/* Full Transaction Log */}
                     {transactions.length > 0 && (
                         <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
                             <Box sx={{ px: 2.5, py: 1.5, backgroundColor: theme.palette.primary.main + '08' }}>
@@ -610,9 +585,7 @@ const UserDetails = () => {
                     )}
                 </Grid>
 
-                {/* ═══ RIGHT: Sidebar info ═══ */}
                 <Grid item xs={12} lg={4}>
-                    {/* Playbooks */}
                     <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden', mb: 3, position: 'sticky', top: 80 }}>
                         <Box sx={{ px: 2.5, py: 1.5, backgroundColor: theme.palette.primary.main + '08' }}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>

@@ -19,12 +19,14 @@ import {
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSeo } from '../../hooks/useSeo';
+import { ROUTE_META } from '../../routeMeta';
 
 const teamToSlug = (name) => name?.toLowerCase().replace(/\s+/g, '_') || '';
 const slugToTeam = (slug, teams) => teams.find(t => teamToSlug(t.name) === slug) || null;
 
 const SeasonStats = ({ user }) => {
-    useEffect(() => { document.title = 'FCFB | Season Stats'; }, []);
+    useSeo(ROUTE_META['/season-stats']);
 
     const { team: teamSlug, season: seasonParam } = useParams();
     const navigate = useNavigate();
@@ -32,13 +34,11 @@ const SeasonStats = ({ user }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Data states
     const [teams, setTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [selectedSeason, setSelectedSeason] = useState(null);
     const [teamSeasonStats, setTeamSeasonStats] = useState(null);
 
-    // Available seasons
     const seasons = [11, 10];
 
     useEffect(() => {
@@ -48,7 +48,6 @@ const SeasonStats = ({ user }) => {
                 const teamsData = await getAllTeams();
                 setTeams(teamsData);
 
-                // Determine team from URL param or user/default
                 let defaultTeam = null;
                 const sortedTeams = teamsData.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -71,7 +70,6 @@ const SeasonStats = ({ user }) => {
                     await fetchTeamStats(defaultTeam, defaultSeason);
                 }
 
-                // Navigate to URL with team/season if not already there
                 if (!teamSlug && defaultTeam) {
                     navigate(`/season-stats/${teamToSlug(defaultTeam.name)}/${defaultSeason}`, { replace: true });
                 }
@@ -89,18 +87,17 @@ const SeasonStats = ({ user }) => {
 
     const fetchTeamStats = async (team, season) => {
         if (!team) return;
-        
+
         try {
             setLoading(true);
             setError(null);
-            
-            const seasonStatsResponse = await getFilteredSeasonStats(team.name, null, season, null, 0, 1); // Get season stats for specific team and season
-            
-            // Extract the season stats from the paginated response
-            const seasonStats = seasonStatsResponse.content && seasonStatsResponse.content.length > 0 
-                ? seasonStatsResponse.content[0] 
+
+            const seasonStatsResponse = await getFilteredSeasonStats(team.name, null, season, null, 0, 1);
+
+            const seasonStats = seasonStatsResponse.content && seasonStatsResponse.content.length > 0
+                ? seasonStatsResponse.content[0]
                 : null;
-            
+
             setTeamSeasonStats(seasonStats);
         } catch (err) {
             setError('Failed to fetch team stats');
@@ -109,7 +106,6 @@ const SeasonStats = ({ user }) => {
             setLoading(false);
         }
     };
-
 
     const handleTeamChange = (event, newValue) => {
         setSelectedTeam(newValue);
@@ -143,7 +139,6 @@ const SeasonStats = ({ user }) => {
     const renderTeamSeasonStats = () => {
         if (!teamSeasonStats) return null;
 
-        // Organize stats into logical categories
         const recordStats = [
             { label: 'Wins', value: teamSeasonStats.wins },
             { label: 'Losses', value: teamSeasonStats.losses },
@@ -307,7 +302,6 @@ const SeasonStats = ({ user }) => {
                 pt: { xs: 8, md: 10 },
                 pb: { xs: 4, md: 6 }
             }}>
-                {/* Page Header */}
                 <Box sx={{ mb: 4, textAlign: 'center' }}>
                     <Typography
                         variant="h3"
@@ -331,7 +325,6 @@ const SeasonStats = ({ user }) => {
                     </Typography>
                 </Box>
 
-                {/* Filters */}
                 <Card sx={{ mb: 3 }}>
                     <CardContent>
                         <Typography variant="h6" gutterBottom>
@@ -392,21 +385,18 @@ const SeasonStats = ({ user }) => {
                     </CardContent>
                 </Card>
 
-                {/* Error Display */}
                 {error && (
                     <Alert severity="error" sx={{ mb: 3 }}>
                         {error}
                     </Alert>
                 )}
 
-                {/* Loading State */}
                 {loading && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                         <CircularProgress size={60} />
                     </Box>
                 )}
 
-                {/* Team Stats Section */}
                 {selectedTeam && (
                     <Box sx={{ mb: 4 }}>
                         <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>

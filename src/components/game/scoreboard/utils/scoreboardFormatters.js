@@ -13,7 +13,6 @@ export const formatBallLocationWithTeam = (ballLocation, possession, homeTeam, a
     }
     
     if (ballLocationNum < 50) {
-        // Ball is on the home team's side
         if (possession === 'HOME') {
             return (homeTeamData?.abbreviation || homeTeam?.substring(0, 3) || 'H') + ' ' + ballLocationNum;
         } else if (possession === 'AWAY') {
@@ -22,7 +21,7 @@ export const formatBallLocationWithTeam = (ballLocation, possession, homeTeam, a
     }
     
     if (ballLocationNum > 50) {
-        // Ball is on the away team's side, convert to yards from their end zone
+        // Convert to yards from the away team's end zone
         const convertedYards = 100 - ballLocationNum;
         if (possession === 'HOME') {
             return (awayTeamData?.abbreviation || awayTeam?.substring(0, 3) || 'A') + ' ' + convertedYards;

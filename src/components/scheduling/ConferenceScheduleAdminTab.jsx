@@ -65,7 +65,6 @@ const ConferenceScheduleAdminTab = ({
     const [rulesExpanded, setRulesExpanded] = useState(false);
     const [savingRules, setSavingRules] = useState(false);
 
-    // Build a grid: rows = teams, columns = weeks
     const grid = useMemo(() => {
         const g = {};
         conferenceTeams.forEach(team => {
@@ -94,7 +93,6 @@ const ConferenceScheduleAdminTab = ({
         return g;
     }, [conferenceTeams, conferenceSchedule]);
 
-    // Count home/away for a team
     const getGameCounts = (teamName) => {
         let home = 0, away = 0;
         conferenceSchedule.forEach(game => {
@@ -108,7 +106,6 @@ const ConferenceScheduleAdminTab = ({
 
     return (
         <Box>
-            {/* Conference selector + actions */}
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'center' }}>
                 <FormControl size="small" sx={{ minWidth: 200 }}>
                     <InputLabel>Conference</InputLabel>
@@ -146,7 +143,6 @@ const ConferenceScheduleAdminTab = ({
                 </Button>
             </Box>
 
-            {/* ===== CONFERENCE RULES SECTION (INLINE) ===== */}
             <StyledCard hover={false} sx={{ mb: 3 }}>
                 <Box sx={{ p: 2 }}>
                     <Box
@@ -295,7 +291,6 @@ const ConferenceScheduleAdminTab = ({
                 </Box>
             </StyledCard>
 
-            {/* Conference schedule grid */}
             {confLoading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                     <CircularProgress />

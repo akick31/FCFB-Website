@@ -14,13 +14,15 @@ import StyledTable from '../../components/ui/StyledTable';
 import { TeamsFilters, getTeamsTableColumns } from '../../components/team';
 import LoadingSpinner from '../../components/icons/LoadingSpinner';
 import ErrorMessage from '../../components/message/ErrorMessage';
+import { useSeo } from '../../hooks/useSeo';
+import { ROUTE_META } from '../../routeMeta';
 
 const Teams = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const { conference: confParam, availability: availParam } = useParams();
 
-    useEffect(() => { document.title = 'FCFB | Teams'; }, []);
+    useSeo(ROUTE_META['/teams']);
     const [searchTerm, setSearchTerm] = useState('');
     const [teams, setTeams] = useState([]);
     const [filteredTeams, setFilteredTeams] = useState([]);
@@ -28,8 +30,7 @@ const Teams = () => {
     const [error, setError] = useState(null);
     const [selectedConference, setSelectedConference] = useState('');
     const [selectedAvailability, setSelectedAvailability] = useState('');
-    
-    // Pagination state
+
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_TEAMS_PER_PAGE);
 
@@ -78,7 +79,6 @@ const Teams = () => {
     useEffect(() => {
         let filtered = teams;
 
-        // Filter by search term
         if (searchTerm.trim() !== '') {
             filtered = filtered.filter(team =>
                 team.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -87,19 +87,17 @@ const Teams = () => {
             );
         }
 
-        // Filter by conference
         if (selectedConference !== '') {
             filtered = filtered.filter(team => team.conference === selectedConference);
         }
 
-        // Filter by availability
         if (selectedAvailability !== '') {
             const isTaken = selectedAvailability === TEAM_STATUS.TAKEN;
             filtered = filtered.filter(team => team.is_taken === isTaken);
         }
 
         setFilteredTeams(filtered);
-        setPage(0); // Reset to first page when filters change
+        setPage(0);
     }, [searchTerm, selectedConference, selectedAvailability, teams]);
 
     const handleTeamClick = (team) => {
@@ -117,12 +115,10 @@ const Teams = () => {
         setPage(0);
     };
 
-    // Get current page data
     const startIndex = page * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
     const currentPageTeams = filteredTeams.slice(startIndex, endIndex);
 
-    // Get table columns
     const columns = getTeamsTableColumns(theme);
 
     if (loading) {
@@ -152,7 +148,6 @@ const Teams = () => {
             title="College Football Teams"
             subtitle="Explore all teams across the FCFB league"
         >
-            {/* Filters Section */}
             <TeamsFilters
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
@@ -165,8 +160,7 @@ const Teams = () => {
                 theme={theme}
             />
 
-            {/* Teams Table */}
-            <Box sx={{ 
+            <Box sx={{
                 backgroundColor: 'transparent',
                 borderRadius: 0,
                 border: `1px solid ${theme.palette.divider}`,
@@ -200,7 +194,6 @@ const Teams = () => {
                     }}
                 />
                 
-                {/* Pagination */}
                 <TablePagination
                     component="div"
                     count={filteredTeams.length}

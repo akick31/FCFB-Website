@@ -58,14 +58,13 @@ const TeamManagement = () => {
         fetchTeams();
     }, []);
 
-    // Filter teams based on all criteria
     useEffect(() => {
         let filtered = teams;
 
         if (hideFakeTeams) {
             filtered = filtered.filter(team => team.subdivision !== 'FAKE');
         }
-        
+
         if (conferenceFilter !== 'ALL') {
             filtered = filtered.filter(team => team.conference === conferenceFilter);
         }
@@ -86,7 +85,7 @@ const TeamManagement = () => {
                 team.abbreviation?.toLowerCase().includes(searchLower)
             );
         }
-        
+
         setFilteredTeams(filtered);
     }, [teams, hideFakeTeams, conferenceFilter, takenFilter, searchTerm]);
 
@@ -101,7 +100,6 @@ const TeamManagement = () => {
     };
 
     const handleTeamCreated = async () => {
-        // Refresh the teams list
         try {
             const response = await getAllTeams();
             setTeams(response);
@@ -134,7 +132,6 @@ const TeamManagement = () => {
         { id: 'actions', label: '', width: 50 },
     ];
 
-    // Transform teams data for the table
     const tableData = filteredTeams.map(team => ({
         ...team,
         logo: (
@@ -227,8 +224,7 @@ const TeamManagement = () => {
                         Create Team
                     </Button>
                 </Box>
-                
-                {/* Filter Controls */}
+
                 <Box sx={{ mb: 3 }}>
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} sm={6} md={3}>
@@ -313,8 +309,7 @@ const TeamManagement = () => {
                     headerTextColor="white"
                 />
 
-                {/* Create Team Dialog */}
-                <CreateTeamForm 
+                <CreateTeamForm
                     open={createTeamOpen}
                     onClose={() => setCreateTeamOpen(false)}
                     onTeamCreated={handleTeamCreated}

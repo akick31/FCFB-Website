@@ -17,12 +17,14 @@ import { getAllTeams } from '../../api/teamApi';
 import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedule, getScheduleBySeason } from '../../api/scheduleApi';
 import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { getAllOngoingGames } from '../../api/gameApi';
+import { getStorageItem } from '../../utils/utils';
 import { conferences } from '../../components/constants/conferences';
 import TeamScheduleTable from '../../components/schedule/TeamScheduleTable';
 import ConferenceScheduleGrid from '../../components/schedule/ConferenceScheduleGrid';
 import Postseason from '../../components/schedule/Postseason';
+import { useSeo } from '../../hooks/useSeo';
+import { ROUTE_META } from '../../routeMeta';
 
-// localStorage keys
 const LS_TEAM = 'schedule_selectedTeam';
 const LS_SEASON = 'schedule_season';
 const LS_CONFERENCE = 'schedule_conference';
@@ -36,7 +38,7 @@ const confToSlug = (conf) => conf?.toLowerCase() || '';
 const Schedule = () => {
     const { tab, selection, seasonParam } = useParams();
     const navigate = useNavigate();
-    useEffect(() => { document.title = 'FCFB | Schedules'; }, []);
+    useSeo(ROUTE_META['/schedules']);
 
     const tabIndex = TAB_FROM_SLUG[tab] ?? 0;
 
@@ -49,21 +51,16 @@ const Schedule = () => {
     const [scheduleLoading, setScheduleLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Postseason state
     const [postseasonSchedule, setPostseasonSchedule] = useState([]);
     const [postseasonLoading, setPostseasonLoading] = useState(false);
     const [ongoingGames, setOngoingGames] = useState([]);
 
-    // Conference tab state
-    const [selectedConference, setSelectedConference] = useState(() => {
-        return localStorage.getItem(LS_CONFERENCE) || '';
-    });
+    const [selectedConference, setSelectedConference] = useState(() => getStorageItem('local', LS_CONFERENCE, ''));
     const [conferenceSchedule, setConferenceSchedule] = useState([]);
-    const [allSeasonSchedule, setAllSeasonSchedule] = useState([]); // Full schedule for OOC display
+    const [allSeasonSchedule, setAllSeasonSchedule] = useState([]);
     const [conferenceTeams, setConferenceTeams] = useState([]);
     const [confLoading, setConfLoading] = useState(false);
 
-    // Build a map of team name -> team data for quick logo lookup
     const teamMap = useMemo(() => {
         const map = {};
         teams.forEach(team => {
@@ -74,14 +71,12 @@ const Schedule = () => {
         return map;
     }, [teams]);
 
-    // Redirect bare /schedules to /schedules/team
     useEffect(() => {
         if (!tab && !loading) {
             navigate('/schedules/team', { replace: true });
         }
     }, [tab, loading, navigate]);
 
-    // Sync URL selection → state (for deep links and direct URL changes)
     useEffect(() => {
         if (!teams.length) return;
         const activeTeams = teams.filter(t => t.active);
@@ -94,28 +89,24 @@ const Schedule = () => {
     // eslint-disable-next-line
     }, [tab, selection, teams]);
 
-    // Save conference to localStorage whenever it changes
     useEffect(() => {
         if (selectedConference) {
             localStorage.setItem(LS_CONFERENCE, selectedConference);
         }
     }, [selectedConference]);
 
-    // Save team to localStorage whenever it changes
     useEffect(() => {
         if (selectedTeam) {
             localStorage.setItem(LS_TEAM, selectedTeam.name);
         }
     }, [selectedTeam]);
 
-    // Save season to localStorage whenever it changes
     useEffect(() => {
         if (season != null) {
             localStorage.setItem(LS_SEASON, String(season));
         }
     }, [season]);
 
-    // Load teams, current season, and all seasons on mount
     useEffect(() => {
         const init = async () => {
             try {
@@ -129,8 +120,6 @@ const Schedule = () => {
                 const seasonNumbers = seasonsData.map(s => s.season_number || s.seasonNumber);
                 setAllSeasons(seasonNumbers);
 
-                // Use season from URL if provided, otherwise default to current season
-                // For postseason tab, season is in `selection` param; for others it's in `seasonParam`
                 const rawUrlSeason = tab === 'postseason' ? selection : seasonParam;
                 const urlSeason = rawUrlSeason ? parseInt(rawUrlSeason) : null;
                 if (urlSeason && !isNaN(urlSeason) && seasonNumbers.includes(urlSeason)) {
@@ -139,7 +128,6 @@ const Schedule = () => {
                     setSeason(currentSeason);
                 }
 
-                // Restore selected team from URL, localStorage, or default to first alphabetical
                 const activeTeams = teamsData.filter(t => t.active).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 if (tab === 'team' && selection) {
                     const found = activeTeams.find(t => teamToSlug(t.name) === selection);
@@ -154,7 +142,6 @@ const Schedule = () => {
                     }
                 }
 
-                // Restore conference from URL, localStorage, or default to first alphabetical
                 if (tab === 'conference' && selection) {
                     setSelectedConference(selection.toUpperCase());
                 } else {
@@ -174,7 +161,6 @@ const Schedule = () => {
         init();
     }, []);
 
-    // Filter teams by selected conference (for conference tab)
     useEffect(() => {
         if (teams.length > 0 && selectedConference) {
             const filtered = teams.filter(
@@ -184,7 +170,6 @@ const Schedule = () => {
         }
     }, [teams, selectedConference]);
 
-    // Fetch team schedule when team is selected
     useEffect(() => {
         const fetchSchedule = async () => {
             if (!selectedTeam || !season) return;
@@ -208,7 +193,6 @@ const Schedule = () => {
         fetchSchedule();
     }, [selectedTeam, season, tabIndex]);
 
-    // Fetch conference schedule and full season schedule when conference/season changes and tab is Conference
     useEffect(() => {
         const fetchConfSchedule = async () => {
             if (!season || !selectedConference || tabIndex !== 1) return;
@@ -231,7 +215,6 @@ const Schedule = () => {
         fetchConfSchedule();
     }, [season, selectedConference, tabIndex]);
 
-    // Fetch postseason schedule when season changes and playoff tab is active
     useEffect(() => {
         const fetchPostseason = async () => {
             if (!season || tabIndex !== 2) return;
@@ -249,7 +232,6 @@ const Schedule = () => {
         fetchPostseason();
     }, [season, tabIndex]);
 
-    // Also fetch postseason on mount to determine if tab should show
     useEffect(() => {
         const checkPostseason = async () => {
             if (!season) return;
@@ -263,7 +245,6 @@ const Schedule = () => {
         if (season) checkPostseason();
     }, [season]);
 
-    // Fetch ongoing games so the bracket can show live quarter/clock
     useEffect(() => {
         const fetchOngoing = async () => {
             try {
@@ -276,7 +257,6 @@ const Schedule = () => {
         fetchOngoing();
     }, []);
 
-    // Determine if postseason data exists for the bracket tab
     const hasPostseason = postseasonSchedule.length > 0;
 
     if (loading) {
@@ -292,7 +272,6 @@ const Schedule = () => {
     return (
         <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
             <Box sx={{ pt: { xs: 8, md: 10 }, pb: { xs: 4, md: 6 } }}>
-                {/* Page Header */}
                 <Box sx={{ mb: 4, textAlign: 'center' }}>
                     <Typography
                         variant="h3"
@@ -306,7 +285,6 @@ const Schedule = () => {
                     </Typography>
                 </Box>
 
-                {/* Season Selector */}
                 <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
                     <FormControl size="medium" sx={{ minWidth: 140 }}>
                         <InputLabel>Season</InputLabel>
@@ -333,7 +311,6 @@ const Schedule = () => {
                     </FormControl>
                 </Box>
 
-                {/* Tabs: Team Schedule / Conference / Playoff Bracket (conditional) */}
                 <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'center' }}>
                     <Tabs value={tabIndex} onChange={(_, v) => {
                         const slug = TAB_SLUGS[v];
@@ -356,7 +333,6 @@ const Schedule = () => {
                     <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
                 )}
 
-                {/* TEAM SCHEDULE TAB */}
                 {tabIndex === 0 && (
                     <TeamScheduleTable
                         teams={teams}
@@ -372,7 +348,6 @@ const Schedule = () => {
                     />
                 )}
 
-                {/* CONFERENCE TAB */}
                 {tabIndex === 1 && (
                     <ConferenceScheduleGrid
                         selectedConference={selectedConference}
@@ -388,7 +363,6 @@ const Schedule = () => {
                     />
                 )}
 
-                {/* PLAYOFF BRACKET TAB */}
                 {tabIndex === 2 && hasPostseason && (
                     <Postseason
                         postseasonSchedule={postseasonSchedule}

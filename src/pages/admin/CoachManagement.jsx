@@ -39,13 +39,11 @@ const CoachManagement = ({ user }) => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    
-    // Filter states
+
     const [conferenceFilter, setConferenceFilter] = useState('ALL');
     const [takenFilter, setTakenFilter] = useState('ALL');
     const [activeFilter, setActiveFilter] = useState('ALL');
-    
-    // Dialog states
+
     const [hireDialogOpen, setHireDialogOpen] = useState(false);
     const [fireDialogOpen, setFireDialogOpen] = useState(false);
     const [selectedTeam, setSelectedTeam] = useState(null);
@@ -57,13 +55,11 @@ const CoachManagement = ({ user }) => {
     const navigationItems = adminNavigationItems;
 
     useEffect(() => {
-        // If user is not loaded yet, just return (we're loading)
         if (!user || !user.role) {
             setLoading(true);
             return;
         }
 
-        // Once the user is loaded, check the role
         if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
             navigate('*');
         } else {
@@ -93,7 +89,6 @@ const CoachManagement = ({ user }) => {
         }
     }, [user]);
 
-    // Filter teams based on all criteria
     useEffect(() => {
         let filtered = teams;
 
@@ -116,7 +111,7 @@ const CoachManagement = ({ user }) => {
                 filtered = filtered.filter(team => !team.active);
             }
         }
-        
+
         setFilteredTeams(filtered);
     }, [teams, conferenceFilter, takenFilter, activeFilter]);
 
@@ -157,7 +152,6 @@ const CoachManagement = ({ user }) => {
             });
 
             setHireDialogOpen(false);
-            // Refresh teams data
             const updatedTeams = await getAllTeams();
             setTeams(updatedTeams);
         } catch (error) {
@@ -189,7 +183,6 @@ const CoachManagement = ({ user }) => {
             });
 
             setHireDialogOpen(false);
-            // Refresh teams data
             const updatedTeams = await getAllTeams();
             setTeams(updatedTeams);
         } catch (error) {
@@ -210,7 +203,6 @@ const CoachManagement = ({ user }) => {
             });
 
             setFireDialogOpen(false);
-            // Refresh teams data
             const updatedTeams = await getAllTeams();
             setTeams(updatedTeams);
         } catch (error) {
@@ -227,7 +219,6 @@ const CoachManagement = ({ user }) => {
         { id: 'actions', label: 'Actions', width: 200 },
     ];
 
-    // Transform teams data for the table
     const tableData = filteredTeams.map(team => ({
         ...team,
         logo: (
@@ -305,8 +296,7 @@ const CoachManagement = ({ user }) => {
                 <Typography variant="h4" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
                     Coach Management
                 </Typography>
-                
-                {/* Filter Controls */}
+
                 <Box sx={{ mb: 3 }}>
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} sm={6} md={3}>
@@ -378,7 +368,6 @@ const CoachManagement = ({ user }) => {
                 />
             </Box>
 
-            {/* Hire Coach Dialog */}
             <Dialog open={hireDialogOpen} onClose={() => setHireDialogOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Hire Coach for {selectedTeam?.name}</DialogTitle>
                 <DialogContent>
@@ -448,7 +437,6 @@ const CoachManagement = ({ user }) => {
                 </DialogActions>
             </Dialog>
 
-            {/* Fire Coach Dialog */}
             <Dialog open={fireDialogOpen} onClose={() => setFireDialogOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Fire Coach from {selectedTeam?.name}</DialogTitle>
                 <DialogContent>

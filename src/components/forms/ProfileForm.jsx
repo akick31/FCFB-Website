@@ -30,8 +30,6 @@ const ProfileForm = ({ user }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-
-        // Validation logic goes here
     };
 
     const handleSubmit = async (e, field) => {

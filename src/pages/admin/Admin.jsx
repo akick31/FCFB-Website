@@ -31,7 +31,6 @@ const Admin = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [openTeams, setOpenTeams] = useState([]);
 
-    // Fetch new signups data
     useEffect(() => {
         const fetchNewSignups = async () => {
             try {
@@ -47,7 +46,6 @@ const Admin = ({ user }) => {
         fetchNewSignups();
     }, []);
 
-    // Fetch open teams data
     useEffect(() => {
         const fetchOpenTeams = async () => {
             try {
@@ -80,7 +78,6 @@ const Admin = ({ user }) => {
         { id: 'status', label: 'Status', width: 80 },
     ];
 
-    // Transform new signup data to include approval status indicators
     const transformedNewSignups = newSignups.map(signup => ({
         ...signup,
         offensive_playbook: formatOffensivePlaybook(signup.offensive_playbook),
@@ -93,7 +90,6 @@ const Admin = ({ user }) => {
         )
     }));
 
-    // Transform open teams data to show only available teams
     const transformedOpenTeams = openTeams
         .filter(team => !team.is_taken && team.active)
         .map(team => ({
@@ -135,7 +131,6 @@ const Admin = ({ user }) => {
             textColor="primary.main"
         >
             <Box sx={{ p: 3 }}>
-                {/* Welcome Section */}
                 <Box sx={{ mb: 4 }}>
                     <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, color: 'primary.main' }}>
                         Welcome back, {user?.username || 'Admin'}!
@@ -145,9 +140,7 @@ const Admin = ({ user }) => {
                     </Typography>
                 </Box>
 
-                {/* Main Content Grid */}
                 <Grid container spacing={4}>
-                    {/* New Signups */}
                     <Grid item xs={12}>
                         <StyledCard>
                             <Box sx={{ p: 3 }}>
@@ -166,7 +159,6 @@ const Admin = ({ user }) => {
                         </StyledCard>
                     </Grid>
 
-                    {/* Open Teams */}
                     <Grid item xs={12}>
                         <StyledCard>
                             <Box sx={{ p: 3 }}>
@@ -185,7 +177,6 @@ const Admin = ({ user }) => {
                         </StyledCard>
                     </Grid>
 
-                    {/* Quick Actions */}
                     <Grid item xs={12}>
                         <StyledCard>
                             <Box sx={{ p: 3 }}>

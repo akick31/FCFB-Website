@@ -13,26 +13,19 @@ import { getCurrentSeasonOrLatest } from '../../../api/seasonApi';
 import EloHistoryChart from '../EloHistoryChart';
 import EloHistoryFilters from '../EloHistoryFilters';
 
-/**
- * ELO History Tab Component
- * Displays ELO rating history for teams with interactive charts
- */
 const EloHistoryTab = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [eloData, setEloData] = useState([]);
-    
-    // Filter states
+
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [selectedSeason, setSelectedSeason] = useState('all-time');
     const [viewMode, setViewMode] = useState('all-time');
-    const [showAllTeams, setShowAllTeams] = useState(true); // Default to showing all teams
-    
-    // Data states
+    const [showAllTeams, setShowAllTeams] = useState(true);
+
     const [teams, setTeams] = useState([]);
     const [seasons, setSeasons] = useState([]);
 
-    // Initialize data
     useEffect(() => {
         const initData = async () => {
             try {
@@ -46,8 +39,7 @@ const EloHistoryTab = () => {
                 setTeams(teamsData.filter(t => t.active).sort((a, b) => (a.name || '').localeCompare(b.name || '')));
                 const seasonNumbers = seasonsData.map(s => s.season_number || s.seasonNumber).sort((a, b) => b - a);
                 setSeasons(seasonNumbers);
-                
-                // Set default season to current season
+
                 if (currentSeasonData && seasonNumbers.includes(currentSeasonData)) {
                     setSelectedSeason(currentSeasonData);
                 }
@@ -62,7 +54,6 @@ const EloHistoryTab = () => {
         initData();
     }, []);
 
-    // Fetch ELO history
     const fetchEloHistory = async () => {
         if (!showAllTeams && !selectedTeam) {
             setError('Please select a team or enable "Show All Teams"');
@@ -89,7 +80,6 @@ const EloHistoryTab = () => {
         }
     };
 
-    // Auto-fetch when team/season changes (after initial load)
     useEffect(() => {
         if ((showAllTeams || selectedTeam) && !loading && teams.length > 0) {
             fetchEloHistory();
@@ -102,7 +92,6 @@ const EloHistoryTab = () => {
 
     return (
         <Box>
-            {/* Filters */}
             <EloHistoryFilters
                 selectedTeam={selectedTeam}
                 setSelectedTeam={setSelectedTeam}
@@ -118,21 +107,18 @@ const EloHistoryTab = () => {
                 loading={loading}
             />
 
-            {/* Error Display */}
             {error && (
                 <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
                     {error}
                 </Alert>
             )}
 
-            {/* Loading State */}
             {loading && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                     <CircularProgress size={60} />
                 </Box>
             )}
 
-            {/* Chart */}
             {!loading && !error && eloData.length > 0 && (
                 <Paper sx={{ p: 3 }}>
                     <Typography variant="h6" gutterBottom>
@@ -148,7 +134,6 @@ const EloHistoryTab = () => {
                 </Paper>
             )}
 
-            {/* No Data State */}
             {!loading && !error && eloData.length === 0 && (showAllTeams || selectedTeam) && (
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
                     <Typography variant="body1" color="text.secondary">
@@ -159,7 +144,6 @@ const EloHistoryTab = () => {
                 </Paper>
             )}
 
-            {/* Initial State */}
             {!loading && !error && !showAllTeams && !selectedTeam && (
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
                     <Typography variant="body1" color="text.secondary">

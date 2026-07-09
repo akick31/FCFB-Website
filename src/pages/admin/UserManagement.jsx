@@ -32,13 +32,11 @@ const UserManagement = ({ user }) => {
     const navigationItems = adminNavigationItems;
 
     useEffect(() => {
-        // If user is not loaded yet, just return (we're loading)
         if (!user || !user.role) {
             setLoading(true);
             return;
         }
 
-        // Once the user is loaded, check the role
         if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
             navigate('*');
         } else {
@@ -47,7 +45,6 @@ const UserManagement = ({ user }) => {
     }, [user, navigate]);
 
     useEffect(() => {
-        // Fetch the list of users
         const fetchUsers = async () => {
             try {
                 const response = await getAllUsers();
@@ -62,7 +59,6 @@ const UserManagement = ({ user }) => {
         fetchUsers();
     }, []);
 
-    // Filter users based on search and filter criteria
     useEffect(() => {
         let filtered = users;
 
@@ -87,7 +83,7 @@ const UserManagement = ({ user }) => {
                 filtered = filtered.filter(user => user.isVerified === false);
             }
         }
-        
+
         setFilteredUsers(filtered);
     }, [users, searchTerm, roleFilter, statusFilter]);
 
@@ -130,7 +126,6 @@ const UserManagement = ({ user }) => {
         { id: 'actions', label: '', width: 80 },
     ];
 
-    // Transform users data for the table
     const tableData = filteredUsers.map(user => ({
         ...user,
         role: (
@@ -184,7 +179,6 @@ const UserManagement = ({ user }) => {
                     User Management
                 </Typography>
 
-                {/* Search and Filter Controls */}
                 <Box sx={{ mb: 3 }}>
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} sm={6} md={3}>

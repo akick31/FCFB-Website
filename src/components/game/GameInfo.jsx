@@ -9,9 +9,7 @@ const GameInfo = ({ game, homeTeam, awayTeam }) => {
 
     return (
         <Box sx={{ p: 0 }}>
-            {/* Team Details Section - First Row */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
-                {/* Home Team Details (Left) */}
                 <Grid item xs={12} lg={6}>
                     <TeamDetailsCard
                         team={homeTeam}
@@ -20,7 +18,6 @@ const GameInfo = ({ game, homeTeam, awayTeam }) => {
                     />
                 </Grid>
 
-                {/* Away Team Details (Right) */}
                 <Grid item xs={12} lg={6}>
                     <TeamDetailsCard
                         team={awayTeam}
@@ -30,7 +27,6 @@ const GameInfo = ({ game, homeTeam, awayTeam }) => {
                 </Grid>
             </Grid>
 
-            {/* Game Details Section - Second Row */}
             <Grid container spacing={3}>
                 <Grid item xs={12}>
                     <GameDetailsCard

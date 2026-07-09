@@ -39,9 +39,7 @@ export const getAllSeasons = async () => {
     }
 };
 
-// Between seasons (previous season ended, next one not started yet), /season/current
-// 500s. Fall back to the most recent season in /season/all so pages can still default
-// to something sensible instead of failing outright.
+// /season/current 500s between seasons, so fall back to the most recent entry in /season/all.
 const getLatestSeason = async () => {
     const allSeasons = await getAllSeasons();
     return allSeasons.reduce((latest, s) => {

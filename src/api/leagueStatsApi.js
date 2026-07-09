@@ -1,6 +1,5 @@
 import apiClient from './apiClient';
 
-// League Stats API functions
 export const getFilteredLeagueStats = async (subdivision = null, season = null, page = 0, size = 20) => {
     try {
         const params = { page, size };

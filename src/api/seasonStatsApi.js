@@ -1,6 +1,5 @@
 import apiClient from './apiClient';
 
-// Season Stats API functions - matches SeasonStatsController
 export const getFilteredSeasonStats = async (team = null, conference = null, season = null, stat = null, page = 0, size = 20) => {
     try {
         const params = { page, size };
@@ -20,7 +19,6 @@ export const getFilteredSeasonStats = async (team = null, conference = null, sea
     }
 };
 
-// Leaderboard function
 export const getLeaderboard = async (statName, season, subdivision, conference, limit = 10, ascending = false) => {
     try {
         const params = { statName, limit, ascending };

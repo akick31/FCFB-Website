@@ -109,7 +109,6 @@ const TeamScheduleTable = ({
 
     return (
         <>
-            {/* Team Search Dropdown */}
             <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
                 <Autocomplete
                     options={teams.filter(t => t.active)}
@@ -148,7 +147,6 @@ const TeamScheduleTable = ({
                 />
             </Box>
 
-            {/* Selected Team Header */}
             {selectedTeam && (
                 <Box sx={{
                     display: 'flex',
@@ -182,7 +180,6 @@ const TeamScheduleTable = ({
                 </Box>
             )}
 
-            {/* Schedule Table */}
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                     <CircularProgress size={40} />
@@ -246,7 +243,6 @@ const TeamScheduleTable = ({
                                         </TableCell>
                                         <TableCell>
                                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                {/* Postseason Game Logo */}
                                                 {(gameType === 'BOWL' || gameType === 'PLAYOFFS' || gameType === 'CONFERENCE_CHAMPIONSHIP' || gameType === 'NATIONAL_CHAMPIONSHIP') &&
                                                   field(game, 'postseasonGameLogo', 'postseason_game_logo') && (
                                                     <Box sx={{ display: 'flex', justifyContent: 'center', mb: 0.5 }}>

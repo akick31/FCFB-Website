@@ -7,7 +7,7 @@ export const StyledPaper = styled(Paper)({
     flexDirection: 'column',
     alignItems: 'center',
     justifycontent: 'center',
-    width: '80%', // Full width of the container
+    width: '80%',
     backgroundColor: 'transparent'
 });
 

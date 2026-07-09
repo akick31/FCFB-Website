@@ -186,7 +186,6 @@ const theme = createTheme({
             },
         },
     },
-    // Custom theme extensions
     custom: {
         gradients: {
             primary: 'linear-gradient(135deg, #004260 0%, #1e5a7a 100%)',

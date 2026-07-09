@@ -58,7 +58,6 @@ const ForgotPasswordForm = ({ open, onClose }) => {
 
     return (
         <>
-            {/* Forgot Password Form Dialog */}
             <Dialog 
                 open={open && !success} 
                 onClose={handleClose}
@@ -129,7 +128,6 @@ const ForgotPasswordForm = ({ open, onClose }) => {
                 </DialogContent>
             </Dialog>
 
-            {/* Success Dialog */}
             <Dialog 
                 open={success} 
                 onClose={handleSuccessClose}

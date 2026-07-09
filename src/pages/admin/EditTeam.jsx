@@ -108,7 +108,6 @@ const EditTeam = () => {
             textColor="primary.main"
         >
             <Box sx={{ p: 3 }}>
-                {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                     <IconButton
                         component="a"
@@ -123,7 +122,6 @@ const EditTeam = () => {
                     </Typography>
                 </Box>
 
-                {/* Alerts */}
                 {error && (
                     <Alert severity="error" sx={{ mb: 3 }}>
                         {error}
@@ -136,7 +134,6 @@ const EditTeam = () => {
                 )}
 
                 <Grid container spacing={3}>
-                    {/* Basic Information */}
                     <Grid item xs={12} lg={6}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -227,7 +224,6 @@ const EditTeam = () => {
                         </Card>
                     </Grid>
 
-                    {/* Playbooks and Conference */}
                     <Grid item xs={12} lg={6}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -337,7 +333,6 @@ const EditTeam = () => {
                         </Card>
                     </Grid>
 
-                    {/* Current Season Stats */}
                     <Grid item xs={12} lg={6}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -415,7 +410,6 @@ const EditTeam = () => {
                         </Card>
                     </Grid>
 
-                    {/* Overall Stats */}
                     <Grid item xs={12} lg={6}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -493,7 +487,6 @@ const EditTeam = () => {
                         </Card>
                     </Grid>
 
-                    {/* Championship Stats */}
                     <Grid item xs={12}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -635,7 +628,6 @@ const EditTeam = () => {
                         </Card>
                     </Grid>
 
-                    {/* Team Status */}
                     <Grid item xs={12}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -690,7 +682,6 @@ const EditTeam = () => {
                     </Grid>
                 </Grid>
 
-                {/* Action Buttons */}
                 <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'flex-end' }}>
                     <Button
                         variant="outlined"

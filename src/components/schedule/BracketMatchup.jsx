@@ -22,7 +22,6 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
     const clickable = !!gameId;
     const gameUrl = gameId ? `/game-details/${gameId}` : null;
 
-    // Game status info
     const quarter = field(game, 'quarter', 'quarter');
     const clock = field(game, 'clock', 'clock') || field(game, 'gameClock', 'game_clock');
     const status = field(game, 'status', 'status') || field(game, 'gameStatus', 'game_status');
@@ -35,13 +34,11 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
 
     const getStatusText = () => {
         if (finished || status === 'FINAL' || status === 'COMPLETED') {
-            // No "Final" label — winning team is already bolded.
-            // Only annotate overtime games.
+            // No "Final" label - the winning team is already bolded; only annotate overtime
             if (quarter >= 6) return `${quarter - 4}OT`;
             if (quarter === 5) return 'OT';
             return null;
         }
-        // Show clock + quarter for in-progress games, e.g. "2:33 3Q"
         if (quarter) {
             const qtr = formatQuarterShort(quarter);
             const time = (quarter >= 5) ? '' : (clock || '');
@@ -82,7 +79,6 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
                 maxWidth: compact ? 200 : 260,
             }}
         >
-            {/* Title Header (CCG name, Bowl name, etc.) */}
             {title && (
                 <Box sx={{
                     display: 'flex',
@@ -108,7 +104,6 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
                 </Box>
             )}
 
-            {/* Home team row */}
             <Box sx={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 px: 1, py: 0.5,
@@ -147,7 +142,6 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
                     </Typography>
                 )}
             </Box>
-            {/* Away team row */}
             <Box sx={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 px: 1, py: 0.5,
@@ -187,7 +181,6 @@ const BracketMatchup = ({ game, teamMap = {}, compact = false, title = null, tit
                 )}
             </Box>
 
-            {/* Game Status Row (Quarter/Time or Final) */}
             {statusText && (
                 <Box sx={{
                     textAlign: 'center',

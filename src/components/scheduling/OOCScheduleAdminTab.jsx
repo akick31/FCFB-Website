@@ -42,7 +42,6 @@ const OOCScheduleAdminTab = ({
     onMoveGame,
     onDeleteGame,
 }) => {
-    // OOC games only (for counting)
     const oocGamesOnly = useMemo(() =>
         oocFullSchedule.filter(g => field(g, 'gameType', 'game_type') === 'OUT_OF_CONFERENCE'),
         [oocFullSchedule]

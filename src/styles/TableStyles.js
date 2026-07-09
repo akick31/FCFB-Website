@@ -2,46 +2,45 @@ import { Table, TableCell, TableContainer, TableHead, TableRow } from '@mui/mate
 import { styled } from '@mui/system';
 
 export const StyledTableContainer = styled(TableContainer)({
-    maxWidth: '90%', // Adjust the width for a more compact look
-    margin: '0 auto', // Centers the table horizontally
-    boxShadow: 'none', // Optional: removes shadow for a clean look
+    maxWidth: '90%',
+    margin: '0 auto',
+    boxShadow: 'none',
 });
 
 export const StyledTable = styled(Table)({
-    minWidth: 600, // Make sure the table is wide enough but not too large
-    borderCollapse: 'collapse', // Ensures the table does not have gaps between cells
+    minWidth: 600,
+    borderCollapse: 'collapse',
 });
 
 export const StyledTableHead = styled(TableHead)({
-    padding: '8px', // Reduces padding to make it compact
-    fontSize: '12px', // Smaller font size for a more compact look
-    textAlign: 'center', // Centers text in the cell
-    alignContent: 'center', // Centers content in the cell
-    fontWeight: 'bold', // Makes the header text bold
+    padding: '8px',
+    fontSize: '12px',
+    textAlign: 'center',
+    alignContent: 'center',
+    fontWeight: 'bold',
 });
 
 export const StyledTableCell = styled(TableCell)({
-    padding: '8px', // Reduces padding to make it compact
-    fontSize: '12px', // Smaller font size for a more compact look
-    textAlign: 'center', // Centers text in the cell
-    alignContent: 'center', // Centers content in the cell
-    whiteSpace: 'nowrap', // Prevents text wrapping
-    borderRight: '1px solid #ddd', // Adds vertical lines between columns
-    // Optionally, remove the last column's border
+    padding: '8px',
+    fontSize: '12px',
+    textAlign: 'center',
+    alignContent: 'center',
+    whiteSpace: 'nowrap',
+    borderRight: '1px solid #ddd',
     '&:last-child': {
         borderRight: 'none',
     }
 });
 
 export const StyledTableHeadCell = styled(StyledTableCell)({
-    fontWeight: 'bold', // Make header text bold
+    fontWeight: 'bold',
 });
 
 export const StyledTableRow = styled(TableRow)({
     '&:nth-of-type(odd)': {
-        backgroundColor: '#f9f9f9', // Alternates row colors
+        backgroundColor: '#f9f9f9',
     },
     '&:hover': {
-        backgroundColor: '#f1f1f1', // Hover effect for interactivity
+        backgroundColor: '#f1f1f1',
     },
 });

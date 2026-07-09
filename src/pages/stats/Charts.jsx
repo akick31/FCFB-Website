@@ -12,16 +12,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import EloHistoryTab from '../../components/stats/charts/EloHistoryTab';
 import RankingsHistoryTab from '../../components/stats/charts/RankingsHistoryTab';
 import ScatterPlotsTab from '../../components/stats/charts/ScatterPlotsTab';
+import { useSeo } from '../../hooks/useSeo';
+import { ROUTE_META } from '../../routeMeta';
 
 const TAB_SLUGS = ['elo_history', 'rankings_history', 'stat_plots'];
 const TAB_FROM_SLUG = { elo_history: 0, rankings_history: 1, stat_plots: 2 };
 
-/**
- * Charts Page
- * Main page for all statistical charts with tabbed interface
- */
 const Charts = () => {
-    useEffect(() => { document.title = 'FCFB | Charts'; }, []);
+    useSeo(ROUTE_META['/charts']);
 
     const { tab } = useParams();
     const navigate = useNavigate();

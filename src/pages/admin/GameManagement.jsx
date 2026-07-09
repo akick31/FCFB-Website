@@ -60,7 +60,6 @@ import {
     GAME_STATUS_DESCRIPTIONS 
 } from '../../constants/gameEnums';
 
-
 const GameManagement = () => {
     const navigate = useNavigate();
     const [gameData, setGameData] = useState({
@@ -73,14 +72,12 @@ const GameManagement = () => {
         awayDefensivePlaybook: 'FOUR_THREE'
     });
 
-
     const [filteredGames, setFilteredGames] = useState([]);
     const [loading, setLoading] = useState(false);
     const [gamesLoading, setGamesLoading] = useState(true);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-    
-    // Filters for ongoing games
+
     const [filters, setFilters] = useState({
         season: null,
         week: null,
@@ -107,7 +104,6 @@ const GameManagement = () => {
         gameType: 'Out of Conference'
     });
 
-    // Start Game Week state
     const [currentSeason, setCurrentSeason] = useState(null);
     const [currentWeek, setCurrentWeek] = useState(null);
     const [selectedStartSeason, setSelectedStartSeason] = useState(null);
@@ -122,11 +118,6 @@ const GameManagement = () => {
 
     const navigationItems = adminNavigationItems;
 
-
-
-
-
-    // Cleanup polling on unmount
     useEffect(() => {
         return () => {
             if (pollIntervalRef.current) {
@@ -135,7 +126,6 @@ const GameManagement = () => {
         };
     }, []);
 
-    // Initialize current season/week and set defaults
     useEffect(() => {
         const initDefaults = async () => {
             try {
@@ -143,21 +133,17 @@ const GameManagement = () => {
                     getCurrentSeasonOrLatest(),
                     getCurrentWeekOrLatest()
                 ]);
-                
-                // Set state for Start Game Week
+
                 setCurrentSeason(season);
                 setCurrentWeek(week);
                 setSelectedStartSeason(season);
                 setSelectedStartWeek(week);
 
-                // Load schedule for Start Game Week
                 if (season && week) {
                     const schedule = await getScheduleBySeasonAndWeek(season, week);
                     setWeekSchedule(schedule || []);
                 }
-                
-                
-                // Set defaults for game data and filters
+
                 setGameData(prev => ({
                     ...prev,
                     season: season,
@@ -169,8 +155,7 @@ const GameManagement = () => {
                     season: season,
                     week: week
                 }));
-                
-                // Load games once on mount
+
                 setGamesLoading(true);
                 try {
                     const response = await getFilteredGames({
@@ -196,7 +181,6 @@ const GameManagement = () => {
                 }
             } catch (error) {
                 console.error('Failed to fetch current season/week:', error);
-                // Set fallback values if API fails (same as Past Games)
                 setGameData(prev => ({
                     ...prev,
                     season: 11,
@@ -208,8 +192,7 @@ const GameManagement = () => {
                     season: 11,
                     week: 1
                 }));
-                
-                // Try to load games with fallback values
+
                 setGamesLoading(true);
                 try {
                     const response = await getFilteredGames({
@@ -239,8 +222,6 @@ const GameManagement = () => {
         initDefaults();
     }, []);
 
-
-
     useEffect(() => {
         const loadTeams = async () => {
             try {
@@ -250,11 +231,10 @@ const GameManagement = () => {
                 console.error('Failed to load teams:', error);
             }
         };
-        
+
         loadTeams();
     }, []);
 
-    // Start Game Week functions
     const getGameStats = () => {
         const total = weekSchedule.length;
         const started = weekSchedule.filter(g => g.started).length;
@@ -332,7 +312,6 @@ const GameManagement = () => {
         }
     };
 
-    // Function to refresh games with current filters (avoids infinite loops)
     const refreshGamesWithCurrentFilters = async () => {
         if (gamesLoading || !filters.season || !filters.week) return;
         
@@ -361,24 +340,17 @@ const GameManagement = () => {
         }
     };
 
-
-
     const handleFilterChange = (field, value) => {
         setFilters(prev => ({
             ...prev,
             [field]: value === '' ? null : value
         }));
-        setCurrentPage(0); // Reset to first page when filters change
-        
-        // Refresh games when filters change
+        setCurrentPage(0);
+
         setTimeout(() => {
             refreshGamesWithCurrentFilters();
         }, 50);
     };
-
-
-
-
 
     const handleScrimmageSubmit = async () => {
         if (!scrimmageTeams.homeTeam || !scrimmageTeams.awayTeam) {
@@ -406,7 +378,6 @@ const GameManagement = () => {
                 awayDefensivePlaybook: gameData.awayDefensivePlaybook
             };
 
-            // Check if this is an overtime scrimmage
             if (scrimmageTeams.scrimmageType === 'Overtime') {
                 await startOvertimeGame(startRequest);
                 setSuccess('Overtime scrimmage started successfully!');
@@ -417,7 +388,6 @@ const GameManagement = () => {
 
             setScrimmageTeams({ homeTeam: '', awayTeam: '' });
             setScrimmageDialogOpen(false);
-            // No automatic refresh - user can manually refresh if needed
         } catch (error) {
             setError(`Failed to start scrimmage: ${error.message}`);
         } finally {
@@ -429,8 +399,6 @@ const GameManagement = () => {
         setScrimmageTeams({ homeTeam: '', awayTeam: '' });
         setScrimmageDialogOpen(false);
     };
-
-
 
     const handleStartGameCancel = () => {
         setStartGameData({
@@ -475,7 +443,6 @@ const GameManagement = () => {
                 gameType: 'Out of Conference'
             });
             setStartGameDialogOpen(false);
-            // No automatic refresh - user can manually refresh if needed
         } catch (error) {
             setError(`Failed to start game: ${error.message}`);
         } finally {
@@ -494,7 +461,6 @@ const GameManagement = () => {
         try {
             await markAllGamesAsChewMode();
             setSuccess('All games marked as chew mode!');
-            // No automatic refresh - user can manually refresh if needed
         } catch (error) {
             setError(`Failed to mark games as chew mode: ${error.message}`);
         } finally {
@@ -513,7 +479,6 @@ const GameManagement = () => {
         try {
             await endAllOngoingGames();
             setSuccess('All games ended successfully!');
-            // No automatic refresh - user can manually refresh if needed
         } catch (error) {
             setError(`Failed to end all games: ${error.message}`);
         } finally {
@@ -524,8 +489,6 @@ const GameManagement = () => {
     const handleEditGame = (game) => {
         navigate(`/admin/edit-game/${game.game_id}`);
     };
-
-
 
     const ongoingGameColumns = [
         { id: 'teams', label: 'Teams', width: 200 },
@@ -599,7 +562,6 @@ const GameManagement = () => {
                     </Alert>
                 )}
 
-                {/* Start Game Week Section */}
                 {selectedStartSeason && selectedStartWeek && (
                     <Card sx={{ mb: 4, backgroundColor: 'rgba(25, 118, 210, 0.05)', border: '1px solid', borderColor: 'primary.main' }}>
                         <CardContent>
@@ -708,7 +670,6 @@ const GameManagement = () => {
                     </Card>
                 )}
 
-                {/* Confirm Start Week Dialog */}
                 <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
                     <DialogTitle>Start Game Week {selectedStartWeek}?</DialogTitle>
                     <DialogContent>
@@ -747,7 +708,6 @@ const GameManagement = () => {
                 </Dialog>
                 
                 <Grid container spacing={4} sx={{ mb: 4 }}>
-                    {/* Create New Game */}
                     <Grid item xs={12} lg={6}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -828,7 +788,6 @@ const GameManagement = () => {
                         </Card>
                     </Grid>
 
-                    {/* Game Management Actions */}
                     <Grid item xs={12} lg={6}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -917,7 +876,6 @@ const GameManagement = () => {
                     </Grid>
                 </Grid>
 
-                {/* Games Section */}
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white', mb: 3 }}>
                             <CardContent>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -927,8 +885,6 @@ const GameManagement = () => {
                                 </Box>
                                 
 
-
-                        {/* Filters */}
                         <Box sx={{ mb: 3 }}>
                             <Grid container spacing={2} alignItems="center">
                                 <Grid item xs={12} sm={6} md={3}>
@@ -1029,8 +985,8 @@ const GameManagement = () => {
                                     headerBackground="primary.main"
                                     headerTextColor="white"
                                 />
-                                
-                                {/* Pagination */}
+
+
                                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 2 }}>
                                     <Typography variant="body2" sx={{ color: 'primary.main', mr: 2, alignSelf: 'center' }}>
                                         Showing {Math.min(currentPage * pageSize + 1, totalGames)} to {Math.min((currentPage + 1) * pageSize, totalGames)} of {totalGames} games
@@ -1041,7 +997,6 @@ const GameManagement = () => {
                                             page={currentPage + 1}
                                             onChange={(event, page) => {
                                                 setCurrentPage(page - 1);
-                                                // No automatic refresh - user can manually refresh if needed
                                             }}
                                             color="primary"
                                             size="large"
@@ -1062,7 +1017,6 @@ const GameManagement = () => {
                     </CardContent>
                 </Card>
 
-                {/* Scrimmage Dialog */}
                 <Dialog 
                     open={scrimmageDialogOpen} 
                     onClose={handleScrimmageCancel}
@@ -1171,7 +1125,6 @@ const GameManagement = () => {
                     </DialogActions>
                 </Dialog>
 
-                {/* Start Game Dialog */}
                 <Dialog 
                     open={startGameDialogOpen} 
                     onClose={handleStartGameCancel}
@@ -1184,7 +1137,6 @@ const GameManagement = () => {
                     <DialogContent>
                         <Box sx={{ pt: 2 }}>
                             <Grid container spacing={3}>
-                                {/* Game Configuration */}
                                 <Grid item xs={12}>
                                     <Typography variant="h6" sx={{ color: 'primary.main', mb: 2, fontWeight: 500 }}>
                                         Game Configuration
@@ -1270,8 +1222,8 @@ const GameManagement = () => {
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                                
-                                {/* Team Selection */}
+
+
                                 <Grid item xs={12}>
                                     <Typography variant="h6" sx={{ color: 'primary.main', mb: 2, fontWeight: 500, mt: 2 }}>
                                         Team Selection

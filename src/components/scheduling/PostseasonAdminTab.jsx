@@ -37,7 +37,7 @@ import Postseason from '../schedule/Postseason';
 import { R2_BYE_SEEDS, QF_SEED_GROUPS, SF_SEED_GROUPS, ROUND_LABELS, playoffWeekForRound, CFP_LOGO_URL } from '../constants/playoffBracket';
 import { field } from '../../utils/fieldHelper';
 
-// Conferences available for CCG (exclude FBS Independent)
+// FBS Independent has no conference championship game
 const CCG_CONFERENCES = conferences.filter(c => c.value !== 'FBS_INDEPENDENT');
 
 const PostseasonAdminTab = ({
@@ -50,16 +50,13 @@ const PostseasonAdminTab = ({
     onShowSnackbar,
     onOpenAddGameDialog,
 }) => {
-    // Playoff bracket seed-selection state
     const [playoffTeams, setPlayoffTeams] = useState(Array(24).fill(null));
     const [playoffDialogOpen, setPlayoffDialogOpen] = useState(false);
 
-    // Advance-team dialog state
     const [advanceDialogOpen, setAdvanceDialogOpen] = useState(false);
     const [advanceGame, setAdvanceGame] = useState(null);
     const [advanceWinner, setAdvanceWinner] = useState('');
-    
-    // Edit bowl game name dialog state
+
     const [editBowlDialogOpen, setEditBowlDialogOpen] = useState(false);
     const [editingBowlGame, setEditingBowlGame] = useState(null);
     const [editingBowlName, setEditingBowlName] = useState('');
@@ -67,13 +64,11 @@ const PostseasonAdminTab = ({
     const [editingBowlLogoPreview, setEditingBowlLogoPreview] = useState(null);
     const [uploadingLogo, setUploadingLogo] = useState(false);
 
-    // CCG dialog state
     const [ccgDialogOpen, setCcgDialogOpen] = useState(false);
     const [ccgConference, setCcgConference] = useState('');
     const [ccgHome, setCcgHome] = useState(null);
     const [ccgAway, setCcgAway] = useState(null);
 
-    // Derived data
     const postseasonCCG = useMemo(() =>
         postseasonSchedule.filter(g => field(g, 'gameType', 'game_type') === 'CONFERENCE_CHAMPIONSHIP'),
         [postseasonSchedule]
@@ -90,11 +85,9 @@ const PostseasonAdminTab = ({
         [postseasonSchedule]
     );
 
-    // Only playoff games for the bracket component (avoid duplicate CCG/Bowl rendering)
-    // Reuse postseasonPlayoffs instead of duplicating the filter
+    // Bracket component only needs playoff games, not CCG/Bowl, to avoid duplicate rendering
     const playoffOnlySchedule = postseasonPlayoffs;
 
-    // Teams already selected in the bracket (duplicate prevention)
     const selectedPlayoffTeamNames = useMemo(() =>
         new Set(playoffTeams.filter(t => t !== null).map(t => t.name)),
         [playoffTeams]
@@ -107,7 +100,6 @@ const PostseasonAdminTab = ({
             return !selectedPlayoffTeamNames.has(t.name);
         });
 
-    // CCG: teams filtered by selected conference
     const ccgTeams = useMemo(() => {
         if (!ccgConference) return [];
         return allTeams
@@ -115,12 +107,11 @@ const PostseasonAdminTab = ({
             .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }, [ccgConference, allTeams]);
 
-    // Preview schedule entries for the bracket dialog
     const previewScheduleEntries = useMemo(() => {
         if (!playoffTeams.some(t => t !== null)) return [];
         const entries = [];
 
-        // R1 games: 9v24, 10v23, …, 16v17
+        // R1 seeding: 9v24, 10v23, …, 16v17
         for (let i = 0; i < 8; i++) {
             const highSeed = 9 + i;
             const lowSeed = 24 - i;
@@ -154,7 +145,6 @@ const PostseasonAdminTab = ({
         return entries;
     }, [playoffTeams]);
 
-    // Load existing bracket into the dialog
     const loadExistingBracket = () => {
         const newPlayoffTeams = Array(24).fill(null);
         postseasonPlayoffs.forEach(g => {
@@ -183,7 +173,6 @@ const PostseasonAdminTab = ({
         setPlayoffDialogOpen(true);
     };
 
-    // CCG creation
     const handleCreateCCG = async () => {
         if (!ccgHome || !ccgAway) {
             onShowSnackbar('Please select both teams', 'error');
@@ -210,7 +199,6 @@ const PostseasonAdminTab = ({
         }
     };
 
-    // Delete game
     const handleDeleteGame = async (gameId) => {
         try {
             await deleteScheduleEntry(gameId);
@@ -222,7 +210,6 @@ const PostseasonAdminTab = ({
         }
     };
 
-    // Edit bowl game name
     const handleEditBowlName = (game) => {
         setEditingBowlGame(game);
         setEditingBowlName(field(game, 'postseasonGameName', 'postseason_game_name') || '');
@@ -262,7 +249,6 @@ const PostseasonAdminTab = ({
         }
     };
 
-    // Generate playoff bracket (R1 games + R2 placeholders)
     const handleGeneratePlayoffBracket = async () => {
         const validTeams = playoffTeams.filter(t => t !== null);
         if (validTeams.length !== 24) {
@@ -276,7 +262,6 @@ const PostseasonAdminTab = ({
         }
 
         try {
-            // Delete existing playoff games
             const existingPlayoffIds = postseasonPlayoffs.map(g => g.id).filter(Boolean);
             for (const id of existingPlayoffIds) {
                 await deleteScheduleEntry(id);
@@ -463,7 +448,6 @@ const PostseasonAdminTab = ({
         return `${winner} advanced to ${ROUND_LABELS[nextRound] || `Round ${nextRound}`} (Week ${nextWeek})!`;
     };
 
-    // Dialog-driven advance
     const handleAdvanceTeam = async () => {
         if (!advanceGame || !advanceWinner) {
             onShowSnackbar('Please select a winner', 'error');
@@ -482,7 +466,6 @@ const PostseasonAdminTab = ({
         }
     };
 
-    // Auto-advance finished playoff games
     const autoAdvancedRef = useRef(new Set());
 
     useEffect(() => {
@@ -510,7 +493,6 @@ const PostseasonAdminTab = ({
 
                 const winner = homeScore > awayScore ? homeTeam : awayTeam;
 
-                // Skip if winner is already in a next-round game
                 const alreadyAdvanced = localSchedule.some(g => {
                     const pr = field(g, 'playoffRound', 'playoff_round');
                     const ht = field(g, 'homeTeam', 'home_team');
@@ -560,10 +542,8 @@ const PostseasonAdminTab = ({
         }
     }, [postseasonSchedule]);
 
-    // Render
     return (
         <Box>
-            {/* Action buttons */}
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'center' }}>
                 <Button
                     variant="contained"
@@ -607,7 +587,6 @@ const PostseasonAdminTab = ({
                 </Box>
             ) : (
                 <Box>
-                    {/* ── Conference Championships ───────────────────────── */}
                     <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', mb: 2 }}>
                         Conference Championships
                     </Typography>
@@ -624,7 +603,6 @@ const PostseasonAdminTab = ({
                                 const awayWon = finished && awayScore != null && awayScore > homeScore;
                                 return (
                                     <Paper key={game.id} sx={{ p: 2, minWidth: 280 }} elevation={2}>
-                                        {/* Conference Championship Game Logo */}
                                         {field(game, 'postseasonGameLogo', 'postseason_game_logo') && (
                                             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
                                                 <Avatar
@@ -677,7 +655,6 @@ const PostseasonAdminTab = ({
 
                     <Divider sx={{ my: 3 }} />
 
-                    {/* ── Playoff Bracket (visual bracket with admin actions) */}
                     <Postseason
                         postseasonSchedule={playoffOnlySchedule}
                         teamMap={teamMap}
@@ -692,7 +669,6 @@ const PostseasonAdminTab = ({
 
                     <Divider sx={{ my: 3 }} />
 
-                    {/* ── Bowl Games ─────────────────────────────────────── */}
                     <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', mb: 2 }}>
                         Bowl Games
                     </Typography>
@@ -710,7 +686,6 @@ const PostseasonAdminTab = ({
                                 const awayWon = finished && awayScore != null && awayScore > homeScore;
                                 return (
                                     <Paper key={game.id} sx={{ p: 2, minWidth: 280 }} elevation={2}>
-                                        {/* Bowl Game Logo */}
                                         {field(game, 'postseasonGameLogo', 'postseason_game_logo') && (
                                             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
                                                 <Avatar
@@ -720,7 +695,6 @@ const PostseasonAdminTab = ({
                                                 />
                                             </Box>
                                         )}
-                                        {/* Bowl Game Name */}
                                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                                             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.main' }}>
                                                 {bowlName || 'Unnamed Bowl Game'}
@@ -770,7 +744,6 @@ const PostseasonAdminTab = ({
                 </Box>
             )}
 
-            {/* ═══════════════ CCG DIALOG ═══════════════════════════════ */}
             <Dialog open={ccgDialogOpen} onClose={() => setCcgDialogOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Add Conference Championship Game</DialogTitle>
                 <DialogContent>
@@ -847,7 +820,6 @@ const PostseasonAdminTab = ({
                 </DialogActions>
             </Dialog>
 
-            {/* ═══════════════ PLAYOFF BRACKET DIALOG ═══════════════════ */}
             <Dialog open={playoffDialogOpen} onClose={() => setPlayoffDialogOpen(false)} maxWidth="xl" fullWidth>
                 <DialogTitle>
                     {postseasonPlayoffs.length > 0
@@ -918,7 +890,6 @@ const PostseasonAdminTab = ({
                             ))}
                         </Grid>
 
-                        {/* Bracket Preview — full bracket visualization */}
                         {previewScheduleEntries.length > 0 && (
                             <>
                                 <Divider sx={{ my: 2 }} />
@@ -946,7 +917,6 @@ const PostseasonAdminTab = ({
                 </DialogActions>
             </Dialog>
 
-            {/* ═══════════════ ADVANCE TEAM DIALOG ═════════════════════ */}
             <Dialog open={advanceDialogOpen} onClose={() => setAdvanceDialogOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Advance Winner to Next Round</DialogTitle>
                 <DialogContent>
@@ -995,7 +965,6 @@ const PostseasonAdminTab = ({
                 </DialogActions>
             </Dialog>
 
-            {/* ═══════════════ EDIT BOWL GAME NAME DIALOG ═══════════════════════════════ */}
             <Dialog open={editBowlDialogOpen} onClose={() => setEditBowlDialogOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Edit Bowl Game</DialogTitle>
                 <DialogContent>
@@ -1026,7 +995,6 @@ const PostseasonAdminTab = ({
                                         try {
                                             const result = await uploadPostseasonLogo(file);
                                             setEditingBowlLogo(result.url);
-                                            // Create preview URL
                                             const reader = new FileReader();
                                             reader.onloadend = () => {
                                                 setEditingBowlLogoPreview(reader.result);

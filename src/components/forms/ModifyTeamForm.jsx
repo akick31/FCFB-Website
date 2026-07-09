@@ -51,14 +51,13 @@ const ModifyTeamForm = ({ team }) => {
             return;
         }
 
-        // Merge original team data with modified form data
         const updatedTeamData = {
-            ...team, // Spread the original team data
-            ...formData, // Override with modified form data
+            ...team,
+            ...formData,
         };
 
         try {
-            await updateTeam(updatedTeamData); // Call the API with the updated team data
+            await updateTeam(updatedTeamData);
             alert("Team updated successfully!");
         } catch (error) {
             setValidation({ errorMessage: "Failed to modify team. Please try again." });
@@ -94,7 +93,6 @@ const ModifyTeamForm = ({ team }) => {
                             required
                         />
 
-                        {/* Color Picker for Primary Color */}
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                             <Typography variant="body1" align="left">Primary Color</Typography>
                             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -115,7 +113,6 @@ const ModifyTeamForm = ({ team }) => {
                             </Box>
                         </Box>
 
-                        {/* Offensive Playbook */}
                         <FormControl fullWidth margin="normal">
                             <InputLabel id="offensive-playbook-label">Offensive Playbook</InputLabel>
                             <Select
@@ -133,7 +130,6 @@ const ModifyTeamForm = ({ team }) => {
                             </Select>
                         </FormControl>
 
-                        {/* Defensive Playbook */}
                         <FormControl fullWidth margin="normal">
                             <InputLabel id="defensive-playbook-label">Defensive Playbook</InputLabel>
                             <Select
@@ -151,7 +147,6 @@ const ModifyTeamForm = ({ team }) => {
                             </Select>
                         </FormControl>
 
-                        {/* Conference */}
                         <FormControl fullWidth margin="normal">
                             <InputLabel id="conference-label">Conference</InputLabel>
                             <Select

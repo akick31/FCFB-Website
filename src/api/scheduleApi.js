@@ -1,7 +1,5 @@
 import apiClient from './apiClient';
 
-// GET Endpoints
-
 export const getScheduleBySeasonAndTeam = async (season, team) => {
     try {
         const response = await apiClient.get('/schedule/season', {
@@ -86,8 +84,6 @@ export const isTeamAvailable = async (season, week, team) => {
     }
 };
 
-// POST Endpoints
-
 export const createScheduleEntry = async (entry) => {
     try {
         const response = await apiClient.post('/schedule', entry);
@@ -129,10 +125,7 @@ export const generateConferenceSchedule = async (request) => {
     }
 };
 
-/**
- * Auto-generate conference schedules for ALL conferences in a season (async fire-and-forget).
- * Returns a job response with a jobId to poll for progress.
- */
+// Fire-and-forget: returns a jobId to poll for progress rather than waiting on the full generation.
 export const generateAllConferenceSchedules = async (season) => {
     try {
         const response = await apiClient.post(`/schedule/generate-all-conferences/${season}`);
@@ -146,9 +139,6 @@ export const generateAllConferenceSchedules = async (season) => {
     }
 };
 
-/**
- * Poll the status of an all-conference generation job.
- */
 export const pollScheduleGenJobStatus = async (jobId) => {
     try {
         const response = await apiClient.get(`/schedule/generate-all-conferences/status/${jobId}`);
@@ -162,10 +152,7 @@ export const pollScheduleGenJobStatus = async (jobId) => {
     }
 };
 
-/**
- * Start a game week (async). Returns a job ID immediately.
- * Use pollGameWeekJobStatus() to track progress.
- */
+// Async: returns a jobId immediately, track progress via getGameWeekJobStatus().
 export const startGameWeek = async (season, week) => {
     try {
         const response = await apiClient.post('/game/week', null, {
@@ -181,9 +168,6 @@ export const startGameWeek = async (season, week) => {
     }
 };
 
-/**
- * Poll the status of a game week start job.
- */
 export const getGameWeekJobStatus = async (jobId) => {
     try {
         const response = await apiClient.get(`/game/week/status/${jobId}`);
@@ -197,9 +181,6 @@ export const getGameWeekJobStatus = async (jobId) => {
     }
 };
 
-/**
- * Get all game week jobs.
- */
 export const getAllGameWeekJobs = async () => {
     try {
         const response = await apiClient.get('/game/week/jobs');
@@ -213,9 +194,6 @@ export const getAllGameWeekJobs = async () => {
     }
 };
 
-/**
- * Retry failed games from a previous job. Returns a new job ID.
- */
 export const retryFailedGames = async (jobId) => {
     try {
         const response = await apiClient.post(`/game/week/retry/${jobId}`);
@@ -278,8 +256,6 @@ export const getConferenceRules = async (conference) => {
     }
 };
 
-// PUT Endpoints
-
 export const updateScheduleEntry = async (id, entry) => {
     try {
         const response = await apiClient.put(`/schedule/${id}`, entry);
@@ -305,8 +281,6 @@ export const moveGame = async (scheduleId, newWeek) => {
         throw new Error("An unexpected error occurred while moving game");
     }
 };
-
-// DELETE Endpoints
 
 export const deleteScheduleEntry = async (id) => {
     try {

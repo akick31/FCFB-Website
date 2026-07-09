@@ -32,8 +32,7 @@ import { useNavigate } from 'react-router-dom';
 const Reports = ({ user }) => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState(0);
-    
-    // Transaction log states
+
     const [transactions, setTransactions] = useState([]);
     const [filteredTransactions, setFilteredTransactions] = useState([]);
     const [transactionLoading, setTransactionLoading] = useState(true);
@@ -43,7 +42,6 @@ const Reports = ({ user }) => {
     const [positionFilter, setPositionFilter] = useState('ALL');
     const [transactionTypeFilter, setTransactionTypeFilter] = useState('ALL');
 
-    // User delay instances states
     const [userDelayData, setUserDelayData] = useState([]);
     const [filteredUserDelayData, setFilteredUserDelayData] = useState([]);
     const [delayLoading, setDelayLoading] = useState(true);
@@ -56,14 +54,12 @@ const Reports = ({ user }) => {
     const navigationItems = adminNavigationItems;
 
     useEffect(() => {
-        // If user is not loaded yet, just return (we're loading)
         if (!user || !user.role) {
             setTransactionLoading(true);
             setDelayLoading(true);
             return;
         }
 
-        // Once the user is loaded, check the role
         if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
             navigate('*');
         } else {
@@ -72,7 +68,6 @@ const Reports = ({ user }) => {
         }
     }, [user, navigate]);
 
-    // Fetch transaction log data
     useEffect(() => {
         const fetchTransactionData = async () => {
             try {
@@ -91,7 +86,6 @@ const Reports = ({ user }) => {
         }
     }, [user]);
 
-    // Fetch user delay data
     useEffect(() => {
         const fetchDelayData = async () => {
             try {
@@ -107,7 +101,7 @@ const Reports = ({ user }) => {
                     teamLogo: teamsResponse.find(t => t.name === user.team)?.logo || null,
                     delayInstances: user.delay_of_game_instances
                 }));
-                
+
                 setUserDelayData(delayData);
                 setDelayLoading(false);
             } catch (error) {
@@ -122,7 +116,6 @@ const Reports = ({ user }) => {
         }
     }, [user]);
 
-    // Filter transactions based on all criteria
     useEffect(() => {
         let filtered = transactions;
 
@@ -148,11 +141,10 @@ const Reports = ({ user }) => {
                 ))
             );
         }
-        
+
         setFilteredTransactions(filtered);
     }, [transactions, teamFilter, positionFilter, transactionTypeFilter, searchTerm]);
 
-    // Filter and sort user delay data
     useEffect(() => {
         let filtered = userDelayData;
 
@@ -168,18 +160,16 @@ const Reports = ({ user }) => {
                 user.team?.toLowerCase().includes(searchLower)
             );
         }
-        
-        // Sort the data
+
         filtered.sort((a, b) => {
             let aValue = a[delaySortField];
             let bValue = b[delaySortField];
-            
-            // Handle string comparison
+
             if (typeof aValue === 'string' && typeof bValue === 'string') {
                 aValue = aValue.toLowerCase();
                 bValue = bValue.toLowerCase();
             }
-            
+
             if (aValue < bValue) {
                 return delaySortDirection === 'asc' ? -1 : 1;
             }
@@ -188,7 +178,7 @@ const Reports = ({ user }) => {
             }
             return 0;
         });
-        
+
         setFilteredUserDelayData(filtered);
     }, [userDelayData, delayTeamFilter, delaySearchTerm, delaySortField, delaySortDirection]);
 
@@ -290,13 +280,11 @@ const Reports = ({ user }) => {
         },
     ];
 
-    // Get unique teams, positions, and transaction types for filters
     const uniqueTeams = [...new Set(transactions.map(t => t.team))].filter(Boolean).sort();
     const uniquePositions = [...new Set(transactions.map(t => t.position))].filter(Boolean).sort();
     const uniqueTransactionTypes = [...new Set(transactions.map(t => t.transaction))].filter(Boolean).sort();
     const uniqueDelayTeams = [...new Set(userDelayData.map(u => u.team))].filter(Boolean).sort();
 
-    // Transform transactions data for the table
     const transactionTableData = filteredTransactions.map(transaction => ({
         ...transaction,
         team: transaction.team || 'N/A',
@@ -319,7 +307,6 @@ const Reports = ({ user }) => {
         processedBy: transaction.processedBy || 'N/A',
     }));
 
-    // Transform user delay data for the table
     const userDelayTableData = filteredUserDelayData.map(user => ({
         ...user,
         username: user.username,
@@ -393,14 +380,12 @@ const Reports = ({ user }) => {
                     </Tabs>
                 </Box>
 
-                {/* User Delay Instances Tab */}
                 {activeTab === 0 && (
                     <Box>
                         <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
                             User Delay Instances
                         </Typography>
-                        
-                        {/* Filter Controls */}
+
                         <Box sx={{ mb: 3 }}>
                             <Grid container spacing={2} alignItems="center">
                                 <Grid item xs={12} sm={6} md={4}>
@@ -547,14 +532,12 @@ const Reports = ({ user }) => {
                     </Box>
                 )}
 
-                {/* Coach Transaction Log Tab */}
                 {activeTab === 1 && (
                     <Box>
                         <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
                             Coach Transaction Log
                         </Typography>
-                        
-                        {/* Filter Controls */}
+
                         <Box sx={{ mb: 3 }}>
                             <Grid container spacing={2} alignItems="center">
                                 <Grid item xs={12} sm={6} md={3}>

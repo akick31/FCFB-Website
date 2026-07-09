@@ -20,13 +20,6 @@ import { getAllSeasons } from '../../../api/seasonApi';
 import { getCurrentSeasonOrLatest } from '../../../api/seasonApi';
 import ScatterPlotChart from '../ScatterPlotChart';
 
-/**
- * Scatter Plots Tab Component
- * Displays performance scatter plots for teams
- * 
- * NOTE: Success rate is calculated as (successes / attempts)
- * Example: 5 successful conversions out of 10 attempts = 5/10 = 0.50 = 50% success rate
- */
 const ScatterPlotsTab = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -125,8 +118,6 @@ const ScatterPlotsTab = () => {
                     const avgOffDiff = stat.average_offensive_diff ?? stat.averageOffensiveDiff;
                     const avgDefDiff = stat.average_defensive_diff ?? stat.averageDefensiveDiff;
                     
-                    // Success Rate Formula: successes / attempts
-                    // Example: 7 conversions out of 10 attempts = 7/10 = 0.70 = 70%
                     const thirdDownSuccess = stat.third_down_conversion_success ?? stat.thirdDownConversionSuccess ?? 0;
                     const thirdDownAttempts = stat.third_down_conversion_attempts ?? stat.thirdDownConversionAttempts ?? 0;
                     const fourthDownSuccess = stat.fourth_down_conversion_success ?? stat.fourthDownConversionSuccess ?? 0;
@@ -135,7 +126,6 @@ const ScatterPlotsTab = () => {
                     const totalAttempts = thirdDownAttempts + fourthDownAttempts;
                     const offenseThirdFourthDown = totalAttempts > 0 ? totalSuccess / totalAttempts : null;
                     
-                    // Defensive 3rd/4th down from opponent stats
                     const oppThirdDownSuccess = stat.opponent_third_down_conversion_success ?? stat.opponentThirdDownConversionSuccess ?? 0;
                     const oppThirdDownAttempts = stat.opponent_third_down_conversion_attempts ?? stat.opponentThirdDownConversionAttempts ?? 0;
                     const oppFourthDownSuccess = stat.opponent_fourth_down_conversion_success ?? stat.opponentFourthDownConversionSuccess ?? 0;
@@ -144,7 +134,6 @@ const ScatterPlotsTab = () => {
                     const oppTotalAttempts = oppThirdDownAttempts + oppFourthDownAttempts;
                     const defenseThirdFourthDown = oppTotalAttempts > 0 ? oppTotalSuccess / oppTotalAttempts : null;
                     
-                    // Overall success rate (pass + rush)
                     const passAttempts = stat.pass_attempts ?? stat.passAttempts ?? 0;
                     const rushAttempts = stat.rush_attempts ?? stat.rushAttempts ?? 0;
                     const totalPlayAttempts = passAttempts + rushAttempts;
@@ -154,7 +143,6 @@ const ScatterPlotsTab = () => {
                         ? (passSuccesses + rushSuccesses) / totalPlayAttempts
                         : null;
                     
-                    // Defensive success rate from opponent stats
                     const oppPassAttempts = stat.opponent_pass_attempts ?? stat.opponentPassAttempts ?? 0;
                     const oppRushAttempts = stat.opponent_rush_attempts ?? stat.opponentRushAttempts ?? 0;
                     const oppTotalPlayAttempts = oppPassAttempts + oppRushAttempts;

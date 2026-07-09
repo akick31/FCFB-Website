@@ -10,7 +10,6 @@ const ProtectedRoute = ({
     isAdmin, 
     loading = false 
 }) => {
-    // Show loading spinner while checking authentication
     if (loading) {
         return (
             <Box sx={{ 
@@ -28,17 +27,14 @@ const ProtectedRoute = ({
         );
     }
 
-    // Check if authentication is required and user is not authenticated
     if (requireAuth && !isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
 
-    // Check if admin access is required and user is not admin
     if (requireAdmin && !isAdmin) {
         return <Navigate to="/" replace />;
     }
 
-    // User is authenticated and authorized, render the protected content
     return children;
 };
 

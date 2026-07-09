@@ -99,7 +99,6 @@ const CompleteRegistrationForm = () => {
             setValidation((prev) => ({ ...prev, passwordValid: isStrongPassword(value) }));
         }
 
-        // Clear error message when user starts typing
         if (validation.errorMessage) {
             setValidation((prev) => ({ ...prev, errorMessage: null }));
         }
@@ -112,12 +111,10 @@ const CompleteRegistrationForm = () => {
     const validateTeamChoices = () => {
         const { team_choice_one, team_choice_two, team_choice_three } = formData;
         
-        // Must have at least one team choice
         if (!team_choice_one && !team_choice_two && !team_choice_three) {
             return false;
         }
-        
-        // No duplicate teams
+
         const choices = [team_choice_one, team_choice_two, team_choice_three].filter(Boolean);
         const uniqueChoices = new Set(choices);
         
@@ -129,7 +126,6 @@ const CompleteRegistrationForm = () => {
         const { email, confirm_email, password, confirm_password } = formData;
         const { emailValid, passwordValid } = validation;
 
-        // Validate team choices
         const teamChoicesValid = validateTeamChoices();
         setValidation((prev) => ({ ...prev, teamChoicesValid }));
 
@@ -266,7 +262,6 @@ const CompleteRegistrationForm = () => {
 
                         <Box component="form" onSubmit={handleSubmit} sx={{ textAlign: 'left' }}>
                             <Grid container spacing={3}>
-                                {/* Username */}
                                 <Grid item xs={12}>
                                     <TextField
                                         fullWidth
@@ -281,7 +276,6 @@ const CompleteRegistrationForm = () => {
                                     />
                                 </Grid>
 
-                                {/* Coach Name */}
                                 <Grid item xs={12}>
                                     <TextField
                                         fullWidth
@@ -296,7 +290,6 @@ const CompleteRegistrationForm = () => {
                                     />
                                 </Grid>
 
-                                {/* Position and Discord Tag */}
                                 <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth>
                                         <InputLabel>Position</InputLabel>
@@ -330,7 +323,6 @@ const CompleteRegistrationForm = () => {
                                     />
                                 </Grid>
 
-                                {/* Offensive Playbook */}
                                 <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth>
                                         <InputLabel>Offensive Playbook</InputLabel>
@@ -349,7 +341,6 @@ const CompleteRegistrationForm = () => {
                                     </FormControl>
                                 </Grid>
 
-                                {/* Defensive Playbook */}
                                 <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth>
                                         <InputLabel>Defensive Playbook</InputLabel>
@@ -368,7 +359,6 @@ const CompleteRegistrationForm = () => {
                                     </FormControl>
                                 </Grid>
 
-                                {/* Team Choices */}
                                 <Grid item xs={12}>
                                     <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
                                         Team Preferences
@@ -378,7 +368,6 @@ const CompleteRegistrationForm = () => {
                                     </Typography>
                                 </Grid>
 
-                                {/* Team Choice 1 */}
                                 <Grid item xs={12} sm={4}>
                                     <FormControl fullWidth error={teamChoiceError}>
                                         <InputLabel sx={{ color: 'text.primary' }}>1st Choice</InputLabel>
@@ -420,7 +409,6 @@ const CompleteRegistrationForm = () => {
                                     </FormControl>
                                 </Grid>
 
-                                {/* Team Choice 2 */}
                                 <Grid item xs={12} sm={4}>
                                     <FormControl fullWidth error={teamChoiceError}>
                                         <InputLabel>2nd Choice</InputLabel>
@@ -453,7 +441,6 @@ const CompleteRegistrationForm = () => {
                                     </FormControl>
                                 </Grid>
 
-                                {/* Team Choice 3 */}
                                 <Grid item xs={12} sm={4}>
                                     <FormControl fullWidth error={teamChoiceError}>
                                         <InputLabel>3rd Choice</InputLabel>
@@ -486,7 +473,6 @@ const CompleteRegistrationForm = () => {
                                     </FormControl>
                                 </Grid>
 
-                                {/* Email */}
                                 <Grid item xs={12}>
                                     <TextField
                                         fullWidth
@@ -504,7 +490,6 @@ const CompleteRegistrationForm = () => {
                                     />
                                 </Grid>
 
-                                {/* Confirm Email */}
                                 <Grid item xs={12}>
                                     <TextField
                                         fullWidth
@@ -522,7 +507,6 @@ const CompleteRegistrationForm = () => {
                                     />
                                 </Grid>
 
-                                {/* Password */}
                                 <Grid item xs={12}>
                                     <TextField
                                         fullWidth
@@ -547,7 +531,6 @@ const CompleteRegistrationForm = () => {
                                     />
                                 </Grid>
 
-                                {/* Confirm Password */}
                                 <Grid item xs={12}>
                                     <TextField
                                         fullWidth

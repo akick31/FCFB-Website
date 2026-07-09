@@ -46,7 +46,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
     const [teamData, setTeamData] = useState(null);
     const [isLoadingTeam, setIsLoadingTeam] = useState(false);
 
-    // Fetch team data when user changes
     useEffect(() => {
         const fetchTeamData = async () => {
             if (user?.team) {
@@ -135,7 +134,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
     const isActiveRoute = (path) => location.pathname === path;
     const isStatsActive = () => location.pathname === '/records' || location.pathname === '/season-stats' || location.pathname === '/league-stats' || location.pathname === '/leaderboard' || location.pathname === '/charts';
 
-    // Mobile Drawer
     const drawer = (
         <Box sx={{ 
             width: 280, 
@@ -185,7 +183,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     </ListItem>
                 ))}
 
-                {/* Stats Menu Items */}
                 <ListItem disablePadding>
                     <ListItemButton
                         component="a"
@@ -317,7 +314,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     </ListItemButton>
                 </ListItem>
 
-                {/* Admin Menu */}
                 {isAdmin && (
                     <ListItem disablePadding>
                         <ListItemButton
@@ -372,7 +368,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
 
     return (
         <Box sx={{ backgroundColor: 'primary.main', overflow: 'hidden' }}>
-            {/* Logo Section with Enhanced Rectangle Design */}
             <Container maxWidth="xl">
                 <Box sx={{ 
                     py: 0.2,
@@ -380,7 +375,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                     position: 'relative',
                     overflow: 'hidden'
                 }}>
-                    {/* Enhanced Rectangle with Darker Gray Edges */}
                     <Box sx={{
                         position: 'absolute',
                         top: 0,
@@ -391,7 +385,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                         zIndex: 3,
                     }} />
                     
-                    {/* Left Darker Gray Edge */}
                     <Box sx={{
                         position: 'absolute',
                         top: 0,
@@ -402,7 +395,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                         zIndex: 3
                     }} />
                     
-                    {/* Right Darker Gray Edge */}
                     <Box sx={{
                         position: 'absolute',
                         top: 0,
@@ -414,7 +406,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                         zIndex: 3
                     }} />
                     
-                    {/* Logo positioned above the enhanced background - Always same relative position */}
                     <Box sx={{ 
                         position: 'relative', 
                         left: '2.8%', // Fixed percentage for consistent positioning
@@ -425,7 +416,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 </Box>
             </Container>
 
-            {/* Navigation Section - Red Background with Sticky Positioning and Strong Drop Shadow */}
             <AppBar 
                 position="sticky" 
                 top={0}
@@ -450,7 +440,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                         overflow: 'visible',
                         flexWrap: 'nowrap',
                     }}>
-                        {/* Left Navigation - Hidden on small screens, only show on medium and up */}
                         <Box sx={{ 
                             display: { xs: 'none', md: 'flex' }, 
                             alignItems: 'center', 
@@ -493,7 +482,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                 </Button>
                             ))}
 
-                            {/* Stats Dropdown */}
                             <Button
                                 onClick={handleStatsMenuOpen}
                                 variant={isStatsActive() ? "contained" : "text"}
@@ -525,7 +513,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                                 Stats
                             </Button>
 
-                            {/* Admin Button */}
                             {isAdmin && (
                                 <Button
                                     component="a"
@@ -551,7 +538,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                             )}
                         </Box>
 
-                        {/* Mobile Menu Button - Moved more to the right */}
                         <Box sx={{ 
                             display: { xs: 'flex', md: 'none' },
                             position: 'relative',
@@ -576,7 +562,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                             </IconButton>
                         </Box>
 
-                        {/* Right Auth Section - Hidden on small screens, only show on medium and up */}
                         <Box sx={{ 
                             display: { xs: 'none', md: 'flex' }, 
                             alignItems: 'center', 
@@ -703,7 +688,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 </Container>
             </AppBar>
 
-            {/* Mobile Drawer */}
             <Drawer
                 variant="temporary"
                 open={mobileOpen}
@@ -726,7 +710,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
 
 
 
-            {/* Stats Menu */}
             <Menu
                 anchorEl={statsMenuAnchor}
                 open={Boolean(statsMenuAnchor)}
@@ -779,7 +762,6 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 ))}
             </Menu>
 
-            {/* User Menu */}
             <Menu
                 anchorEl={userMenuAnchor}
                 open={Boolean(userMenuAnchor)}

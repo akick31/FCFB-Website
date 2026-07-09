@@ -56,7 +56,6 @@ const RankingsTable = ({ teams, rankingType }) => {
 
     return (
         <Box>
-            {/* Rankings Header */}
             <Box sx={{ mb: 3, textAlign: 'center' }}>
                 <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                     {getRankingDisplayName(rankingType)}
@@ -79,7 +78,6 @@ const RankingsTable = ({ teams, rankingType }) => {
                 }}
             >
                 <Table size="small">
-                    {/* Table Header */}
                     <TableHead sx={{ 
                         backgroundColor: 'primary.main',
                         '& .MuiTableCell-head': {
@@ -98,7 +96,6 @@ const RankingsTable = ({ teams, rankingType }) => {
                         </TableRow>
                     </TableHead>
 
-                    {/* Table Body */}
                     <TableBody>
                         {teams.map((team) => {
                             const ranking = getRankingValue(team, rankingType);
@@ -124,7 +121,6 @@ const RankingsTable = ({ teams, rankingType }) => {
                                         }
                                     }}
                                 >
-                                    {/* Rank */}
                                     <TableCell sx={{ padding: '8px', textAlign: 'center' }}>
                                         <Box sx={{ 
                                             display: 'flex', 
@@ -146,7 +142,6 @@ const RankingsTable = ({ teams, rankingType }) => {
                                         </Box>
                                     </TableCell>
 
-                                    {/* Team (Logo + Name) */}
                                     <TableCell sx={{ padding: '8px' }}>
                                         <Box sx={{
                                             display: 'flex',
@@ -192,7 +187,6 @@ const RankingsTable = ({ teams, rankingType }) => {
                                         </Box>
                                     </TableCell>
 
-                                    {/* Conference */}
                                     <TableCell sx={{ padding: '8px' }}>
                                         {(() => {
                                             const confData = conferencesList.find(c => c.value === team.conference);
@@ -210,14 +204,12 @@ const RankingsTable = ({ teams, rankingType }) => {
                                         })()}
                                     </TableCell>
 
-                                    {/* Record */}
                                     <TableCell sx={{ padding: '8px', textAlign: 'center' }}>
                                         <Typography variant="body2" sx={{ fontWeight: 'medium', fontSize: '0.8rem' }}>
                                             {overallWins}-{overallLosses}
                                         </Typography>
                                     </TableCell>
 
-                                    {/* ELO */}
                                     <TableCell sx={{ padding: '8px', textAlign: 'center' }}>
                                         <Typography variant="body2" sx={{ fontWeight: 'medium', fontSize: '0.8rem' }}>
                                             {team.current_elo !== null && team.current_elo !== undefined ? 

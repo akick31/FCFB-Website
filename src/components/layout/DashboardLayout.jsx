@@ -122,7 +122,6 @@ const DashboardLayout = ({
                         </ListItemButton>
                     </ListItem>
                 ))}
-                {/* Back to Home option for admin pages */}
                 {hideHeader && (
                     <ListItem disablePadding>
                         <ListItemButton
@@ -159,7 +158,6 @@ const DashboardLayout = ({
 
     return (
         <Box sx={{ display: 'flex', ...sx }}>
-            {/* Mobile AppBar with hamburger menu */}
             {isMobile && (
                 <AppBar
                     position="fixed"
@@ -188,7 +186,6 @@ const DashboardLayout = ({
                 </AppBar>
             )}
 
-            {/* Desktop AppBar */}
             {!hideHeader && !isMobile && (
                 <AppBar
                     position="fixed"
@@ -222,7 +219,6 @@ const DashboardLayout = ({
                 component="nav"
                 sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
             >
-                {/* Mobile drawer */}
                 <Drawer
                     variant="temporary"
                     open={mobileOpen}
@@ -242,7 +238,6 @@ const DashboardLayout = ({
                     {drawer}
                 </Drawer>
                 
-                {/* Desktop drawer */}
                 <Drawer
                     variant="permanent"
                     sx={{
@@ -266,9 +261,7 @@ const DashboardLayout = ({
                     flexGrow: 1,
                     p: 3,
                     width: { md: `calc(100% - ${drawerWidth}px)` },
-                    // A fixed AppBar renders on mobile regardless of hideHeader (it's the only
-                    // way to open the nav drawer there), so content needs top clearance for it
-                    // even when the desktop header is hidden.
+                    // Mobile always renders a fixed AppBar (it's the only way to open the nav drawer there)
                     mt: (isMobile || !hideHeader) ? 10 : 0,
                 }}
             >

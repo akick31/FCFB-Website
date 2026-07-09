@@ -50,16 +50,16 @@ export const getStatusColor = (status) => {
     if (!status) return '#757575';
     
     const statusColors = {
-        'IN_PROGRESS': '#FF5722',        // Gold for live games
-        'HALFTIME': '#FF9800',           // Orange for halftime
-        'OVERTIME': '#FFD700',           // Red for overtime
-        'OPENING_KICKOFF': '#9C27B0',    // Purple for kickoff
-        'PREGAME': '#2196F3',            // Blue for scheduled
-        'FINAL': '#4CAF50',              // Green for completed
-        'END_OF_REGULATION': '#4CAF50'   // Green for completed
+        'IN_PROGRESS': '#FF5722',
+        'HALFTIME': '#FF9800',
+        'OVERTIME': '#FFD700',
+        'OPENING_KICKOFF': '#9C27B0',
+        'PREGAME': '#2196F3',
+        'FINAL': '#4CAF50',
+        'END_OF_REGULATION': '#4CAF50'
     };
-    
-    return statusColors[status] || '#757575'; // Gray for unknown
+
+    return statusColors[status] || '#757575';
 };
 
 export const formatScoreboardQuarter = (quarter) => {

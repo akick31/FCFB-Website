@@ -160,7 +160,7 @@ const ScatterPlotChart = ({
         const finalXDomain = zoomDomain.x || [xResult.domainMin, xResult.domainMax];
         const finalYDomain = zoomDomain.y || [yResult.domainMin, yResult.domainMax];
 
-        // FIXED: Strict tick filtering to prevent ticks outside domain
+        // Ticks are filtered strictly to the domain since recharts renders ticks outside it otherwise
         const xDomainMin = Math.min(...finalXDomain);
         const xDomainMax = Math.max(...finalXDomain);
         const yDomainMin = Math.min(...finalYDomain);
@@ -217,17 +217,15 @@ const ScatterPlotChart = ({
         setZoomDomain({ x: null, y: null });
     }, []);
 
-    // FIXED: Corrected vertical drag - drag down moves viewport up
     const handleDrag = useCallback((deltaX, deltaY, containerWidth, containerHeight) => {
         const currentXDomain = zoomDomainRef.current.x || [baseRanges.xMin, baseRanges.xMax];
         const currentYDomain = zoomDomainRef.current.y || [baseRanges.yMin, baseRanges.yMax];
-        
+
         const xRange = currentXDomain[1] - currentXDomain[0];
         const yRange = currentYDomain[1] - currentYDomain[0];
-        
-        // Horizontal: drag right (+deltaX) = move viewport right (+panX)
+
         const panX = (deltaX / containerWidth) * xRange;
-        // FIXED: Vertical: drag down (+deltaY) = move viewport up (+panY to show higher values)
+        // Drag down (+deltaY) pans the viewport up (+panY) to reveal higher values
         const panY = (deltaY / containerHeight) * yRange;
         
         const newXDomain = [currentXDomain[0] + panX, currentXDomain[1] + panX];
@@ -441,8 +439,6 @@ const ScatterPlotChart = ({
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     
-    // On mobile, fit to viewport width and use a height that fits on screen
-    // Maintains aspect ratio while being fully visible
     const chartWidth = isMobile ? '100%' : '100%';
     const chartHeight = isMobile ? 400 : 500;
 

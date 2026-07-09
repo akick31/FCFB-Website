@@ -5,9 +5,11 @@ import StandingsTable from '../../components/team/StandingsTable';
 import { getAllTeams } from '../../api/teamApi';
 import { formatTeamStats } from '../../utils/teamDataUtils';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSeo } from '../../hooks/useSeo';
+import { ROUTE_META } from '../../routeMeta';
 
 const Standings = () => {
-    useEffect(() => { document.title = 'FCFB | Standings'; }, []);
+    useSeo(ROUTE_META['/standings']);
 
     const { conference: confParam } = useParams();
     const navigate = useNavigate();
@@ -38,8 +40,7 @@ const Standings = () => {
         try {
             setLoading(true);
             const teamsData = await getAllTeams();
-            
-            // Add formatted stats to each team
+
             const teamsWithStats = teamsData.map(team => ({
                 ...team,
                 stats: formatTeamStats(team)
@@ -65,7 +66,6 @@ const Standings = () => {
 
     const sortTeamsByStandings = (teamsToSort) => {
         return teamsToSort.sort((a, b) => {
-            // First sort by conference win percentage
             const aConfWins = a.current_conference_wins || 0;
             const aConfLosses = a.current_conference_losses || 0;
             const bConfWins = b.current_conference_wins || 0;
@@ -77,8 +77,7 @@ const Standings = () => {
             if (bConfWinPct !== aConfWinPct) {
                 return bConfWinPct - aConfWinPct;
             }
-            
-            // If win percentage is tied, sort alphabetically by team name
+
             return a.name.localeCompare(b.name);
         });
     };
@@ -113,7 +112,6 @@ const Standings = () => {
                 pt: { xs: 8, md: 10 },
                 pb: { xs: 4, md: 6 }
             }}>
-                {/* Page Header */}
                 <Box sx={{ mb: 4, textAlign: 'center' }}>
                     <Typography
                         variant="h3"
@@ -137,8 +135,7 @@ const Standings = () => {
                     </Typography>
                 </Box>
 
-                {/* Conference Filter */}
-                <Box sx={{ 
+                <Box sx={{
                     mb: 4,
                     display: 'flex',
                     justifyContent: 'center',
@@ -151,7 +148,6 @@ const Standings = () => {
                     />
                 </Box>
 
-                {/* Standings Table */}
                 {sortedTeams.length > 0 ? (
                     <StandingsTable 
                         teams={sortedTeams}

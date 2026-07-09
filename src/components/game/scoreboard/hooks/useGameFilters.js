@@ -3,13 +3,10 @@ import { useState } from 'react';
 export const useGameFilters = (initialFilters, setParentFilters) => {
     const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
-    const handleFilterChange = () => {
-        // This is called when individual filters change in the FilterMenu
-        // We don't need to do anything here as the FilterMenu manages its own state
-    };
+    // No-op: FilterMenu manages its own state for individual filter changes
+    const handleFilterChange = () => {};
 
     const handleFilterApply = (newFilters) => {
-        // Apply the new filters to the parent component
         if (setParentFilters) {
             setParentFilters(prev => ({ ...prev, ...newFilters, page: 0 }));
         }

@@ -33,7 +33,7 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         return map;
     }, [teams]);
 
-    // FIXED: Filter to start at Season 11, Week 5 only
+    // Only Season 11 Week 5 onward is shown
     const filteredData = useMemo(() => {
         if (!data || data.length === 0) return [];
         
@@ -127,9 +127,7 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         }
     }, [filteredData, showAllTeams]);
 
-    // FIXED: Don't set initial zoom - let users see full timeline and scroll to current
-    // Users can use the brush or zoom buttons to focus on recent weeks
-
+    // No initial zoom - users see the full timeline and can use the brush/zoom buttons to focus in
     if (!filteredData || filteredData.length === 0) {
         return (
             <Paper sx={{ p: 3, textAlign: 'center' }}>
@@ -140,23 +138,19 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         );
     }
 
-    // FIXED: Better tooltip that finds the actually hovered line
     const AllTeamsTooltip = ({ active, payload }) => {
         if (!active || !payload || payload.length === 0) return null;
 
-        // Filter to only lines with actual values (non-null)
         const validPayloads = payload.filter(
             p => p.value != null && p.value !== undefined && p.dataKey && p.dataKey.includes('_elo')
         );
 
         if (validPayloads.length === 0) return null;
 
-        // FIXED: Find the hovered team by looking for activeDot property
-        // Recharts sets activeDot: true on the actually hovered line
+        // Recharts sets activeDot: true on the hovered line; falls back to the first valid payload
+        // since showAllTeams mode with shared=false should only ever have one anyway
         let hoveredPayload = validPayloads.find(p => p.dataKey && p.name) || validPayloads[0];
-        
-        // If we can't determine from activeDot, just use the first valid one
-        // (In showAllTeams mode with shared=false, there should only be one anyway)
+
         const teamName = hoveredPayload.dataKey.replace('_elo', '');
         const teamInfo = teamMap[teamName];
         
@@ -350,7 +344,6 @@ const EloHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     
-    // On mobile, fit to viewport width and use a height that fits on screen
     const chartWidth = isMobile ? '100%' : '100%';
     const chartHeight = isMobile ? 400 : (showAllTeams ? 600 : 500);
 

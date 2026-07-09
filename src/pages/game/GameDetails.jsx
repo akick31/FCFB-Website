@@ -23,12 +23,13 @@ import {
     ResponsiveContainer
 } from 'recharts';
 import cfpLogo from '../../assets/images/playoff.png';
+import { useSeo } from '../../hooks/useSeo';
 
 const GameDetails = ({ isAdmin }) => {
     const theme = useTheme();
     const navigate = useNavigate();
     const { gameId } = useParams();
-    
+
     const [plays, setPlays] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -47,6 +48,13 @@ const GameDetails = ({ isAdmin }) => {
     const [endingGame, setEndingGame] = useState(false);
     const [chewingGame, setChewingGame] = useState(false);
     const [gameControlError, setGameControlError] = useState(null);
+
+    useSeo({
+        title: game ? `${game.away_team} vs ${game.home_team} | Fake College Football` : 'Game Details | Fake College Football',
+        description: game
+            ? `Live play-by-play, box score, and stats for ${game.away_team} vs ${game.home_team} in Fake College Football.`
+            : 'Live play-by-play, box score, and stats for Fake College Football games.',
+    });
 
     useEffect(() => {
         let cancelled = false;
@@ -67,7 +75,6 @@ const GameDetails = ({ isAdmin }) => {
                 if (cancelled) return;
                 setHomeTeam(homeTeamResponse);
                 setAwayTeam(awayTeamResponse);
-                document.title = `FCFB | ${gameResponse.away_team} vs ${gameResponse.home_team}`;
 
                 const [homeStats, awayStats] = await Promise.all([
                     getGameStatsByIdAndTeam(gameId, gameResponse.home_team),
@@ -90,7 +97,6 @@ const GameDetails = ({ isAdmin }) => {
         return () => { cancelled = true; };
     }, [gameId]);
 
-    // Fetch plays for the game
     useEffect(() => {
         let cancelled = false;
         const fetchPlays = async () => {
@@ -112,7 +118,6 @@ const GameDetails = ({ isAdmin }) => {
         return () => { cancelled = true; };
     }, [game, gameId, orderBy, order]);
 
-    // Compute chart data from plays (sorted ascending by play_number)
     const chartData = useMemo(() => {
         if (!plays || plays.length === 0) return { scoreData: [], wpData: [] };
 
@@ -139,20 +144,18 @@ const GameDetails = ({ isAdmin }) => {
                     wpData.push({ play: label, homeWP: rounded });
                 }
             } else if (lastHomeWP != null) {
-                // Carry forward previous WP for plays without win_probability
-                // (e.g. delay of game penalties)
+                // Plays with no win_probability (e.g. delay of game penalties) carry forward the last known value.
                 wpData.push({ play: label, homeWP: lastHomeWP });
             }
         });
 
-        // Insert interpolation points at 50% crossings and add clamped keys
         const processedWp = [];
         for (let i = 0; i < wpData.length; i++) {
             const curr = wpData[i];
             if (i > 0) {
                 const prev = wpData[i - 1];
                 if ((prev.homeWP - 50) * (curr.homeWP - 50) < 0) {
-                    // Crossing point: both line segments meet here
+                    // Interpolated point where the WP line crosses 50%, so both chart segments meet exactly at the midline.
                     processedWp.push({
                         play: `${prev.play}x`, homeWP: 50,
                         homeAbove: 50, homeBelow: 50,
@@ -192,7 +195,6 @@ const GameDetails = ({ isAdmin }) => {
         
         try {
             await generateGameStats(parseInt(gameId));
-            // Optionally refresh the game data after generation
             window.location.reload();
         } catch (error) {
             console.error('Error generating game stats:', error);
@@ -210,7 +212,6 @@ const GameDetails = ({ isAdmin }) => {
         
         try {
             await endGameByGameId(parseInt(gameId));
-            // Refresh the game data after ending
             window.location.reload();
         } catch (error) {
             console.error('Error ending game:', error);
@@ -228,7 +229,6 @@ const GameDetails = ({ isAdmin }) => {
         
         try {
             await chewGameByGameId(parseInt(gameId));
-            // Refresh the game data after chewing
             window.location.reload();
         } catch (error) {
             console.error('Error chewing game:', error);
@@ -265,7 +265,6 @@ const GameDetails = ({ isAdmin }) => {
             title=""
             subtitle=""
         >
-            {/* Back Button */}
             <Box component="a" href="/scoreboard" onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/scoreboard'); } }} sx={{ mb: 3, display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
                 <IconButton
                     sx={{
@@ -280,7 +279,6 @@ const GameDetails = ({ isAdmin }) => {
                 </Typography>
             </Box>
 
-            {/* Game Header with Scorebug */}
             <Box sx={{
                 mb: 4,
                 p: { xs: 2, md: 4 },
@@ -290,7 +288,6 @@ const GameDetails = ({ isAdmin }) => {
                 boxShadow: theme.shadows[2],
                 textAlign: 'center'
             }}>
-                {/* Postseason logo + name above title */}
                 {(game?.game_type === 'BOWL' || game?.game_type === 'PLAYOFFS' || game?.game_type === 'CONFERENCE_CHAMPIONSHIP' || game?.game_type === 'NATIONAL_CHAMPIONSHIP') && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
                         {(() => {
@@ -344,7 +341,6 @@ const GameDetails = ({ isAdmin }) => {
                     </Box>
                 </Typography>
 
-                {/* Season, Week, Game Type, and Spread Chips */}
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mb: 1, flexWrap: 'wrap' }}>
                     {game.season && (
                         <Chip
@@ -397,8 +393,7 @@ const GameDetails = ({ isAdmin }) => {
                 </Box>
 
 
-                {/* Game ID and Number of Plays */}
-                <Box sx={{ 
+                <Box sx={{
                     display: 'flex', 
                     justifyContent: 'center', 
                     alignItems: 'center', 
@@ -426,9 +421,8 @@ const GameDetails = ({ isAdmin }) => {
                     </Typography>
                 </Box>
 
-                {/* Admin Controls */}
                 {isAdmin && (
-                    <Box sx={{ 
+                    <Box sx={{
                         display: 'flex', 
                         justifyContent: 'center', 
                         alignItems: 'center', 
@@ -519,7 +513,6 @@ const GameDetails = ({ isAdmin }) => {
                 )}
             </Box>
 
-            {/* ─── Charts: Score + Win Probability ─── */}
             {(chartData.scoreData.length > 0 || chartData.wpData.length > 0) && (() => {
                 const homeColor = homeTeam?.primary_color || theme.palette.primary.main;
                 const awayColor = awayTeam?.primary_color || theme.palette.error.main;
@@ -527,7 +520,6 @@ const GameDetails = ({ isAdmin }) => {
                 return (
                     <Box sx={{ mb: 4 }}>
                         <Grid container spacing={3}>
-                            {/* Score Chart */}
                             {chartData.scoreData.length > 0 && (
                                 <Grid item xs={12} md={6}>
                                     <Card sx={{ borderRadius: 3, boxShadow: theme.shadows[1] }}>
@@ -563,7 +555,6 @@ const GameDetails = ({ isAdmin }) => {
                                 </Grid>
                             )}
 
-                            {/* Win Probability Chart */}
                             {chartData.wpData.length > 0 && (
                                 <Grid item xs={12} md={6}>
                                     <Card sx={{ borderRadius: 3, boxShadow: theme.shadows[1] }}>
@@ -619,7 +610,6 @@ const GameDetails = ({ isAdmin }) => {
                 );
             })()}
 
-            {/* Game Info and Stats */}
             <Box sx={{ mb: 4 }}>
                 <Grid container spacing={4}>
                     <Grid item xs={12} md={6}>
@@ -660,7 +650,6 @@ const GameDetails = ({ isAdmin }) => {
                 </Grid>
             </Box>
 
-            {/* Plays Table */}
             <Card sx={{ p: 0, borderRadius: 3, boxShadow: theme.shadows[2], overflow: 'hidden' }}>
                 <CardContent sx={{ p: { xs: 2, md: 3 } }}>
                     <Typography variant="h5" sx={{

@@ -1,6 +1,5 @@
 import apiClient from './apiClient';
 
-// Records API functions - matches RecordsController
 export const getFilteredRecords = async (season = null, conference = null, recordType = null, recordName = null, page = 0, size = 20) => {
     try {
         const params = { page, size };

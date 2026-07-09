@@ -13,26 +13,19 @@ import { getRankingsHistory } from '../../../api/rankingsHistoryApi.jsx';
 import RankingsHistoryChart from '../RankingsHistoryChart';
 import RankingsHistoryFilters from '../RankingsHistoryFilters';
 
-/**
- * Rankings History Tab Component
- * Displays coaches poll ranking history for teams
- */
 const RankingsHistoryTab = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [rankingsData, setRankingsData] = useState([]);
-    
-    // Filter states
+
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [selectedSeason, setSelectedSeason] = useState('all-time');
     const [viewMode, setViewMode] = useState('all-time');
     const [showAllTeams, setShowAllTeams] = useState(true);
-    
-    // Data states
+
     const [teams, setTeams] = useState([]);
     const [seasons, setSeasons] = useState([]);
 
-    // Initialize data
     useEffect(() => {
         const initData = async () => {
             try {
@@ -61,7 +54,6 @@ const RankingsHistoryTab = () => {
         initData();
     }, []);
 
-    // Fetch rankings history
     const fetchRankingsHistory = async () => {
         if (!showAllTeams && !selectedTeam) {
             setError('Please select a team or enable "Show All Teams"');
@@ -88,7 +80,6 @@ const RankingsHistoryTab = () => {
         }
     };
 
-    // Auto-fetch when team/season changes (after initial load)
     useEffect(() => {
         if ((showAllTeams || selectedTeam) && !loading && teams.length > 0) {
             fetchRankingsHistory();
@@ -101,7 +92,6 @@ const RankingsHistoryTab = () => {
 
     return (
         <Box>
-            {/* Filters */}
             <RankingsHistoryFilters
                 selectedTeam={selectedTeam}
                 setSelectedTeam={setSelectedTeam}
@@ -117,21 +107,18 @@ const RankingsHistoryTab = () => {
                 loading={loading}
             />
 
-            {/* Error Display */}
             {error && (
                 <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
                     {error}
                 </Alert>
             )}
 
-            {/* Loading State */}
             {loading && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                     <CircularProgress size={60} />
                 </Box>
             )}
 
-            {/* Chart */}
             {!loading && !error && rankingsData.length > 0 && (
                 <Paper sx={{ p: 3 }}>
                     <Typography variant="h6" gutterBottom>
@@ -147,7 +134,6 @@ const RankingsHistoryTab = () => {
                 </Paper>
             )}
 
-            {/* No Data State */}
             {!loading && !error && rankingsData.length === 0 && (showAllTeams || selectedTeam) && (
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
                     <Typography variant="body1" color="text.secondary">
@@ -158,7 +144,6 @@ const RankingsHistoryTab = () => {
                 </Paper>
             )}
 
-            {/* Initial State */}
             {!loading && !error && !showAllTeams && !selectedTeam && (
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
                     <Typography variant="body1" color="text.secondary">

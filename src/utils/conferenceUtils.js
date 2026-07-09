@@ -1,20 +1,14 @@
-// Conference name mapping for proper display formatting
 const CONFERENCE_MAPPINGS = {
-    // Power 5 Conferences
     'BIG_12': 'Big 12',
     'SEC': 'SEC',
     'ACC': 'ACC',
     'PAC_12': 'Pac-12',
     'BIG_TEN': 'Big Ten',
-    
-    // Group of 5 Conferences
     'AAC': 'American',
     'CUSA': 'Conference USA',
     'MAC': 'MAC',
     'MWC': 'Mountain West',
     'SUN_BELT': 'Sun Belt',
-    
-    // FCS Conferences
     'SOUTHLAND': 'Southland',
     'MISSOURI_VALLEY': 'Missouri Valley',
     'BIG_SKY': 'Big Sky',
@@ -24,8 +18,6 @@ const CONFERENCE_MAPPINGS = {
     'NORTHEAST': 'Northeast',
     'PIONEER': 'Pioneer League',
     'IVY': 'Ivy League',
-    
-    // Other Conferences
     'INDEPENDENT': 'Independent',
     'FCS_INDEPENDENT': 'FCS Independent',
     'D2': 'Division II',
@@ -35,13 +27,11 @@ const CONFERENCE_MAPPINGS = {
 
 export const formatConferenceName = (conference) => {
     if (!conference) return 'Independent';
-    
-    // Check if we have a direct mapping
+
     if (CONFERENCE_MAPPINGS[conference]) {
         return CONFERENCE_MAPPINGS[conference];
     }
-    
-    // Fallback formatting for unmapped conferences
+
     return conference
         .replace(/_/g, ' ')
         .replace(/\b\w/g, l => l.toUpperCase())
@@ -75,4 +65,4 @@ export const formatConferenceName = (conference) => {
 
 export const getUniqueConferences = (teams) => {
     return [...new Set(teams.map(team => team.conference).filter(Boolean))].sort();
-}; 
+};
