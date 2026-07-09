@@ -21,6 +21,7 @@ import StyledTable from '../../components/ui/StyledTable';
 import { useNavigate } from 'react-router-dom';
 import { getNewSignups } from '../../api/newSignupsApi';
 import { getAllTeams } from '../../api/teamApi';
+import { isRealTeam } from '../../utils/teamDataUtils';
 import { formatPosition, formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 import { conferences as conferencesList } from '../../components/constants/conferences';
 import { adminNavigationItems } from '../../config/adminNavigation.jsx';
@@ -91,7 +92,7 @@ const Admin = ({ user }) => {
     }));
 
     const transformedOpenTeams = openTeams
-        .filter(team => !team.is_taken && team.active)
+        .filter(team => !team.is_taken && team.active && isRealTeam(team))
         .map(team => ({
             ...team,
             conference: (() => {

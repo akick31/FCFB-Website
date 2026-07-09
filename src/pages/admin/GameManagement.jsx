@@ -46,6 +46,7 @@ import {
 } from '../../api/gameApi';
 import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
 import { getAllTeams } from '../../api/teamApi';
+import { isRealTeam } from '../../utils/teamDataUtils';
 import {
     getScheduleBySeasonAndWeek,
     startGameWeek,
@@ -226,7 +227,7 @@ const GameManagement = () => {
         const loadTeams = async () => {
             try {
                 const teams = await getAllTeams();
-                setAvailableTeams(teams);
+                setAvailableTeams(teams.filter(isRealTeam));
             } catch (error) {
                 console.error('Failed to load teams:', error);
             }
@@ -722,7 +723,7 @@ const GameManagement = () => {
                                         onClick={async () => {
                                             try {
                                                 const teams = await getAllTeams();
-                                                setAvailableTeams(teams);
+                                                setAvailableTeams(teams.filter(isRealTeam));
                                                 setStartGameDialogOpen(true);
                                             } catch (error) {
                                                 setError(`Failed to load teams: ${error.message}`);
@@ -744,7 +745,7 @@ const GameManagement = () => {
                                         onClick={async () => {
                                             try {
                                                 const teams = await getAllTeams();
-                                                setAvailableTeams(teams);
+                                                setAvailableTeams(teams.filter(isRealTeam));
                                                 setScrimmageDialogOpen(true);
                                             } catch (error) {
                                                 setError(`Failed to load teams: ${error.message}`);
@@ -766,7 +767,7 @@ const GameManagement = () => {
                                         onClick={async () => {
                                             try {
                                                 const teams = await getAllTeams();
-                                                setAvailableTeams(teams);
+                                                setAvailableTeams(teams.filter(isRealTeam));
                                                 setScrimmageTeams(prev => ({ ...prev, scrimmageType: 'Overtime' }));
                                                 setScrimmageDialogOpen(true);
                                             } catch (error) {

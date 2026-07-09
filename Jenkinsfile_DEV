@@ -65,7 +65,8 @@ pipeline {
                         docker rm ${CONTAINER_NAME} || echo "No container to remove."
                         docker tag ${IMAGE_NAME}:new ${IMAGE_NAME}:latest
                         docker run -d --name ${CONTAINER_NAME} \
-                            --memory=256m \
+                            --restart unless-stopped \
+                            --memory=512m \
                             -v /var/images:/app/images \
                             -p 462:462 \
                             --env-file .env \

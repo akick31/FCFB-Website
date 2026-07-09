@@ -31,6 +31,9 @@ import { formatConference } from '../../utils/formatText';
 import { conferences as conferencesList } from '../../components/constants/conferences';
 import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 import { CONFERENCES } from '../../constants/teamEnums';
+import { isRealTeam } from '../../utils/teamDataUtils';
+
+const REAL_CONFERENCES = CONFERENCES.filter(c => c !== 'FAKE_TEAM');
 
 const CoachManagement = ({ user }) => {
     const navigate = useNavigate();
@@ -90,7 +93,7 @@ const CoachManagement = ({ user }) => {
     }, [user]);
 
     useEffect(() => {
-        let filtered = teams;
+        let filtered = teams.filter(isRealTeam);
 
         if (conferenceFilter !== 'ALL') {
             filtered = filtered.filter(team => team.conference === conferenceFilter);
@@ -312,7 +315,7 @@ const CoachManagement = ({ user }) => {
                                     }}
                                 >
                                     <MenuItem value="ALL">All Conferences</MenuItem>
-                                    {CONFERENCES.map(conference => (
+                                    {REAL_CONFERENCES.map(conference => (
                                         <MenuItem key={conference} value={conference}>
                                             {formatConference(conference)}
                                         </MenuItem>

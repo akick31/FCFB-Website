@@ -31,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getAllTeams } from '../../api/teamApi';
+import { isRealTeam } from '../../utils/teamDataUtils';
 import {
     getScheduleBySeasonAndTeam,
     getScheduleBySeason,
@@ -903,7 +904,7 @@ const Scheduling = () => {
 
                             <Autocomplete
                                 options={allTeams.filter(t => {
-                                    if (!t.active) return false;
+                                    if (!t.active || !isRealTeam(t)) return false;
                                     if (addGameWeek && addGameWeek <= TOTAL_WEEKS) {
                                         return !teamWeekOccupiedAll.has(`${t.name}|${addGameWeek}`);
                                     }
@@ -931,11 +932,11 @@ const Scheduling = () => {
                                 options={(() => {
                                     let opts;
                                     if (addGameType === 'OUT_OF_CONFERENCE') {
-                                        opts = allTeams.filter(t => t.active && t.conference !== selectedOOCTeam?.conference);
+                                        opts = allTeams.filter(t => t.active && isRealTeam(t) && t.conference !== selectedOOCTeam?.conference);
                                     } else if (addGameType === 'CONFERENCE_GAME') {
                                         opts = conferenceTeams;
                                     } else {
-                                        opts = allTeams.filter(t => t.active);
+                                        opts = allTeams.filter(t => t.active && isRealTeam(t));
                                     }
                                     if (addGameWeek && addGameWeek <= TOTAL_WEEKS) {
                                         opts = opts.filter(t => !teamWeekOccupiedAll.has(`${t.name}|${addGameWeek}`));

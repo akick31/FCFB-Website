@@ -18,6 +18,7 @@ import { getFilteredSeasonStats } from '../../../api/seasonStatsApi';
 import { getAllTeams } from '../../../api/teamApi';
 import { getAllSeasons } from '../../../api/seasonApi';
 import { getCurrentSeasonOrLatest } from '../../../api/seasonApi';
+import { isRealTeam } from '../../../utils/teamDataUtils';
 import ScatterPlotChart from '../ScatterPlotChart';
 
 const ScatterPlotsTab = () => {
@@ -44,7 +45,7 @@ const ScatterPlotsTab = () => {
                     getCurrentSeasonOrLatest(),
                 ]);
                 
-                setTeams(teamsData.filter(t => t.active).sort((a, b) => (a.name || '').localeCompare(b.name || '')));
+                setTeams(teamsData.filter(t => t.active && isRealTeam(t)).sort((a, b) => (a.name || '').localeCompare(b.name || '')));
                 const seasonNumbers = seasonsData.map(s => s.season_number || s.seasonNumber).sort((a, b) => b - a);
                 setSeasons(seasonNumbers);
                 

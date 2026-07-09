@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getAllTeams } from '../../api/teamApi';
+import { isRealTeam } from '../../utils/teamDataUtils';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
@@ -45,7 +46,7 @@ const SeasonStats = ({ user }) => {
         const fetchInitialData = async () => {
             try {
                 setLoading(true);
-                const teamsData = await getAllTeams();
+                const teamsData = (await getAllTeams()).filter(isRealTeam);
                 setTeams(teamsData);
 
                 let defaultTeam = null;

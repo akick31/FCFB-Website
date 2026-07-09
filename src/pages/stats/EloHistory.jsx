@@ -13,6 +13,7 @@ import { getAllSeasons } from '../../api/seasonApi';
 import { getCurrentSeasonOrLatest } from '../../api/seasonApi';
 import EloHistoryChart from '../../components/stats/EloHistoryChart';
 import EloHistoryFilters from '../../components/stats/EloHistoryFilters';
+import { isRealTeam } from '../../utils/teamDataUtils';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
 
@@ -41,7 +42,7 @@ const EloHistory = () => {
                     getCurrentSeasonOrLatest(),
                 ]);
                 
-                setTeams(teamsData.filter(t => t.active).sort((a, b) => (a.name || '').localeCompare(b.name || '')));
+                setTeams(teamsData.filter(t => t.active && isRealTeam(t)).sort((a, b) => (a.name || '').localeCompare(b.name || '')));
                 const seasonNumbers = seasonsData.map(s => s.season_number || s.seasonNumber).sort((a, b) => b - a);
                 setSeasons(seasonNumbers);
 

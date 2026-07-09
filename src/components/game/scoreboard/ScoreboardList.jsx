@@ -29,6 +29,7 @@ import { getAllTeams } from '../../../api/teamApi';
 import {
     formatGameType
 } from '../../../utils/gameUtils';
+import { isRealTeam } from '../../../utils/teamDataUtils';
 import { SCOREBOARD_CONSTANTS } from './utils/scoreboardConstants';
 import LiveGameCard from './LiveGameCard';
 
@@ -66,7 +67,7 @@ const ScoreboardList = ({
         const fetchTeams = async () => {
             try {
                 const teams = await getAllTeams();
-                setAllTeams(teams.filter(t => t.active));
+                setAllTeams(teams.filter(t => t.active && isRealTeam(t)));
             } catch (err) {
                 console.error('Failed to fetch teams for search:', err);
             }

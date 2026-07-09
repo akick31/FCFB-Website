@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Container, CircularProgress, Alert, FormControl, Select, MenuItem } from '@mui/material';
 import RankingsTable from '../../components/team/RankingsTable';
 import { getAllTeams } from '../../api/teamApi';
+import { isRealTeam } from '../../utils/teamDataUtils';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
@@ -83,12 +84,12 @@ const Rankings = () => {
         
         if (selectedRanking === 'COACHES_POLL') {
             filtered = teams
-                .filter(team => team.coaches_poll_ranking !== null && team.coaches_poll_ranking !== undefined)
+                .filter(team => isRealTeam(team) && team.coaches_poll_ranking !== null && team.coaches_poll_ranking !== undefined)
                 .sort((a, b) => a.coaches_poll_ranking - b.coaches_poll_ranking)
                 .slice(0, 25);
         } else if (selectedRanking === 'PLAYOFF_RANKINGS') {
             filtered = teams
-                .filter(team => team.playoff_committee_ranking !== null && team.playoff_committee_ranking !== undefined)
+                .filter(team => isRealTeam(team) && team.playoff_committee_ranking !== null && team.playoff_committee_ranking !== undefined)
                 .sort((a, b) => a.playoff_committee_ranking - b.playoff_committee_ranking)
                 .slice(0, 25);
         }

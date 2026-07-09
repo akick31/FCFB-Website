@@ -64,5 +64,5 @@ export const formatConferenceName = (conference) => {
 };
 
 export const getUniqueConferences = (teams) => {
-    return [...new Set(teams.map(team => team.conference).filter(Boolean))].sort();
+    return [...new Set(teams.filter(team => team.conference !== 'FAKE_TEAM').map(team => team.conference).filter(Boolean))].sort();
 };

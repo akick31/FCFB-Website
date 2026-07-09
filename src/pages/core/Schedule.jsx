@@ -18,6 +18,7 @@ import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedul
 import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { getAllOngoingGames } from '../../api/gameApi';
 import { getStorageItem } from '../../utils/utils';
+import { isRealTeam } from '../../utils/teamDataUtils';
 import { conferences } from '../../components/constants/conferences';
 import TeamScheduleTable from '../../components/schedule/TeamScheduleTable';
 import ConferenceScheduleGrid from '../../components/schedule/ConferenceScheduleGrid';
@@ -79,7 +80,7 @@ const Schedule = () => {
 
     useEffect(() => {
         if (!teams.length) return;
-        const activeTeams = teams.filter(t => t.active);
+        const activeTeams = teams.filter(t => t.active && isRealTeam(t));
         if (tab === 'team' && selection) {
             const found = activeTeams.find(t => teamToSlug(t.name) === selection);
             if (found) setSelectedTeam(found);
@@ -128,7 +129,7 @@ const Schedule = () => {
                     setSeason(currentSeason);
                 }
 
-                const activeTeams = teamsData.filter(t => t.active).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                const activeTeams = teamsData.filter(t => t.active && isRealTeam(t)).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 if (tab === 'team' && selection) {
                     const found = activeTeams.find(t => teamToSlug(t.name) === selection);
                     setSelectedTeam(found || activeTeams[0] || null);

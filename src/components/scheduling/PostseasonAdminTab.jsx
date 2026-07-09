@@ -36,6 +36,7 @@ import { conferences } from '../constants/conferences';
 import Postseason from '../schedule/Postseason';
 import { R2_BYE_SEEDS, QF_SEED_GROUPS, SF_SEED_GROUPS, ROUND_LABELS, playoffWeekForRound, CFP_LOGO_URL } from '../constants/playoffBracket';
 import { field } from '../../utils/fieldHelper';
+import { isRealTeam } from '../../utils/teamDataUtils';
 
 // FBS Independent has no conference championship game
 const CCG_CONFERENCES = conferences.filter(c => c.value !== 'FBS_INDEPENDENT');
@@ -95,7 +96,7 @@ const PostseasonAdminTab = ({
 
     const getAvailablePlayoffTeams = (seedIndex) =>
         allTeams.filter(t => {
-            if (!t.active) return false;
+            if (!t.active || !isRealTeam(t)) return false;
             if (playoffTeams[seedIndex]?.name === t.name) return true;
             return !selectedPlayoffTeamNames.has(t.name);
         });
@@ -103,7 +104,7 @@ const PostseasonAdminTab = ({
     const ccgTeams = useMemo(() => {
         if (!ccgConference) return [];
         return allTeams
-            .filter(t => t.conference === ccgConference && t.active)
+            .filter(t => t.conference === ccgConference && t.active && isRealTeam(t))
             .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }, [ccgConference, allTeams]);
 

@@ -19,6 +19,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { formatGameType } from '../../utils/formatText';
 import { field } from '../../utils/fieldHelper';
+import { isRealTeam } from '../../utils/teamDataUtils';
 
 const GAME_TYPE_CHIP_COLORS = {
     CONFERENCE_GAME: 'primary',
@@ -111,7 +112,7 @@ const TeamScheduleTable = ({
         <>
             <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
                 <Autocomplete
-                    options={teams.filter(t => t.active)}
+                    options={teams.filter(t => t.active && isRealTeam(t))}
                     getOptionLabel={(option) => option.name || ''}
                     value={selectedTeam}
                     onChange={(_, newValue) => onTeamChange(newValue)}

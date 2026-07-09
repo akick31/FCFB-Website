@@ -10,6 +10,10 @@ export const isTeamAvailable = (team) => {
     return !team.is_taken;
 };
 
+export const isRealTeam = (team) => {
+    return team.conference !== 'FAKE_TEAM';
+};
+
 export const getTeamStatusText = (team) => {
     return team.is_taken ? 'Taken' : 'Available';
 };

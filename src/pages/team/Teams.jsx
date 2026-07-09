@@ -8,6 +8,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { getAllTeams } from '../../api/teamApi';
 import { formatConferenceName } from '../../utils/conferenceUtils';
+import { isRealTeam } from '../../utils/teamDataUtils';
 import { DEFAULT_TEAMS_PER_PAGE, TEAMS_PER_PAGE_OPTIONS, TEAM_STATUS } from '../../constants/teamConstants';
 import PageLayout from '../../components/layout/PageLayout';
 import StyledTable from '../../components/ui/StyledTable';
@@ -77,7 +78,7 @@ const Teams = () => {
     };
 
     useEffect(() => {
-        let filtered = teams;
+        let filtered = teams.filter(isRealTeam);
 
         if (searchTerm.trim() !== '') {
             filtered = filtered.filter(team =>
