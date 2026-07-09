@@ -1,5 +1,3 @@
-// Team enum constants for consistent use across the application
-
 export const OFFENSIVE_PLAYBOOKS = [
     'FLEXBONE',
     'AIR_RAID', 

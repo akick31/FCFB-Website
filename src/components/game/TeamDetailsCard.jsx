@@ -26,7 +26,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
         return `${wins}-${losses}`;
     };
 
-    // Get team colors with fallbacks
     const getTeamColors = (team) => {
         if (!team || !team.primaryColor) {
             return {
@@ -44,7 +43,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
     const teamColors = getTeamColors(team);
     const isHome = isHomeTeam;
     
-    // Get team data based on home/away
     const teamData = isHome ? {
         coaches: game.home_coaches,
         offensivePlaybook: game.home_offensive_playbook,
@@ -75,7 +73,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
             position: 'relative',
             ...sx
         }}>
-            {/* Header with team logo and name */}
             <Box
                 component={team?.id ? 'a' : 'div'}
                 href={team?.id ? `/team-details/${team.id}` : undefined}
@@ -90,7 +87,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                     '&:hover': team?.id ? { opacity: 0.9 } : {},
                 }}
             >
-                {/* Home/Away indicator - moved to top-left corner */}
                 <Box sx={{
                     position: 'absolute',
                     top: 6,
@@ -146,7 +142,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                 )}
             </Box>
 
-            {/* Team Stats Grid */}
             <Box sx={{ p: 1.9 }}>
                 <Box sx={{
                     display: 'grid',
@@ -154,7 +149,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                     gap: 1.9,
                     mb: 1.9
                 }}>
-                    {/* Overall Record */}
                     <Box sx={{
                         textAlign: 'center',
                         p: 1.4,
@@ -180,7 +174,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                         </Typography>
                     </Box>
 
-                    {/* Conference Record */}
                     <Box sx={{
                         textAlign: 'center',
                         p: 1.4,
@@ -207,7 +200,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                     </Box>
                 </Box>
 
-                {/* Ranking */}
                 <Box sx={{
                     textAlign: 'center',
                     mb: 1.9
@@ -233,7 +225,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                     />
                 </Box>
 
-                {/* ELO Rating */}
                 {team.current_elo !== null && team.current_elo !== undefined && (
                     <Box sx={{
                         textAlign: 'center',
@@ -261,7 +252,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                     </Box>
                 )}
 
-                {/* Playbooks */}
                 <Box sx={{ mb: 1.9, textAlign: 'center' }}>
                     <Typography variant="caption" sx={{
                         color: 'text.secondary',
@@ -300,7 +290,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                     </Box>
                 </Box>
 
-                {/* Coaches */}
                 {teamData.coaches && teamData.coaches.length > 0 && (
                     <Box sx={{ mb: 1.9 }}>
                         <Typography variant="caption" sx={{
@@ -352,7 +341,6 @@ const TeamDetailsCard = ({ team, game, isHomeTeam, sx = {} }) => {
                     </Box>
                 )}
 
-                {/* Conference */}
                 {team.conference && (
                     <Box sx={{ mt: 1.9, textAlign: 'center' }}>
                         <Typography variant="caption" sx={{

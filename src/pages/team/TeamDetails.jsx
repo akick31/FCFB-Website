@@ -42,6 +42,7 @@ import PageLayout from '../../components/layout/PageLayout';
 import LoadingSpinner from '../../components/icons/LoadingSpinner';
 import ErrorMessage from '../../components/message/ErrorMessage';
 import PlaybooksSection from '../../components/team/PlaybooksSection';
+import { useSeo } from '../../hooks/useSeo';
 
 const TeamDetails = () => {
     const theme = useTheme();
@@ -51,12 +52,17 @@ const TeamDetails = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Season selector
+    useSeo({
+        title: team ? `${team.name} | Fake College Football` : 'Team Details | Fake College Football',
+        description: team
+            ? `Roster, stats, schedule, and ELO history for ${team.name} in Fake College Football.`
+            : 'Team roster, stats, schedule, and ELO history in Fake College Football.',
+    });
+
     const [seasons, setSeasons] = useState([]);
     const [currentSeason, setCurrentSeason] = useState(null);
-    const [selectedSeason, setSelectedSeason] = useState('current'); // 'current', 'all', or season number
+    const [selectedSeason, setSelectedSeason] = useState('current');
 
-    // Chart data
     const [eloData, setEloData] = useState([]);
     const [rankingsData, setRankingsData] = useState([]);
     const [seasonStats, setSeasonStats] = useState(null);
@@ -73,7 +79,6 @@ const TeamDetails = () => {
                 const foundTeam = teams.find(t => t.id === parseInt(teamId));
                 if (foundTeam) {
                     setTeam(foundTeam);
-                    document.title = `FCFB | ${foundTeam.name}`;
                 } else {
                     setError('Team not found');
                 }
@@ -92,7 +97,6 @@ const TeamDetails = () => {
         fetchTeam();
     }, [teamId]);
 
-    // Aggregate multiple seasons' stats into one object
     const aggregateSeasonStats = (statsList) => {
         if (!statsList || statsList.length === 0) return null;
         if (statsList.length === 1) return statsList[0];
@@ -128,7 +132,6 @@ const TeamDetails = () => {
         return result;
     };
 
-    // Fetch chart data when team or selected season changes
     useEffect(() => {
         if (!team) return;
 
@@ -141,13 +144,11 @@ const TeamDetails = () => {
                 const [elo, rankings, statsResponse] = await Promise.all([
                     getEloHistory(team.name, seasonParam).catch(() => []),
                     getRankingsHistory(team.name, seasonParam).catch(() => []),
-                    // For all-time, fetch up to 100 season rows so we can aggregate
                     isAllTime
                         ? getFilteredSeasonStats(team.name, null, null, null, 0, 100).catch(() => null)
                         : getFilteredSeasonStats(team.name, null, seasonParam, null, 0, 1).catch(() => null)
                 ]);
 
-                // Format ELO data for chart
                 if (elo && elo.length > 0) {
                     const formatted = elo.map(entry => ({
                         week: isAllTime
@@ -160,7 +161,6 @@ const TeamDetails = () => {
                     setEloData([]);
                 }
 
-                // Format rankings data for chart
                 if (rankings && rankings.length > 0) {
                     const formatted = rankings.map(game => {
                         const isHome = game.home_team === team.name;
@@ -179,7 +179,6 @@ const TeamDetails = () => {
                     setRankingsData([]);
                 }
 
-                // Season stats — aggregate multiple seasons when 'all' selected
                 if (statsResponse?.content?.length > 0) {
                     if (isAllTime && statsResponse.content.length > 1) {
                         setSeasonStats(aggregateSeasonStats(statsResponse.content));
@@ -223,7 +222,6 @@ const TeamDetails = () => {
 
     return (
         <PageLayout title="" subtitle="">
-            {/* Back Button */}
             <Box component="a" href="/teams" onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/teams'); } }} sx={{ mb: 3, display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
                 <IconButton
                     sx={{
@@ -238,7 +236,6 @@ const TeamDetails = () => {
                 </Typography>
             </Box>
 
-            {/* Team Header */}
             <Box sx={{
                 mb: 4,
                 p: { xs: 2, md: 4 },
@@ -253,7 +250,6 @@ const TeamDetails = () => {
                     alignItems: 'center',
                     gap: 3
                 }}>
-                    {/* Team Logo */}
                     <Box
                         component="img"
                         src={team.logo || 'https://via.placeholder.com/120x120/004260/ffffff?text=T'}
@@ -261,7 +257,6 @@ const TeamDetails = () => {
                         sx={{ width: { xs: 80, md: 100 }, height: { xs: 80, md: 100 }, objectFit: 'contain' }}
                     />
 
-                    {/* Team Info */}
                     <Box sx={{ flex: 1, textAlign: { xs: 'center', md: 'left' } }}>
                         <Typography variant="h4" sx={{ fontWeight: 700, fontSize: { xs: '1.5rem', md: '2rem' } }}>
                             {team.name}
@@ -295,7 +290,6 @@ const TeamDetails = () => {
                         </Box>
                     </Box>
 
-                    {/* Quick Records */}
                     <Box sx={{ display: 'flex', gap: 2, textAlign: 'center' }}>
                         <Box>
                             <Typography variant="caption" color="text.secondary">Record</Typography>
@@ -308,7 +302,6 @@ const TeamDetails = () => {
                     </Box>
                 </Box>
 
-                {/* Coaches Row */}
                 {coaches.length > 0 && (
                     <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}`, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: { xs: 'center', md: 'flex-start' } }}>
                         {coaches.map((coach, index) => (
@@ -347,7 +340,6 @@ const TeamDetails = () => {
                 )}
             </Box>
 
-            {/* Season Selector + Charts */}
             <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
                 <FormControl size="small" sx={{ minWidth: 180 }}>
                     <InputLabel>Season</InputLabel>
@@ -371,7 +363,6 @@ const TeamDetails = () => {
                 </Box>
             ) : (
                 <Grid container spacing={3} sx={{ mb: 4 }}>
-                    {/* ELO History Chart - always show */}
                     <Grid item xs={12} md={6}>
                         <Card sx={{ height: '100%', boxShadow: theme.shadows[1] }}>
                             <CardContent>
@@ -397,7 +388,6 @@ const TeamDetails = () => {
                         </Card>
                     </Grid>
 
-                    {/* Rankings History Chart - always show */}
                     <Grid item xs={12} md={6}>
                         <Card sx={{ height: '100%', boxShadow: theme.shadows[1] }}>
                             <CardContent>
@@ -429,7 +419,6 @@ const TeamDetails = () => {
                 </Grid>
             )}
 
-            {/* Season Stats Cards */}
             {seasonStats && (
                 <Grid container spacing={3} sx={{ mb: 4 }}>
                     <Grid item xs={12} md={4}>
@@ -480,7 +469,6 @@ const TeamDetails = () => {
                 </Grid>
             )}
 
-            {/* Records Row */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} md={6}>
                     <Card sx={{ height: '100%', boxShadow: theme.shadows[1] }}>
@@ -524,7 +512,6 @@ const TeamDetails = () => {
                 </Grid>
             </Grid>
 
-            {/* Championships */}
             <Box sx={{ mb: 4, p: { xs: 2, md: 3 }, backgroundColor: 'background.paper', borderRadius: 3, border: `1px solid ${theme.palette.divider}`, boxShadow: theme.shadows[1] }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, fontSize: '1.1rem' }}>Championships & Playoffs</Typography>
                 <Grid container spacing={2}>
@@ -544,7 +531,6 @@ const TeamDetails = () => {
                 </Grid>
             </Box>
 
-            {/* Playbooks */}
             <PlaybooksSection team={team} />
         </PageLayout>
     );

@@ -25,7 +25,6 @@ const GameStatsTable = ({ homeTeam, awayTeam, homeStats, awayStats }) => {
         );
     }
 
-    // Get team colors with fallbacks
     const getTeamColors = (team) => {
         if (!team || !team.primary_color) {
             return {

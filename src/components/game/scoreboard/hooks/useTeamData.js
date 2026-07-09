@@ -25,7 +25,6 @@ export const useTeamData = (games) => {
             setLoading(true);
             const teams = {};
             try {
-                // Fetch all teams in parallel for better performance
                 const teamPromises = teamsToFetch.map(async (teamName) => {
                     try {
                         const response = await getTeamByName(teamName);

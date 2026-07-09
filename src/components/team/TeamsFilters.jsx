@@ -49,7 +49,6 @@ const TeamsFilters = ({
             </Typography>
             
             <Grid container spacing={{ xs: 2, md: 3 }} alignItems="center">
-                {/* Search */}
                 <Grid item xs={12} md={4}>
                     <TextField
                         fullWidth
@@ -71,7 +70,6 @@ const TeamsFilters = ({
                     />
                 </Grid>
 
-                {/* Conference Filter */}
                 <Grid item xs={12} sm={6} md={3}>
                     <FormControl fullWidth>
                         <InputLabel>{FILTER_LABELS.CONFERENCE}</InputLabel>
@@ -99,7 +97,6 @@ const TeamsFilters = ({
                     </FormControl>
                 </Grid>
 
-                {/* Availability Filter */}
                 <Grid item xs={12} sm={6} md={3}>
                     <FormControl fullWidth>
                         <InputLabel>{FILTER_LABELS.AVAILABILITY}</InputLabel>
@@ -116,7 +113,6 @@ const TeamsFilters = ({
                     </FormControl>
                 </Grid>
 
-                {/* Results Count */}
                 <Grid item xs={12} sm={12} md={2}>
                     <Box sx={{ textAlign: 'center' }}>
                         <Typography variant="h6" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>

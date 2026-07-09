@@ -13,10 +13,6 @@ import {
 } from '@mui/material';
 import { FilterList } from '@mui/icons-material';
 
-/**
- * Rankings History Filters Component
- * Provides filtering options for rankings history chart
- */
 const RankingsHistoryFilters = ({
     selectedTeam,
     setSelectedTeam,
@@ -50,7 +46,6 @@ const RankingsHistoryFilters = ({
                                     onChange={(e) => {
                                         setShowAllTeams(e.target.checked);
                                         if (!e.target.checked && teams && teams.length > 0) {
-                                            // When switching to single team, default to first team alphabetically
                                             const sortedTeams = [...teams].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                                             setSelectedTeam(sortedTeams[0]);
                                         } else {

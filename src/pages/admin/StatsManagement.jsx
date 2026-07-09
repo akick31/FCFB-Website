@@ -238,7 +238,6 @@ const StatsManagement = () => {
                     ))}
                 </Grid>
 
-                {/* Confirmation Dialog */}
                 <Dialog open={confirmDialog.open} onClose={handleCancel} maxWidth="sm" fullWidth>
                     <DialogTitle>
                         Confirm Generation

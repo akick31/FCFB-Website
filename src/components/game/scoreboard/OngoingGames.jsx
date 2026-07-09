@@ -56,7 +56,6 @@ const OngoingGames = () => {
         }
     }, [filters]);
 
-    // Initial fetch + re-fetch when filters change
     useEffect(() => {
         const showLoading = isFirstLoad.current;
         isFirstLoad.current = false;

@@ -1,6 +1,5 @@
 import apiClient from './apiClient';
 
-// Conference Stats API functions
 export const getFilteredConferenceStats = async (conference = null, season = null, subdivision = null, page = 0, size = 20) => {
     try {
         const params = { page, size };

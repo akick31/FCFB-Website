@@ -29,11 +29,11 @@ import { getAllTeams } from '../../../api/teamApi';
 import {
     formatGameType
 } from '../../../utils/gameUtils';
+import { isRealTeam } from '../../../utils/teamDataUtils';
 import { SCOREBOARD_CONSTANTS } from './utils/scoreboardConstants';
 import LiveGameCard from './LiveGameCard';
-// getAllOngoingGames no longer used; team search now works via filter size expansion
 
-const ScoreboardList = ({ 
+const ScoreboardList = ({
     games, 
     loading, 
     error, 
@@ -53,24 +53,21 @@ const ScoreboardList = ({
     const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
     const navigate = useNavigate();
     
-    // Team search state
     const [allTeams, setAllTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [filteredGames, setFilteredGames] = useState(games);
     // Track the page size before a team search expands it so we can restore it on clear
     const preSearchSizeRef = useRef(null);
-    
-    // Use custom hooks for better organization
+
     const { teamsData, loading: teamsLoading } = useTeamData(filteredGames);
     const { filterMenuOpen, handleFilterApply, openFilterMenu, closeFilterMenu } = useGameFilters(filters, setFilters);
     const { rowsPerPage, handleRowsPerPageChange } = useGamePagination(SCOREBOARD_CONSTANTS.DEFAULT_ROWS_PER_PAGE);
-    
-    // Fetch all teams for search
+
     useEffect(() => {
         const fetchTeams = async () => {
             try {
                 const teams = await getAllTeams();
-                setAllTeams(teams.filter(t => t.active));
+                setAllTeams(teams.filter(t => t.active && isRealTeam(t)));
             } catch (err) {
                 console.error('Failed to fetch teams for search:', err);
             }
@@ -78,7 +75,6 @@ const ScoreboardList = ({
         fetchTeams();
     }, []);
 
-    // Filter games by selected team
     useEffect(() => {
         if (!selectedTeam) {
             setFilteredGames(games);
@@ -93,10 +89,8 @@ const ScoreboardList = ({
         }
     }, [selectedTeam, games]);
 
-    // Check if this is showing past games
-    const isPastGames = false; // All game types now use LiveGameCard layout
+    const isPastGames = false; // all game types now use the LiveGameCard layout
 
-    // Get responsive column definitions
     const getGridColumns = () => {
         const size = isSmallScreen ? 'small' : 'large';
         return isPastGames 
@@ -104,7 +98,6 @@ const ScoreboardList = ({
             : SCOREBOARD_CONSTANTS.GRID_COLUMNS.LIVE_GAMES[size];
     };
 
-    // Get responsive minimum widths
     const getMinWidth = () => {
         if (isPastGames) {
             return isSmallScreen ? '490px' : '100%';
@@ -129,7 +122,6 @@ const ScoreboardList = ({
         );
     }
 
-    // Don't render until team logos are loaded
     if (teamsLoading && filteredGames.length > 0) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
@@ -138,10 +130,6 @@ const ScoreboardList = ({
             </Box>
         );
     }
-
-    // Note: We don't return early here anymore - we'll show the header with filters even when no games are found
-
-
 
     const handleRowsPerPageChangeLocal = (event) => {
         const newRowsPerPage = handleRowsPerPageChange(event);
@@ -169,7 +157,6 @@ const ScoreboardList = ({
 
     return (
         <Box>
-            {/* Header with Title, Games Count, Season/Week Filters, and Controls */}
             <Box sx={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
@@ -185,7 +172,6 @@ const ScoreboardList = ({
                             {title}
                         </Typography>
                         
-                        {/* Team Search */}
                         <Box sx={{ minWidth: 200 }}>
                             <Autocomplete
                                 options={allTeams}
@@ -233,7 +219,6 @@ const ScoreboardList = ({
                             />
                         </Box>
                         
-                        {/* Season and Week Filters - only show if provided */}
                         {seasonFilter && (
                             <Box sx={{ minWidth: 150 }}>
                                 {seasonFilter}
@@ -260,7 +245,6 @@ const ScoreboardList = ({
                 </Box>
                 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-                    {/* Rows Per Page Selector */}
                     <FormControl size="small" sx={{ minWidth: 120 }}>
                         <InputLabel>Rows</InputLabel>
                         <Select
@@ -274,7 +258,6 @@ const ScoreboardList = ({
                         </Select>
                     </FormControl>
 
-                    {/* Filter Button */}
                     <Fab
                         size="small"
                         color="primary"
@@ -286,7 +269,6 @@ const ScoreboardList = ({
                 </Box>
             </Box>
 
-            {/* Games List or No Games Message */}
             {(!filteredGames || filteredGames.length === 0) ? (
                 <Box sx={{
                     textAlign: 'center',
@@ -300,7 +282,6 @@ const ScoreboardList = ({
                     </Typography>
                 </Box>
             ) : !isPastGames ? (
-                /* ═══ LIVE GAMES: Card-based layout ═══ */
                 <Box sx={{
                     display: 'grid',
                     gridTemplateColumns: {
@@ -326,7 +307,6 @@ const ScoreboardList = ({
                     })}
                 </Box>
             ) : (
-                /* ═══ PAST GAMES: Grid table layout ═══ */
                 <Box sx={{
                     backgroundColor: '#f8f9fa',
                     borderRadius: 2,
@@ -347,7 +327,6 @@ const ScoreboardList = ({
                         backgroundColor: '#a8a8a8'
                     }
                 }}>
-                {/* Header Row */}
                 <Box sx={{
                     display: 'grid',
                     gridTemplateColumns: getGridColumns(),
@@ -380,7 +359,6 @@ const ScoreboardList = ({
                     ))}
                 </Box>
 
-                {/* Past Game Rows */}
                 {filteredGames.map((game, index) => {
                     const awayTeamName = game.awayTeam || game.away_team;
                     const homeTeamName = game.homeTeam || game.home_team;
@@ -410,9 +388,7 @@ const ScoreboardList = ({
                             }}
                             onClick={(e) => handleRowClick(e, game)}
                         >
-                            {/* Team Matchup Column */}
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                {/* Home Team */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                     <Box sx={{
                                         width: { xs: 18, sm: 24 },
@@ -472,7 +448,6 @@ const ScoreboardList = ({
 
                                 <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem', mx: 0.5 }}>vs</Typography>
 
-                                {/* Away Team */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                     <Box sx={{
                                         width: { xs: 18, sm: 24 },
@@ -531,7 +506,6 @@ const ScoreboardList = ({
                                 </Box>
                             </Box>
 
-                            {/* Score Column */}
                             <Box sx={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -564,7 +538,6 @@ const ScoreboardList = ({
                                 </Typography>
                             </Box>
 
-                            {/* Game Type */}
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <Typography sx={{ color: 'text.primary', fontSize: '0.8rem', fontWeight: 500 }}>
                                     {(() => {
@@ -577,7 +550,6 @@ const ScoreboardList = ({
                                 </Typography>
                             </Box>
 
-                            {/* Spread */}
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                                 {game.home_vegas_spread !== null && game.home_vegas_spread !== undefined ? (
                                     <>
@@ -625,8 +597,6 @@ const ScoreboardList = ({
                 </Box>
             )}
 
-            {/* Pagination - only show when there are games and multiple pages,
-                and when we're not in a team-specific search */}
             {!selectedTeam && filteredGames && filteredGames.length > 0 && totalPages > 1 && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                     <Pagination
@@ -639,7 +609,6 @@ const ScoreboardList = ({
                 </Box>
             )}
 
-            {/* Filter Menu Drawer */}
             <Drawer
                 anchor="right"
                 open={filterMenuOpen}

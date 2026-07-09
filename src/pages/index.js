@@ -1,25 +1,17 @@
-// Auth Pages
 export { Login, Registration, ResetPassword, Verify } from './auth';
 
-// Game Pages
 export { GameDetails, Scoreboard } from './game';
 
-// Team Pages
 export { Teams, TeamDetails, ModifyTeam } from './team';
 
-// Admin Pages
 export { Admin, UserManagement, GameManagement, TeamManagement, EditTeam, CoachManagement, CoachTransactionLog,
     EditGame, StatsManagement, Reports, Scheduling, GameWeek } from './admin';
 
-// Core Pages
 export { Home, Profile, Standings, Rankings, Schedule, Error, NotFound } from './core';
 
-// User Pages
 export { UserDetails } from './user';
 
-// Stats Pages
 export { Records, SeasonStats, LeagueStats, Leaderboard, EloHistory, Charts } from './stats';
 
-// Register Pages (special flow)
 export { default as Complete } from './register/Complete';
-export { default as RegistrationSuccess } from './register/Success'; 
+export { default as RegistrationSuccess } from './register/Success';

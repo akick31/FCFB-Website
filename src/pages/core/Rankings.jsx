@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Container, CircularProgress, Alert, FormControl, Select, MenuItem } from '@mui/material';
 import RankingsTable from '../../components/team/RankingsTable';
 import { getAllTeams } from '../../api/teamApi';
+import { isRealTeam } from '../../utils/teamDataUtils';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSeo } from '../../hooks/useSeo';
+import { ROUTE_META } from '../../routeMeta';
 
 const Rankings = () => {
-    useEffect(() => { document.title = 'FCFB | Rankings'; }, []);
+    useSeo(ROUTE_META['/rankings']);
 
     const { type } = useParams();
     const navigate = useNavigate();
@@ -34,7 +37,6 @@ const Rankings = () => {
             if (availableRankings.includes(rankingValue)) {
                 setSelectedRanking(rankingValue);
             } else {
-                // Default to first available
                 navigate(`/rankings/${availableRankings[0].toLowerCase()}`, { replace: true });
             }
         } else {
@@ -61,14 +63,12 @@ const Rankings = () => {
 
     const determineAvailableRankings = () => {
         const rankings = [];
-        
-        // Check if any teams have coaches poll rankings
+
         const hasCoachesPoll = teams.some(team => team.coaches_poll_ranking !== null && team.coaches_poll_ranking !== undefined);
         if (hasCoachesPoll) {
             rankings.push('COACHES_POLL');
         }
-        
-        // Check if any teams have playoff committee rankings
+
         const hasPlayoffRankings = teams.some(team => team.playoff_committee_ranking !== null && team.playoff_committee_ranking !== undefined);
         if (hasPlayoffRankings) {
             rankings.push('PLAYOFF_RANKINGS');
@@ -84,12 +84,12 @@ const Rankings = () => {
         
         if (selectedRanking === 'COACHES_POLL') {
             filtered = teams
-                .filter(team => team.coaches_poll_ranking !== null && team.coaches_poll_ranking !== undefined)
+                .filter(team => isRealTeam(team) && team.coaches_poll_ranking !== null && team.coaches_poll_ranking !== undefined)
                 .sort((a, b) => a.coaches_poll_ranking - b.coaches_poll_ranking)
                 .slice(0, 25);
         } else if (selectedRanking === 'PLAYOFF_RANKINGS') {
             filtered = teams
-                .filter(team => team.playoff_committee_ranking !== null && team.playoff_committee_ranking !== undefined)
+                .filter(team => isRealTeam(team) && team.playoff_committee_ranking !== null && team.playoff_committee_ranking !== undefined)
                 .sort((a, b) => a.playoff_committee_ranking - b.playoff_committee_ranking)
                 .slice(0, 25);
         }
@@ -160,7 +160,6 @@ const Rankings = () => {
                 pt: { xs: 8, md: 10 },
                 pb: { xs: 4, md: 6 }
             }}>
-                {/* Page Header */}
                 <Box sx={{ mb: 4, textAlign: 'center' }}>
                     <Typography
                         variant="h3"
@@ -184,8 +183,7 @@ const Rankings = () => {
                     </Typography>
                 </Box>
 
-                {/* Rankings Type Selector */}
-                <Box sx={{ 
+                <Box sx={{
                     mb: 4,
                     display: 'flex',
                     justifyContent: 'center',
@@ -210,7 +208,6 @@ const Rankings = () => {
                     </FormControl>
                 </Box>
 
-                {/* Rankings Table */}
                 {filteredTeams.length > 0 ? (
                     <RankingsTable 
                         teams={filteredTeams}

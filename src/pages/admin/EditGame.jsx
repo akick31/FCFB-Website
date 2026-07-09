@@ -275,12 +275,10 @@ const EditGame = () => {
                     </Alert>
                 )}
 
-                {/* Action Buttons */}
                 <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                     <Button
                         variant="contained"
                         onClick={handleSave}
-                        // disabled={saving}
                         disabled={true}
                         startIcon={<Save />}
                     >
@@ -316,7 +314,6 @@ const EditGame = () => {
                 </Box>
 
                 <Grid container spacing={3}>
-                    {/* Basic Game Info */}
                     <Grid item xs={12} md={6}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -408,7 +405,6 @@ const EditGame = () => {
                         </Card>
                     </Grid>
 
-                    {/* Team Playbooks */}
                     <Grid item xs={12} md={6}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -481,7 +477,6 @@ const EditGame = () => {
                         </Card>
                     </Grid>
 
-                    {/* Scores and Game State */}
                     <Grid item xs={12} md={6}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -571,7 +566,6 @@ const EditGame = () => {
                         </Card>
                     </Grid>
 
-                    {/* Team Records and Rankings */}
                     <Grid item xs={12} md={6}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -638,7 +632,6 @@ const EditGame = () => {
                         </Card>
                     </Grid>
 
-                    {/* Game Flow */}
                     <Grid item xs={12} md={6}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -724,7 +717,6 @@ const EditGame = () => {
                         </Card>
                     </Grid>
 
-                    {/* Game Settings and Alerts */}
                     <Grid item xs={12} md={6}>
                         <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                             <CardContent>
@@ -854,7 +846,6 @@ const EditGame = () => {
                     </Grid>
                 </Grid>
 
-                {/* Plays Table */}
                 <Card sx={{ mt: 3, backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}>
                     <CardContent>
                         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>

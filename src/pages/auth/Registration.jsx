@@ -25,7 +25,6 @@ const Registration = () => {
 
     const handleDiscordOAuth = () => {
         setLoading(true);
-        // Redirect to Discord OAuth
         const clientId = import.meta.env.VITE_CLIENT_ID;
         const redirectUri = import.meta.env.VITE_BASE_URL;
         
@@ -108,7 +107,6 @@ const Registration = () => {
                             </Alert>
                         )}
 
-                        {/* Discord OAuth Button */}
                         <Box sx={{ mb: 4 }}>
                             <Button
                                 variant="contained"
@@ -154,7 +152,6 @@ const Registration = () => {
                     </StyledCard>
                 </Grid>
 
-                {/* Right side content for larger screens */}
                 <Grid item xs={12} md={6} lg={5} sx={{ display: { xs: 'none', md: 'block' } }}>
                     <Box sx={{ textAlign: 'center', p: 4 }}>
                         <Typography

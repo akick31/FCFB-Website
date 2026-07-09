@@ -35,14 +35,13 @@ const EloHistoryFilters = ({
                     <FormControlLabel
                         control={
                             <Switch
-                                checked={showAllTeams === true}
+                                checked={!!showAllTeams}
                                 onChange={(e) => {
                                     if (setShowAllTeams) {
                                         setShowAllTeams(e.target.checked);
                                         if (e.target.checked) {
                                             setSelectedTeam(null);
                                         } else {
-                                            // When switching to single team, default to first team alphabetically
                                             if (teams && teams.length > 0) {
                                                 const sortedTeams = [...teams].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                                                 setSelectedTeam(sortedTeams[0]);

@@ -45,7 +45,6 @@ const CoachTransactionLog = () => {
         fetchTransactions();
     }, []);
 
-    // Filter transactions based on all criteria
     useEffect(() => {
         let filtered = transactions;
 
@@ -71,7 +70,7 @@ const CoachTransactionLog = () => {
                 ))
             );
         }
-        
+
         setFilteredTransactions(filtered);
     }, [transactions, teamFilter, positionFilter, transactionTypeFilter, searchTerm]);
 
@@ -129,12 +128,10 @@ const CoachTransactionLog = () => {
         { id: 'processed_by', label: 'Processed By', width: 150 },
     ];
 
-    // Get unique teams, positions, and transaction types for filters
     const uniqueTeams = [...new Set(transactions.map(t => t.team))].filter(Boolean).sort();
     const uniquePositions = [...new Set(transactions.map(t => t.position))].filter(Boolean).sort();
     const uniqueTransactionTypes = [...new Set(transactions.map(t => t.transaction))].filter(Boolean).sort();
 
-    // Transform transactions data for the table
     const tableData = filteredTransactions.map(transaction => ({
         ...transaction,
         team: transaction.team || 'N/A',
@@ -187,8 +184,7 @@ const CoachTransactionLog = () => {
                         Coach Transaction Log
                     </Typography>
                 </Box>
-                
-                {/* Filter Controls */}
+
                 <Box sx={{ mb: 3 }}>
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} sm={6} md={3}>

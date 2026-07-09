@@ -13,6 +13,7 @@ import {
 import ConferenceDropdown from "../dropdown/ConferenceDropdown";
 import GameTypeDropdown from "../dropdown/GameTypeDropdown";
 import GameStatusDropdown from "../dropdown/GameStatusDropdown";
+import { getStorageItem } from "../../utils/utils";
 
 
 const FilterMenu = ({ onApply, category }) => {
@@ -23,11 +24,8 @@ const FilterMenu = ({ onApply, category }) => {
     }[category] || [];
 
     const getSavedFilters = () => {
-        const saved = sessionStorage.getItem(`filters_${category}`);
-        
-        // For debugging - clear sessionStorage to start fresh
-        // sessionStorage.removeItem(`filters_${category}`);
-        
+        const saved = getStorageItem('session', `filters_${category}`, null);
+
         if (!saved) {
         return {
             filters: [],
@@ -45,12 +43,9 @@ const FilterMenu = ({ onApply, category }) => {
         const parsed = JSON.parse(saved);
         let { filters, gameStatus, gameType, gameMode } = parsed;
 
-        // Extract gameStatus and gameType from filters if present
         if (filters && Array.isArray(filters)) {
             gameStatus = filters.find(f => ["PREGAME", "OPENING_KICKOFF", "IN_PROGRESS", "OVERTIME"].includes(f)) || null;
             gameType = filters.find(f => ["OUT_OF_CONFERENCE", "CONFERENCE_GAME", "CONFERENCE_CHAMPIONSHIP", "PLAYOFFS", "NATIONAL_CHAMPIONSHIP", "BOWL"].includes(f)) || null;
-
-            // Remove extracted values from filters
             filters = filters.filter(f => f !== gameStatus && f !== gameType);
         }
 
@@ -81,7 +76,6 @@ const FilterMenu = ({ onApply, category }) => {
         };
     }, [category]);
 
-    // Handle dropdown changes
     const handleChange = (field) => (event) => {
         let newValue = event.target.value;
         if (newValue === "") newValue = null; // Convert "All" to null
@@ -161,7 +155,6 @@ const FilterMenu = ({ onApply, category }) => {
                     Game Filters
                 </Typography>
                 
-                {/* Conference Filter */}
                 {availableFilters.includes('conference') && (
                     <Box sx={{ mb: 2 }}>
                         <ConferenceDropdown
@@ -175,7 +168,6 @@ const FilterMenu = ({ onApply, category }) => {
                     </Box>
                 )}
 
-                {/* Game Type Filter */}
                 {availableFilters.includes('gameType') && (
                     <Box sx={{ mb: 2 }}>
                         <GameTypeDropdown
@@ -186,7 +178,6 @@ const FilterMenu = ({ onApply, category }) => {
                     </Box>
                 )}
 
-                {/* Game Status Filter */}
                 {availableFilters.includes('gameStatus') && (
                     <Box sx={{ mb: 2 }}>
                         <GameStatusDropdown
@@ -197,7 +188,6 @@ const FilterMenu = ({ onApply, category }) => {
                     </Box>
                 )}
 
-                {/* Game Mode Filter */}
                 {availableFilters.includes('gameMode') && (
                     <Box sx={{ mb: 2 }}>
                         <FormControl fullWidth size="small">
@@ -215,7 +205,6 @@ const FilterMenu = ({ onApply, category }) => {
                     </Box>
                 )}
 
-                {/* Ranked Games Filter */}
                 {availableFilters.includes('rankedGame') && (
                     <Box sx={{ mb: 2 }}>
                         <FormControl fullWidth size="small">

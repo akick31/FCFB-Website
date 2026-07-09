@@ -33,12 +33,14 @@ import { offensivePlaybooks } from '../../components/constants/offensivePlaybook
 import { defensivePlaybooks } from '../../components/constants/defensivePlaybooks';
 import { formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSeo } from '../../hooks/useSeo';
+import { ROUTE_META } from '../../routeMeta';
 
 const TAB_SLUGS = ['conference', 'league', 'playbook'];
 const TAB_FROM_SLUG = { conference: 0, league: 1, playbook: 2 };
 
 const LeagueStats = () => {
-    useEffect(() => { document.title = 'FCFB | League Stats'; }, []);
+    useSeo(ROUTE_META['/league-stats']);
 
     const { tab, season: seasonParam, p1, p2 } = useParams();
     const navigate = useNavigate();
@@ -47,12 +49,10 @@ const LeagueStats = () => {
     const [error, setError] = useState(null);
     const activeTab = TAB_FROM_SLUG[tab] ?? 1; // Default to 'league' tab
 
-    // Data states
     const [conferenceStats, setConferenceStats] = useState([]);
     const [leagueStats, setLeagueStats] = useState([]);
     const [playbookStats, setPlaybookStats] = useState([]);
 
-    // Filter states
     const [selectedSeason, setSelectedSeason] = useState(seasonParam ? parseInt(seasonParam) : 11);
     const [selectedConference, setSelectedConference] = useState(
         tab === 'conference' && p1 ? p1.toUpperCase() : ''
@@ -63,8 +63,7 @@ const LeagueStats = () => {
     const [selectedDefensivePlaybook, setSelectedDefensivePlaybook] = useState(
         tab === 'playbook' && p2 ? p2.toUpperCase() : ''
     );
-    
-    // Sorting states
+
     const [conferenceSortField, setConferenceSortField] = useState('');
     const [conferenceSortDirection, setConferenceSortDirection] = useState('asc');
     const [leagueSortField, setLeagueSortField] = useState('');
@@ -72,7 +71,6 @@ const LeagueStats = () => {
     const [playbookSortField, setPlaybookSortField] = useState('');
     const [playbookSortDirection, setPlaybookSortDirection] = useState('asc');
 
-    // Available seasons
     const seasons = [11, 10];
 
     useEffect(() => {
@@ -92,7 +90,6 @@ const LeagueStats = () => {
                 setLoading(true);
                 await getCurrentSeasonOrLatest();
 
-                // Load all data for the default season
                 const initialSeason = seasonParam ? parseInt(seasonParam) : 11;
                 await fetchAllData(initialSeason);
             } catch (err) {
@@ -111,14 +108,13 @@ const LeagueStats = () => {
         try {
             setLoading(true);
             setError(null);
-            
+
             const [conferenceResponse, leagueResponse, playbookResponse] = await Promise.all([
-                getFilteredConferenceStats(null, season, null, 0, 1000), // Get all records for the season
-                getFilteredLeagueStats(null, season, 0, 1000), // Get all records for the season
-                getFilteredPlaybookStats(null, null, season, 0, 1000) // Get all records for the season
+                getFilteredConferenceStats(null, season, null, 0, 1000),
+                getFilteredLeagueStats(null, season, 0, 1000),
+                getFilteredPlaybookStats(null, null, season, 0, 1000)
             ]);
-            
-            // Extract content from paginated responses
+
             setConferenceStats(conferenceResponse.content || []);
             setLeagueStats(leagueResponse.content || []);
             setPlaybookStats(playbookResponse.content || []);
@@ -215,17 +211,14 @@ const LeagueStats = () => {
         return [...data].sort((a, b) => {
             let aVal = a[field];
             let bVal = b[field];
-            
-            // Handle null/undefined values
+
             if (aVal === null || aVal === undefined) aVal = '';
             if (bVal === null || bVal === undefined) bVal = '';
-            
-            // Handle numeric values
+
             if (typeof aVal === 'number' && typeof bVal === 'number') {
                 return direction === 'asc' ? aVal - bVal : bVal - aVal;
             }
-            
-            // Handle string values
+
             const aStr = String(aVal).toLowerCase();
             const bStr = String(bVal).toLowerCase();
             
@@ -249,7 +242,6 @@ const LeagueStats = () => {
 
         const sortedStats = sortData(filteredStats, conferenceSortField, conferenceSortDirection);
 
-        // Define stat categories
         const statCategories = [
             {
                 title: 'Offense',
@@ -473,7 +465,6 @@ const LeagueStats = () => {
 
         const sortedStats = sortData(leagueStats, leagueSortField, leagueSortDirection);
 
-        // Define stat categories for League Stats
         const statCategories = [
             {
                 title: 'Offense',
@@ -619,7 +610,6 @@ const LeagueStats = () => {
 
         const sortedStats = sortData(filteredStats, playbookSortField, playbookSortDirection);
 
-        // Define stat categories for Playbook Stats
         const statCategories = [
             {
                 title: 'Offense',
@@ -827,7 +817,6 @@ const LeagueStats = () => {
                 pt: { xs: 8, md: 10 },
                 pb: { xs: 4, md: 6 }
             }}>
-                {/* Page Header */}
                 <Box sx={{ mb: 4, textAlign: 'center' }}>
                     <Typography
                         variant="h3"
@@ -851,7 +840,6 @@ const LeagueStats = () => {
                     </Typography>
                 </Box>
 
-                {/* Season Filter */}
                 <Card sx={{ mb: 3 }}>
                     <CardContent>
                         <Typography variant="h6" gutterBottom>
@@ -878,21 +866,18 @@ const LeagueStats = () => {
                     </CardContent>
                 </Card>
 
-                {/* Error Display */}
                 {error && (
                     <Alert severity="error" sx={{ mb: 3 }}>
                         {error}
                     </Alert>
                 )}
 
-                {/* Loading State */}
                 {loading && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                         <CircularProgress size={60} />
                     </Box>
                 )}
 
-                {/* Tabs */}
                 <Card sx={{ mb: 3 }}>
                     <Tabs
                         value={activeTab}
@@ -906,7 +891,6 @@ const LeagueStats = () => {
                     </Tabs>
                 </Card>
 
-                {/* Tab Content */}
                 {activeTab === 0 && renderConferenceStats()}
                 {activeTab === 1 && renderLeagueStats()}
                 {activeTab === 2 && renderPlaybookStats()}

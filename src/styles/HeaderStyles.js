@@ -1,6 +1,5 @@
 import { styled } from "@mui/system";
 
-// Utility styles for modern header components
 export const HeaderContainer = styled('div')`
     position: relative;
     z-index: 1000;

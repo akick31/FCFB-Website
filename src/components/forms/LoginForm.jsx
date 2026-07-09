@@ -32,7 +32,6 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
             ...prev,
             [name]: value
         }));
-        // Clear error when user starts typing
         if (error) setError('');
     };
 
@@ -205,7 +204,6 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
                 </StyledCard>
             </Grid>
 
-            {/* Right side content for larger screens */}
             <Grid item xs={12} md={6} lg={5} sx={{ display: { xs: 'none', md: 'block' } }}>
                 <Box sx={{ textAlign: 'center', p: 4 }}>
                     <Typography
@@ -251,7 +249,6 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
                 </Box>
             </Grid>
 
-            {/* Forgot Password Dialog */}
             <ForgotPasswordForm 
                 open={forgotPasswordOpen}
                 onClose={() => setForgotPasswordOpen(false)}

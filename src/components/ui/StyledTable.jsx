@@ -34,7 +34,7 @@ const StyledTable = ({
 
     const handleRowClick = (e, row, index) => {
         if (onRowClick) {
-            // If getRowHref is set, allow modifier keys for native link behavior
+            // Let modifier-key clicks fall through to native link behavior (open in new tab, etc.)
             if (getRowHref && (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0)) return;
             if (getRowHref) e.preventDefault();
             onRowClick(row, index, e);

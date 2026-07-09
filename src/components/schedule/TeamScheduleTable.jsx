@@ -19,6 +19,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { formatGameType } from '../../utils/formatText';
 import { field } from '../../utils/fieldHelper';
+import { isRealTeam } from '../../utils/teamDataUtils';
 
 const GAME_TYPE_CHIP_COLORS = {
     CONFERENCE_GAME: 'primary',
@@ -122,10 +123,9 @@ const TeamScheduleTable = ({
 
     return (
         <>
-            {/* Team Search Dropdown */}
             <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
                 <Autocomplete
-                    options={teams.filter(t => t.active)}
+                    options={teams.filter(t => t.active && isRealTeam(t))}
                     getOptionLabel={(option) => option.name || ''}
                     value={selectedTeam}
                     onChange={(_, newValue) => onTeamChange(newValue)}
@@ -161,7 +161,6 @@ const TeamScheduleTable = ({
                 />
             </Box>
 
-            {/* Selected Team Header */}
             {selectedTeam && (
                 <Box sx={{
                     display: 'flex',
@@ -195,7 +194,6 @@ const TeamScheduleTable = ({
                 </Box>
             )}
 
-            {/* Schedule Table */}
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                     <CircularProgress size={40} />
@@ -278,7 +276,6 @@ const TeamScheduleTable = ({
                                         </TableCell>
                                         <TableCell>
                                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                {/* Postseason Game Logo */}
                                                 {(gameType === 'BOWL' || gameType === 'PLAYOFFS' || gameType === 'CONFERENCE_CHAMPIONSHIP' || gameType === 'NATIONAL_CHAMPIONSHIP') &&
                                                   field(game, 'postseasonGameLogo', 'postseason_game_logo') && (
                                                     <Box sx={{ display: 'flex', justifyContent: 'center', mb: 0.5 }}>

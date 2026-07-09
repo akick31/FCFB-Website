@@ -1,5 +1,3 @@
-// Game enum constants for consistent use across the application
-
 export const TV_CHANNELS = [
     'ABC',
     'CBS',

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
     Box,
     Button,
@@ -17,15 +17,16 @@ import { faDiscord, faPatreon } from '@fortawesome/free-brands-svg-icons';
 import { Coffee } from '@mui/icons-material';
 import logo from '../../assets/graphics/main_logo.png';
 import backgroundImg from '../../assets/images/background.jpg';
+import { useSeo } from '../../hooks/useSeo';
+import { ROUTE_META } from '../../routeMeta';
 
 const HomePage = () => {
     const theme = useTheme();
 
-    useEffect(() => { document.title = 'FCFB | Home'; }, []);
+    useSeo(ROUTE_META['/']);
 
     return (
         <Box sx={{ minHeight: '100vh', background: theme.palette.background.default }}>
-            {/* Hero Section */}
             <Box
                 sx={{
                     background: `linear-gradient(135deg, rgba(0, 66, 96, 0.95) 0%, rgba(30, 90, 122, 0.95) 100%), url(${backgroundImg})`,
@@ -154,7 +155,6 @@ const HomePage = () => {
                 </Container>
             </Box>
 
-            {/* CTA Section */}
             <Box sx={{ py: { xs: 6, md: 10 }, background: theme.palette.background.dark }}>
                 <Container maxWidth="lg">
                     <Box sx={{ textAlign: 'center', mb: 6 }}>

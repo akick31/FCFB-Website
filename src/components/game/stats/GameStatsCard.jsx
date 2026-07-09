@@ -18,7 +18,6 @@ const StatsGrid = ({ stats }) => (
 
 const GameStatsCard = ({ team, stats, teamLogo }) => (
     <Paper elevation={3} sx={{ p: 3, borderRadius: 2, mb: 4 }}>
-        {/* Team Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
             <Box
                 sx={{
@@ -46,9 +45,7 @@ const GameStatsCard = ({ team, stats, teamLogo }) => (
             </Typography>
         </Box>
 
-        {/* Stats Sections */}
         <Grid container spacing={3}>
-            {/* Offensive Stats */}
             <Grid item xs={12} md={6}>
                 <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#004260' }}>
@@ -65,7 +62,6 @@ const GameStatsCard = ({ team, stats, teamLogo }) => (
                 </Box>
             </Grid>
 
-            {/* Defensive Stats */}
             <Grid item xs={12} md={6}>
                 <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#004260' }}>
@@ -82,7 +78,6 @@ const GameStatsCard = ({ team, stats, teamLogo }) => (
                 </Box>
             </Grid>
 
-            {/* Special Teams */}
             <Grid item xs={12} md={6}>
                 <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#004260' }}>
@@ -99,7 +94,6 @@ const GameStatsCard = ({ team, stats, teamLogo }) => (
                 </Box>
             </Grid>
 
-            {/* Game Overview */}
             <Grid item xs={12} md={6}>
                 <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#004260' }}>

@@ -32,7 +32,6 @@ app.get("/discord/redirect", async (req, res) => {
         const { username, discriminator } = userResponse.data;
         const discordTag = `${username}#${discriminator}`;
 
-        // Redirect back to frontend with the Discord tag
         res.redirect(`${REDIRECT_URI}?discordTag=${encodeURIComponent(discordTag)}`);
     } catch (error) {
         console.error("Discord OAuth2 Error:", error);

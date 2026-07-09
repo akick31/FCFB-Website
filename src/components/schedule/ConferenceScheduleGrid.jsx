@@ -37,7 +37,6 @@ const ConferenceScheduleGrid = ({
     const theme = useTheme();
     const navigate = useNavigate();
 
-    // Build a set of conference game keys for quick lookup
     const conferenceGameKeys = useMemo(() => {
         const keys = new Set();
         conferenceSchedule.forEach(game => {
@@ -52,8 +51,7 @@ const ConferenceScheduleGrid = ({
         return keys;
     }, [conferenceSchedule]);
 
-    // Build conference grid (read-only): rows = teams, columns = weeks
-    // Shows ALL games (conference + OOC) for each team
+    // Rows = teams, columns = weeks; includes both conference and OOC games for each team
     const confGrid = useMemo(() => {
         const grid = {};
         const teamNames = conferenceTeams.map(t => t.name);
@@ -65,7 +63,6 @@ const ConferenceScheduleGrid = ({
             }
         });
 
-        // First, add all conference games
         conferenceSchedule.forEach(game => {
             const week = game.week;
             const home = field(game, 'homeTeam', 'home_team');
@@ -91,22 +88,19 @@ const ConferenceScheduleGrid = ({
             }
         });
 
-        // Then, add OOC games (games where one team is in the conference but the other is not)
         allSeasonSchedule.forEach(game => {
             const week = game.week;
             const home = field(game, 'homeTeam', 'home_team');
             const away = field(game, 'awayTeam', 'away_team');
             const gameKey = `${home}|${away}|${week}`;
-            
-            // Skip if this is already a conference game
+
             if (conferenceGameKeys.has(gameKey)) {
                 return;
             }
 
-            // If home team is in conference and away is not, add it as OOC
             if (teamNames.includes(home) && !teamNames.includes(away)) {
                 grid[home] = grid[home] || {};
-                if (!grid[home][week]) { // Only add if no conference game already exists
+                if (!grid[home][week]) {
                     grid[home][week] = {
                         ...game,
                         opponent: away,
@@ -115,10 +109,9 @@ const ConferenceScheduleGrid = ({
                     };
                 }
             }
-            // If away team is in conference and home is not, add it as OOC
             if (teamNames.includes(away) && !teamNames.includes(home)) {
                 grid[away] = grid[away] || {};
-                if (!grid[away][week]) { // Only add if no conference game already exists
+                if (!grid[away][week]) {
                     grid[away][week] = {
                         ...game,
                         opponent: home,
@@ -132,7 +125,6 @@ const ConferenceScheduleGrid = ({
         return grid;
     }, [conferenceTeams, conferenceSchedule, allSeasonSchedule, conferenceGameKeys]);
 
-    // Count wins/losses for a team in conference games
     const getGameCounts = (teamName) => {
         let wins = 0, losses = 0;
         conferenceSchedule.forEach(game => {
@@ -157,7 +149,6 @@ const ConferenceScheduleGrid = ({
 
     return (
         <Box>
-            {/* Conference selector */}
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
                 <FormControl size="medium" sx={{ minWidth: 220 }}>
                     <InputLabel>Conference</InputLabel>
@@ -192,7 +183,6 @@ const ConferenceScheduleGrid = ({
                 </Typography>
             </Box>
 
-            {/* FBS Independent note */}
             {selectedConference === 'FBS_INDEPENDENT' && (
                 <Alert severity="info" sx={{ mb: 3, mx: 'auto', maxWidth: 600 }}>
                     FBS Independent teams have no conference games. All games are out-of-conference.
@@ -216,13 +206,10 @@ const ConferenceScheduleGrid = ({
                 >
                     <Table stickyHeader size="small" sx={{ tableLayout: 'fixed', width: '100%' }}>
                         <colgroup>
-                            {/* Team column */}
                             <col style={{ width: '110px', minWidth: '100px' }} />
-                            {/* 12 week columns — equal share of remaining space */}
                             {Array.from({ length: TOTAL_WEEKS }, (_, i) => (
                                 <col key={i} style={{ minWidth: '72px' }} />
                             ))}
-                            {/* H / A count columns */}
                             <col style={{ width: '36px', minWidth: '32px' }} />
                             <col style={{ width: '36px', minWidth: '32px' }} />
                         </colgroup>
@@ -381,7 +368,6 @@ const ConferenceScheduleGrid = ({
                     </Table>
                 </TableContainer>
             ) : selectedConference === 'FBS_INDEPENDENT' ? (
-                /* Show FBS Independent teams list */
                 <Box sx={{ maxWidth: 600, mx: 'auto' }}>
                     <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: theme.shadows[3] }}>
                         <Table size="small">

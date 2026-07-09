@@ -34,10 +34,8 @@ const PastGames = ({ urlSeason, urlWeek }) => {
         size: 10,
     });
 
-    // Set default season and week when no URL params provided
     useEffect(() => {
         if (urlSeason && urlWeek) {
-            // URL params provided, already set in initial state
             initializedRef.current = true;
             return;
         }
@@ -91,8 +89,7 @@ const PastGames = ({ urlSeason, urlWeek }) => {
             setLoading(true);
             try {
                 if (filters.postseason || filters.playoffsOnly) {
-                    // Fetch each postseason week in parallel and combine results.
-                    // For Playoffs: week 14 filters by PLAYOFFS game type; weeks 15+ are all playoffs.
+                    // Week 14 filters by PLAYOFFS game type; weeks 15+ are all playoffs
                     const results = await Promise.all(
                         POSTSEASON_WEEKS.map(week =>
                             getFilteredGames({

@@ -39,8 +39,7 @@ const Scrimmages = () => {
                     page: filters.page,
                     size: filters.size,
                 });
-                
-                // Filter for ongoing scrimmages only (not completed ones)
+
                 const ongoingScrimmages = response.content.filter(game => {
                     const gameStatus = game.gameStatus || game.status;
                     return gameStatus === 'IN_PROGRESS' || 

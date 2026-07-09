@@ -1,6 +1,5 @@
 import apiClient from './apiClient';
 
-// Fetches games with rankings (home_team_rank and away_team_rank)
 export const getRankingsHistory = async (team, season = null) => {
     try {
         const params = { team, ...(season && { season }) };

@@ -42,7 +42,7 @@ import {
 } from '../../api/scheduleApi';
 import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 
-const POLL_INTERVAL_MS = 3000; // Poll every 3 seconds
+const POLL_INTERVAL_MS = 3000;
 
 const GameWeek = () => {
     const [season, setSeason] = useState(null);
@@ -52,7 +52,6 @@ const GameWeek = () => {
     const [weekSchedule, setWeekSchedule] = useState([]);
     const [scheduleLoading, setScheduleLoading] = useState(false);
 
-    // Job tracking state
     const [activeJobId, setActiveJobId] = useState(null);
     const [jobData, setJobData] = useState(null);
     const [isStarting, setIsStarting] = useState(false);
@@ -61,7 +60,6 @@ const GameWeek = () => {
     const logContainerRef = useRef(null);
     const pollIntervalRef = useRef(null);
 
-    // Initialize
     useEffect(() => {
         const init = async () => {
             try {
@@ -82,21 +80,18 @@ const GameWeek = () => {
         init();
     }, []);
 
-    // Fetch week schedule when season/selectedWeek available
     useEffect(() => {
         if (season && selectedWeek) {
             fetchWeekSchedule();
         }
     }, [season, selectedWeek]);
 
-    // Auto-scroll log container when new logs arrive
     useEffect(() => {
         if (logContainerRef.current) {
             logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
         }
     }, [jobData?.logs?.length]);
 
-    // Cleanup polling on unmount
     useEffect(() => {
         return () => {
             if (pollIntervalRef.current) {
@@ -126,9 +121,7 @@ const GameWeek = () => {
         return { total, started, finished, notStarted };
     };
 
-    // Start polling for job status
     const startPolling = useCallback((jobId) => {
-        // Clear any existing interval
         if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
         }
@@ -138,26 +131,21 @@ const GameWeek = () => {
                 const status = await getGameWeekJobStatus(jobId);
                 setJobData(status);
 
-                // If job is completed, stop polling and refresh schedule
                 if (status.status === 'COMPLETED' || status.status === 'FAILED') {
                     clearInterval(pollIntervalRef.current);
                     pollIntervalRef.current = null;
                     setIsStarting(false);
-                    // Refresh schedule data
                     await fetchWeekSchedule();
                 }
             } catch (err) {
                 console.error('Error polling job status:', err);
-                // Don't stop polling on transient errors
             }
         };
 
-        // Poll immediately, then at interval
         poll();
         pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
     }, [season, selectedWeek]);
 
-    // Handle starting the week
     const handleStartWeek = async () => {
         setConfirmDialogOpen(false);
         setIsStarting(true);
@@ -188,7 +176,6 @@ const GameWeek = () => {
         }
     };
 
-    // Handle retrying failed games
     const handleRetryFailed = async () => {
         if (!activeJobId) return;
 
@@ -238,7 +225,6 @@ const GameWeek = () => {
             textColor="primary.main"
         >
             <Box sx={{ p: 3 }}>
-                {/* Header */}
                 <Box sx={{ mb: 4 }}>
                     <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
                         Start Game Week
@@ -248,7 +234,6 @@ const GameWeek = () => {
                     </Typography>
                 </Box>
 
-                {/* Current Season/Week Info */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>
                     <Grid item xs={12} sm={6} md={3}>
                         <StyledCard hover={false}>
@@ -353,7 +338,6 @@ const GameWeek = () => {
                     </Grid>
                 </Grid>
 
-                {/* Progress & Logs */}
                 {jobData && (
                     <StyledCard hover={false} sx={{ mb: 4 }}>
                         <Box sx={{ p: 3 }}>
@@ -380,7 +364,6 @@ const GameWeek = () => {
                                 </Box>
                             </Box>
 
-                            {/* Progress bar */}
                             {jobData.status === 'IN_PROGRESS' && (
                                 <Box sx={{ mb: 2 }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
@@ -411,7 +394,6 @@ const GameWeek = () => {
                                 </Alert>
                             )}
 
-                            {/* Log Console */}
                             <Paper
                                 ref={logContainerRef}
                                 variant="outlined"
@@ -478,7 +460,6 @@ const GameWeek = () => {
                     </StyledCard>
                 )}
 
-                {/* Week Schedule Table */}
                 <StyledCard hover={false}>
                     <Box sx={{ p: 3 }}>
                         <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', mb: 2 }}>
@@ -502,7 +483,6 @@ const GameWeek = () => {
                                     </TableHead>
                                     <TableBody>
                                         {weekSchedule.sort((a, b) => {
-                                            // Sort: not started first, then started, then finished
                                             if (a.started !== b.started) return a.started ? 1 : -1;
                                             if (a.finished !== b.finished) return a.finished ? 1 : -1;
                                             return 0;
@@ -563,7 +543,6 @@ const GameWeek = () => {
                     </Box>
                 </StyledCard>
 
-                {/* Confirm Dialog */}
                 <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
                     <DialogTitle>Start Game Week {selectedWeek}?</DialogTitle>
                     <DialogContent>

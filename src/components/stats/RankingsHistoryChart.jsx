@@ -152,7 +152,6 @@ const RankingsHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
         );
     }
 
-    // FIXED: Better tooltip that finds the actually hovered line
     const AllTeamsTooltip = ({ active, payload }) => {
         if (!active || !payload || payload.length === 0) return null;
 
@@ -162,7 +161,6 @@ const RankingsHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
 
         if (validPayloads.length === 0) return null;
 
-        // FIXED: Find the hovered team
         let hoveredPayload = validPayloads.find(p => p.dataKey && p.name) || validPayloads[0];
         
         const teamName = hoveredPayload.dataKey.replace('_rank', '');
@@ -355,7 +353,6 @@ const RankingsHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     
-    // On mobile, fit to viewport width and use a height that fits on screen
     const chartWidth = isMobile ? '100%' : '100%';
     const chartHeight = isMobile ? 400 : (showAllTeams ? 600 : 500);
 

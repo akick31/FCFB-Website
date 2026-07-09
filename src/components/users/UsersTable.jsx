@@ -47,7 +47,6 @@ const UsersTable = ({
 
     return (
         <div>
-            {/* Role Filter Dropdown */}
             <FormControl fullWidth sx={{ marginBottom: 2 }}>
                 <InputLabel>Filter by Role</InputLabel>
                 <Select
@@ -66,7 +65,6 @@ const UsersTable = ({
 
             <TableContainer component={Paper}>
                 <Table>
-                    {/* Table Header */}
                     <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                         <TableRow>
                             <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Username</TableCell>
@@ -95,7 +93,6 @@ const UsersTable = ({
                         </TableRow>
                     </TableHead>
 
-                    {/* Table Body */}
                     <TableBody>
                         {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => (
                             <TableRow
@@ -131,7 +128,6 @@ const UsersTable = ({
                     </TableBody>
                 </Table>
 
-                {/* Table Pagination */}
                 <TablePagination
                     rowsPerPageOptions={[10, 25, 50, { label: 'All', value: -1 }]}
                     component="div"

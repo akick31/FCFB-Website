@@ -31,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getAllTeams } from '../../api/teamApi';
+import { isRealTeam } from '../../utils/teamDataUtils';
 import {
     getScheduleBySeasonAndTeam,
     getScheduleBySeason,
@@ -58,7 +59,6 @@ import OOCScheduleAdminTab from '../../components/scheduling/OOCScheduleAdminTab
 const TOTAL_WEEKS = 12;
 const DEFAULT_CONFERENCE_GAMES = 9;
 
-// Conferences that should NOT appear in the admin Conference Schedule tab
 const EXCLUDED_ADMIN_CONFERENCES = ['FBS_INDEPENDENT'];
 
 const Scheduling = () => {
@@ -74,36 +74,29 @@ const Scheduling = () => {
     const [loading, setLoading] = useState(true);
     const [tabIndex, setTabIndex] = useState(0);
 
-    // Full season schedule (for occupancy checks)
     const [allSeasonSchedule, setAllSeasonSchedule] = useState([]);
 
-    // Conference scheduling state
     const [selectedConference, setSelectedConference] = useState('ACC');
     const [conferenceSchedule, setConferenceSchedule] = useState([]);
     const [conferenceTeams, setConferenceTeams] = useState([]);
     const [confLoading, setConfLoading] = useState(false);
 
-    // Conference generation rules
     const [numConferenceGames, setNumConferenceGames] = useState(DEFAULT_CONFERENCE_GAMES);
     const [protectedRivalries, setProtectedRivalries] = useState([]);
     const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
-    // OOC scheduling state
     const [selectedOOCTeam, setSelectedOOCTeam] = useState(null);
     const [oocFullSchedule, setOocFullSchedule] = useState([]);
     const [oocLoading, setOocLoading] = useState(false);
 
-    // Postseason state
     const [postseasonSchedule, setPostseasonSchedule] = useState([]);
     const [postseasonLoading, setPostseasonLoading] = useState(false);
 
-    // Cell click dialog state (for clicking empty cells in conference grid)
     const [cellDialogOpen, setCellDialogOpen] = useState(false);
     const [cellDialogTeam, setCellDialogTeam] = useState(null);
     const [cellDialogWeek, setCellDialogWeek] = useState(null);
     const [cellDialogOpponent, setCellDialogOpponent] = useState(null);
     const [cellDialogIsHome, setCellDialogIsHome] = useState(true);
 
-    // Add game dialog state (for manual add / OOC / postseason)
     const [addGameDialogOpen, setAddGameDialogOpen] = useState(false);
     const [addGameWeek, setAddGameWeek] = useState(1);
     const [addGameHome, setAddGameHome] = useState(null);
@@ -118,21 +111,17 @@ const Scheduling = () => {
     const [addGameLogoPreview, setAddGameLogoPreview] = useState(null);
     const [uploadingLogo, setUploadingLogo] = useState(false);
 
-    // Move game dialog state
     const [moveDialogOpen, setMoveDialogOpen] = useState(false);
     const [moveGameData, setMoveGameData] = useState(null);
     const [moveToWeek, setMoveToWeek] = useState(1);
 
-    // Create season dialog
     const [createSeasonDialogOpen, setCreateSeasonDialogOpen] = useState(false);
     const [newSeasonNumber, setNewSeasonNumber] = useState('');
 
-    // (Playoff bracket and advance team state managed in PostseasonAdminTab)
+    // Playoff bracket and advance team state is managed in PostseasonAdminTab.
 
-    // Notifications
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-    // Build team map for logos
     const teamMap = useMemo(() => {
         const map = {};
         allTeams.forEach(team => {
@@ -141,13 +130,12 @@ const Scheduling = () => {
         return map;
     }, [allTeams]);
 
-    // Set defaults when dialog opens for BOWL or PLAYOFFS
     useEffect(() => {
         if (addGameDialogOpen) {
             if (addGameType === 'BOWL') {
                 setAddGameWeek(14);
                 setAddGameSubdivision('FCFB');
-                setAddGameBowlName(''); // Reset bowl name when opening dialog
+                setAddGameBowlName('');
             } else if (addGameType === 'PLAYOFFS' || addGameType === 'NATIONAL_CHAMPIONSHIP') {
                 if (addGamePlayoffRound) {
                     setAddGameWeek(13 + addGamePlayoffRound);
@@ -157,7 +145,6 @@ const Scheduling = () => {
         }
     }, [addGameDialogOpen, addGameType, addGamePlayoffRound]);
 
-    // Initialize
     useEffect(() => {
         const init = async () => {
             try {
@@ -170,7 +157,6 @@ const Scheduling = () => {
                 setAllTeams(teamsData);
                 const seasonNumbers = seasonsData.map(s => s.season_number || s.seasonNumber);
                 setAllSeasons(seasonNumbers);
-                // Default to current season
                 setSeason(currentSeason);
             } catch (err) {
                 console.error('Error initializing scheduling page:', err);
@@ -182,7 +168,6 @@ const Scheduling = () => {
         init();
     }, []);
 
-    // Check schedule lock when season changes
     useEffect(() => {
         const checkLock = async () => {
             if (!season) return;
@@ -197,7 +182,6 @@ const Scheduling = () => {
         checkLock();
     }, [season]);
 
-    // Handle toggling schedule lock
     const handleToggleLock = async () => {
         try {
             if (scheduleLocked) {
@@ -215,7 +199,6 @@ const Scheduling = () => {
         }
     };
 
-    // Filter teams by selected conference
     useEffect(() => {
         if (allTeams.length > 0 && selectedConference) {
             const filtered = allTeams.filter(
@@ -225,7 +208,6 @@ const Scheduling = () => {
         }
     }, [allTeams, selectedConference]);
 
-    // Fetch full season schedule for occupancy checking (once per season)
     useEffect(() => {
         if (season) {
             const fetchAll = async () => {
@@ -241,7 +223,6 @@ const Scheduling = () => {
         }
     }, [season]);
 
-    // Fetch conference schedule when conference or season changes
     useEffect(() => {
         if (season && selectedConference && tabIndex === 0) {
             fetchConferenceSchedule();
@@ -249,7 +230,6 @@ const Scheduling = () => {
         }
     }, [season, selectedConference, tabIndex]);
 
-    // Load conference rules when conference changes
     const loadConferenceRules = async () => {
         if (!selectedConference) return;
         try {
@@ -258,33 +238,28 @@ const Scheduling = () => {
                 setNumConferenceGames(rules.numConferenceGames || DEFAULT_CONFERENCE_GAMES);
                 setProtectedRivalries(rules.protectedRivalries || []);
             } else {
-                // No saved rules, use defaults
                 setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
                 setProtectedRivalries([]);
             }
         } catch (err) {
             console.error('Error loading conference rules:', err);
-            // On error, use defaults
             setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
             setProtectedRivalries([]);
         }
     };
 
-    // Fetch OOC schedule (full schedule) when team changes
     useEffect(() => {
         if (season && selectedOOCTeam && tabIndex === 1) {
             fetchOOCSchedule();
         }
     }, [season, selectedOOCTeam, tabIndex]);
 
-    // Fetch postseason schedule
     useEffect(() => {
         if (season && tabIndex === 2) {
             fetchPostseasonSchedule();
         }
     }, [season, tabIndex]);
 
-    // Refresh the full season schedule for occupancy map
     const refreshAllSeasonSchedule = async () => {
         try {
             const schedule = await getScheduleBySeason(season);
@@ -337,9 +312,7 @@ const Scheduling = () => {
         setSnackbar({ open: true, message, severity });
     };
 
-    // Handle clicking an empty cell in the conference grid
     const handleEmptyCellClick = (teamName, weekNum) => {
-        // Check if the team already has a game that week (e.g. OOC game)
         if (teamWeekOccupiedAll.has(`${teamName}|${weekNum}`)) {
             showSnackbar(`${teamName} already has a game scheduled in Week ${weekNum}`, 'warning');
             return;
@@ -351,7 +324,6 @@ const Scheduling = () => {
         setCellDialogOpen(true);
     };
 
-    // Handle creating a game from the cell click dialog (auto-fills opponent)
     const handleCellDialogSave = async () => {
         if (!cellDialogTeam || !cellDialogOpponent || !cellDialogWeek) {
             showSnackbar('Please select an opponent', 'error');
@@ -378,14 +350,12 @@ const Scheduling = () => {
         }
     };
 
-    // Handle adding a game (manual dialog)
     const handleAddGame = async () => {
         if (!addGameHome || !addGameAway) {
             showSnackbar('Please fill in all fields', 'error');
             return;
         }
-        
-        // Determine week and subdivision based on game type
+
         let finalWeek = addGameWeek;
         let finalSubdivision = addGameSubdivision;
         let finalGameType = addGameType;
@@ -446,7 +416,6 @@ const Scheduling = () => {
         }
     };
 
-    // Handle deleting a game
     const handleDeleteGame = async (gameId) => {
         try {
             await deleteScheduleEntry(gameId);
@@ -461,7 +430,6 @@ const Scheduling = () => {
         }
     };
 
-    // Handle moving a game
     const handleMoveGame = async () => {
         if (!moveGameData || !moveToWeek) return;
         try {
@@ -479,9 +447,7 @@ const Scheduling = () => {
         }
     };
 
-    // Handle generating conference schedule
     const handleGenerateConferenceSchedule = async () => {
-        // Validate all protected rivalries have both teams set
         const incompleteRivalries = protectedRivalries.filter(r => (r.team1 && !r.team2) || (!r.team1 && r.team2));
         if (incompleteRivalries.length > 0) {
             showSnackbar('All protected rivalries must have both teams set before generating', 'error');
@@ -511,7 +477,6 @@ const Scheduling = () => {
         }
     };
 
-    // Handle creating a new season + auto-generating all conference schedules (async with polling)
     const [creatingSeasonLoading, setCreatingSeasonLoading] = useState(false);
     const [createSeasonProgress, setCreateSeasonProgress] = useState('');
     const handleCreateSeason = async () => {
@@ -523,20 +488,18 @@ const Scheduling = () => {
         setCreatingSeasonLoading(true);
         setCreateSeasonProgress('Creating season…');
         try {
-            // 1. Create the season
             await createSeasonForScheduling(num);
             if (!isMountedRef.current) return;
             setCreateSeasonProgress('Season created. Starting conference schedule generation…');
 
-            // 2. Fire-and-forget: start async generation and poll for progress
             try {
                 const jobResponse = await generateAllConferenceSchedules(num);
                 const jobId = jobResponse.jobId;
 
-                // Poll until complete (or until this component unmounts)
+                // Bail out of the poll loop if the component unmounts mid-generation.
                 let done = false;
                 while (!done && isMountedRef.current) {
-                    await new Promise(r => setTimeout(r, 2000)); // Poll every 2s
+                    await new Promise(r => setTimeout(r, 2000));
                     if (!isMountedRef.current) break;
                     try {
                         const status = await pollScheduleGenJobStatus(jobId);
@@ -599,7 +562,6 @@ const Scheduling = () => {
         }
     };
 
-    // Rivalry management
     const addRivalry = () => {
         setProtectedRivalries([...protectedRivalries, { team1: '', team2: '', week: null }]);
     };
@@ -614,7 +576,6 @@ const Scheduling = () => {
         setProtectedRivalries(updated);
     };
 
-    // Save conference rules
     const handleSaveConferenceRules = async (conference, numGames, rivalries) => {
         try {
             await saveConferenceRules(conference, numGames, rivalries);
@@ -627,10 +588,7 @@ const Scheduling = () => {
 
     const navigationItems = adminNavigationItems;
 
-    // Build a set of "team|week" pairs from the FULL season schedule for occupancy checks.
-    // `teamWeekOccupiedAll` includes ALL games (used for duplicate prevention in add-game dialogs).
-    // `teamWeekOccupiedNonConf` EXCLUDES conference games for the currently selected conference
-    //   (used in the conference grid to show "OOC" — prevents conference games from being mislabelled as OOC).
+    // Includes every game, used to prevent double-booking in add-game dialogs.
     const teamWeekOccupiedAll = useMemo(() => {
         const occupied = new Set();
         allSeasonSchedule.forEach(game => {
@@ -643,8 +601,7 @@ const Scheduling = () => {
         return occupied;
     }, [allSeasonSchedule]);
 
-    // Conference game keys from the currently loaded conferenceSchedule — these should NOT
-    // appear as "OOC" in the conference grid even if allSeasonSchedule includes them.
+    // Excludes this conference's own games so they aren't mislabeled as OOC in the grid.
     const teamWeekOccupiedNonConf = useMemo(() => {
         const confKeys = new Set();
         conferenceSchedule.forEach(game => {
@@ -666,7 +623,6 @@ const Scheduling = () => {
         return occupied;
     }, [allSeasonSchedule, conferenceSchedule]);
 
-    // Check if any games have been played in this season
     const hasGamesPlayed = useMemo(() => {
         return allSeasonSchedule.some(game => {
             const started = field(game, 'started', 'started');
@@ -675,14 +631,11 @@ const Scheduling = () => {
         });
     }, [allSeasonSchedule]);
 
-    // Available opponents for cell dialog (conference teams not scheduled that week AND not already playing this team)
     const cellDialogAvailableOpponents = useMemo(() => {
         if (!cellDialogWeek || !cellDialogTeam) return [];
         return conferenceTeams.filter(t => {
             if (t.name === cellDialogTeam) return false;
-            // Check if opponent is already scheduled that week
             if (teamWeekOccupiedAll.has(`${t.name}|${cellDialogWeek}`)) return false;
-            // Check if this team is already scheduled to play this opponent anywhere in the season
             const alreadyPlaying = allSeasonSchedule.some(game => {
                 const home = field(game, 'homeTeam', 'home_team');
                 const away = field(game, 'awayTeam', 'away_team');
@@ -692,7 +645,6 @@ const Scheduling = () => {
         });
     }, [cellDialogWeek, cellDialogTeam, conferenceTeams, teamWeekOccupiedAll, allSeasonSchedule]);
 
-    // Filtered conferences for admin (excludes FBS Independent)
     const adminConferences = useMemo(() => {
         return conferences.filter(c => !EXCLUDED_ADMIN_CONFERENCES.includes(c.value));
     }, []);
@@ -720,7 +672,6 @@ const Scheduling = () => {
             textColor="primary.main"
         >
             <Box sx={{ p: 3 }}>
-                {/* Page Header */}
                 <Box sx={{ mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 1 }}>
                         <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
@@ -785,7 +736,6 @@ const Scheduling = () => {
                     </Alert>
                 )}
 
-                {/* Tab Selector */}
                 <Tabs
                     value={tabIndex}
                     onChange={(_, newVal) => setTabIndex(newVal)}
@@ -796,7 +746,6 @@ const Scheduling = () => {
                     <Tab label="Postseason" />
                 </Tabs>
 
-                {/* ======================== CONFERENCE SCHEDULE TAB ======================== */}
                 {tabIndex === 0 && (
                     <ConferenceScheduleAdminTab
                         selectedConference={selectedConference}
@@ -830,7 +779,6 @@ const Scheduling = () => {
                     />
                 )}
 
-                {/* ======================== OOC SCHEDULE TAB ======================== */}
                 {tabIndex === 1 && (
                     <OOCScheduleAdminTab
                         allTeams={allTeams}
@@ -861,7 +809,6 @@ const Scheduling = () => {
                     />
                 )}
 
-                {/* ======================== POSTSEASON TAB ======================== */}
                 {tabIndex === 2 && (
                     <PostseasonAdminTab
                         season={season}
@@ -887,7 +834,6 @@ const Scheduling = () => {
                     />
                 )}
 
-                {/* ======================== CELL CLICK DIALOG (Conference Grid) ======================== */}
                 <Dialog open={cellDialogOpen} onClose={() => setCellDialogOpen(false)} maxWidth="sm" fullWidth>
                     <DialogTitle>
                         Schedule Game: {cellDialogTeam}, Week {cellDialogWeek}
@@ -932,12 +878,10 @@ const Scheduling = () => {
                     </DialogActions>
                 </Dialog>
 
-                {/* ======================== ADD GAME DIALOG ======================== */}
                 <Dialog open={addGameDialogOpen} onClose={() => setAddGameDialogOpen(false)} maxWidth="sm" fullWidth>
                     <DialogTitle>Add {formatGameType(addGameType)}</DialogTitle>
                     <DialogContent>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                            {/* Week selector - hidden for BOWL (always 14), PLAYOFFS (calculated from round), and CONFERENCE_CHAMPIONSHIP (always 13) */}
                             {addGameType !== 'BOWL' && addGameType !== 'PLAYOFFS' && addGameType !== 'CONFERENCE_CHAMPIONSHIP' && addGameType !== 'NATIONAL_CHAMPIONSHIP' && (
                                 <FormControl size="small" fullWidth>
                                     <InputLabel>Week</InputLabel>
@@ -952,7 +896,6 @@ const Scheduling = () => {
                                     </Select>
                                 </FormControl>
                             )}
-                            {/* Show week info for BOWL (always 14) */}
                             {addGameType === 'BOWL' && (
                                 <Alert severity="info" sx={{ py: 0.5 }}>
                                     Bowl games are always scheduled for Week 14
@@ -961,8 +904,7 @@ const Scheduling = () => {
 
                             <Autocomplete
                                 options={allTeams.filter(t => {
-                                    if (!t.active) return false;
-                                    // For regular season games (weeks 1-12), filter out teams already scheduled
+                                    if (!t.active || !isRealTeam(t)) return false;
                                     if (addGameWeek && addGameWeek <= TOTAL_WEEKS) {
                                         return !teamWeekOccupiedAll.has(`${t.name}|${addGameWeek}`);
                                     }
@@ -990,13 +932,12 @@ const Scheduling = () => {
                                 options={(() => {
                                     let opts;
                                     if (addGameType === 'OUT_OF_CONFERENCE') {
-                                        opts = allTeams.filter(t => t.active && t.conference !== selectedOOCTeam?.conference);
+                                        opts = allTeams.filter(t => t.active && isRealTeam(t) && t.conference !== selectedOOCTeam?.conference);
                                     } else if (addGameType === 'CONFERENCE_GAME') {
                                         opts = conferenceTeams;
                                     } else {
-                                        opts = allTeams.filter(t => t.active);
+                                        opts = allTeams.filter(t => t.active && isRealTeam(t));
                                     }
-                                    // For regular season games, filter out teams already scheduled that week
                                     if (addGameWeek && addGameWeek <= TOTAL_WEEKS) {
                                         opts = opts.filter(t => !teamWeekOccupiedAll.has(`${t.name}|${addGameWeek}`));
                                     }
@@ -1020,7 +961,6 @@ const Scheduling = () => {
                                 isOptionEqualToValue={(option, value) => option.name === value?.name}
                             />
 
-                            {/* Bowl Game Name - only shown for BOWL games */}
                             {addGameType === 'BOWL' && (
                                 <TextField
                                     label="Bowl Game Name"
@@ -1035,7 +975,6 @@ const Scheduling = () => {
                                 />
                             )}
 
-                            {/* Postseason Game Logo - URL input for BOWL, file upload for others */}
                             {addGameType === 'BOWL' && (
                                 <Box>
                                     <TextField
@@ -1117,7 +1056,6 @@ const Scheduling = () => {
                                 </Box>
                             )}
 
-                            {/* Game Type selector - hidden for BOWL (always BOWL) */}
                             {addGameType !== 'BOWL' && (
                                 <FormControl size="small" fullWidth>
                                     <InputLabel>Game Type</InputLabel>
@@ -1146,7 +1084,6 @@ const Scheduling = () => {
                                             onChange={(e) => {
                                                 const round = e.target.value ? parseInt(e.target.value) : null;
                                                 setAddGamePlayoffRound(round);
-                                                // Calculate week from round: Round 1 = Week 14, Round 2 = Week 15, etc.
                                                 if (round) {
                                                     const calculatedWeek = 13 + round;
                                                     setAddGameWeek(calculatedWeek);
@@ -1186,7 +1123,6 @@ const Scheduling = () => {
                                 </>
                             )}
 
-                            {/* Subdivision selector - hidden for BOWL, PLAYOFFS, CONFERENCE_CHAMPIONSHIP, and NATIONAL_CHAMPIONSHIP (always FCFB) */}
                             {addGameType !== 'BOWL' && addGameType !== 'PLAYOFFS' && addGameType !== 'CONFERENCE_CHAMPIONSHIP' && addGameType !== 'NATIONAL_CHAMPIONSHIP' && (
                                 <FormControl size="small" fullWidth>
                                     <InputLabel>Subdivision</InputLabel>
@@ -1208,7 +1144,6 @@ const Scheduling = () => {
                     </DialogActions>
                 </Dialog>
 
-                {/* ======================== MOVE GAME DIALOG ======================== */}
                 <Dialog open={moveDialogOpen} onClose={() => setMoveDialogOpen(false)} maxWidth="xs" fullWidth>
                     <DialogTitle>Move or Remove Game</DialogTitle>
                     <DialogContent>
@@ -1248,9 +1183,8 @@ const Scheduling = () => {
                                                 const awayOccupied = away && teamWeekOccupiedAll.has(`${away}|${weekNum}`);
                                                 const isOccupied = homeOccupied || awayOccupied;
                                                 const isCurrentWeek = weekNum === moveGameData.week;
-                                                // Only show weeks 1-12 that are not occupied (or the current week)
                                                 if (isOccupied && !isCurrentWeek) {
-                                                    return null; // Don't render occupied weeks
+                                                    return null;
                                                 }
                                                 return (
                                                     <MenuItem 
@@ -1304,7 +1238,6 @@ const Scheduling = () => {
                     </DialogActions>
                 </Dialog>
 
-                {/* ======================== GENERATE CONFERENCE SCHEDULE DIALOG ======================== */}
                 <Dialog open={generateDialogOpen} onClose={() => setGenerateDialogOpen(false)} maxWidth="md" fullWidth>
                     <DialogTitle>Auto-Generate {formatConference(selectedConference)} Conference Schedule</DialogTitle>
                     <DialogContent>
@@ -1340,7 +1273,6 @@ const Scheduling = () => {
                     </DialogActions>
                 </Dialog>
 
-                {/* ======================== CREATE SEASON DIALOG ======================== */}
                 <Dialog open={createSeasonDialogOpen} onClose={() => !creatingSeasonLoading && setCreateSeasonDialogOpen(false)} maxWidth="xs" fullWidth>
                     <DialogTitle>Create New Season for Scheduling</DialogTitle>
                     <DialogContent>
@@ -1377,7 +1309,6 @@ const Scheduling = () => {
                     </DialogActions>
                 </Dialog>
 
-                {/* Snackbar notifications */}
                 <Snackbar
                     open={snackbar.open}
                     autoHideDuration={4000}

@@ -65,7 +65,6 @@ const GameDetailsCard = ({ game, sx = {} }) => {
             boxShadow: `0 4px 20px ${theme.palette.primary.main}20`,
             ...sx
         }}>
-            {/* Header */}
             <Box sx={{
                 background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                 p: 1.5,
@@ -87,9 +86,7 @@ const GameDetailsCard = ({ game, sx = {} }) => {
                 </Typography>
             </Box>
 
-            {/* Content */}
             <Box sx={{ p: 1.5 }}>
-                {/* Game Status Section */}
                 <Box sx={{ mb: 2 }}>
                     <Typography variant="subtitle2" sx={{
                         color: theme.palette.secondary.main,
@@ -144,7 +141,6 @@ const GameDetailsCard = ({ game, sx = {} }) => {
                     </Box>
                 </Box>
 
-                {/* Additional Information */}
                 {additionalInfo.length > 0 && (
                     <Box>
                         <Typography variant="subtitle2" sx={{

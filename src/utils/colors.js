@@ -1,4 +1,3 @@
-// colors.js
 export const primary = '#004260';
 export const secondary = '#d22830';
 export const success = '#28a745';

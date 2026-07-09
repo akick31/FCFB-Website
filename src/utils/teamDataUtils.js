@@ -10,6 +10,10 @@ export const isTeamAvailable = (team) => {
     return !team.is_taken;
 };
 
+export const isRealTeam = (team) => {
+    return team.conference !== 'FAKE_TEAM';
+};
+
 export const getTeamStatusText = (team) => {
     return team.is_taken ? 'Taken' : 'Available';
 };
@@ -48,16 +52,12 @@ export const getTeamPlaybooks = (team) => {
     const formatPlaybookName = (playbook) => {
         if (!playbook) return 'N/A';
         
-        // Convert enum values to human-readable descriptions
         const playbookMappings = {
-            // Offensive Playbooks
             'FLEXBONE': 'Flexbone',
             'AIR_RAID': 'Air Raid',
             'PRO': 'Pro',
             'SPREAD': 'Spread',
             'WEST_COAST': 'West Coast',
-            
-            // Defensive Playbooks
             'FOUR_THREE': '4-3',
             'THREE_FOUR': '3-4',
             'FIVE_TWO': '5-2',

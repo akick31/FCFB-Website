@@ -32,7 +32,6 @@ const RegistrationSuccess = () => {
                         maxWidth: 500
                     }}
                 >
-                    {/* Success Icon */}
                     <Box sx={{ mb: 3 }}>
                         <CheckCircle
                             sx={{
@@ -43,7 +42,6 @@ const RegistrationSuccess = () => {
                         />
                     </Box>
 
-                    {/* Success Message */}
                     <Typography
                         variant="h4"
                         component="h1"
@@ -69,7 +67,6 @@ const RegistrationSuccess = () => {
                         Welcome to FCFB! Your account has been created successfully.
                     </Typography>
 
-                    {/* Email Verification Section */}
                     <Box
                         sx={{
                             backgroundColor: 'grey.200',
@@ -120,7 +117,6 @@ const RegistrationSuccess = () => {
                         </Typography>
                     </Box>
 
-                    {/* Next Steps */}
                     <Typography
                         variant="body1"
                         sx={{
@@ -131,7 +127,6 @@ const RegistrationSuccess = () => {
                         Once you verify your email, you'll be able to sign in and start playing!
                     </Typography>
 
-                    {/* Sign In Button */}
                     <Button
                         variant="contained"
                         size="large"

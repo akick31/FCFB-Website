@@ -37,7 +37,6 @@ const ResetPassword = () => {
 
     const navigate = useNavigate();
 
-    // Redirect if no userId or token is provided
     useEffect(() => {
         if (!userId || !token) {
             navigate('/login');
@@ -219,7 +218,6 @@ const ResetPassword = () => {
                 </StyledCard>
             </Grid>
 
-            {/* Right side content for larger screens */}
             <Grid item xs={12} md={6} lg={5} sx={{ display: { xs: 'none', md: 'block' } }}>
                 <Box sx={{ textAlign: 'center', p: 4 }}>
                     <Typography

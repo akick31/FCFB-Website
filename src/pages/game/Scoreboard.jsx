@@ -17,6 +17,8 @@ import StyledCard from '../../components/ui/StyledCard';
 import OngoingGames from '../../components/game/scoreboard/OngoingGames';
 import PastGames from '../../components/game/scoreboard/PastGames';
 import Scrimmages from '../../components/game/scoreboard/Scrimmages';
+import { useSeo } from '../../hooks/useSeo';
+import { ROUTE_META } from '../../routeMeta';
 
 const TAB_SLUGS = ['live', 'past', 'scrimmages'];
 const TAB_FROM_SLUG = { live: 0, past: 1, scrimmages: 2 };
@@ -29,9 +31,8 @@ const Scoreboard = () => {
 
     const activeTab = TAB_FROM_SLUG[tab] ?? 0;
 
-    useEffect(() => { document.title = 'FCFB | Scoreboard'; }, []);
+    useSeo(ROUTE_META['/scoreboard']);
 
-    // Redirect bare /scoreboard to /scoreboard/live
     useEffect(() => {
         if (!tab) navigate('/scoreboard/live', { replace: true });
     }, [tab, navigate]);

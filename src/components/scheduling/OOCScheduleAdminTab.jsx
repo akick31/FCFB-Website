@@ -25,6 +25,7 @@ import {
 import StyledCard from '../ui/StyledCard';
 import { formatGameType, formatConference } from '../../utils/formatText';
 import { field } from '../../utils/fieldHelper';
+import { isRealTeam } from '../../utils/teamDataUtils';
 
 const TOTAL_WEEKS = 12;
 const DEFAULT_OOC_GAMES = 3;
@@ -42,7 +43,6 @@ const OOCScheduleAdminTab = ({
     onMoveGame,
     onDeleteGame,
 }) => {
-    // OOC games only (for counting)
     const oocGamesOnly = useMemo(() =>
         oocFullSchedule.filter(g => field(g, 'gameType', 'game_type') === 'OUT_OF_CONFERENCE'),
         [oocFullSchedule]
@@ -52,7 +52,7 @@ const OOCScheduleAdminTab = ({
         <Box>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'center' }}>
                 <Autocomplete
-                    options={allTeams.filter(t => t.active)}
+                    options={allTeams.filter(t => t.active && isRealTeam(t))}
                     getOptionLabel={(option) => option.name || ''}
                     value={selectedOOCTeam}
                     onChange={(_, newValue) => onOOCTeamChange(newValue)}

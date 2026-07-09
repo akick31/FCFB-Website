@@ -92,23 +92,23 @@ export const getFreeAgents = async () => {
     }
 }
 
-export const updateUsername = async (userId, username) =>
+export const updateUsername = (userId, username) =>
     updateUserDetails(userId, { newUsername: username });
 
-export const updateEmail = async (userId, email) =>
+export const updateEmail = (userId, email) =>
     updateUserDetails(userId, { newEmail: email });
 
-export const updatePassword = async (userId, password) =>
+export const updatePassword = (userId, password) =>
     updateUserDetails(userId, { newPassword: password });
 
-export const updateRole = async (userId, role) =>
+export const updateRole = (userId, role) =>
     updateUserDetails(userId, { newRole: role });
 
-export const updateCoachName = async (userId, coachName) =>
+export const updateCoachName = (userId, coachName) =>
     updateUserDetails(userId, { newCoachName: coachName });
 
-export const updateDiscordTag = async (userId, discordTag) =>
+export const updateDiscordTag = (userId, discordTag) =>
     updateUserDetails(userId, { newDiscordTag: discordTag });
 
-export const updateTeam = async (userId, team) =>
+export const updateTeam = (userId, team) =>
     updateUserDetails(userId, { newTeam: team });

@@ -101,7 +101,6 @@ export const getFilteredGames = async (params) => {
     }
 };
 
-// New game management functions
 export const startGame = async (startRequest) => {
     try {
         const response = await apiClient.post('/game', startRequest);

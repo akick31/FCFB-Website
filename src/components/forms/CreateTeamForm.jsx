@@ -84,8 +84,7 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
 
         try {
             const newTeam = await createTeam(formData);
-            
-            // Reset form
+
             setFormData({
                 name: '',
                 short_name: '',
@@ -196,7 +195,6 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
                             fullWidth
                         />
 
-                        {/* Color Pickers */}
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                             <Typography variant="body1">Primary Color</Typography>
                             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -217,7 +215,6 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
                             </Box>
                         </Box>
 
-                        {/* Subdivision - Fixed to FAKE */}
                         <FormControl fullWidth margin="normal">
                             <InputLabel id="subdivision-label">Subdivision</InputLabel>
                             <Select
@@ -232,7 +229,6 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
                             </Select>
                         </FormControl>
 
-                        {/* Offensive Playbook */}
                         <FormControl fullWidth margin="normal">
                             <InputLabel id="offensive-playbook-label">Offensive Playbook *</InputLabel>
                             <Select
@@ -251,7 +247,6 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
                             </Select>
                         </FormControl>
 
-                        {/* Defensive Playbook */}
                         <FormControl fullWidth margin="normal">
                             <InputLabel id="defensive-playbook-label">Defensive Playbook *</InputLabel>
                             <Select
@@ -270,7 +265,6 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
                             </Select>
                         </FormControl>
 
-                        {/* Conference */}
                         <FormControl fullWidth margin="normal">
                             <InputLabel id="conference-label">Conference *</InputLabel>
                             <Select

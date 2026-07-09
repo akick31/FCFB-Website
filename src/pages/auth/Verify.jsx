@@ -15,9 +15,10 @@ import {
 import PropTypes from 'prop-types';
 import {Person} from "@mui/icons-material";
 
-const Verify = ({ userId }) => {
+const Verify = () => {
     const theme = useTheme();
     const location = useLocation();
+    const userId = new URLSearchParams(location.search).get('id');
     const [loading, setLoading] = useState(true);
     const [verificationSuccess, setVerificationSuccess] = useState(false);
     const navigate = useNavigate();
@@ -118,7 +119,6 @@ const Verify = ({ userId }) => {
 };
 
 Verify.propTypes = {
-    userId: PropTypes.string.isRequired,
     token: PropTypes.string.isRequired,
 };
 

@@ -41,7 +41,6 @@ const StandingsTable = ({ teams, conference }) => {
 
     return (
         <Box>
-            {/* Conference Header */}
             <Box sx={{ mb: 3, textAlign: 'center' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
                     {(() => {
@@ -72,7 +71,6 @@ const StandingsTable = ({ teams, conference }) => {
                 }}
             >
                 <Table>
-                    {/* Table Header */}
                     <TableHead sx={{ 
                         backgroundColor: 'primary.main',
                         '& .MuiTableCell-head': {
@@ -91,7 +89,6 @@ const StandingsTable = ({ teams, conference }) => {
                         </TableRow>
                     </TableHead>
 
-                    {/* Table Body */}
                     <TableBody>
                         {teams.map((team, index) => {
                             const overallWins = team.current_wins || 0;
@@ -119,7 +116,6 @@ const StandingsTable = ({ teams, conference }) => {
                                         }
                                     }}
                                 >
-                                    {/* Rank */}
                                     <TableCell>
                                         <Box sx={{ 
                                             display: 'flex', 
@@ -139,7 +135,6 @@ const StandingsTable = ({ teams, conference }) => {
                                         </Box>
                                     </TableCell>
 
-                                    {/* Team (Logo + Name) */}
                                     <TableCell>
                                         <Box sx={{
                                             display: 'flex',
@@ -187,28 +182,24 @@ const StandingsTable = ({ teams, conference }) => {
 
 
 
-                                    {/* Overall Record */}
                                     <TableCell>
                                         <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                                             {overallWins}-{overallLosses}
                                         </Typography>
                                     </TableCell>
 
-                                    {/* Conference Record */}
                                     <TableCell>
                                         <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                                             {confWins}-{confLosses}
                                         </Typography>
                                     </TableCell>
 
-                                    {/* Conference Win Percentage */}
                                     <TableCell>
                                         <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                                             {confWinPct}
                                         </Typography>
                                     </TableCell>
 
-                                    {/* ELO */}
                                     <TableCell>
                                         <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                                             {team.current_elo !== null && team.current_elo !== undefined ? 

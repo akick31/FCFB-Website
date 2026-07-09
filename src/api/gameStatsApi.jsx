@@ -40,7 +40,6 @@ export const generateGameStats = async (gameId) => {
     }
 };
 
-// Used to populate scatter plots
 export const getGameStatsBySeasonAndWeek = async (season, week = null) => {
     try {
         const params = { season, ...(week && { week }) };

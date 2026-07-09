@@ -29,9 +29,11 @@ import { getLeaderboard } from '../../api/seasonStatsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { conferences } from '../../components/constants/conferences';
+import { useSeo } from '../../hooks/useSeo';
+import { ROUTE_META } from '../../routeMeta';
 
 const Leaderboard = () => {
-    useEffect(() => { document.title = 'FCFB | Leaderboard'; }, []);
+    useSeo(ROUTE_META['/leaderboard']);
 
     const [leaderboard, setLeaderboard] = useState([]);
     const [allStatsLeaderboard, setAllStatsLeaderboard] = useState({});
@@ -39,8 +41,7 @@ const Leaderboard = () => {
     const [seasons, setSeasons] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    
-    // Filter states
+
     const [selectedSeason, setSelectedSeason] = useState(11);
     const [selectedConference, setSelectedConference] = useState('');
     const [selectedStat, setSelectedStat] = useState('');
@@ -48,7 +49,6 @@ const Leaderboard = () => {
     const [ascending, setAscending] = useState(false);
     const [showAllStats, setShowAllStats] = useState(true);
 
-    // Available stats for leaderboard
     const availableStats = [
         { value: 'wins', label: 'Wins' },
         { value: 'losses', label: 'Losses' },
@@ -76,15 +76,12 @@ const Leaderboard = () => {
                     getAllSeasons()
                 ]);
                 setTeams(teamsData);
-                
-                // Create seasons array from all seasons, sorted descending
+
                 const seasonNumbers = allSeasonsData.map(s => s.season_number || s.seasonNumber);
                 setSeasons(seasonNumbers.sort((a, b) => b - a));
-                
-                // Set default season to the current season
+
                 setSelectedSeason(currentSeason);
-                
-                // Load all stats by default
+
                 await fetchLeaderboard();
             } catch (err) {
                 setError('Failed to load initial data');
@@ -99,13 +96,11 @@ const Leaderboard = () => {
 
     const fetchLeaderboard = async () => {
         if (showAllStats) {
-            // Fetch all stats in parallel with error handling
             try {
                 setLoading(true);
                 setError(null);
                 const allStatsData = {};
-                
-                // Fetch all stats in parallel, but continue even if some fail
+
                 const promises = availableStats.map(async (stat) => {
                     try {
                         const data = await getLeaderboard(
@@ -122,17 +117,16 @@ const Leaderboard = () => {
                         return { stat: stat.value, data: null, error: err.message };
                     }
                 });
-                
+
                 const results = await Promise.all(promises);
                 results.forEach(({ stat, data, error }) => {
                     if (data) {
                         allStatsData[stat] = data;
                     } else if (error) {
-                        // Log error but don't block the rest
                         console.warn(`Failed to load ${stat}: ${error}`);
                     }
                 });
-                
+
                 setAllStatsLeaderboard(allStatsData);
             } catch (err) {
                 setError('Failed to fetch leaderboard data');
@@ -141,7 +135,6 @@ const Leaderboard = () => {
                 setLoading(false);
             }
         } else {
-            // Fetch single stat
             if (!selectedStat) {
                 setError('Please select a stat to view leaderboard');
                 return;
@@ -170,8 +163,7 @@ const Leaderboard = () => {
 
     const formatStatValue = (statName, value) => {
         if (value === null || value === undefined) return 'N/A';
-        
-        // Format based on stat type
+
         switch (statName) {
             case 'total_yards':
             case 'pass_yards':
@@ -218,7 +210,6 @@ const Leaderboard = () => {
                     View leaderboards for various season statistics across teams and conferences.
                 </Typography>
 
-                {/* Filters */}
                 <Card sx={{ mb: 3 }}>
                     <CardContent>
                         <Typography variant="h6" gutterBottom>
@@ -349,21 +340,18 @@ const Leaderboard = () => {
                     </CardContent>
                 </Card>
 
-                {/* Error Display */}
                 {error && (
                     <Alert severity="error" sx={{ mb: 3 }}>
                         {error}
                     </Alert>
                 )}
 
-                {/* Loading State */}
                 {loading && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                         <CircularProgress size={60} />
                     </Box>
                 )}
 
-                {/* All Stats Leaderboard Results */}
                 {!loading && showAllStats && Object.keys(allStatsLeaderboard).length > 0 && (
                     <Box>
                         {Object.entries(allStatsLeaderboard).map(([statKey, statData]) => {
@@ -446,7 +434,6 @@ const Leaderboard = () => {
                     </Box>
                 )}
 
-                {/* Single Stat Leaderboard Results */}
                 {!loading && !showAllStats && leaderboard.length > 0 && (
                     <Card>
                         <CardContent>
@@ -531,7 +518,6 @@ const Leaderboard = () => {
                     </Card>
                 )}
 
-                {/* No Results */}
                 {!loading && !error && selectedStat && leaderboard.length === 0 && (
                     <Card>
                         <CardContent>
