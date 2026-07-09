@@ -1,7 +1,3 @@
-/**
- * Conference formatting utilities for consistent display across the application
- */
-
 // Conference name mapping for proper display formatting
 const CONFERENCE_MAPPINGS = {
     // Power 5 Conferences
@@ -37,11 +33,6 @@ const CONFERENCE_MAPPINGS = {
     'NAIA': 'NAIA'
 };
 
-/**
- * Formats a conference name from backend format to display format
- * @param {string} conference - The conference name from backend (e.g., "BIG_12")
- * @returns {string} - Formatted conference name (e.g., "Big 12")
- */
 export const formatConferenceName = (conference) => {
     if (!conference) return 'Independent';
     
@@ -82,11 +73,6 @@ export const formatConferenceName = (conference) => {
         });
 };
 
-/**
- * Gets all unique conferences from a list of teams
- * @param {Array} teams - Array of team objects
- * @returns {Array} - Sorted array of unique conference names
- */
 export const getUniqueConferences = (teams) => {
     return [...new Set(teams.map(team => team.conference).filter(Boolean))].sort();
 }; 

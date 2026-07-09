@@ -9,7 +9,7 @@ import {
 import { getEloHistory } from '../../../api/eloHistoryApi.jsx';
 import { getAllTeams } from '../../../api/teamApi';
 import { getAllSeasons } from '../../../api/seasonApi';
-import { getCurrentSeason } from '../../../api/seasonApi';
+import { getCurrentSeasonOrLatest } from '../../../api/seasonApi';
 import EloHistoryChart from '../EloHistoryChart';
 import EloHistoryFilters from '../EloHistoryFilters';
 
@@ -40,7 +40,7 @@ const EloHistoryTab = () => {
                 const [teamsData, seasonsData, currentSeasonData] = await Promise.all([
                     getAllTeams(),
                     getAllSeasons(),
-                    getCurrentSeason(),
+                    getCurrentSeasonOrLatest(),
                 ]);
                 
                 setTeams(teamsData.filter(t => t.active).sort((a, b) => (a.name || '').localeCompare(b.name || '')));
@@ -78,8 +78,8 @@ const EloHistoryTab = () => {
                 : parseInt(selectedSeason);
             
             const teamParam = showAllTeams ? 'all' : selectedTeam.name;
-            const data = await getEloHistory(teamParam, season);
-            setEloData(data);
+            const eloHistory = await getEloHistory(teamParam, season);
+            setEloData(eloHistory);
         } catch (err) {
             console.error('Error fetching ELO history:', err);
             setError(err.message || 'Failed to fetch ELO history');

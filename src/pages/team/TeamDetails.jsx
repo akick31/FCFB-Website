@@ -31,7 +31,7 @@ import { getAllTeams } from '../../api/teamApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getRankingsHistory } from '../../api/rankingsHistoryApi.jsx';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
-import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { conferences as conferencesList } from '../../components/constants/conferences';
 import {
     formatTeamStats,
@@ -67,8 +67,8 @@ const TeamDetails = () => {
             try {
                 const [teams, season, allSeasonsData] = await Promise.all([
                     getAllTeams(),
-                    getCurrentSeason(),
-                    getAllSeasons()
+                    getCurrentSeasonOrLatest().catch(() => null),
+                    getAllSeasons().catch(() => [])
                 ]);
                 const foundTeam = teams.find(t => t.id === parseInt(teamId));
                 if (foundTeam) {
@@ -130,7 +130,7 @@ const TeamDetails = () => {
 
     // Fetch chart data when team or selected season changes
     useEffect(() => {
-        if (!team || currentSeason === null) return;
+        if (!team) return;
 
         const fetchChartData = async () => {
             setChartsLoading(true);

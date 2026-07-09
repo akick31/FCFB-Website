@@ -1,12 +1,3 @@
-/**
- * Game utility functions for consistent formatting across the application
- */
-
-/**
- * Formats game type enum to human-readable description
- * @param {string} gameType - Game type enum value
- * @returns {string} - Formatted game type description
- */
 export const formatGameType = (gameType) => {
     if (!gameType) return 'Regular Season';
     
@@ -23,11 +14,6 @@ export const formatGameType = (gameType) => {
     return gameTypeMappings[gameType] || gameType;
 };
 
-/**
- * Formats game status enum to human-readable description for scoreboard display
- * @param {string} gameStatus - Game status enum value
- * @returns {string} - Formatted game status description
- */
 export const formatGameStatus = (gameStatus) => {
     if (!gameStatus) return 'Unknown';
     
@@ -44,11 +30,6 @@ export const formatGameStatus = (gameStatus) => {
     return gameStatusMappings[gameStatus] || gameStatus;
 };
 
-/**
- * Formats game status for scoreboard display (simplified)
- * @param {string} gameStatus - Game status enum value
- * @returns {string} - Simplified status for scoreboard
- */
 export const formatScoreboardStatus = (gameStatus) => {
     if (!gameStatus) return 'Unknown';
     
@@ -65,11 +46,6 @@ export const formatScoreboardStatus = (gameStatus) => {
     return statusMappings[gameStatus] || gameStatus;
 };
 
-/**
- * Gets status color for scoreboard display
- * @param {string} status - Game status
- * @returns {string} - Hex color for status
- */
 export const getStatusColor = (status) => {
     if (!status) return '#757575';
     
@@ -86,11 +62,6 @@ export const getStatusColor = (status) => {
     return statusColors[status] || '#757575'; // Gray for unknown
 };
 
-/**
- * Formats quarter information for scoreboard display
- * @param {number} quarter - Quarter number
- * @returns {string} - Formatted quarter
- */
 export const formatScoreboardQuarter = (quarter) => {
     if (!quarter) return 'Unknown';
     
@@ -103,12 +74,6 @@ export const formatScoreboardQuarter = (quarter) => {
     return 'Unknown';
 };
 
-/**
- * Formats down and distance for scoreboard display
- * @param {number} down - Down number
- * @param {number} yardsToGo - Yards to go
- * @returns {string} - Formatted down and distance
- */
 export const formatDownAndDistance = (down, yardsToGo) => {
     if (!down || !yardsToGo) return '--';
     
@@ -116,11 +81,6 @@ export const formatDownAndDistance = (down, yardsToGo) => {
     return `${down}${downSuffix} & ${yardsToGo}`;
 };
 
-/**
- * Formats possession for scoreboard display
- * @param {string} possession - Possession ('HOME' or 'AWAY')
- * @returns {string} - Formatted possession
- */
 export const formatPossession = (possession) => {
     if (!possession) return '--';
     
@@ -130,23 +90,11 @@ export const formatPossession = (possession) => {
     return possession;
 };
 
-/**
- * Formats ball location for scoreboard display
- * @param {string} ballLocation - Ball location
- * @returns {string} - Formatted ball location or '--'
- */
 export const formatBallLocation = (ballLocation) => {
     if (!ballLocation) return '--';
     return ballLocation;
 };
 
-/**
- * Formats waiting on information for scoreboard display
- * @param {string} waitingOn - Who the game is waiting on
- * @param {string} homeTeam - Home team name
- * @param {string} awayTeam - Away team name
- * @returns {string} - Formatted waiting on or '--'
- */
 export const formatWaitingOn = (waitingOn, homeTeam, awayTeam) => {
     if (!waitingOn) return '--';
     
@@ -156,11 +104,6 @@ export const formatWaitingOn = (waitingOn, homeTeam, awayTeam) => {
     return waitingOn;
 };
 
-/**
- * Formats TV channel enum to human-readable description
- * @param {string} tvChannel - TV channel enum value
- * @returns {string} - Formatted TV channel description
- */
 export const formatTVChannel = (tvChannel) => {
     if (!tvChannel) return 'N/A';
     
@@ -189,13 +132,6 @@ export const formatTVChannel = (tvChannel) => {
     return tvChannelMappings[tvChannel] || tvChannel;
 };
 
-/**
- * Formats coin toss winner to team name
- * @param {string} coinTossWinner - Coin toss winner ('HOME' or 'AWAY')
- * @param {string} homeTeam - Home team name
- * @param {string} awayTeam - Away team name
- * @returns {string} - Team name that won coin toss
- */
 export const formatCoinTossWinner = (coinTossWinner, homeTeam, awayTeam) => {
     if (!coinTossWinner) return 'N/A';
     
@@ -205,14 +141,6 @@ export const formatCoinTossWinner = (coinTossWinner, homeTeam, awayTeam) => {
     return coinTossWinner;
 };
 
-/**
- * Formats waiting on information
- * @param {string} waitingOn - Team that the game is waiting on
- * @param {string} homeTeam - Home team name
- * @param {string} awayTeam - Away team name
- * @param {string} gameStatus - Current game status
- * @returns {string} - Team name or 'N/A' if game is final
- */
 export const formatWaitingOnDetailed = (waitingOn, homeTeam, awayTeam, gameStatus) => {
     if (gameStatus === 'FINAL') return 'N/A';
     
@@ -222,34 +150,17 @@ export const formatWaitingOnDetailed = (waitingOn, homeTeam, awayTeam, gameStatu
     return waitingOn || 'N/A';
 };
 
-/**
- * Formats game timer with EST timezone
- * @param {string} gameTimer - Game timer value
- * @param {string} gameStatus - Current game status
- * @returns {string} - Formatted timer with EST or 'N/A' if game is final
- */
 export const formatGameTimer = (gameTimer, gameStatus) => {
     if (gameStatus === 'FINAL') return 'N/A';
     
     return gameTimer ? `${gameTimer} EST` : 'N/A';
 };
 
-/**
- * Formats record from wins and losses
- * @param {number} wins - Number of wins
- * @param {number} losses - Number of losses
- * @returns {string} - Formatted record (e.g., "5-2")
- */
 export const formatRecord = (wins, losses) => {
     if (wins === undefined || losses === undefined) return 'N/A';
     return `${wins}-${losses}`;
 };
 
-/**
- * Formats team rank
- * @param {number} rank - Team rank
- * @returns {string} - Formatted rank or "Unranked" if 0
- */
 export const formatRank = (rank) => {
     if (!rank || rank === 0) return 'Unranked';
     return `#${rank}`;

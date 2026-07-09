@@ -175,7 +175,7 @@ const TeamScheduleTable = ({
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                             Season {season} Schedule
                             {selectedTeam.current_wins !== undefined &&
-                                ` — ${selectedTeam.current_wins}-${selectedTeam.current_losses}`
+                                ` (${selectedTeam.current_wins}-${selectedTeam.current_losses})`
                             }
                         </Typography>
                     </Box>

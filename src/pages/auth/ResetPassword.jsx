@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { resetPassword } from '../../api/authApi';
 import {
@@ -38,8 +38,13 @@ const ResetPassword = () => {
     const navigate = useNavigate();
 
     // Redirect if no userId or token is provided
+    useEffect(() => {
+        if (!userId || !token) {
+            navigate('/login');
+        }
+    }, [userId, token, navigate]);
+
     if (!userId || !token) {
-        navigate('/login');
         return null;
     }
 

@@ -44,7 +44,7 @@ import {
     endAllOngoingGames,
     getFilteredGames
 } from '../../api/gameApi';
-import { getCurrentSeason, getCurrentWeek } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
 import { getAllTeams } from '../../api/teamApi';
 import {
     getScheduleBySeasonAndWeek,
@@ -140,8 +140,8 @@ const GameManagement = () => {
         const initDefaults = async () => {
             try {
                 const [season, week] = await Promise.all([
-                    getCurrentSeason(),
-                    getCurrentWeek()
+                    getCurrentSeasonOrLatest(),
+                    getCurrentWeekOrLatest()
                 ]);
                 
                 // Set state for Start Game Week
@@ -254,18 +254,12 @@ const GameManagement = () => {
         loadTeams();
     }, []);
 
-    
-
-    const handleNavigationChange = (item) => {
-        navigate(item.path);
-    };
-
     // Start Game Week functions
     const getGameStats = () => {
         const total = weekSchedule.length;
-        const started = weekSchedule.filter(g => g.started || g.started === true).length;
-        const finished = weekSchedule.filter(g => g.finished || g.finished === true).length;
-        const notStarted = weekSchedule.filter(g => !g.started && g.started !== true).length;
+        const started = weekSchedule.filter(g => g.started).length;
+        const finished = weekSchedule.filter(g => g.finished).length;
+        const notStarted = weekSchedule.filter(g => !g.started).length;
         return { total, started, finished, notStarted };
     };
 
@@ -585,7 +579,6 @@ const GameManagement = () => {
         <DashboardLayout
             title="Game Management"
             navigationItems={navigationItems}
-            onNavigationChange={handleNavigationChange}
             hideHeader={true}
             textColor="primary.main"
         >

@@ -16,7 +16,7 @@ import cfpLogo from '../../../assets/images/playoff.png';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:1313';
 
-// ── Format previous play into readable text ─────────────────────
+// Format previous play into readable text
 const formatPreviousPlay = (play, homeTeamName, awayTeamName) => {
     if (!play) return null;
     const result = play.actual_result || play.result;
@@ -95,7 +95,7 @@ const formatPreviousPlay = (play, homeTeamName, awayTeamName) => {
     }
 };
 
-// ── Game type badge ─────────────────────────────────────────────
+// Game type badge
 const GameTypeInfo = ({ game, homeTeamData }) => {
     const theme = useTheme();
     const gameType = game.game_type;
@@ -136,7 +136,7 @@ const GameTypeInfo = ({ game, homeTeamData }) => {
     }
 };
 
-// ── Main card ──────────────────────────────────────────────────
+// Main card
 const LiveGameCard = ({ game, homeTeamData, awayTeamData }) => {
     const theme = useTheme();
     const navigate = useNavigate();

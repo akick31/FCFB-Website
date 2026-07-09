@@ -117,10 +117,6 @@ const Admin = ({ user }) => {
 
     const navigationItems = adminNavigationItems;
 
-    const handleNavigationChange = (item) => {
-        navigate(item.path);
-    };
-
     if (loading) {
         return (
             <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -135,7 +131,6 @@ const Admin = ({ user }) => {
         <DashboardLayout
             title="Admin Dashboard"
             navigationItems={navigationItems}
-            onNavigationChange={handleNavigationChange}
             hideHeader={true}
             textColor="primary.main"
         >

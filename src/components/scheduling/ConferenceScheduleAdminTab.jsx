@@ -159,7 +159,7 @@ const ConferenceScheduleAdminTab = ({
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <SettingsIcon color="primary" fontSize="small" />
                             <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                                Conference Rules — {formatConference(selectedConference)}
+                                Conference Rules: {formatConference(selectedConference)}
                             </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -175,7 +175,7 @@ const ConferenceScheduleAdminTab = ({
                         <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                             {conferenceTeams.length <= numConferenceGames + 1 && (
                                 <Alert severity="info" sx={{ py: 0.5 }}>
-                                    Round robin format — each team plays every other team once.
+                                    Round robin format: each team plays every other team once.
                                 </Alert>
                             )}
 
@@ -200,7 +200,7 @@ const ConferenceScheduleAdminTab = ({
                                     </Button>
                                 </Box>
                                 <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
-                                    Protected rivalries are always scheduled when auto-generating. They cannot be deleted — only moved across weeks.
+                                    Protected rivalries are always scheduled when auto-generating. They cannot be deleted, only moved across weeks.
                                     The schedule cannot be finalized if any protected rivalry is missing.
                                 </Typography>
 
@@ -327,16 +327,16 @@ const ConferenceScheduleAdminTab = ({
                             <Table stickyHeader size="small">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 700, minWidth: 160, position: 'sticky', left: 0, backgroundColor: 'background.paper', zIndex: 3 }}>
+                                        <TableCell sx={{ fontWeight: 700, minWidth: 140, position: 'sticky', left: 0, backgroundColor: 'background.paper', zIndex: 3 }}>
                                             Team
                                         </TableCell>
                                         {Array.from({ length: TOTAL_WEEKS }, (_, i) => (
-                                            <TableCell key={i + 1} sx={{ fontWeight: 700, textAlign: 'center', minWidth: 120 }}>
+                                            <TableCell key={i + 1} sx={{ fontWeight: 700, textAlign: 'center', minWidth: 104 }}>
                                                 Wk {i + 1}
                                             </TableCell>
                                         ))}
-                                        <TableCell sx={{ fontWeight: 700, textAlign: 'center', minWidth: 80 }}>H</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, textAlign: 'center', minWidth: 80 }}>A</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, textAlign: 'center', minWidth: 64 }}>H</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, textAlign: 'center', minWidth: 64 }}>A</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -374,7 +374,7 @@ const ConferenceScheduleAdminTab = ({
                                                     return (
                                                         <TableCell key={weekNum} sx={{ textAlign: 'center', p: 0.5 }}>
                                                             {cell ? (
-                                                                <Tooltip title={`${cell.isHome ? 'vs' : '@'} ${cell.opponent} — Click to move/delete`}>
+                                                                <Tooltip title={`${cell.isHome ? 'vs' : '@'} ${cell.opponent} (click to move/delete)`}>
                                                                     <Box
                                                                         sx={{
                                                                             display: 'flex',

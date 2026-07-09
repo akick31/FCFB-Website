@@ -1,4 +1,4 @@
-// ─── Playoff Bracket Constants ────────────────────────────────────────
+// Playoff Bracket Constants
 
 // Official CFP logo
 export const CFP_LOGO_URL = 'https://cfbuniform.com/wp-content/uploads/2025/03/Logo_of_college_football_playoff.svg.png';

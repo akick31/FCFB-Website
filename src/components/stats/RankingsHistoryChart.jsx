@@ -340,17 +340,14 @@ const RankingsHistoryChart = ({ data, teams = [], showAllTeams = false }) => {
 
     useEffect(() => {
         if (isDragging) {
-            const moveHandler = (e) => handleMouseMove(e);
-            const upHandler = () => handleMouseUp();
-            
-            window.addEventListener('mousemove', moveHandler);
-            window.addEventListener('mouseup', upHandler);
-            window.addEventListener('mouseleave', upHandler);
-            
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+            window.addEventListener('mouseleave', handleMouseUp);
+
             return () => {
-                window.removeEventListener('mousemove', moveHandler);
-                window.removeEventListener('mouseup', upHandler);
-                window.removeEventListener('mouseleave', upHandler);
+                window.removeEventListener('mousemove', handleMouseMove);
+                window.removeEventListener('mouseup', handleMouseUp);
+                window.removeEventListener('mouseleave', handleMouseUp);
             };
         }
     }, [isDragging, handleMouseMove, handleMouseUp]);

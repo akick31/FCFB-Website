@@ -12,16 +12,7 @@ import {
 } from '@mui/icons-material';
 import { getTeamCoaches } from '../../utils/teamDataUtils';
 
-/**
- * Reusable CoachesSection component for displaying team coaching staff
- * @param {Object} props - Component props
- * @param {Object} props.team - Team object
- * @param {string} props.title - Section title (default: "Coaching Staff")
- * @param {boolean} props.showDiscordIds - Whether to show Discord IDs (default: false)
- * @param {Object} props.sx - Additional styles
- * @returns {JSX.Element} - CoachesSection component
- */
-const CoachesSection = ({ 
+const CoachesSection = ({
     team, 
     title = "Coaching Staff", 
     showDiscordIds = false,

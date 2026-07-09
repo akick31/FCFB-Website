@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getFilteredGames } from '../../../api/gameApi';
-import { getCurrentSeason, getCurrentWeek } from '../../../api/seasonApi';
+import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../../api/seasonApi';
 import ScoreboardList from './ScoreboardList';
 import { Box } from '@mui/material';
 import SeasonDropdown from '../../dropdown/SeasonDropdown';
@@ -46,8 +46,8 @@ const PastGames = ({ urlSeason, urlWeek }) => {
         const setDefaults = async () => {
             try {
                 const [currentSeason, currentWeek] = await Promise.all([
-                    getCurrentSeason(),
-                    getCurrentWeek()
+                    getCurrentSeasonOrLatest(),
+                    getCurrentWeekOrLatest()
                 ]);
                 if (currentWeek >= 14) {
                     setFilters(prev => ({

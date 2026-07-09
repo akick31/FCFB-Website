@@ -148,10 +148,11 @@ const RankingsTable = ({ teams, rankingType }) => {
 
                                     {/* Team (Logo + Name) */}
                                     <TableCell sx={{ padding: '8px' }}>
-                                        <Box sx={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            gap: 1.5
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1.5,
+                                            minWidth: 0,
                                         }}>
                                             {team.logo ? (
                                                 <img 
@@ -178,8 +179,8 @@ const RankingsTable = ({ teams, rankingType }) => {
                                                     </Typography>
                                                 </Box>
                                             )}
-                                            <Box>
-                                                <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>
+                                            <Box sx={{ minWidth: 0 }}>
+                                                <Typography variant="body2" noWrap sx={{ fontWeight: 'bold', fontSize: '0.875rem', maxWidth: 200 }}>
                                                     {team.name}
                                                 </Typography>
                                                 {team.abbreviation && (

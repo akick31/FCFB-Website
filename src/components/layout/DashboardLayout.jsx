@@ -25,6 +25,7 @@ import {
     Group,
     Person
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 const drawerWidth = 280;
@@ -40,6 +41,7 @@ const DashboardLayout = ({
 }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const navigate = useNavigate();
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const defaultNavigationItems = [
@@ -61,6 +63,8 @@ const DashboardLayout = ({
     const handleNavigationClick = (item) => {
         if (onNavigationChange) {
             onNavigationChange(item);
+        } else if (item?.path) {
+            navigate(item.path);
         }
         if (isMobile) {
             setMobileOpen(false);
@@ -262,7 +266,10 @@ const DashboardLayout = ({
                     flexGrow: 1,
                     p: 3,
                     width: { md: `calc(100% - ${drawerWidth}px)` },
-                    mt: hideHeader ? 0 : 10,
+                    // A fixed AppBar renders on mobile regardless of hideHeader (it's the only
+                    // way to open the nav drawer there), so content needs top clearance for it
+                    // even when the desktop header is hidden.
+                    mt: (isMobile || !hideHeader) ? 10 : 0,
                 }}
             >
                 {children}

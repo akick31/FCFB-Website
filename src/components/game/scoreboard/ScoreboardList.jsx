@@ -145,7 +145,7 @@ const ScoreboardList = ({
 
     const handleRowsPerPageChangeLocal = (event) => {
         const newRowsPerPage = handleRowsPerPageChange(event);
-        if (title === 'Live Games' && selectedTeam) {
+        if (selectedTeam) {
             // While searching by team, save the new preference for when search is cleared
             preSearchSizeRef.current = newRowsPerPage;
         } else {
@@ -159,14 +159,9 @@ const ScoreboardList = ({
         if (gameId) {
             if (e.metaKey || e.ctrlKey || e.shiftKey) return; // let browser handle new tab
             e.preventDefault();
-            try {
-                navigate(`/game-details/${gameId}`);
-            } catch (error) {
-                console.error('Navigation error:', error);
-            }
+            navigate(`/game-details/${gameId}`);
         } else {
-            console.warn('No game ID found:', game);
-            console.warn('Available fields:', Object.keys(game));
+            console.warn('No game ID found for game:', game);
         }
     };
 
@@ -198,9 +193,9 @@ const ScoreboardList = ({
                                 value={selectedTeam}
                                 onChange={(event, newValue) => {
                                     setSelectedTeam(newValue);
-                                    // For Live Games, expand fetch size so search spans all games,
+                                    // Expand fetch size so search spans all games for this tab,
                                     // not just those on the current page
-                                    if (title === 'Live Games' && setFilters) {
+                                    if (setFilters) {
                                         if (newValue) {
                                             preSearchSizeRef.current = filters?.size || rowsPerPage;
                                             setFilters(prev => ({ ...prev, size: Math.max(totalGames || 0, 500), page: 0 }));

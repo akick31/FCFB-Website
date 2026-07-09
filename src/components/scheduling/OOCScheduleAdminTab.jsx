@@ -90,7 +90,7 @@ const OOCScheduleAdminTab = ({
                             </Avatar>
                             <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                                    {selectedOOCTeam.name} — Full Schedule
+                                    {selectedOOCTeam.name}: Full Schedule
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                                     Conference: {formatConference(selectedOOCTeam.conference)} | OOC Games: {oocGamesOnly.length}/{DEFAULT_OOC_GAMES}

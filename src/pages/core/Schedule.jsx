@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { getAllTeams } from '../../api/teamApi';
 import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedule, getScheduleBySeason } from '../../api/scheduleApi';
-import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { getAllOngoingGames } from '../../api/gameApi';
 import { conferences } from '../../components/constants/conferences';
 import TeamScheduleTable from '../../components/schedule/TeamScheduleTable';
@@ -122,7 +122,7 @@ const Schedule = () => {
                 setLoading(true);
                 const [teamsData, currentSeason, seasonsData] = await Promise.all([
                     getAllTeams(),
-                    getCurrentSeason(),
+                    getCurrentSeasonOrLatest(),
                     getAllSeasons()
                 ]);
                 setTeams(teamsData);
@@ -192,8 +192,8 @@ const Schedule = () => {
             try {
                 setScheduleLoading(true);
                 setError('');
-                const data = await getScheduleBySeasonAndTeam(season, selectedTeam.name);
-                const sorted = (data || []).sort((a, b) => (a.week || 0) - (b.week || 0));
+                const teamSchedule = await getScheduleBySeasonAndTeam(season, selectedTeam.name);
+                const sorted = (teamSchedule || []).sort((a, b) => (a.week || 0) - (b.week || 0));
                 setSchedule(sorted);
             } catch (err) {
                 console.error('Error fetching schedule:', err);
@@ -237,8 +237,8 @@ const Schedule = () => {
             if (!season || tabIndex !== 2) return;
             try {
                 setPostseasonLoading(true);
-                const data = await getPostseasonSchedule(season);
-                setPostseasonSchedule(data || []);
+                const postseason = await getPostseasonSchedule(season);
+                setPostseasonSchedule(postseason || []);
             } catch (err) {
                 console.error('Error fetching postseason schedule:', err);
                 setPostseasonSchedule([]);
@@ -254,8 +254,8 @@ const Schedule = () => {
         const checkPostseason = async () => {
             if (!season) return;
             try {
-                const data = await getPostseasonSchedule(season);
-                setPostseasonSchedule(data || []);
+                const postseason = await getPostseasonSchedule(season);
+                setPostseasonSchedule(postseason || []);
             } catch {
                 setPostseasonSchedule([]);
             }

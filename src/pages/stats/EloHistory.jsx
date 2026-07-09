@@ -10,7 +10,7 @@ import {
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getAllTeams } from '../../api/teamApi';
 import { getAllSeasons } from '../../api/seasonApi';
-import { getCurrentSeason } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest } from '../../api/seasonApi';
 import EloHistoryChart from '../../components/stats/EloHistoryChart';
 import EloHistoryFilters from '../../components/stats/EloHistoryFilters';
 
@@ -43,7 +43,7 @@ const EloHistory = () => {
                 const [teamsData, seasonsData, currentSeasonData] = await Promise.all([
                     getAllTeams(),
                     getAllSeasons(),
-                    getCurrentSeason(),
+                    getCurrentSeasonOrLatest(),
                 ]);
                 
                 setTeams(teamsData.filter(t => t.active).sort((a, b) => (a.name || '').localeCompare(b.name || '')));

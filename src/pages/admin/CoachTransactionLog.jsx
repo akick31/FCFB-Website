@@ -16,10 +16,8 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
 import StyledTable from '../../components/ui/StyledTable';
 import { adminNavigationItems } from '../../config/adminNavigation.jsx';
-import { useNavigate } from 'react-router-dom';
 
 const CoachTransactionLog = () => {
-    const navigate = useNavigate();
     const [transactions, setTransactions] = useState([]);
     const [filteredTransactions, setFilteredTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -50,23 +48,19 @@ const CoachTransactionLog = () => {
     // Filter transactions based on all criteria
     useEffect(() => {
         let filtered = transactions;
-        
-        // Filter by team
+
         if (teamFilter !== 'ALL') {
             filtered = filtered.filter(transaction => transaction.team === teamFilter);
         }
-        
-        // Filter by position
+
         if (positionFilter !== 'ALL') {
             filtered = filtered.filter(transaction => transaction.position === positionFilter);
         }
-        
-        // Filter by transaction type
+
         if (transactionTypeFilter !== 'ALL') {
             filtered = filtered.filter(transaction => transaction.transaction === transactionTypeFilter);
         }
-        
-        // Filter by search term
+
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
             filtered = filtered.filter(transaction => 
@@ -80,10 +74,6 @@ const CoachTransactionLog = () => {
         
         setFilteredTransactions(filtered);
     }, [transactions, teamFilter, positionFilter, transactionTypeFilter, searchTerm]);
-
-    const handleNavigationChange = (item) => {
-        navigate(item.path);
-    };
 
     const getTransactionTypeColor = (transactionType) => {
         switch (transactionType) {
@@ -187,7 +177,6 @@ const CoachTransactionLog = () => {
         <DashboardLayout
             title="Coach Transaction Log"
             navigationItems={navigationItems}
-            onNavigationChange={handleNavigationChange}
             hideHeader={true}
             textColor="primary.main"
         >

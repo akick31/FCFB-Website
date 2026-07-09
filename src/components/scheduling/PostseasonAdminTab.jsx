@@ -50,16 +50,16 @@ const PostseasonAdminTab = ({
     onShowSnackbar,
     onOpenAddGameDialog,
 }) => {
-    // ── Playoff bracket seed-selection state ──────────────────────────
+    // Playoff bracket seed-selection state
     const [playoffTeams, setPlayoffTeams] = useState(Array(24).fill(null));
     const [playoffDialogOpen, setPlayoffDialogOpen] = useState(false);
 
-    // ── Advance-team dialog state ────────────────────────────────────
+    // Advance-team dialog state
     const [advanceDialogOpen, setAdvanceDialogOpen] = useState(false);
     const [advanceGame, setAdvanceGame] = useState(null);
     const [advanceWinner, setAdvanceWinner] = useState('');
     
-    // ── Edit bowl game name dialog state ─────────────────────────────
+    // Edit bowl game name dialog state
     const [editBowlDialogOpen, setEditBowlDialogOpen] = useState(false);
     const [editingBowlGame, setEditingBowlGame] = useState(null);
     const [editingBowlName, setEditingBowlName] = useState('');
@@ -67,13 +67,13 @@ const PostseasonAdminTab = ({
     const [editingBowlLogoPreview, setEditingBowlLogoPreview] = useState(null);
     const [uploadingLogo, setUploadingLogo] = useState(false);
 
-    // ── CCG dialog state ─────────────────────────────────────────────
+    // CCG dialog state
     const [ccgDialogOpen, setCcgDialogOpen] = useState(false);
     const [ccgConference, setCcgConference] = useState('');
     const [ccgHome, setCcgHome] = useState(null);
     const [ccgAway, setCcgAway] = useState(null);
 
-    // ── Derived data ─────────────────────────────────────────────────
+    // Derived data
     const postseasonCCG = useMemo(() =>
         postseasonSchedule.filter(g => field(g, 'gameType', 'game_type') === 'CONFERENCE_CHAMPIONSHIP'),
         [postseasonSchedule]
@@ -115,7 +115,7 @@ const PostseasonAdminTab = ({
             .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }, [ccgConference, allTeams]);
 
-    // ── Preview schedule entries for the bracket dialog ──────────────
+    // Preview schedule entries for the bracket dialog
     const previewScheduleEntries = useMemo(() => {
         if (!playoffTeams.some(t => t !== null)) return [];
         const entries = [];
@@ -154,7 +154,7 @@ const PostseasonAdminTab = ({
         return entries;
     }, [playoffTeams]);
 
-    // ── Load existing bracket into the dialog ────────────────────────
+    // Load existing bracket into the dialog
     const loadExistingBracket = () => {
         const newPlayoffTeams = Array(24).fill(null);
         postseasonPlayoffs.forEach(g => {
@@ -183,7 +183,7 @@ const PostseasonAdminTab = ({
         setPlayoffDialogOpen(true);
     };
 
-    // ── CCG creation ─────────────────────────────────────────────────
+    // CCG creation
     const handleCreateCCG = async () => {
         if (!ccgHome || !ccgAway) {
             onShowSnackbar('Please select both teams', 'error');
@@ -210,7 +210,7 @@ const PostseasonAdminTab = ({
         }
     };
 
-    // ── Delete game ──────────────────────────────────────────────────
+    // Delete game
     const handleDeleteGame = async (gameId) => {
         try {
             await deleteScheduleEntry(gameId);
@@ -222,7 +222,7 @@ const PostseasonAdminTab = ({
         }
     };
 
-    // ── Edit bowl game name ──────────────────────────────────────────
+    // Edit bowl game name
     const handleEditBowlName = (game) => {
         setEditingBowlGame(game);
         setEditingBowlName(field(game, 'postseasonGameName', 'postseason_game_name') || '');
@@ -262,7 +262,7 @@ const PostseasonAdminTab = ({
         }
     };
 
-    // ── Generate playoff bracket (R1 games + R2 placeholders) ───────
+    // Generate playoff bracket (R1 games + R2 placeholders)
     const handleGeneratePlayoffBracket = async () => {
         const validTeams = playoffTeams.filter(t => t !== null);
         if (validTeams.length !== 24) {
@@ -339,7 +339,7 @@ const PostseasonAdminTab = ({
         }
     };
 
-    // ── Core advance logic (used by dialog and auto-advance) ─────────
+    // Core advance logic (used by dialog and auto-advance)
     const advanceTeamToNextRound = async (game, winner, schedule) => {
         const sched = schedule || postseasonSchedule;
         const currentRound = field(game, 'playoffRound', 'playoff_round') || 1;
@@ -463,7 +463,7 @@ const PostseasonAdminTab = ({
         return `${winner} advanced to ${ROUND_LABELS[nextRound] || `Round ${nextRound}`} (Week ${nextWeek})!`;
     };
 
-    // ── Dialog-driven advance ─────────────────────────────────────────
+    // Dialog-driven advance
     const handleAdvanceTeam = async () => {
         if (!advanceGame || !advanceWinner) {
             onShowSnackbar('Please select a winner', 'error');
@@ -482,7 +482,7 @@ const PostseasonAdminTab = ({
         }
     };
 
-    // ── Auto-advance finished playoff games ───────────────────────────
+    // Auto-advance finished playoff games
     const autoAdvancedRef = useRef(new Set());
 
     useEffect(() => {
@@ -560,7 +560,7 @@ const PostseasonAdminTab = ({
         }
     }, [postseasonSchedule]);
 
-    // ── Render ───────────────────────────────────────────────────────
+    // Render
     return (
         <Box>
             {/* Action buttons */}

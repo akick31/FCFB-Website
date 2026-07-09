@@ -27,7 +27,7 @@ import {
 import { getFilteredConferenceStats } from '../../api/conferenceStatsApi';
 import { getFilteredLeagueStats } from '../../api/leagueStatsApi';
 import { getFilteredPlaybookStats } from '../../api/playbookStatsApi';
-import { getCurrentSeason } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest } from '../../api/seasonApi';
 import { conferences } from '../../components/constants/conferences';
 import { offensivePlaybooks } from '../../components/constants/offensivePlaybooks';
 import { defensivePlaybooks } from '../../components/constants/defensivePlaybooks';
@@ -90,7 +90,7 @@ const LeagueStats = () => {
         const fetchInitialData = async () => {
             try {
                 setLoading(true);
-                await getCurrentSeason();
+                await getCurrentSeasonOrLatest();
 
                 // Load all data for the default season
                 const initialSeason = seasonParam ? parseInt(seasonParam) : 11;

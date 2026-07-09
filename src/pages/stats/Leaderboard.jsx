@@ -27,7 +27,7 @@ import {
 } from '@mui/material';
 import { getLeaderboard } from '../../api/seasonStatsApi';
 import { getAllTeams } from '../../api/teamApi';
-import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { conferences } from '../../components/constants/conferences';
 
 const Leaderboard = () => {
@@ -72,7 +72,7 @@ const Leaderboard = () => {
                 setLoading(true);
                 const [teamsData, currentSeason, allSeasonsData] = await Promise.all([
                     getAllTeams(),
-                    getCurrentSeason(),
+                    getCurrentSeasonOrLatest(),
                     getAllSeasons()
                 ]);
                 setTeams(teamsData);

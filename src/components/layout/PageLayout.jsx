@@ -47,13 +47,8 @@ const PageLayout = ({
                                 variant={isMobile ? 'h3' : 'h2'}
                                 sx={{
                                     fontWeight: 700,
-                                    color: 'text.primary',
+                                    color: 'primary.main',
                                     mb: subtitle ? 2 : 0,
-                                    background: theme.custom?.gradients?.primary,
-                                    backgroundClip: 'text',
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent',
-                                    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                 }}
                             >
                                 {title}

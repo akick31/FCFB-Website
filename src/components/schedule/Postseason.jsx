@@ -9,7 +9,7 @@ import { field } from '../../utils/fieldHelper';
 import { conferences } from '../constants/conferences';
 import { formatConferenceName } from '../../utils/conferenceUtils';
 
-// ─── Component ──────────────────────────────────────────────────────
+// Component
 const Postseason = ({
     postseasonSchedule = [],
     ongoingGames = [],
@@ -22,7 +22,7 @@ const Postseason = ({
     const navigate = useNavigate();
     const theme = useTheme();
 
-    // ── Merge live quarter/clock from ongoing games into schedule entries ──
+    // Merge live quarter/clock from ongoing games into schedule entries
     const enrichedSchedule = useMemo(() => {
         if (!ongoingGames.length) return postseasonSchedule;
         const liveById = {};
@@ -47,7 +47,7 @@ const Postseason = ({
         });
     }, [postseasonSchedule, ongoingGames]);
 
-    // ── Categorize games ────────────────────────────────────────────
+    // Categorize games
     const playoffGames = useMemo(() =>
         enrichedSchedule.filter(g => {
             const gt = field(g, 'gameType', 'game_type');
@@ -62,7 +62,7 @@ const Postseason = ({
         enrichedSchedule.filter(g => field(g, 'gameType', 'game_type') === 'BOWL'),
         [enrichedSchedule]);
 
-    // ── Group playoff games by round ────────────────────────────────
+    // Group playoff games by round
     const gamesByRound = useMemo(() => {
         const rounds = {};
         playoffGames.forEach(g => {
@@ -73,7 +73,7 @@ const Postseason = ({
         return rounds;
     }, [playoffGames]);
 
-    // ── Build seed → team name mapping from all playoff game data ───
+    // Build seed → team name mapping from all playoff game data
     const seedToTeam = useMemo(() => {
         const mapping = {};
         playoffGames.forEach(g => {
@@ -87,7 +87,7 @@ const Postseason = ({
         return mapping;
     }, [playoffGames]);
 
-    // ── Finders ─────────────────────────────────────────────────────
+    // Finders
     const findR1Game = (highSeed, lowSeed) =>
         (gamesByRound[1] || []).find(g => {
             const hs = field(g, 'playoffHomeSeed', 'playoff_home_seed');
@@ -144,14 +144,14 @@ const Postseason = ({
     const sfData = useMemo(() => getGamesForRound(4, 2, SF_SEED_GROUPS), [gamesByRound]);
     const ncgData = useMemo(() => getGamesForRound(5, 1, [[1, 2, 3, 4, 5, 6, 7, 8]]), [gamesByRound]);
 
-    // ── Helper to get team display name ───────────────────────────────
+    // Helper to get team display name
     const getTeamDisplayName = (teamName) => {
         if (!teamName || teamName === 'TBD' || teamName === 'OPEN') return null;
         const td = teamMap[teamName];
         return td?.abbreviation || teamName?.substring(0, 14);
     };
 
-    // ── Helper to get "Winner of" label from a game ────────────────────
+    // Helper to get "Winner of" label from a game
     const getWinnerLabel = (game) => {
         if (!game) return null;
         const home = field(game, 'homeTeam', 'home_team');
@@ -164,7 +164,7 @@ const Postseason = ({
         return null;
     };
 
-    // ── Get Quarterfinal labels from Round 2 games ─────────────────────
+    // Get Quarterfinal labels from Round 2 games
     const getQFLabels = (qfIndex) => {
         // QF 0: R2 Game 0 vs R2 Game 1
         // QF 1: R2 Game 2 vs R2 Game 3
@@ -180,7 +180,7 @@ const Postseason = ({
         };
     };
 
-    // ── Get Semifinal labels from Quarterfinal games ───────────────────
+    // Get Semifinal labels from Quarterfinal games
     const getSFLabels = (sfIndex) => {
         // SF 0: QF 0 vs QF 1
         // SF 1: QF 2 vs QF 3
@@ -194,7 +194,7 @@ const Postseason = ({
         };
     };
 
-    // ── Get Championship label from Semifinal games ────────────────────
+    // Get Championship label from Semifinal games
     const getNCGLabel = () => {
         const sfGame1 = sfData[0];
         const sfGame2 = sfData[1];
@@ -204,7 +204,7 @@ const Postseason = ({
         };
     };
 
-    // ── Rendering helpers ───────────────────────────────────────────
+    // Rendering helpers
     const renderTeamRow = (teamName, seed, score, isWinner, isTop, fontSize = '0.72rem', customLabel = null) => {
         const td = teamMap[teamName];
         const isTBD = !teamName || teamName === 'TBD' || teamName === 'OPEN';
@@ -385,7 +385,7 @@ const Postseason = ({
         </Paper>
     );
 
-    // ── Horizontal connectors (1:1, R1 → R2) ─────────────────────────
+    // Horizontal connectors (1:1, R1 → R2)
     const renderHorizontalConnectors = (count) => (
         <Box sx={{ display: 'flex', flexDirection: 'column', width: 24, flexShrink: 0 }}>
             {Array(count).fill(null).map((_, i) => (
@@ -396,7 +396,7 @@ const Postseason = ({
         </Box>
     );
 
-    // ── Merge connector lines between rounds ────────────────────────
+    // Merge connector lines between rounds
     const renderConnectors = (numPairs) => (
         <Box sx={{ display: 'flex', flexDirection: 'column', width: 32, flexShrink: 0 }}>
             {Array(numPairs).fill(null).map((_, i) => (
@@ -414,7 +414,7 @@ const Postseason = ({
         </Box>
     );
 
-    // ── Column header ───────────────────────────────────────────────
+    // Column header
     const RoundHeader = ({ label, weekNum, isChampionship }) => (
         <Box sx={{ textAlign: 'center', mb: 0.5 }}>
             <Typography variant="caption" sx={{
@@ -432,7 +432,7 @@ const Postseason = ({
         </Box>
     );
 
-    // ── Main bracket ────────────────────────────────────────────────
+    // Main bracket
     const renderFullBracket = () => {
         const W = 195; // card width
         const ROW_H = 84; // increased since bye badges removed (8 rows instead of 16)
@@ -558,7 +558,7 @@ const Postseason = ({
         );
     };
 
-    // ── Loading state ───────────────────────────────────────────────
+    // Loading state
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -567,7 +567,7 @@ const Postseason = ({
         );
     }
 
-    // ── Helper: get conference info (label + logo) ──────────────────
+    // Helper: get conference info (label + logo)
     const getConferenceInfo = (confValue) => {
         if (!confValue) return { label: null, logo: null };
         const conf = conferences.find(c => c.value === confValue);
@@ -575,7 +575,7 @@ const Postseason = ({
         return { label: formatConferenceName(confValue), logo: null };
     };
 
-    // ── Shared grid layout for postseason game cards ─────────────────
+    // Shared grid layout for postseason game cards
     const cardGridSx = {
         display: 'grid',
         gridTemplateColumns: {
@@ -587,7 +587,7 @@ const Postseason = ({
         gap: 2.5,
     };
 
-    // ── Section header ───────────────────────────────────────────────
+    // Section header
     const SectionHeader = ({ children }) => (
         <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main', mb: 2 }}>
             {children}
@@ -596,7 +596,7 @@ const Postseason = ({
 
     // GameCardHeader removed — title/logo now passed as props to BracketMatchup
 
-    // ── Derive CCG card header info ──────────────────────────────────
+    // Derive CCG card header info
     const getCCGHeaderInfo = (game) => {
         const homeTeam = field(game, 'homeTeam', 'home_team');
         const awayTeam = field(game, 'awayTeam', 'away_team');
@@ -608,7 +608,7 @@ const Postseason = ({
         };
     };
 
-    // ── Derive Bowl card header info ─────────────────────────────────
+    // Derive Bowl card header info
     const getBowlHeaderInfo = (game) => {
         const bowlName = field(game, 'postseasonGameName', 'postseason_game_name');
         const gameLogo = field(game, 'postseasonGameLogo', 'postseason_game_logo');
@@ -621,7 +621,7 @@ const Postseason = ({
         };
     };
 
-    // ── Render ───────────────────────────────────────────────────────
+    // Render
     return (
         <Box>
             {/* Playoff Bracket */}

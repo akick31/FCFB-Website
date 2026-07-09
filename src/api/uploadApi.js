@@ -1,10 +1,5 @@
 import apiClient from './apiClient';
 
-/**
- * Upload a postseason game logo
- * @param {File} file - The image file to upload
- * @returns {Promise<{url: string}>} The URL/path to the uploaded file
- */
 export const uploadPostseasonLogo = async (file) => {
     try {
         const formData = new FormData();

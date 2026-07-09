@@ -61,18 +61,15 @@ const TeamManagement = () => {
     // Filter teams based on all criteria
     useEffect(() => {
         let filtered = teams;
-        
-        // Filter out fake teams if checkbox is checked
+
         if (hideFakeTeams) {
             filtered = filtered.filter(team => team.subdivision !== 'FAKE');
         }
         
-        // Filter by conference
         if (conferenceFilter !== 'ALL') {
             filtered = filtered.filter(team => team.conference === conferenceFilter);
         }
-        
-        // Filter by taken status
+
         if (takenFilter !== 'ALL') {
             if (takenFilter === 'TAKEN') {
                 filtered = filtered.filter(team => team.is_taken);
@@ -80,8 +77,7 @@ const TeamManagement = () => {
                 filtered = filtered.filter(team => !team.is_taken);
             }
         }
-        
-        // Filter by search term
+
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
             filtered = filtered.filter(team => 
@@ -93,10 +89,6 @@ const TeamManagement = () => {
         
         setFilteredTeams(filtered);
     }, [teams, hideFakeTeams, conferenceFilter, takenFilter, searchTerm]);
-
-    const handleNavigationChange = (item) => {
-        navigate(item.path);
-    };
 
     const handleTeamClick = (team, index, e) => {
         if (e && (e.metaKey || e.ctrlKey || e.shiftKey)) return;
@@ -213,7 +205,6 @@ const TeamManagement = () => {
         <DashboardLayout
             title="Team Management"
             navigationItems={navigationItems}
-            onNavigationChange={handleNavigationChange}
             hideHeader={true}
             textColor="primary.main"
         >

@@ -17,7 +17,7 @@ import { getGameStatsBySeasonAndWeek } from '../../../api/gameStatsApi.jsx';
 import { getFilteredSeasonStats } from '../../../api/seasonStatsApi';
 import { getAllTeams } from '../../../api/teamApi';
 import { getAllSeasons } from '../../../api/seasonApi';
-import { getCurrentSeason } from '../../../api/seasonApi';
+import { getCurrentSeasonOrLatest } from '../../../api/seasonApi';
 import ScatterPlotChart from '../ScatterPlotChart';
 
 /**
@@ -48,7 +48,7 @@ const ScatterPlotsTab = () => {
                 const [teamsData, seasonsData, currentSeasonData] = await Promise.all([
                     getAllTeams(),
                     getAllSeasons(),
-                    getCurrentSeason(),
+                    getCurrentSeasonOrLatest(),
                 ]);
                 
                 setTeams(teamsData.filter(t => t.active).sort((a, b) => (a.name || '').localeCompare(b.name || '')));
@@ -91,8 +91,8 @@ const ScatterPlotsTab = () => {
                     setSeasonStatsData([]);
                     return;
                 }
-                const data = await getGameStatsBySeasonAndWeek(selectedSeason, week);
-                setGameStatsData(data);
+                const gameStats = await getGameStatsBySeasonAndWeek(selectedSeason, week);
+                setGameStatsData(gameStats);
                 setSeasonStatsData([]);
             }
         } catch (err) {

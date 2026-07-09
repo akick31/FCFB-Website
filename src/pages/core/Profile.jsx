@@ -16,6 +16,7 @@ import {
     InputLabel,
     Select,
     MenuItem,
+    Alert,
     useTheme,
 } from '@mui/material';
 import {
@@ -41,10 +42,11 @@ import { formatResponseTime } from '../../utils/timeUtils';
 import { getTeamByName } from '../../api/teamApi';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
-import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
+import { updateUserDetails } from '../../api/userApi';
 import { useNavigate } from 'react-router-dom';
 
-// ── Stat row helper ────────────────────────────────────────────
+// Stat row helper
 const StatRow = ({ label, value, suffix = '', decimals = 0, highlight = false }) => {
     if (value === null || value === undefined) return null;
     const displayValue = decimals > 0 ? Number(value).toFixed(decimals) : value;
@@ -61,7 +63,7 @@ const StatRow = ({ label, value, suffix = '', decimals = 0, highlight = false })
     );
 };
 
-// ── Aggregate multiple season stat rows into one ───────────────
+// Aggregate multiple season stat rows into one
 const aggregateSeasonStats = (statsList) => {
     if (!statsList || statsList.length === 0) return null;
     if (statsList.length === 1) return statsList[0];
@@ -89,13 +91,15 @@ const aggregateSeasonStats = (statsList) => {
     return result;
 };
 
-const Profile = ({ user }) => {
+const Profile = ({ user, setUser }) => {
     const theme = useTheme();
     const navigate = useNavigate();
 
     useEffect(() => { document.title = 'FCFB | Profile'; }, []);
 
     const [isEditing, setIsEditing] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState(null);
     const [formData, setFormData] = useState({
         username: user?.username || '',
         email: '',
@@ -131,7 +135,7 @@ const Profile = ({ user }) => {
     useEffect(() => {
         const fetchSeasons = async () => {
             try {
-                const [season, allSeasonData] = await Promise.all([getCurrentSeason(), getAllSeasons()]);
+                const [season, allSeasonData] = await Promise.all([getCurrentSeasonOrLatest(), getAllSeasons()]);
                 setCurrentSeason(season);
                 const nums = allSeasonData
                     .map(s => s.season_number || s.seasonNumber)
@@ -194,22 +198,56 @@ const Profile = ({ user }) => {
     };
 
     const handleSave = async () => {
+        if (formData.password && formData.password !== formData.confirmPassword) {
+            setSaveError('Passwords do not match.');
+            return;
+        }
+
+        const updates = {};
+        if (formData.username && formData.username !== user?.username) {
+            updates.newUsername = formData.username;
+        }
+        if (formData.email) {
+            updates.newEmail = formData.email;
+        }
+        if (formData.password) {
+            updates.newPassword = formData.password;
+        }
+
+        if (Object.keys(updates).length === 0) {
+            setIsEditing(false);
+            setSaveError(null);
+            return;
+        }
+
+        setSaving(true);
+        setSaveError(null);
         try {
+            await updateUserDetails(user.id, updates);
+            setUser?.(prev => ({
+                ...prev,
+                ...(updates.newUsername && { username: updates.newUsername }),
+                ...(updates.newEmail && { email: updates.newEmail }),
+            }));
+            setFormData(prev => ({ ...prev, email: '', password: '', confirmPassword: '' }));
             setIsEditing(false);
         } catch (error) {
-            console.error('Error updating profile:', error);
+            setSaveError(error.message || 'Failed to update profile. Please try again.');
+        } finally {
+            setSaving(false);
         }
     };
 
     const handleCancel = () => {
         setFormData({ username: user?.username || '', email: '', password: '', confirmPassword: '' });
+        setSaveError(null);
         setIsEditing(false);
     };
 
     const winPercentage = user?.win_percentage ? (user.win_percentage * 100).toFixed(1) : '0.0';
     const totalGames = (user?.wins || 0) + (user?.losses || 0);
 
-    // ── Stat pill helper ───────────────────────────────────────────
+    // Stat pill helper
     const StatBox = ({ label, value, icon, color = 'primary' }) => (
         <Paper elevation={0} sx={{
             p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider',
@@ -233,7 +271,7 @@ const Profile = ({ user }) => {
         </Paper>
     );
 
-    // ── Record row helper ──────────────────────────────────────────
+    // Record row helper
     const RecordRow = ({ label, wins, losses, icon }) => (
         <Box sx={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -507,11 +545,18 @@ const Profile = ({ user }) => {
                                 <Button size="small" startIcon={<Edit />} onClick={() => setIsEditing(true)}>Edit</Button>
                             ) : (
                                 <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                    <Button size="small" variant="contained" startIcon={<Save />} onClick={handleSave}>Save</Button>
-                                    <Button size="small" variant="outlined" startIcon={<Cancel />} onClick={handleCancel}>Cancel</Button>
+                                    <Button size="small" variant="contained" startIcon={<Save />} onClick={handleSave} disabled={saving}>
+                                        {saving ? 'Saving…' : 'Save'}
+                                    </Button>
+                                    <Button size="small" variant="outlined" startIcon={<Cancel />} onClick={handleCancel} disabled={saving}>Cancel</Button>
                                 </Box>
                             )}
                         </Box>
+                        {saveError && (
+                            <Alert severity="error" sx={{ mx: 2.5, mt: 2 }} onClose={() => setSaveError(null)}>
+                                {saveError}
+                            </Alert>
+                        )}
                         <Divider />
                         <Box sx={{ p: 2.5 }}>
                             <Box sx={{ mb: 2.5 }}>

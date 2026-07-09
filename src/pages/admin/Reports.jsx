@@ -125,23 +125,19 @@ const Reports = ({ user }) => {
     // Filter transactions based on all criteria
     useEffect(() => {
         let filtered = transactions;
-        
-        // Filter by team
+
         if (teamFilter !== 'ALL') {
             filtered = filtered.filter(transaction => transaction.team === teamFilter);
         }
-        
-        // Filter by position
+
         if (positionFilter !== 'ALL') {
             filtered = filtered.filter(transaction => transaction.position === positionFilter);
         }
-        
-        // Filter by transaction type
+
         if (transactionTypeFilter !== 'ALL') {
             filtered = filtered.filter(transaction => transaction.transaction === transactionTypeFilter);
         }
-        
-        // Filter by search term
+
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
             filtered = filtered.filter(transaction => 
@@ -159,13 +155,11 @@ const Reports = ({ user }) => {
     // Filter and sort user delay data
     useEffect(() => {
         let filtered = userDelayData;
-        
-        // Filter by team
+
         if (delayTeamFilter !== 'ALL') {
             filtered = filtered.filter(user => user.team === delayTeamFilter);
         }
-        
-        // Filter by search term
+
         if (delaySearchTerm) {
             const searchLower = delaySearchTerm.toLowerCase();
             filtered = filtered.filter(user => 
@@ -197,10 +191,6 @@ const Reports = ({ user }) => {
         
         setFilteredUserDelayData(filtered);
     }, [userDelayData, delayTeamFilter, delaySearchTerm, delaySortField, delaySortDirection]);
-
-    const handleNavigationChange = (item) => {
-        navigate(item.path);
-    };
 
     const handleTabChange = (event, newValue) => {
         setActiveTab(newValue);
@@ -377,7 +367,6 @@ const Reports = ({ user }) => {
         <DashboardLayout
             title="Reports"
             navigationItems={navigationItems}
-            onNavigationChange={handleNavigationChange}
             hideHeader={true}
             textColor="primary.main"
         >

@@ -17,7 +17,6 @@ const theme = createTheme({
         background: {
             default: '#f8fafc',
             paper: '#ffffff',
-            gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             dark: '#0f172a',
         },
         text: {
@@ -192,8 +191,6 @@ const theme = createTheme({
         gradients: {
             primary: 'linear-gradient(135deg, #004260 0%, #1e5a7a 100%)',
             secondary: 'linear-gradient(135deg, #d12a2e 0%, #e85a5e 100%)',
-            sports: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-            dark: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
         },
         spacing: {
             section: '80px',
