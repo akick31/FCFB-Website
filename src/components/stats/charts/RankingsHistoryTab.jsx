@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import { getAllTeams } from '../../../api/teamApi';
 import { getAllSeasons } from '../../../api/seasonApi';
-import { getCurrentSeason } from '../../../api/seasonApi';
+import { getCurrentSeasonOrLatest } from '../../../api/seasonApi';
 import { getRankingsHistory } from '../../../api/rankingsHistoryApi.jsx';
 import RankingsHistoryChart from '../RankingsHistoryChart';
 import RankingsHistoryFilters from '../RankingsHistoryFilters';
@@ -40,7 +40,7 @@ const RankingsHistoryTab = () => {
                 const [teamsData, seasonsData, currentSeasonData] = await Promise.all([
                     getAllTeams(),
                     getAllSeasons(),
-                    getCurrentSeason(),
+                    getCurrentSeasonOrLatest(),
                 ]);
                 
                 setTeams(teamsData.filter(t => t.active).sort((a, b) => (a.name || '').localeCompare(b.name || '')));

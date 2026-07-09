@@ -33,7 +33,7 @@ import {
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import StyledCard from '../../components/ui/StyledCard';
-import { getCurrentSeason, getCurrentWeek } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
 import {
     getScheduleBySeasonAndWeek,
     startGameWeek,
@@ -67,8 +67,8 @@ const GameWeek = () => {
             try {
                 setLoading(true);
                 const [currentSeason, currentWeek] = await Promise.all([
-                    getCurrentSeason(),
-                    getCurrentWeek()
+                    getCurrentSeasonOrLatest(),
+                    getCurrentWeekOrLatest()
                 ]);
                 setSeason(currentSeason);
                 setWeek(currentWeek);

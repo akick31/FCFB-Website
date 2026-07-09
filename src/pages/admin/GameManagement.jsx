@@ -44,7 +44,7 @@ import {
     endAllOngoingGames,
     getFilteredGames
 } from '../../api/gameApi';
-import { getCurrentSeason, getCurrentWeek } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
 import { getAllTeams } from '../../api/teamApi';
 import {
     getScheduleBySeasonAndWeek,
@@ -140,8 +140,8 @@ const GameManagement = () => {
         const initDefaults = async () => {
             try {
                 const [season, week] = await Promise.all([
-                    getCurrentSeason(),
-                    getCurrentWeek()
+                    getCurrentSeasonOrLatest(),
+                    getCurrentWeekOrLatest()
                 ]);
                 
                 // Set state for Start Game Week

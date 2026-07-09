@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { getAllTeams } from '../../api/teamApi';
 import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedule, getScheduleBySeason } from '../../api/scheduleApi';
-import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { getAllOngoingGames } from '../../api/gameApi';
 import { conferences } from '../../components/constants/conferences';
 import TeamScheduleTable from '../../components/schedule/TeamScheduleTable';
@@ -122,7 +122,7 @@ const Schedule = () => {
                 setLoading(true);
                 const [teamsData, currentSeason, seasonsData] = await Promise.all([
                     getAllTeams(),
-                    getCurrentSeason(),
+                    getCurrentSeasonOrLatest(),
                     getAllSeasons()
                 ]);
                 setTeams(teamsData);

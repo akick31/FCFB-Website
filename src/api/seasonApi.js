@@ -39,6 +39,40 @@ export const getAllSeasons = async () => {
     }
 };
 
+// Between seasons (previous season ended, next one not started yet), /season/current
+// 500s. Fall back to the most recent season in /season/all so pages can still default
+// to something sensible instead of failing outright.
+const getLatestSeason = async () => {
+    const allSeasons = await getAllSeasons();
+    return allSeasons.reduce((latest, s) => {
+        const num = s.season_number ?? s.seasonNumber;
+        const latestNum = latest?.season_number ?? latest?.seasonNumber;
+        return latestNum === undefined || num > latestNum ? s : latest;
+    }, null);
+};
+
+export const getCurrentSeasonOrLatest = async () => {
+    try {
+        return await getCurrentSeason();
+    } catch (error) {
+        const latestSeason = await getLatestSeason();
+        const seasonNumber = latestSeason?.season_number ?? latestSeason?.seasonNumber;
+        if (seasonNumber == null) throw error;
+        return seasonNumber;
+    }
+};
+
+export const getCurrentWeekOrLatest = async () => {
+    try {
+        return await getCurrentWeek();
+    } catch (error) {
+        const latestSeason = await getLatestSeason();
+        const week = latestSeason?.current_week ?? latestSeason?.currentWeek;
+        if (week == null) throw error;
+        return week;
+    }
+};
+
 export const getSeasonByNumber = async (seasonNumber) => {
     try {
         const response = await apiClient.get(`/season/${seasonNumber}`);

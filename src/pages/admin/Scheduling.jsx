@@ -45,7 +45,7 @@ import {
     saveConferenceRules,
     getConferenceRules,
 } from '../../api/scheduleApi';
-import { getCurrentSeason, getAllSeasons, isScheduleLocked, lockSchedule, unlockSchedule, createSeasonForScheduling } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest, getAllSeasons, isScheduleLocked, lockSchedule, unlockSchedule, createSeasonForScheduling } from '../../api/seasonApi';
 import { uploadPostseasonLogo } from '../../api/uploadApi';
 import { conferences } from '../../components/constants/conferences';
 import { formatGameType, formatConference } from '../../utils/formatText';
@@ -164,7 +164,7 @@ const Scheduling = () => {
                 setLoading(true);
                 const [teamsData, currentSeason, seasonsData] = await Promise.all([
                     getAllTeams(),
-                    getCurrentSeason(),
+                    getCurrentSeasonOrLatest(),
                     getAllSeasons()
                 ]);
                 setAllTeams(teamsData);

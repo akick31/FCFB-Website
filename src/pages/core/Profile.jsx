@@ -42,7 +42,7 @@ import { formatResponseTime } from '../../utils/timeUtils';
 import { getTeamByName } from '../../api/teamApi';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
-import { getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { updateUserDetails } from '../../api/userApi';
 import { useNavigate } from 'react-router-dom';
 
@@ -135,7 +135,7 @@ const Profile = ({ user, setUser }) => {
     useEffect(() => {
         const fetchSeasons = async () => {
             try {
-                const [season, allSeasonData] = await Promise.all([getCurrentSeason(), getAllSeasons()]);
+                const [season, allSeasonData] = await Promise.all([getCurrentSeasonOrLatest(), getAllSeasons()]);
                 setCurrentSeason(season);
                 const nums = allSeasonData
                     .map(s => s.season_number || s.seasonNumber)
