@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Box, CircularProgress } from '@mui/material';
 import { getFilteredGames } from '../../../api/gameApi';
 import ScoreboardList from './ScoreboardList';
+import OffseasonNotice from './OffseasonNotice';
+import { useOffseasonStatus } from './hooks/useOffseasonStatus';
 
 const POLL_INTERVAL_MS = 15000;
 
 const OngoingGames = () => {
+    const { isOffseason, loading: offseasonLoading } = useOffseasonStatus();
     const [games, setGames] = useState([]);
     const [totalGames, setTotalGames] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -57,12 +61,14 @@ const OngoingGames = () => {
     }, [filters]);
 
     useEffect(() => {
+        if (offseasonLoading || isOffseason) return;
         const showLoading = isFirstLoad.current;
         isFirstLoad.current = false;
         fetchData(showLoading);
-    }, [fetchData]);
+    }, [fetchData, offseasonLoading, isOffseason]);
 
     useEffect(() => {
+        if (offseasonLoading || isOffseason) return;
         pollTimerRef.current = setInterval(() => {
             fetchData(false);
         }, POLL_INTERVAL_MS);
@@ -70,7 +76,7 @@ const OngoingGames = () => {
         return () => {
             if (pollTimerRef.current) clearInterval(pollTimerRef.current);
         };
-    }, [fetchData]);
+    }, [fetchData, offseasonLoading, isOffseason]);
 
     const handlePageChange = (newPage) => {
         setFilters(prev => ({
@@ -78,6 +84,18 @@ const OngoingGames = () => {
             page: newPage
         }));
     };
+
+    if (offseasonLoading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    if (isOffseason) {
+        return <OffseasonNotice />;
+    }
 
     return (
         <ScoreboardList
