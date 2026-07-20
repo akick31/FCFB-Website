@@ -92,14 +92,56 @@ export const getFreeAgents = async () => {
     }
 }
 
-export const updateUsername = (userId, username) =>
-    updateUserDetails(userId, { newUsername: username });
+export const updateUsername = async (userId, newUsername) => {
+    if (!userId) throw new Error("User ID is required");
 
-export const updateEmail = (userId, email) =>
-    updateUserDetails(userId, { newEmail: email });
+    try {
+        const response = await apiClient.put('/user/update/username', null, {
+            params: { id: userId, newUsername },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to update username:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to update username");
+        }
+        throw new Error("An unexpected error occurred while updating username");
+    }
+};
 
-export const updatePassword = (userId, password) =>
-    updateUserDetails(userId, { newPassword: password });
+export const updateEmail = async (userId, newEmail) => {
+    if (!userId) throw new Error("User ID is required");
+
+    try {
+        const response = await apiClient.put('/user/update/email', null, {
+            params: { id: userId, newEmail },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to update email:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to update email");
+        }
+        throw new Error("An unexpected error occurred while updating email");
+    }
+};
+
+export const updatePassword = async (userId, currentPassword, newPassword) => {
+    if (!userId) throw new Error("User ID is required");
+
+    try {
+        const response = await apiClient.put('/user/update/password', null, {
+            params: { id: userId, currentPassword, newPassword },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to update password:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to update password");
+        }
+        throw new Error("An unexpected error occurred while updating password");
+    }
+};
 
 export const updateRole = (userId, role) =>
     updateUserDetails(userId, { newRole: role });

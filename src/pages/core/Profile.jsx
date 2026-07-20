@@ -43,7 +43,7 @@ import { getTeamByName } from '../../api/teamApi';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
-import { updateUserDetails } from '../../api/userApi';
+import { updateUsername, updateEmail, updatePassword } from '../../api/userApi';
 import { useNavigate } from 'react-router-dom';
 import { useSeo } from '../../hooks/useSeo';
 
@@ -102,6 +102,7 @@ const Profile = ({ user, setUser }) => {
     const [formData, setFormData] = useState({
         username: user?.username || '',
         email: '',
+        currentPassword: '',
         password: '',
         confirmPassword: ''
     });
@@ -195,19 +196,16 @@ const Profile = ({ user, setUser }) => {
             setSaveError('Passwords do not match.');
             return;
         }
-
-        const updates = {};
-        if (formData.username && formData.username !== user?.username) {
-            updates.newUsername = formData.username;
-        }
-        if (formData.email) {
-            updates.newEmail = formData.email;
-        }
-        if (formData.password) {
-            updates.newPassword = formData.password;
+        if (formData.password && !formData.currentPassword) {
+            setSaveError('Current password is required to set a new password.');
+            return;
         }
 
-        if (Object.keys(updates).length === 0) {
+        const usernameChanged = formData.username && formData.username !== user?.username;
+        const emailChanged = Boolean(formData.email);
+        const passwordChanged = Boolean(formData.password);
+
+        if (!usernameChanged && !emailChanged && !passwordChanged) {
             setIsEditing(false);
             setSaveError(null);
             return;
@@ -216,13 +214,21 @@ const Profile = ({ user, setUser }) => {
         setSaving(true);
         setSaveError(null);
         try {
-            await updateUserDetails(user.id, updates);
+            if (usernameChanged) {
+                await updateUsername(user.id, formData.username);
+            }
+            if (emailChanged) {
+                await updateEmail(user.id, formData.email);
+            }
+            if (passwordChanged) {
+                await updatePassword(user.id, formData.currentPassword, formData.password);
+            }
             setUser?.(prev => ({
                 ...prev,
-                ...(updates.newUsername && { username: updates.newUsername }),
-                ...(updates.newEmail && { email: updates.newEmail }),
+                ...(usernameChanged && { username: formData.username }),
+                ...(emailChanged && { email: formData.email }),
             }));
-            setFormData(prev => ({ ...prev, email: '', password: '', confirmPassword: '' }));
+            setFormData(prev => ({ ...prev, email: '', currentPassword: '', password: '', confirmPassword: '' }));
             setIsEditing(false);
         } catch (error) {
             setSaveError(error.message || 'Failed to update profile. Please try again.');
@@ -232,7 +238,7 @@ const Profile = ({ user, setUser }) => {
     };
 
     const handleCancel = () => {
-        setFormData({ username: user?.username || '', email: '', password: '', confirmPassword: '' });
+        setFormData({ username: user?.username || '', email: '', currentPassword: '', password: '', confirmPassword: '' });
         setSaveError(null);
         setIsEditing(false);
     };
@@ -569,6 +575,10 @@ const Profile = ({ user, setUser }) => {
                                     <Box sx={{ mb: 2.5 }}>
                                         <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>Email</Typography>
                                         <TextField fullWidth size="small" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Enter new email" />
+                                    </Box>
+                                    <Box sx={{ mb: 2.5 }}>
+                                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>Current Password</Typography>
+                                        <TextField fullWidth size="small" name="currentPassword" type="password" value={formData.currentPassword} onChange={handleChange} placeholder="Required to change password" />
                                     </Box>
                                     <Box sx={{ mb: 2.5 }}>
                                         <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>New Password</Typography>
