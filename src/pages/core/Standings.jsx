@@ -7,12 +7,21 @@ import { formatTeamStats } from '../../utils/teamDataUtils';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
+import { useOffseasonStatus } from '../../components/game/scoreboard/hooks/useOffseasonStatus';
+
+const ZEROED_RECORD_FIELDS = [
+    'current_wins',
+    'current_losses',
+    'current_conference_wins',
+    'current_conference_losses',
+];
 
 const Standings = () => {
     useSeo(ROUTE_META['/standings']);
 
     const { conference: confParam } = useParams();
     const navigate = useNavigate();
+    const { isOffseason, loading: offseasonLoading } = useOffseasonStatus();
 
     const [teams, setTeams] = useState([]);
     const [filteredTeams, setFilteredTeams] = useState([]);
@@ -21,8 +30,9 @@ const Standings = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
+        if (offseasonLoading) return;
         fetchTeams();
-    }, []);
+    }, [offseasonLoading, isOffseason]);
 
     useEffect(() => {
         filterTeamsByConference();
@@ -41,11 +51,18 @@ const Standings = () => {
             setLoading(true);
             const teamsData = await getAllTeams();
 
-            const teamsWithStats = teamsData.map(team => ({
+            const normalizedTeams = isOffseason
+                ? teamsData.map(team => ({
+                    ...team,
+                    ...Object.fromEntries(ZEROED_RECORD_FIELDS.map(field => [field, 0])),
+                }))
+                : teamsData;
+
+            const teamsWithStats = normalizedTeams.map(team => ({
                 ...team,
                 stats: formatTeamStats(team)
             }));
-            
+
             setTeams(teamsWithStats);
         } catch (error) {
             console.error('Error fetching teams:', error);
@@ -131,7 +148,9 @@ const Standings = () => {
                             mb: 3
                         }}
                     >
-                        Current conference standings based on conference win/loss records
+                        {isOffseason
+                            ? "We're in the offseason — standings are reset to 0-0 ahead of the next season"
+                            : 'Current conference standings based on conference win/loss records'}
                     </Typography>
                 </Box>
 

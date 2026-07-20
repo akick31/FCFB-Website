@@ -2,16 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Container, CircularProgress, Alert, FormControl, Select, MenuItem } from '@mui/material';
 import RankingsTable from '../../components/team/RankingsTable';
 import { getAllTeams } from '../../api/teamApi';
+import { getLatestCompletedSeason } from '../../api/seasonApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
+import { useOffseasonStatus } from '../../components/game/scoreboard/hooks/useOffseasonStatus';
 
 const Rankings = () => {
     useSeo(ROUTE_META['/rankings']);
 
     const { type } = useParams();
     const navigate = useNavigate();
+    const { isOffseason, loading: offseasonLoading } = useOffseasonStatus();
 
     const [teams, setTeams] = useState([]);
     const [filteredTeams, setFilteredTeams] = useState([]);
@@ -19,10 +22,18 @@ const Rankings = () => {
     const [availableRankings, setAvailableRankings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [finalRankingsSeason, setFinalRankingsSeason] = useState(null);
 
     useEffect(() => {
         fetchTeams();
     }, []);
+
+    useEffect(() => {
+        if (offseasonLoading || !isOffseason) return;
+        getLatestCompletedSeason()
+            .then(season => setFinalRankingsSeason(season?.season_number ?? null))
+            .catch(() => setFinalRankingsSeason(null));
+    }, [offseasonLoading, isOffseason]);
 
     useEffect(() => {
         if (teams.length > 0) {
@@ -179,7 +190,9 @@ const Rankings = () => {
                             mb: 3
                         }}
                     >
-                        Top 25 teams in the latest rankings
+                        {isOffseason
+                            ? `We're in the offseason — showing the Final Season ${finalRankingsSeason ?? ''} Rankings`
+                            : 'Top 25 teams in the latest rankings'}
                     </Typography>
                 </Box>
 

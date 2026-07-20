@@ -70,6 +70,32 @@ export const getCurrentWeekOrLatest = async () => {
     }
 };
 
+export const getUpcomingSeason = async () => {
+    try {
+        const response = await apiClient.get(`/season/upcoming`);
+        return response.data || null;
+    } catch (error) {
+        console.error("Failed to fetch upcoming season:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to fetch upcoming season");
+        }
+        throw new Error("An unexpected error occurred while fetching upcoming season");
+    }
+};
+
+export const getLatestCompletedSeason = async () => {
+    try {
+        const response = await apiClient.get(`/season/latest-completed`);
+        return response.data || null;
+    } catch (error) {
+        console.error("Failed to fetch latest completed season:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to fetch latest completed season");
+        }
+        throw new Error("An unexpected error occurred while fetching latest completed season");
+    }
+};
+
 export const getSeasonByNumber = async (seasonNumber) => {
     try {
         const response = await apiClient.get(`/season/${seasonNumber}`);
