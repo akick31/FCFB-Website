@@ -16,7 +16,7 @@ import {
 import { getAllTeams } from '../../api/teamApi';
 import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedule, getScheduleBySeason } from '../../api/scheduleApi';
 import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
-import { getAllOngoingGames } from '../../api/gameApi';
+import { getFilteredGames } from '../../api/gameApi';
 import { getStorageItem } from '../../utils/utils';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { conferences } from '../../components/constants/conferences';
@@ -248,8 +248,8 @@ const Schedule = () => {
     useEffect(() => {
         const fetchOngoing = async () => {
             try {
-                const res = await getAllOngoingGames();
-                setOngoingGames(res?.data || []);
+                const res = await getFilteredGames({ category: 'ONGOING', page: 0, size: 50 });
+                setOngoingGames(res?.content || []);
             } catch {
                 setOngoingGames([]);
             }

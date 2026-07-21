@@ -148,9 +148,7 @@ const Standings = () => {
                             mb: 3
                         }}
                     >
-                        {isOffseason
-                            ? "We're in the offseason — standings are reset to 0-0 ahead of the next season"
-                            : 'Current conference standings based on conference win/loss records'}
+                        Current conference standings based on conference win/loss records
                     </Typography>
                 </Box>
 
