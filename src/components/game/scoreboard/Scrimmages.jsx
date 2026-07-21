@@ -41,7 +41,7 @@ const Scrimmages = () => {
                 });
 
                 const ongoingScrimmages = response.content.filter(game => {
-                    const gameStatus = game.gameStatus || game.status;
+                    const gameStatus = game.gameStatus || game.game_status;
                     return gameStatus === 'IN_PROGRESS' || 
                            gameStatus === 'HALFTIME' || 
                            gameStatus === 'OVERTIME' ||
