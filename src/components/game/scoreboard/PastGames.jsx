@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getFilteredGames } from '../../../api/gameApi';
-import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../../api/seasonApi';
+import { getCurrentSeason, getCurrentWeek, getLatestCompletedSeason } from '../../../api/seasonApi';
 import ScoreboardList from './ScoreboardList';
-import OffseasonNotice from './OffseasonNotice';
-import { useOffseasonStatus } from './hooks/useOffseasonStatus';
-import { Box, CircularProgress } from '@mui/material';
+import { Box } from '@mui/material';
 import SeasonDropdown from '../../dropdown/SeasonDropdown';
 import WeekDropdown from '../../dropdown/WeekDropdown';
 
@@ -14,7 +12,6 @@ const PLAYOFFS_GAME_TYPES = new Set(['PLAYOFFS', 'NATIONAL_CHAMPIONSHIP']);
 
 const PastGames = ({ urlSeason, urlWeek }) => {
     const navigate = useNavigate();
-    const { isOffseason, loading: offseasonLoading } = useOffseasonStatus();
     const [games, setGames] = useState([]);
     const [totalGames, setTotalGames] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -38,45 +35,55 @@ const PastGames = ({ urlSeason, urlWeek }) => {
     });
 
     useEffect(() => {
-        if (offseasonLoading || isOffseason) return;
         if (urlSeason && urlWeek) {
             initializedRef.current = true;
             return;
         }
         if (initializedRef.current) return;
         initializedRef.current = true;
+        const applyDefaults = (season, week) => {
+            if (week >= 14) {
+                setFilters(prev => ({
+                    ...prev,
+                    season,
+                    postseason: true,
+                    week: null,
+                }));
+            } else {
+                setFilters(prev => ({
+                    ...prev,
+                    season,
+                    week,
+                }));
+                navigate(`/scoreboard/past/${season}/${week}`, { replace: true });
+            }
+        };
         const setDefaults = async () => {
             try {
                 const [currentSeason, currentWeek] = await Promise.all([
-                    getCurrentSeasonOrLatest(),
-                    getCurrentWeekOrLatest()
+                    getCurrentSeason(),
+                    getCurrentWeek()
                 ]);
-                if (currentWeek >= 14) {
-                    setFilters(prev => ({
-                        ...prev,
-                        season: currentSeason,
-                        postseason: true,
-                        week: null,
-                    }));
-                } else {
-                    setFilters(prev => ({
-                        ...prev,
-                        season: currentSeason,
-                        week: currentWeek,
-                    }));
-                    navigate(`/scoreboard/past/${currentSeason}/${currentWeek}`, { replace: true });
-                }
+                applyDefaults(currentSeason, currentWeek);
             } catch (error) {
-                console.error('Failed to fetch current season/week:', error);
-                setFilters(prev => ({
-                    ...prev,
-                    season: 11,
-                    week: 1
-                }));
+                try {
+                    const latestCompleted = await getLatestCompletedSeason();
+                    const seasonNumber = latestCompleted?.season_number ?? latestCompleted?.seasonNumber;
+                    const week = latestCompleted?.current_week ?? latestCompleted?.currentWeek;
+                    if (seasonNumber == null || week == null) throw error;
+                    applyDefaults(seasonNumber, week);
+                } catch (fallbackError) {
+                    console.error('Failed to fetch current or latest completed season/week:', fallbackError);
+                    setFilters(prev => ({
+                        ...prev,
+                        season: 11,
+                        week: 1
+                    }));
+                }
             }
         };
         setDefaults();
-    }, [offseasonLoading, isOffseason]);
+    }, []);
 
     useEffect(() => {
         if (!urlSeason || !urlWeek) return;
@@ -138,11 +145,10 @@ const PastGames = ({ urlSeason, urlWeek }) => {
             }
         };
 
-        if (!offseasonLoading && !isOffseason && filters.season !== null &&
-            (filters.week !== null || filters.postseason || filters.playoffsOnly)) {
+        if (filters.season !== null && (filters.week !== null || filters.postseason || filters.playoffsOnly)) {
             fetchData();
         }
-    }, [filters, offseasonLoading, isOffseason]);
+    }, [filters]);
 
     const handlePageChange = (newPage) => {
         setFilters(prev => ({ ...prev, page: newPage }));
@@ -170,18 +176,6 @@ const PastGames = ({ urlSeason, urlWeek }) => {
             }
         }
     };
-
-    if (offseasonLoading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
-
-    if (isOffseason) {
-        return <OffseasonNotice />;
-    }
 
     return (
         <Box>
