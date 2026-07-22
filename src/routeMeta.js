@@ -1,7 +1,7 @@
 export const SITE_URL = 'https://fakecollegefootball.com';
 
 export const routeList = [
-    { path: '/', title: 'Fake College Football | Home', description: 'Fake College Football (FCFB) is a play-by-play college football simulation league. Follow live games, conference standings, national rankings, and team stats.' },
+    { path: '/', title: 'Home | Fake College Football', description: 'Fake College Football (FCFB) is a play-by-play college football simulation league. Follow live games, conference standings, national rankings, and team stats.' },
     { path: '/standings', title: 'Standings | Fake College Football', description: 'Live conference and league standings for every Fake College Football conference, updated weekly as the season progresses.' },
     { path: '/rankings', title: 'Rankings | Fake College Football', description: 'Weekly national rankings for every team in the Fake College Football simulation league.' },
     { path: '/scoreboard', title: 'Scoreboard | Fake College Football', description: 'Live and final scores for every Fake College Football game, including ongoing games, completed matchups, and scrimmages.' },
