@@ -20,10 +20,9 @@ import {
 } from './pages';
 import { getUserById } from './api/userApi';
 import { checkIfUserIsAdmin } from "./utils/utils";
-import { CssBaseline } from '@mui/material';
-import { ThemeProvider } from '@mui/material/styles';
 import { Box } from '@mui/system';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import { ColorModeProvider } from './theme/ColorModeContext';
 import {
     ResetPassword,
     Complete,
@@ -49,7 +48,6 @@ import {
     EloHistory,
     Charts
 } from './pages';
-import Theme from "./styles/Theme";
 
 const ConditionalHeader = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, setIsAdmin }) => {
     const location = useLocation();
@@ -128,14 +126,13 @@ const AppRoutes = () => {
     }, [isAuthenticated, isAdmin]);
 
     return (
-        <ThemeProvider theme={Theme}>
-            <CssBaseline />
+        <ColorModeProvider>
             <Box
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
                     minHeight: '100vh',
-                    background: 'background.default',
+                    backgroundColor: 'background.default',
                 }}
             >
                 <ConditionalHeader
@@ -269,7 +266,7 @@ const AppRoutes = () => {
                 </Box>
                 <Footer />
             </Box>
-        </ThemeProvider>
+        </ColorModeProvider>
     );
 };
 
