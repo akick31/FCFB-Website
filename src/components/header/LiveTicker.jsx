@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { getFilteredGames } from '../../api/gameApi';
-import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { isGameOngoing } from '../game/scoreboard/utils/scoreboardFormatters';
 import { formatScoreboardQuarter } from '../../utils/gameUtils';
 import TeamMark from '../ui/TeamMark';
@@ -27,8 +27,16 @@ const statusLabel = (game) => {
 };
 
 const TickerItem = ({ game, teamsMap, onOpen }) => {
-    const home = teamsMap[game.home_team] || { abbreviation: game.home_team };
-    const away = teamsMap[game.away_team] || { abbreviation: game.away_team };
+    const home = teamsMap[game.home_team];
+    const away = teamsMap[game.away_team];
+
+    useEffect(() => {
+        if (!home) ensureTeam(game.home_team);
+        if (!away) ensureTeam(game.away_team);
+    }, [game.home_team, game.away_team, home, away]);
+
+    const homeTeam = home || { abbreviation: game.home_team };
+    const awayTeam = away || { abbreviation: game.away_team };
     const homeWon = game.home_score > game.away_score;
 
     return (
@@ -50,9 +58,9 @@ const TickerItem = ({ game, teamsMap, onOpen }) => {
             <Box component="span" sx={{ fontSize: '0.56rem', fontWeight: 800, letterSpacing: '0.04em', color: isGameOngoing(game.game_status) ? 'var(--live)' : 'var(--text-dim)' }}>
                 {statusLabel(game)}
             </Box>
-            <TeamMark team={away} size={16} />
+            <TeamMark team={awayTeam} size={16} />
             <Box component="b" sx={{ fontWeight: 800, color: homeWon ? 'var(--text-dim)' : 'var(--text)', fontVariantNumeric: 'tabular-nums' }}>{game.away_score}</Box>
-            <TeamMark team={home} size={16} />
+            <TeamMark team={homeTeam} size={16} />
             <Box component="b" sx={{ fontWeight: 800, color: homeWon ? 'var(--text)' : 'var(--text-dim)', fontVariantNumeric: 'tabular-nums' }}>{game.home_score}</Box>
         </Box>
     );
