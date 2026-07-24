@@ -1,33 +1,25 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-    Box,
-    Typography,
-    Container,
-    CircularProgress,
-    Alert,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Tabs,
-    Tab,
-} from '@mui/material';
+import { Box, CircularProgress, Alert } from '@mui/material';
 import { getAllTeams } from '../../api/teamApi';
 import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedule, getScheduleBySeason } from '../../api/scheduleApi';
 import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
-import { getFilteredGames } from '../../api/gameApi';
 import { getStorageItem } from '../../utils/utils';
 import { isRealTeam } from '../../utils/teamDataUtils';
-import { conferences } from '../../components/constants/conferences';
-import TeamScheduleTable from '../../components/schedule/TeamScheduleTable';
-import ConferenceScheduleGrid from '../../components/schedule/ConferenceScheduleGrid';
-import Postseason from '../../components/schedule/Postseason';
+import { CONFERENCE_ORDER } from '../../components/constants/conferences';
+import { useTeamsMap } from '../../hooks/useTeamsMap';
+import PageWrap from '../../components/layout/PageWrap';
+import PageHeading from '../../components/ui/PageHeading';
+import SegTabs from '../../components/ui/SegTabs';
+import SelectPill from '../../components/ui/SelectPill';
+import ConferenceTabs from '../../components/team/ConferenceTabs';
+import TeamSchedule from '../../components/schedule/TeamSchedule';
+import ConferenceGrid from '../../components/schedule/ConferenceGrid';
+import PostseasonView from '../../components/schedule/PostseasonView';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
 
 const LS_TEAM = 'schedule_selectedTeam';
-const LS_SEASON = 'schedule_season';
 const LS_CONFERENCE = 'schedule_conference';
 
 const TAB_SLUGS = ['team', 'conference', 'postseason'];
@@ -40,6 +32,7 @@ const Schedule = () => {
     const { tab, selection, seasonParam } = useParams();
     const navigate = useNavigate();
     useSeo(ROUTE_META['/schedules']);
+    const teamsMap = useTeamsMap();
 
     const tabIndex = TAB_FROM_SLUG[tab] ?? 0;
 
@@ -54,58 +47,35 @@ const Schedule = () => {
 
     const [postseasonSchedule, setPostseasonSchedule] = useState([]);
     const [postseasonLoading, setPostseasonLoading] = useState(false);
-    const [ongoingGames, setOngoingGames] = useState([]);
 
     const [selectedConference, setSelectedConference] = useState(() => getStorageItem('local', LS_CONFERENCE, ''));
-    const [conferenceSchedule, setConferenceSchedule] = useState([]);
     const [allSeasonSchedule, setAllSeasonSchedule] = useState([]);
-    const [conferenceTeams, setConferenceTeams] = useState([]);
     const [confLoading, setConfLoading] = useState(false);
 
-    const teamMap = useMemo(() => {
-        const map = {};
-        teams.forEach(team => {
-            if (team.name) {
-                map[team.name] = team;
-            }
-        });
-        return map;
+    const activeTeams = useMemo(
+        () => teams.filter((team) => team.active && isRealTeam(team)).sort((a, b) => (a.name || '').localeCompare(b.name || '')),
+        [teams],
+    );
+    const availableConferences = useMemo(() => {
+        const present = new Set(teams.filter((team) => team.active).map((team) => team.conference));
+        return CONFERENCE_ORDER.filter((conf) => present.has(conf));
     }, [teams]);
+    const conferenceTeams = useMemo(
+        () => activeTeams.filter((team) => team.conference === selectedConference),
+        [activeTeams, selectedConference],
+    );
 
     useEffect(() => {
-        if (!tab && !loading) {
-            navigate('/schedules/team', { replace: true });
-        }
+        if (!tab && !loading) navigate('/schedules/team', { replace: true });
     }, [tab, loading, navigate]);
 
     useEffect(() => {
-        if (!teams.length) return;
-        const activeTeams = teams.filter(t => t.active && isRealTeam(t));
-        if (tab === 'team' && selection) {
-            const found = activeTeams.find(t => teamToSlug(t.name) === selection);
-            if (found) setSelectedTeam(found);
-        } else if (tab === 'conference' && selection) {
-            setSelectedConference(selection.toUpperCase());
-        }
-    }, [tab, selection, teams]);
-
-    useEffect(() => {
-        if (selectedConference) {
-            localStorage.setItem(LS_CONFERENCE, selectedConference);
-        }
+        if (selectedConference) localStorage.setItem(LS_CONFERENCE, selectedConference);
     }, [selectedConference]);
 
     useEffect(() => {
-        if (selectedTeam) {
-            localStorage.setItem(LS_TEAM, selectedTeam.name);
-        }
+        if (selectedTeam) localStorage.setItem(LS_TEAM, selectedTeam.name);
     }, [selectedTeam]);
-
-    useEffect(() => {
-        if (season != null) {
-            localStorage.setItem(LS_SEASON, String(season));
-        }
-    }, [season]);
 
     useEffect(() => {
         const init = async () => {
@@ -114,42 +84,28 @@ const Schedule = () => {
                 const [teamsData, currentSeason, seasonsData] = await Promise.all([
                     getAllTeams(),
                     getCurrentSeasonOrLatest(),
-                    getAllSeasons()
+                    getAllSeasons(),
                 ]);
                 setTeams(teamsData);
-                const seasonNumbers = seasonsData.map(s => s.season_number || s.seasonNumber);
+                const seasonNumbers = seasonsData.map((entry) => entry.season_number ?? entry.seasonNumber).filter((value) => value != null);
                 setAllSeasons(seasonNumbers);
 
                 const rawUrlSeason = tab === 'postseason' ? selection : seasonParam;
-                const urlSeason = rawUrlSeason ? parseInt(rawUrlSeason) : null;
-                if (urlSeason && !isNaN(urlSeason) && seasonNumbers.includes(urlSeason)) {
-                    setSeason(urlSeason);
-                } else {
-                    setSeason(currentSeason);
-                }
+                const urlSeason = rawUrlSeason ? parseInt(rawUrlSeason, 10) : null;
+                setSeason(urlSeason && seasonNumbers.includes(urlSeason) ? urlSeason : currentSeason);
 
-                const activeTeams = teamsData.filter(t => t.active && isRealTeam(t)).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                const sortedTeams = teamsData.filter((team) => team.active && isRealTeam(team)).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 if (tab === 'team' && selection) {
-                    const found = activeTeams.find(t => teamToSlug(t.name) === selection);
-                    setSelectedTeam(found || activeTeams[0] || null);
+                    setSelectedTeam(sortedTeams.find((team) => teamToSlug(team.name) === selection) || sortedTeams[0] || null);
                 } else {
                     const savedTeam = localStorage.getItem(LS_TEAM);
-                    if (savedTeam) {
-                        const found = activeTeams.find(t => t.name === savedTeam);
-                        setSelectedTeam(found || activeTeams[0] || null);
-                    } else {
-                        setSelectedTeam(activeTeams[0] || null);
-                    }
+                    setSelectedTeam(sortedTeams.find((team) => team.name === savedTeam) || sortedTeams[0] || null);
                 }
 
                 if (tab === 'conference' && selection) {
                     setSelectedConference(selection.toUpperCase());
-                } else {
-                    const savedConf = localStorage.getItem(LS_CONFERENCE);
-                    if (!savedConf) {
-                        const sortedConfs = [...conferences].sort((a, b) => a.label.localeCompare(b.label));
-                        setSelectedConference(sortedConfs[0]?.value || 'ACC');
-                    }
+                } else if (!localStorage.getItem(LS_CONFERENCE)) {
+                    setSelectedConference('SEC');
                 }
             } catch (err) {
                 console.error('Error initializing schedule page:', err);
@@ -162,217 +118,110 @@ const Schedule = () => {
     }, []);
 
     useEffect(() => {
-        if (teams.length > 0 && selectedConference) {
-            const filtered = teams.filter(
-                t => t.conference === selectedConference && t.active
-            ).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-            setConferenceTeams(filtered);
-        }
-    }, [teams, selectedConference]);
-
-    useEffect(() => {
-        const fetchSchedule = async () => {
-            if (!selectedTeam || !season) return;
-            if (tabIndex !== 0) return;
-            try {
-                setScheduleLoading(true);
-                setError('');
-                const teamSchedule = await getScheduleBySeasonAndTeam(season, selectedTeam.name);
-                const sorted = (teamSchedule || []).sort((a, b) => (a.week || 0) - (b.week || 0));
-                setSchedule(sorted);
-            } catch (err) {
-                console.error('Error fetching schedule:', err);
-                setSchedule([]);
-                if (!err.message?.includes('not found')) {
-                    setError('Failed to load schedule. Please try again.');
-                }
-            } finally {
-                setScheduleLoading(false);
-            }
-        };
-        fetchSchedule();
+        if (!selectedTeam || !season || tabIndex !== 0) return;
+        setScheduleLoading(true);
+        getScheduleBySeasonAndTeam(season, selectedTeam.name)
+            .then((data) => setSchedule((data || []).sort((a, b) => (a.week || 0) - (b.week || 0))))
+            .catch(() => setSchedule([]))
+            .finally(() => setScheduleLoading(false));
     }, [selectedTeam, season, tabIndex]);
 
     useEffect(() => {
-        const fetchConfSchedule = async () => {
-            if (!season || !selectedConference || tabIndex !== 1) return;
-            try {
-                setConfLoading(true);
-                const [confData, allData] = await Promise.all([
-                    getConferenceSchedule(season, selectedConference),
-                    getScheduleBySeason(season)
-                ]);
-                setConferenceSchedule(confData || []);
-                setAllSeasonSchedule(allData || []);
-            } catch (err) {
-                console.error('Error fetching conference schedule:', err);
-                setConferenceSchedule([]);
-                setAllSeasonSchedule([]);
-            } finally {
-                setConfLoading(false);
-            }
-        };
-        fetchConfSchedule();
+        if (!season || tabIndex !== 1) return;
+        setConfLoading(true);
+        Promise.all([getConferenceSchedule(season, selectedConference).catch(() => []), getScheduleBySeason(season).catch(() => [])])
+            .then(([, allData]) => setAllSeasonSchedule(allData || []))
+            .finally(() => setConfLoading(false));
     }, [season, selectedConference, tabIndex]);
 
     useEffect(() => {
-        const fetchPostseason = async () => {
-            if (!season || tabIndex !== 2) return;
-            try {
-                setPostseasonLoading(true);
-                const postseason = await getPostseasonSchedule(season);
-                setPostseasonSchedule(postseason || []);
-            } catch (err) {
-                console.error('Error fetching postseason schedule:', err);
-                setPostseasonSchedule([]);
-            } finally {
-                setPostseasonLoading(false);
-            }
-        };
-        fetchPostseason();
-    }, [season, tabIndex]);
-
-    useEffect(() => {
-        const checkPostseason = async () => {
-            if (!season) return;
-            try {
-                const postseason = await getPostseasonSchedule(season);
-                setPostseasonSchedule(postseason || []);
-            } catch {
-                setPostseasonSchedule([]);
-            }
-        };
-        if (season) checkPostseason();
+        if (!season) return;
+        setPostseasonLoading(true);
+        getPostseasonSchedule(season)
+            .then((data) => setPostseasonSchedule(data || []))
+            .catch(() => setPostseasonSchedule([]))
+            .finally(() => setPostseasonLoading(false));
     }, [season]);
 
-    useEffect(() => {
-        const fetchOngoing = async () => {
-            try {
-                const res = await getFilteredGames({ category: 'ONGOING', page: 0, size: 50 });
-                setOngoingGames(res?.content || []);
-            } catch {
-                setOngoingGames([]);
-            }
-        };
-        fetchOngoing();
-    }, []);
-
     const hasPostseason = postseasonSchedule.length > 0;
+    const tabs = [
+        { value: 'team', label: 'Team' },
+        { value: 'conference', label: 'Conference' },
+        ...(hasPostseason ? [{ value: 'postseason', label: 'Postseason' }] : []),
+    ];
+    const mode = TAB_SLUGS[tabIndex];
+
+    const goToTab = (nextSlug) => {
+        if (nextSlug === 'team') navigate(`/schedules/team${selectedTeam ? `/${teamToSlug(selectedTeam.name)}/${season || ''}` : ''}`);
+        else if (nextSlug === 'conference') navigate(`/schedules/conference${selectedConference ? `/${confToSlug(selectedConference)}/${season || ''}` : ''}`);
+        else navigate(`/schedules/postseason/${season || ''}`);
+    };
+
+    const changeSeason = (nextSeason) => {
+        setSeason(nextSeason);
+        if (mode === 'team') navigate(`/schedules/team${selectedTeam ? `/${teamToSlug(selectedTeam.name)}/${nextSeason}` : ''}`, { replace: true });
+        else if (mode === 'conference') navigate(`/schedules/conference${selectedConference ? `/${confToSlug(selectedConference)}/${nextSeason}` : ''}`, { replace: true });
+        else navigate(`/schedules/postseason/${nextSeason}`, { replace: true });
+    };
 
     if (loading) {
-        return (
-            <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                    <CircularProgress size={60} />
-                </Box>
-            </Container>
-        );
+        return <PageWrap><Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box></PageWrap>;
     }
 
     return (
-        <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
-            <Box sx={{ pt: { xs: 8, md: 10 }, pb: { xs: 4, md: 6 } }}>
-                <Box sx={{ mb: 4, textAlign: 'center' }}>
-                    <Typography
-                        variant="h3"
-                        component="h1"
-                        sx={{ fontWeight: 'bold', color: 'primary.main', mb: 2 }}
-                    >
-                        Schedules
-                    </Typography>
-                    <Typography variant="h6" sx={{ color: 'text.secondary', mb: 3 }}>
-                        Season {season}
-                    </Typography>
-                </Box>
+        <PageWrap>
+            <PageHeading eyebrow={season ? `Season ${season}` : null} title="Schedules">
+                <SegTabs ariaLabel="Schedule view" value={mode} onChange={goToTab} options={tabs} />
+                {allSeasons.length > 0 && (
+                    <SelectPill
+                        label="Season"
+                        value={season ?? ''}
+                        onChange={(next) => changeSeason(Number(next))}
+                        options={allSeasons.map((option) => ({ value: option, label: `Season ${option}` }))}
+                    />
+                )}
+            </PageHeading>
 
-                <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
-                    <FormControl size="medium" sx={{ minWidth: 140 }}>
-                        <InputLabel>Season</InputLabel>
-                        <Select
-                            value={season || ''}
-                            label="Season"
-                            onChange={(e) => {
-                                const newSeason = e.target.value;
-                                setSeason(newSeason);
-                                const slug = TAB_SLUGS[tabIndex] || 'team';
-                                if (slug === 'team') {
-                                    navigate(`/schedules/team${selectedTeam ? '/' + teamToSlug(selectedTeam.name) + '/' + newSeason : ''}`, { replace: true });
-                                } else if (slug === 'conference') {
-                                    navigate(`/schedules/conference${selectedConference ? '/' + confToSlug(selectedConference) + '/' + newSeason : ''}`, { replace: true });
-                                } else {
-                                    navigate(`/schedules/postseason/${newSeason}`, { replace: true });
-                                }
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+            {mode === 'team' && (
+                <>
+                    <Box sx={{ mb: '16px' }}>
+                        <SelectPill
+                            label="Team"
+                            value={selectedTeam?.name || ''}
+                            onChange={(name) => {
+                                const team = activeTeams.find((entry) => entry.name === name) || null;
+                                setSelectedTeam(team);
+                                if (team) navigate(`/schedules/team/${teamToSlug(team.name)}/${season || ''}`, { replace: true });
                             }}
-                        >
-                            {allSeasons.map(s => (
-                                <MenuItem key={s} value={s}>Season {s}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Box>
+                            options={activeTeams.map((team) => ({ value: team.name, label: team.name }))}
+                        />
+                    </Box>
+                    <TeamSchedule teamName={selectedTeam?.name} schedule={schedule} season={season} teamsMap={teamsMap} loading={scheduleLoading} />
+                </>
+            )}
 
-                <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'center' }}>
-                    <Tabs value={tabIndex} onChange={(_, v) => {
-                        const slug = TAB_SLUGS[v];
-                        const s = season || '';
-                        if (slug === 'team') {
-                            navigate(`/schedules/team${selectedTeam ? '/' + teamToSlug(selectedTeam.name) + '/' + s : ''}`);
-                        } else if (slug === 'conference') {
-                            navigate(`/schedules/conference${selectedConference ? '/' + confToSlug(selectedConference) + '/' + s : ''}`);
-                        } else {
-                            navigate(`/schedules/postseason/${s}`);
-                        }
-                    }}>
-                        <Tab label="Team Schedule" />
-                        <Tab label="Conference" />
-                        {hasPostseason && <Tab label="Postseason" />}
-                    </Tabs>
-                </Box>
+            {mode === 'conference' && (
+                <>
+                    <Box sx={{ mb: '16px' }}>
+                        <ConferenceTabs
+                            conferences={availableConferences}
+                            value={selectedConference}
+                            onChange={(conf) => {
+                                setSelectedConference(conf);
+                                navigate(`/schedules/conference/${confToSlug(conf)}/${season || ''}`, { replace: true });
+                            }}
+                        />
+                    </Box>
+                    <ConferenceGrid conferenceTeams={conferenceTeams} schedule={allSeasonSchedule} teamsMap={teamsMap} loading={confLoading} />
+                </>
+            )}
 
-                {error && (
-                    <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
-                )}
-
-                {tabIndex === 0 && (
-                    <TeamScheduleTable
-                        teams={teams}
-                        selectedTeam={selectedTeam}
-                        onTeamChange={(team) => {
-                            setSelectedTeam(team);
-                            navigate(`/schedules/team${team ? '/' + teamToSlug(team.name) + '/' + (season || '') : ''}`, { replace: true });
-                        }}
-                        schedule={schedule}
-                        season={season}
-                        teamMap={teamMap}
-                        loading={scheduleLoading}
-                    />
-                )}
-
-                {tabIndex === 1 && (
-                    <ConferenceScheduleGrid
-                        selectedConference={selectedConference}
-                        onConferenceChange={(conf) => {
-                            setSelectedConference(conf);
-                            navigate(`/schedules/conference/${confToSlug(conf)}/${season || ''}`, { replace: true });
-                        }}
-                        conferenceTeams={conferenceTeams}
-                        conferenceSchedule={conferenceSchedule}
-                        allSeasonSchedule={allSeasonSchedule}
-                        teamMap={teamMap}
-                        loading={confLoading}
-                    />
-                )}
-
-                {tabIndex === 2 && hasPostseason && (
-                    <Postseason
-                        postseasonSchedule={postseasonSchedule}
-                        ongoingGames={ongoingGames}
-                        teamMap={teamMap}
-                        loading={postseasonLoading}
-                    />
-                )}
-            </Box>
-        </Container>
+            {mode === 'postseason' && (
+                <PostseasonView postseasonSchedule={postseasonSchedule} teamsMap={teamsMap} loading={postseasonLoading} />
+            )}
+        </PageWrap>
     );
 };
 
