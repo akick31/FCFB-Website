@@ -50,7 +50,7 @@ const GameDetails = ({ isAdmin }) => {
     const [gameControlError, setGameControlError] = useState(null);
 
     useSeo({
-        title: game ? `${game.away_team} vs ${game.home_team} | Fake College Football` : 'Game Details | Fake College Football',
+        title: game ? `${game.away_team} vs ${game.home_team} | FCFB` : 'Game Details | FCFB',
         description: game
             ? `Live play-by-play, box score, and stats for ${game.away_team} vs ${game.home_team} in Fake College Football.`
             : 'Live play-by-play, box score, and stats for Fake College Football games.',

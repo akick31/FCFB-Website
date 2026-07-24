@@ -69,7 +69,7 @@ const UserDetails = () => {
     const [loading, setLoading] = useState(true);
 
     useSeo({
-        title: `${decodedName || 'User Details'} | Fake College Football`,
+        title: `${decodedName || 'User Details'} | FCFB`,
         description: `Coach profile, stats, and transaction history for ${decodedName || 'this coach'} in Fake College Football.`,
     });
 

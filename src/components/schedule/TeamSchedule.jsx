@@ -7,7 +7,7 @@ import TeamMark from '../ui/TeamMark';
 
 const markFor = (teamsMap, name) => teamsMap[name] || { name };
 
-const TeamSchedule = ({ teamName, schedule, season, teamsMap, loading }) => {
+const TeamSchedule = ({ teamName, schedule, season, teamsMap, loading, subtitle, showSeason = false }) => {
     const navigate = useNavigate();
 
     if (loading) {
@@ -15,7 +15,7 @@ const TeamSchedule = ({ teamName, schedule, season, teamsMap, loading }) => {
     }
 
     return (
-        <Panel header={<><TeamMark team={markFor(teamsMap, teamName)} size={22} />{teamName}</>} more={`Season ${season}`}>
+        <Panel header={<><TeamMark team={markFor(teamsMap, teamName)} size={22} />{teamName}</>} more={subtitle || `Season ${season}`}>
             {schedule.length === 0 ? (
                 <Box sx={{ p: 4, textAlign: 'center', color: 'var(--text-muted)' }}>No games scheduled.</Box>
             ) : schedule.map((game) => {
@@ -27,9 +27,9 @@ const TeamSchedule = ({ teamName, schedule, season, teamsMap, loading }) => {
                 return (
                     <Box
                         key={game.game_id || game.id}
-                        sx={{ display: 'grid', gridTemplateColumns: '46px 1fr auto', alignItems: 'center', gap: '10px', px: 1.75, py: 1, borderBottom: '1px solid var(--line-soft)', fontSize: '0.82rem', '&:last-of-type': { borderBottom: 'none' } }}
+                        sx={{ display: 'grid', gridTemplateColumns: `${showSeason ? 68 : 46}px 1fr auto`, alignItems: 'center', gap: '10px', px: 1.75, py: 1, borderBottom: '1px solid var(--line-soft)', fontSize: '0.82rem', '&:last-of-type': { borderBottom: 'none' } }}
                     >
-                        <Box sx={{ color: 'var(--text-dim)', fontWeight: 800, fontSize: '0.66rem' }}>WK {game.week}</Box>
+                        <Box sx={{ color: 'var(--text-dim)', fontWeight: 800, fontSize: '0.66rem' }}>{showSeason ? `S${game.season} · W${game.week}` : `WK ${game.week}`}</Box>
                         <Box
                             onClick={() => game.game_id && navigate(`/game-details/${game.game_id}`)}
                             sx={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, cursor: game.game_id ? 'pointer' : 'default', minWidth: 0 }}
@@ -54,6 +54,8 @@ TeamSchedule.propTypes = {
     season: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     teamsMap: PropTypes.object.isRequired,
     loading: PropTypes.bool,
+    subtitle: PropTypes.string,
+    showSeason: PropTypes.bool,
 };
 
 export default TeamSchedule;

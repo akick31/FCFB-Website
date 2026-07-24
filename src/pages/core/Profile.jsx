@@ -94,7 +94,7 @@ const Profile = ({ user, setUser }) => {
     const theme = useTheme();
     const navigate = useNavigate();
 
-    useSeo({ title: 'Profile | Fake College Football', description: 'Manage your Fake College Football coach profile.' });
+    useSeo({ title: 'Profile | FCFB', description: 'Manage your Fake College Football coach profile.' });
 
     const [isEditing, setIsEditing] = useState(false);
     const [saving, setSaving] = useState(false);
