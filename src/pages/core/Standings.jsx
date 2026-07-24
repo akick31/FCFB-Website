@@ -1,185 +1,150 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Container, CircularProgress, Alert } from '@mui/material';
-import ConferenceDropdown from '../../components/dropdown/ConferenceDropdown';
-import StandingsTable from '../../components/team/StandingsTable';
-import { getAllTeams } from '../../api/teamApi';
-import { formatTeamStats } from '../../utils/teamDataUtils';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Box, CircularProgress, Alert } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
+import PageWrap from '../../components/layout/PageWrap';
+import PageHeading from '../../components/ui/PageHeading';
+import ConferenceTabs from '../../components/team/ConferenceTabs';
+import DataTable from '../../components/ui/DataTable';
+import TeamMark from '../../components/ui/TeamMark';
+import { getAllTeams } from '../../api/teamApi';
+import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { CONFERENCE_ORDER, conferenceLabel, conferenceLogo } from '../../components/constants/conferences';
+import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
+import { useOffseasonStatus } from '../../components/game/scoreboard/hooks/useOffseasonStatus';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
-import { useOffseasonStatus } from '../../components/game/scoreboard/hooks/useOffseasonStatus';
 
-const ZEROED_RECORD_FIELDS = [
-    'current_wins',
-    'current_losses',
-    'current_conference_wins',
-    'current_conference_losses',
-];
+const ZEROED_RECORD_FIELDS = ['current_wins', 'current_losses', 'current_conference_wins', 'current_conference_losses'];
+
+const confWinPct = (team) => {
+    const wins = team.current_conference_wins || 0;
+    const losses = team.current_conference_losses || 0;
+    return wins + losses > 0 ? wins / (wins + losses) : 0;
+};
 
 const Standings = () => {
     useSeo(ROUTE_META['/standings']);
 
     const { conference: confParam } = useParams();
     const navigate = useNavigate();
+    const teamsMap = useTeamsMap();
     const { isOffseason, loading: offseasonLoading } = useOffseasonStatus();
 
     const [teams, setTeams] = useState([]);
-    const [filteredTeams, setFilteredTeams] = useState([]);
-    const [selectedConference, setSelectedConference] = useState(confParam?.toUpperCase() || 'ACC');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     useEffect(() => {
         if (offseasonLoading) return;
-        fetchTeams();
+        setLoading(true);
+        getAllTeams()
+            .then((data) => {
+                const normalized = isOffseason
+                    ? data.map((team) => ({ ...team, ...Object.fromEntries(ZEROED_RECORD_FIELDS.map((field) => [field, 0])) }))
+                    : data;
+                setTeams(normalized);
+            })
+            .catch(() => setError('Failed to load standings data. Please try again.'))
+            .finally(() => setLoading(false));
     }, [offseasonLoading, isOffseason]);
 
-    useEffect(() => {
-        filterTeamsByConference();
-    }, [teams, selectedConference]);
+    const availableConferences = useMemo(() => {
+        const present = new Set(teams.map((team) => team.conference));
+        return CONFERENCE_ORDER.filter((conf) => present.has(conf));
+    }, [teams]);
+
+    const selectedConference = confParam?.toUpperCase() || availableConferences[0];
 
     useEffect(() => {
-        if (confParam) {
-            setSelectedConference(confParam.toUpperCase());
-        } else {
-            navigate('/standings/ACC', { replace: true });
+        if (loading || availableConferences.length === 0) return;
+        if (!confParam || !availableConferences.includes(confParam.toUpperCase())) {
+            navigate(`/standings/${availableConferences[0].toLowerCase()}`, { replace: true });
         }
-    }, [confParam, navigate]);
+    }, [confParam, availableConferences, loading, navigate]);
 
-    const fetchTeams = async () => {
-        try {
-            setLoading(true);
-            const teamsData = await getAllTeams();
-
-            const normalizedTeams = isOffseason
-                ? teamsData.map(team => ({
-                    ...team,
-                    ...Object.fromEntries(ZEROED_RECORD_FIELDS.map(field => [field, 0])),
-                }))
-                : teamsData;
-
-            const teamsWithStats = normalizedTeams.map(team => ({
-                ...team,
-                stats: formatTeamStats(team)
-            }));
-
-            setTeams(teamsWithStats);
-        } catch (error) {
-            console.error('Error fetching teams:', error);
-            setError('Failed to load standings data. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const filterTeamsByConference = () => {
-        const filtered = teams.filter(team => team.conference === selectedConference);
-        setFilteredTeams(filtered);
-    };
-
-    const handleConferenceChange = (conference) => {
-        navigate(`/standings/${conference}`);
-    };
-
-    const sortTeamsByStandings = (teamsToSort) => {
-        return teamsToSort.sort((a, b) => {
-            const aConfWins = a.current_conference_wins || 0;
-            const aConfLosses = a.current_conference_losses || 0;
-            const bConfWins = b.current_conference_wins || 0;
-            const bConfLosses = b.current_conference_losses || 0;
-            
-            const aConfWinPct = aConfWins + aConfLosses > 0 ? aConfWins / (aConfWins + aConfLosses) : 0;
-            const bConfWinPct = bConfWins + bConfLosses > 0 ? bConfWins / (bConfWins + bConfLosses) : 0;
-            
-            if (bConfWinPct !== aConfWinPct) {
-                return bConfWinPct - aConfWinPct;
-            }
-
-            return a.name.localeCompare(b.name);
-        });
-    };
-
-    const sortedTeams = sortTeamsByStandings(filteredTeams);
+    const rows = useMemo(() => teams
+        .filter((team) => team.conference === selectedConference)
+        .sort((a, b) => confWinPct(b) - confWinPct(a) || a.name.localeCompare(b.name)),
+    [teams, selectedConference]);
 
     if (loading) {
         return (
-            <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                    <CircularProgress size={60} />
-                </Box>
-            </Container>
+            <PageWrap>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>
+            </PageWrap>
         );
     }
 
     if (error) {
-        return (
-            <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
-                <Box sx={{ mt: 4 }}>
-                    <Alert severity="error" sx={{ mb: 3 }}>
-                        {error}
-                    </Alert>
-                </Box>
-            </Container>
-            );
+        return <PageWrap><Alert severity="error">{error}</Alert></PageWrap>;
     }
 
+    const confLogo = conferenceLogo(selectedConference);
+
     return (
-        <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
-            <Box sx={{ 
-                pt: { xs: 8, md: 10 },
-                pb: { xs: 4, md: 6 }
-            }}>
-                <Box sx={{ mb: 4, textAlign: 'center' }}>
-                    <Typography
-                        variant="h3"
-                        component="h1"
-                        sx={{
-                            fontWeight: 'bold',
-                            color: 'primary.main',
-                            mb: 2
-                        }}
-                    >
-                        Conference Standings
-                    </Typography>
-                    <Typography
-                        variant="h6"
-                        sx={{
-                            color: 'text.secondary',
-                            mb: 3
-                        }}
-                    >
-                        Current conference standings based on conference win/loss records
-                    </Typography>
-                </Box>
+        <PageWrap>
+            <PageHeading
+                eyebrow={conferenceLabel(selectedConference)}
+                title="Standings"
+                leading={confLogo ? <TeamMark team={{ logo: confLogo, name: selectedConference }} size={42} /> : null}
+            />
 
-                <Box sx={{
-                    mb: 4,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}>
-                    <ConferenceDropdown
-                        value={selectedConference}
-                        onChange={handleConferenceChange}
-                        sx={{ minWidth: 250, maxWidth: 300 }}
-                    />
-                </Box>
-
-                {sortedTeams.length > 0 ? (
-                    <StandingsTable 
-                        teams={sortedTeams}
-                        conference={selectedConference}
-                    />
-                ) : (
-                    <Box sx={{ textAlign: 'center', py: 4 }}>
-                        <Typography variant="h6" color="text.secondary">
-                            No teams found for the selected conference.
-                        </Typography>
-                    </Box>
-                )}
+            <Box sx={{ mb: '16px' }}>
+                <ConferenceTabs
+                    conferences={availableConferences}
+                    value={selectedConference}
+                    onChange={(conf) => navigate(`/standings/${conf.toLowerCase()}`)}
+                />
             </Box>
-        </Container>
+
+            <DataTable minWidth={640}>
+                <thead>
+                    <tr>
+                        <th className="lft stick">Team</th>
+                        <th>Overall</th>
+                        <th>Conf</th>
+                        <th>ELO</th>
+                        <th className="lft">Offense</th>
+                        <th className="lft">Defense</th>
+                        <th>Coach</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map((team, index) => {
+                        const mark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation, logo: team.logo };
+                        const coach = team.coach_usernames?.[0];
+                        return (
+                            <tr key={team.id} onClick={() => navigate(`/team-details/${team.id}`)}>
+                                <td className="lft stick">
+                                    <div className="teamcell">
+                                        <span className="rk">{index + 1}</span>
+                                        <TeamMark team={mark} size={22} />
+                                        <span className="nm">{team.name}</span>
+                                    </div>
+                                </td>
+                                <td className="num">{team.current_wins || 0}-{team.current_losses || 0}</td>
+                                <td className="num">{team.current_conference_wins || 0}-{team.current_conference_losses || 0}</td>
+                                <td className="num">{team.current_elo != null ? Math.round(team.current_elo) : '-'}</td>
+                                <td className="lft" style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{formatOffensivePlaybook(team.offensive_playbook)}</td>
+                                <td className="lft" style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{formatDefensivePlaybook(team.defensive_playbook)}</td>
+                                <td>
+                                    {coach ? (
+                                        <Box
+                                            component="span"
+                                            onClick={(event) => { event.stopPropagation(); navigate(`/user-details/${coach}`); }}
+                                            sx={{ color: 'var(--brand)', fontWeight: 700, cursor: 'pointer' }}
+                                        >
+                                            @{coach}
+                                        </Box>
+                                    ) : '-'}
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </DataTable>
+        </PageWrap>
     );
 };
 
-export default Standings; 
+export default Standings;

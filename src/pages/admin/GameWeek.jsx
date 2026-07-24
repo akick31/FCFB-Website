@@ -56,6 +56,7 @@ const GameWeek = () => {
     const [jobData, setJobData] = useState(null);
     const [isStarting, setIsStarting] = useState(false);
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [rankingsWarning, setRankingsWarning] = useState(null);
 
     const logContainerRef = useRef(null);
     const pollIntervalRef = useRef(null);
@@ -159,6 +160,10 @@ const GameWeek = () => {
         } catch (err) {
             console.error('Error starting week:', err);
             setIsStarting(false);
+            if (err.status === 409) {
+                setRankingsWarning(err.message);
+                return;
+            }
             setJobData({
                 status: 'FAILED',
                 logs: [{
@@ -560,6 +565,21 @@ const GameWeek = () => {
                         <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
                         <Button variant="contained" color="success" onClick={handleStartWeek}>
                             Start Week {selectedWeek}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                <Dialog open={Boolean(rankingsWarning)} onClose={() => setRankingsWarning(null)}>
+                    <DialogTitle>Rankings not uploaded</DialogTitle>
+                    <DialogContent>
+                        <Alert severity="warning" sx={{ mt: 1 }}>
+                            {rankingsWarning}
+                        </Alert>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setRankingsWarning(null)}>Cancel</Button>
+                        <Button variant="contained" onClick={() => { window.location.href = '/admin/rankings'; }}>
+                            Upload Rankings
                         </Button>
                     </DialogActions>
                 </Dialog>

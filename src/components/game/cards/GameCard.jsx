@@ -7,8 +7,8 @@ import StatusPill from '../../ui/StatusPill';
 import GameTypeLabel from './GameTypeLabel';
 import { useColorMode } from '../../../theme/ColorModeContext';
 import { pickTeamColor } from '../../../utils/teamColor';
-import { isGameOngoing } from '../scoreboard/utils/scoreboardFormatters';
-import { formatScoreboardQuarter, formatDownAndDistance, formatBallLocationWithTeam } from '../../../utils/gameUtils';
+import { isGameOngoing, formatBallLocationWithTeam } from '../scoreboard/utils/scoreboardFormatters';
+import { formatScoreboardQuarter, formatDownAndDistance } from '../../../utils/gameUtils';
 import { describePlay } from '../../../utils/formatPlay';
 import { getGameStatsByIdAndTeam } from '../../../api/gameStatsApi';
 import { getPreviousPlay } from '../../../api/playApi';
@@ -125,7 +125,7 @@ const GameCard = ({ game, teamsMap, compact = false }) => {
     const leaderPct = homePct != null ? Math.max(homePct, 100 - homePct) : null;
     const leaderTeam = leaderIsHome ? homeTeam : awayTeam;
 
-    const previousPlayText = ongoing && play ? describePlay(play) : null;
+    const previousPlayText = ongoing && play ? describePlay(play, { homeName: game.home_team, awayName: game.away_team }) : null;
 
     return (
         <Box

@@ -41,6 +41,7 @@ import {
     Reports,
     Scheduling,
     GameWeek,
+    RankingsManagement,
     Records,
     SeasonStats,
     LeagueStats,
@@ -220,6 +221,11 @@ const AppRoutes = () => {
                         <Route path="/admin/game-week" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <GameWeek user={user} />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/admin/rankings" element={
+                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                <RankingsManagement user={user} />
                             </ProtectedRoute>
                         } />
                         <Route path="/verify" element={<Verify />} />

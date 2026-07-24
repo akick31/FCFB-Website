@@ -13,3 +13,16 @@ export const conferences = [
     { value: "COLONIAL", label: "Colonial", logo: "https://images.seeklogo.com/logo-png/49/2/colonial-athletic-association-logo-png_seeklogo-490062.png" },
     { value: "NEC", label: "NEC", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/25.png" },
 ];
+
+export const CONFERENCE_ORDER = [
+    'SEC', 'BIG_TEN', 'ACC', 'BIG_12', 'PAC_12', 'AMERICAN', 'MOUNTAIN_WEST',
+    'MAC', 'SUN_BELT', 'MISSOURI_VALLEY', 'COLONIAL', 'NEC', 'FBS_INDEPENDENT',
+];
+
+export const getConference = (value) => conferences.find((c) => c.value === value) || null;
+export const conferenceLabel = (value) => getConference(value)?.label || value;
+export const conferenceLogo = (value) => getConference(value)?.logo || null;
+export const conferenceLogoDark = (value) => {
+    const logo = conferenceLogo(value);
+    return logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : null;
+};

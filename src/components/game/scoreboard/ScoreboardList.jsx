@@ -14,34 +14,32 @@ import {
     MenuItem,
     FormControl,
     InputLabel,
-    Avatar,
     Autocomplete,
-    TextField
+    TextField,
 } from '@mui/material';
 import { FilterList, Close } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import FilterMenu from '../../menu/FilterMenu';
-import { useTeamData } from './hooks/useTeamData';
 import { useGameFilters } from './hooks/useGameFilters';
 import { useGamePagination } from './hooks/useGamePagination';
 import { getAllTeams } from '../../../api/teamApi';
-import {
-    formatGameType
-} from '../../../utils/gameUtils';
 import { isRealTeam } from '../../../utils/teamDataUtils';
 import { SCOREBOARD_CONSTANTS } from './utils/scoreboardConstants';
-import LiveGameCard from './LiveGameCard';
+import { useTeamsMap } from '../../../hooks/useTeamsMap';
+import GameCard from '../cards/GameCard';
+
+const gameKey = (game) => game.gameId || game.game_id || game.id;
+const teamOf = (game, side) => game[`${side}Team`] || game[`${side}_team`];
 
 const ScoreboardList = ({
-    games, 
-    loading, 
-    error, 
-    currentPage, 
-    totalPages, 
+    games,
+    loading,
+    error,
+    currentPage,
+    totalPages,
     totalGames,
     onPageChange,
-    title = "Games",
+    title = 'Games',
     filters,
     setFilters,
     seasonFilter,
@@ -50,58 +48,48 @@ const ScoreboardList = ({
 }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-    const navigate = useNavigate();
-    
+    const teamsMap = useTeamsMap();
+
     const [allTeams, setAllTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [filteredGames, setFilteredGames] = useState(games);
     const preSearchSizeRef = useRef(null);
 
-    const { teamsData, loading: teamsLoading } = useTeamData(filteredGames);
     const { filterMenuOpen, handleFilterApply, openFilterMenu, closeFilterMenu } = useGameFilters(filters, setFilters);
     const { rowsPerPage, handleRowsPerPageChange } = useGamePagination(SCOREBOARD_CONSTANTS.DEFAULT_ROWS_PER_PAGE);
 
     useEffect(() => {
-        const fetchTeams = async () => {
-            try {
-                const teams = await getAllTeams();
-                setAllTeams(teams.filter(t => t.active && isRealTeam(t)));
-            } catch (err) {
-                console.error('Failed to fetch teams for search:', err);
-            }
-        };
-        fetchTeams();
+        getAllTeams()
+            .then((teams) => setAllTeams(teams.filter((team) => team.active && isRealTeam(team))))
+            .catch((err) => console.error('Failed to fetch teams for search:', err));
     }, []);
 
     useEffect(() => {
         if (!selectedTeam) {
             setFilteredGames(games);
-        } else {
-            const teamName = selectedTeam.name;
-            const filtered = games.filter(game => {
-                const homeTeam = game.homeTeam || game.home_team;
-                const awayTeam = game.awayTeam || game.away_team;
-                return homeTeam === teamName || awayTeam === teamName;
-            });
-            setFilteredGames(filtered);
+            return;
         }
+        setFilteredGames(games.filter((game) => teamOf(game, 'home') === selectedTeam.name || teamOf(game, 'away') === selectedTeam.name));
     }, [selectedTeam, games]);
 
-    const isPastGames = false;
-
-    const getGridColumns = () => {
-        const size = isSmallScreen ? 'small' : 'large';
-        return isPastGames 
-            ? SCOREBOARD_CONSTANTS.GRID_COLUMNS.PAST_GAMES[size]
-            : SCOREBOARD_CONSTANTS.GRID_COLUMNS.LIVE_GAMES[size];
+    const handleSearchChange = (event, team) => {
+        setSelectedTeam(team);
+        if (!setFilters) return;
+        if (team) {
+            preSearchSizeRef.current = filters?.size || rowsPerPage;
+            setFilters((prev) => ({ ...prev, size: Math.max(totalGames || 0, 500), page: 0 }));
+        } else {
+            setFilters((prev) => ({ ...prev, size: preSearchSizeRef.current || rowsPerPage, page: 0 }));
+            preSearchSizeRef.current = null;
+        }
     };
 
-    const getMinWidth = () => {
-        if (isPastGames) {
-            return isSmallScreen ? '490px' : '100%';
+    const handleRowsChange = (event) => {
+        const nextSize = handleRowsPerPageChange(event);
+        if (selectedTeam) {
+            preSearchSizeRef.current = nextSize;
         } else {
-            return isSmallScreen ? '705px' : '1605px';
+            setFilters((prev) => ({ ...prev, size: nextSize, page: 0 }));
         }
     };
 
@@ -114,482 +102,60 @@ const ScoreboardList = ({
     }
 
     if (error) {
-        return (
-            <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-            </Alert>
-        );
+        return <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>;
     }
-
-    if (teamsLoading && filteredGames.length > 0) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                <CircularProgress />
-                <Typography sx={{ ml: 2 }}>Loading team logos...</Typography>
-            </Box>
-        );
-    }
-
-    const handleRowsPerPageChangeLocal = (event) => {
-        const newRowsPerPage = handleRowsPerPageChange(event);
-        if (selectedTeam) {
-            preSearchSizeRef.current = newRowsPerPage;
-        } else {
-            setFilters(prev => ({ ...prev, size: newRowsPerPage, page: 0 }));
-        }
-    };
-
-    const handleRowClick = (e, game) => {
-        const gameId = game.game_id;
-
-        if (gameId) {
-            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-            e.preventDefault();
-            navigate(`/game-details/${gameId}`);
-        } else {
-            console.warn('No game ID found for game:', game);
-        }
-    };
-
-
 
     return (
         <Box>
-            <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'flex-start', 
-                mb: 3 
-            }}>
-                <Box sx={{ flex: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+                <Box sx={{ flex: 1, minWidth: 240 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, flexWrap: 'wrap' }}>
-                        <Typography variant="h5" sx={{ 
-                            fontWeight: 600, 
-                            color: theme.palette.primary.main
-                        }}>
-                            {title}
-                        </Typography>
-                        
-                        <Box sx={{ minWidth: 200 }}>
-                            <Autocomplete
-                                options={allTeams}
-                                getOptionLabel={(option) => option.name || ''}
-                                value={selectedTeam}
-                                onChange={(event, newValue) => {
-                                    setSelectedTeam(newValue);
-                                    if (setFilters) {
-                                        if (newValue) {
-                                            preSearchSizeRef.current = filters?.size || rowsPerPage;
-                                            setFilters(prev => ({ ...prev, size: Math.max(totalGames || 0, 500), page: 0 }));
-                                        } else {
-                                            setFilters(prev => ({ ...prev, size: preSearchSizeRef.current || rowsPerPage, page: 0 }));
-                                            preSearchSizeRef.current = null;
-                                        }
-                                    }
-                                }}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Search Team"
-                                        placeholder="Search for a team..."
-                                        size="small"
-                                    />
-                                )}
-                                renderOption={(props, option) => {
-                                    const { key, ...otherProps } = props;
-                                    return (
-                                        <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            {option.logo && (
-                                                <Avatar
-                                                    src={option.logo}
-                                                    alt={option.name}
-                                                    sx={{ width: 24, height: 24 }}
-                                                />
-                                            )}
-                                            <span>{option.name}</span>
-                                        </Box>
-                                    );
-                                }}
-                                clearOnEscape
-                                clearText="Clear"
-                            />
-                        </Box>
-                        
-                        {seasonFilter && (
-                            <Box sx={{ minWidth: 150 }}>
-                                {seasonFilter}
-                            </Box>
-                        )}
-                        {weekFilter && (
-                            <Box sx={{ minWidth: 150 }}>
-                                {weekFilter}
-                            </Box>
-                        )}
-                        {gameTypeFilter && (
-                            <Box sx={{ minWidth: 160 }}>
-                                {gameTypeFilter}
-                            </Box>
-                        )}
+                        <Typography variant="h3" sx={{ color: 'var(--text)' }}>{title}</Typography>
+                        <Autocomplete
+                            options={allTeams}
+                            getOptionLabel={(option) => option.name || ''}
+                            value={selectedTeam}
+                            onChange={handleSearchChange}
+                            sx={{ minWidth: 200 }}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Search team" placeholder="Search for a team..." size="small" />
+                            )}
+                        />
+                        {seasonFilter && <Box sx={{ minWidth: 150 }}>{seasonFilter}</Box>}
+                        {weekFilter && <Box sx={{ minWidth: 150 }}>{weekFilter}</Box>}
+                        {gameTypeFilter && <Box sx={{ minWidth: 160 }}>{gameTypeFilter}</Box>}
                     </Box>
-                    
                     <Typography variant="body2" color="text.secondary">
-                        {selectedTeam 
+                        {selectedTeam
                             ? `${filteredGames.length} game${filteredGames.length !== 1 ? 's' : ''} found for ${selectedTeam.name}`
-                            : `${totalGames} game${totalGames !== 1 ? 's' : ''} found`
-                        }
+                            : `${totalGames} game${totalGames !== 1 ? 's' : ''} found`}
                     </Typography>
                 </Box>
-                
+
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                    <FormControl size="small" sx={{ minWidth: 110 }}>
                         <InputLabel>Rows</InputLabel>
-                        <Select
-                            value={rowsPerPage}
-                            label="Rows"
-                            onChange={handleRowsPerPageChangeLocal}
-                        >
-                            {SCOREBOARD_CONSTANTS.ROWS_PER_PAGE_OPTIONS.map(option => (
+                        <Select value={rowsPerPage} label="Rows" onChange={handleRowsChange}>
+                            {SCOREBOARD_CONSTANTS.ROWS_PER_PAGE_OPTIONS.map((option) => (
                                 <MenuItem key={option} value={option}>{option}</MenuItem>
                             ))}
                         </Select>
                     </FormControl>
-
-                    <Fab
-                        size="small"
-                        color="primary"
-                        onClick={openFilterMenu}
-                        sx={{ boxShadow: theme.shadows[2] }}
-                    >
+                    <Fab size="small" color="primary" onClick={openFilterMenu} aria-label="Filters">
                         <FilterList />
                     </Fab>
                 </Box>
             </Box>
 
-            {(!filteredGames || filteredGames.length === 0) ? (
-                <Box sx={{
-                    textAlign: 'center',
-                    p: 4,
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: 2,
-                    border: '1px solid #e9ecef'
-                }}>
-                    <Typography variant="h6" color="text.secondary">
-                        No games found
-                    </Typography>
-                </Box>
-            ) : !isPastGames ? (
-                <Box sx={{
-                    display: 'grid',
-                    gridTemplateColumns: {
-                        xs: '1fr',
-                        md: 'repeat(2, 1fr)',
-                        xl: 'repeat(3, 1fr)',
-                    },
-                    gap: 2,
-                }}>
-                    {filteredGames.map((game) => {
-                        const awayTeamName = game.awayTeam || game.away_team;
-                        const homeTeamName = game.homeTeam || game.home_team;
-                        const awayTeamData = teamsData[awayTeamName];
-                        const homeTeamData = teamsData[homeTeamName];
-                        return (
-                            <LiveGameCard
-                                key={game.gameId || game.game_id || game.id}
-                                game={game}
-                                homeTeamData={homeTeamData}
-                                awayTeamData={awayTeamData}
-                            />
-                        );
-                    })}
+            {!filteredGames || filteredGames.length === 0 ? (
+                <Box sx={{ textAlign: 'center', p: 5, backgroundColor: 'var(--surface)', borderRadius: 'var(--r-lg)', border: '1px solid var(--line)' }}>
+                    <Typography variant="h6" color="text.secondary">No games found</Typography>
                 </Box>
             ) : (
-                <Box sx={{
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: 2,
-                    border: '1px solid #e9ecef',
-                    overflow: 'hidden',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    overflowX: 'auto',
-                    position: 'relative',
-                    '&::-webkit-scrollbar': {
-                        height: '8px',
-                        backgroundColor: '#f1f1f1'
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: '#c1c1c1',
-                        borderRadius: '4px'
-                    },
-                    '&::-webkit-scrollbar-thumb:hover': {
-                        backgroundColor: '#a8a8a8'
-                    }
-                }}>
-                <Box sx={{
-                    display: 'grid',
-                    gridTemplateColumns: getGridColumns(),
-                    gap: 1,
-                    p: 1.5,
-                    backgroundColor: theme.palette.primary.main,
-                    color: 'white',
-                    minWidth: getMinWidth(),
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 1,
-                    width: '100%',
-                    '& > *': {
-                        backgroundColor: theme.palette.primary.main,
-                    }
-                }}>
-                    {SCOREBOARD_CONSTANTS.COLUMN_HEADERS.PAST_GAMES.map((header, index) => (
-                        <Typography key={index} sx={{
-                            fontSize: '0.875rem',
-                            fontWeight: 600,
-                            textAlign: 'center',
-                            backgroundColor: theme.palette.primary.main,
-                            minHeight: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            {header}
-                        </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 2 }}>
+                    {filteredGames.map((game) => (
+                        <GameCard key={gameKey(game)} game={game} teamsMap={teamsMap} compact />
                     ))}
-                </Box>
-
-                {filteredGames.map((game, index) => {
-                    const awayTeamName = game.awayTeam || game.away_team;
-                    const homeTeamName = game.homeTeam || game.home_team;
-                    const awayTeamData = teamsData[awayTeamName];
-                    const homeTeamData = teamsData[homeTeamName];
-
-                    return (
-                        <Box
-                            component="a"
-                            href={game.game_id ? `/game-details/${game.game_id}` : '#'}
-                            key={game.gameId || game.id}
-                            sx={{
-                                display: 'grid',
-                                gridTemplateColumns: getGridColumns(),
-                                gap: 1,
-                                p: 1.5,
-                                borderBottom: index < filteredGames.length - 1 ? '1px solid #e9ecef' : 'none',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.2s',
-                                backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa',
-                                minWidth: getMinWidth(),
-                                textDecoration: 'none',
-                                color: 'inherit',
-                                '&:hover': {
-                                    backgroundColor: theme.palette.primary.light + '20'
-                                }
-                            }}
-                            onClick={(e) => handleRowClick(e, game)}
-                        >
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                    <Box sx={{
-                                        width: { xs: 18, sm: 24 },
-                                        height: { xs: 18, sm: 24 },
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        overflow: 'hidden'
-                                    }}>
-                                        {homeTeamData?.logo ? (
-                                            <img
-                                                src={homeTeamData.logo}
-                                                alt="Home Team"
-                                                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                            />
-                                        ) : (
-                                            <Typography sx={{
-                                                color: theme.palette.primary.main,
-                                                fontSize: '0.75rem',
-                                                fontWeight: 600
-                                            }}>
-                                                {homeTeamName?.charAt(0) || 'H'}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                        <Typography sx={{
-                                            color: 'text.primary',
-                                            fontSize: { xs: '0.7rem', sm: '1rem' },
-                                            fontWeight: 600,
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
-                                        }}>
-                                            {isSmallScreen
-                                                ? (homeTeamData?.short_name || homeTeamData?.abbreviation || '')
-                                                : homeTeamName
-                                            }
-                                        </Typography>
-                                        {homeTeamData?.coaches_poll_ranking && homeTeamData.coaches_poll_ranking > 0 && (
-                                            <Typography sx={{
-                                                fontSize: '0.7rem',
-                                                fontWeight: 700,
-                                                backgroundColor: 'warning.light',
-                                                color: 'warning.contrastText',
-                                                px: 0.5,
-                                                py: 0.1,
-                                                borderRadius: 1,
-                                                minWidth: 16,
-                                                textAlign: 'center'
-                                            }}>
-                                                #{homeTeamData.coaches_poll_ranking}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                </Box>
-
-                                <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem', mx: 0.5 }}>vs</Typography>
-
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                    <Box sx={{
-                                        width: { xs: 18, sm: 24 },
-                                        height: { xs: 18, sm: 24 },
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        overflow: 'hidden'
-                                    }}>
-                                        {awayTeamData?.logo ? (
-                                            <img
-                                                src={awayTeamData.logo}
-                                                alt="Away Team"
-                                                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                            />
-                                        ) : (
-                                            <Typography sx={{
-                                                color: theme.palette.primary.main,
-                                                fontSize: '0.75rem',
-                                                fontWeight: 600
-                                            }}>
-                                                {awayTeamName?.charAt(0) || 'A'}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                        <Typography sx={{
-                                            color: 'text.primary',
-                                            fontSize: { xs: '0.7rem', sm: '1rem' },
-                                            fontWeight: 600,
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
-                                        }}>
-                                            {isSmallScreen
-                                                ? (awayTeamData?.short_name || awayTeamData?.abbreviation || '')
-                                                : awayTeamName
-                                            }
-                                        </Typography>
-                                        {awayTeamData?.coaches_poll_ranking && awayTeamData.coaches_poll_ranking > 0 && (
-                                            <Typography sx={{
-                                                fontSize: '0.7rem',
-                                                fontWeight: 700,
-                                                backgroundColor: 'warning.light',
-                                                color: 'warning.contrastText',
-                                                px: 0.5,
-                                                py: 0.1,
-                                                borderRadius: 1,
-                                                minWidth: 16,
-                                                textAlign: 'center'
-                                            }}>
-                                                #{awayTeamData.coaches_poll_ranking}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                </Box>
-                            </Box>
-
-                            <Box sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 0.5
-                            }}>
-                                <Typography sx={{
-                                    color: 'text.primary',
-                                    fontSize: '0.9rem',
-                                    fontWeight: 700,
-                                    minWidth: 20,
-                                    textAlign: 'center'
-                                }}>
-                                    {game.homeScore || game.home_score || 0}
-                                </Typography>
-                                <Typography sx={{
-                                    color: 'text.secondary',
-                                    fontSize: '0.8rem'
-                                }}>
-                                    -
-                                </Typography>
-                                <Typography sx={{
-                                    color: 'text.primary',
-                                    fontSize: '0.9rem',
-                                    fontWeight: 700,
-                                    minWidth: 20,
-                                    textAlign: 'center'
-                                }}>
-                                    {game.awayScore || game.away_score || 0}
-                                </Typography>
-                            </Box>
-
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Typography sx={{ color: 'text.primary', fontSize: '0.8rem', fontWeight: 500 }}>
-                                    {(() => {
-                                        const gt = game.gameType || game.game_type;
-                                        const psName = game.postseason_game_name || game.postseasonGameName;
-                                        return (gt === 'PLAYOFFS' || gt === 'BOWL' || gt === 'CONFERENCE_CHAMPIONSHIP' || gt === 'NATIONAL_CHAMPIONSHIP') && psName
-                                            ? psName
-                                            : formatGameType(gt);
-                                    })()}
-                                </Typography>
-                            </Box>
-
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                                {game.home_vegas_spread !== null && game.home_vegas_spread !== undefined ? (
-                                    <>
-                                        <Box sx={{
-                                            width: 16,
-                                            height: 16,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            overflow: 'hidden'
-                                        }}>
-                                            {homeTeamData?.logo ? (
-                                                <img
-                                                    src={homeTeamData.logo}
-                                                    alt="Home Team"
-                                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                                />
-                                            ) : (
-                                                <Typography sx={{
-                                                    color: theme.palette.primary.main,
-                                                    fontSize: '0.6rem',
-                                                    fontWeight: 600
-                                                }}>
-                                                    {homeTeamName?.charAt(0) || 'H'}
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                        <Typography sx={{
-                                            color: 'text.primary',
-                                            fontSize: '0.8rem',
-                                            fontWeight: 500
-                                        }}>
-                                            {game.home_vegas_spread > 0 ? '+' : ''}{game.home_vegas_spread}
-                                        </Typography>
-                                    </>
-                                ) : (
-                                    <Typography sx={{ color: 'text.primary', fontSize: '0.8rem', fontWeight: 500 }}>
-                                        --
-                                    </Typography>
-                                )}
-                            </Box>
-                        </Box>
-                    );
-                })}
                 </Box>
             )}
 
@@ -605,26 +171,12 @@ const ScoreboardList = ({
                 </Box>
             )}
 
-            <Drawer
-                anchor="right"
-                open={filterMenuOpen}
-                onClose={closeFilterMenu}
-                PaperProps={{
-                    sx: { width: isMobile ? '100%' : 320 }
-                }}
-            >
-                <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="h6">Filters</Typography>
-                        <IconButton onClick={closeFilterMenu}>
-                            <Close />
-                        </IconButton>
-                    </Box>
+            <Drawer anchor="right" open={filterMenuOpen} onClose={closeFilterMenu} PaperProps={{ sx: { width: isMobile ? '100%' : 320 } }}>
+                <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="h6">Filters</Typography>
+                    <IconButton onClick={closeFilterMenu} aria-label="Close filters"><Close /></IconButton>
                 </Box>
-                <FilterMenu
-                    onApply={handleFilterApply}
-                    category={title.toLowerCase().replace(' ', '')}
-                />
+                <FilterMenu onApply={handleFilterApply} category={title.toLowerCase().replace(' ', '')} />
             </Drawer>
         </Box>
     );
@@ -646,4 +198,4 @@ ScoreboardList.propTypes = {
     gameTypeFilter: PropTypes.node,
 };
 
-export default ScoreboardList; 
+export default ScoreboardList;

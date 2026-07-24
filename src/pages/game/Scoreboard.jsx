@@ -50,7 +50,6 @@ const Scoreboard = () => {
     return (
         <PageLayout
             title="Scoreboard"
-            subtitle="Follow all the action in real-time across the FCFB league"
             fullWidth
         >
             <StyledCard sx={{ 

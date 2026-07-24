@@ -9,4 +9,5 @@ export { default as EditGame } from './EditGame';
 export { default as StatsManagement } from './StatsManagement';
 export { default as Reports } from './Reports'; 
 export { default as Scheduling } from './Scheduling';
-export { default as GameWeek } from './GameWeek'; 
+export { default as GameWeek } from './GameWeek';
+export { default as RankingsManagement } from './RankingsManagement'; 
