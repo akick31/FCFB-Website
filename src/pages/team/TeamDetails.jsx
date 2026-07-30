@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { checkIfUserIsAdmin } from '../../utils/utils';
 import { getTeamById } from '../../api/teamApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getRankingsHistory } from '../../api/rankingsHistoryApi.jsx';
@@ -49,6 +50,7 @@ const buildTrend = (points, view) => {
 
 const TeamDetails = () => {
     const { teamId } = useParams();
+    const navigate = useNavigate();
     const teamsMap = useTeamsMap();
     const { mode } = useColorMode();
 
@@ -167,6 +169,17 @@ const TeamDetails = () => {
 
     return (
         <PageWrap>
+            {checkIfUserIsAdmin() && (
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '10px' }}>
+                    <Box
+                        component="button"
+                        onClick={() => navigate(`/admin/edit-team/${teamId}`)}
+                        sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '14px', py: '8px', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)' } }}
+                    >
+                        Edit team
+                    </Box>
+                </Box>
+            )}
             <TeamHeader team={team} mark={mark} pollRank={team.coaches_poll_ranking} />
 
             <SectionTitle title="Program history" />

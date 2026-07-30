@@ -5,7 +5,10 @@ export const NAV_ITEMS = [
     { label: 'Rankings', path: '/rankings' },
     { label: 'Schedules', path: '/schedules' },
     { label: 'Teams', path: '/teams' },
-    { label: 'Charts', path: '/charts' },
+    { label: 'Coaches', path: '/coaches' },
+    { label: 'Stats', path: '/stats' },
+    { label: 'Records', path: '/records' },
+    { label: 'Graphs', path: '/graphs' },
 ];
 
 export const STATS_ITEMS = [

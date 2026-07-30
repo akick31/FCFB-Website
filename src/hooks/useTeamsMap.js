@@ -5,6 +5,7 @@ const toDarkLogo = (logo) =>
     logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo;
 
 const toEntry = (team) => ({
+    id: team.id,
     name: team.name,
     abbreviation: team.abbreviation || team.name.slice(0, 4).toUpperCase(),
     logo: team.logo || null,

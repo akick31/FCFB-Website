@@ -108,17 +108,18 @@ const CompleteRegistrationForm = () => {
         setFormData((prev) => ({ ...prev, show_password: !prev.show_password }));
     };
 
+    const requiredTeamChoices = Math.min(3, openTeams.length);
+
     const validateTeamChoices = () => {
         const { team_choice_one, team_choice_two, team_choice_three } = formData;
-        
-        if (!team_choice_one && !team_choice_two && !team_choice_three) {
+        const choices = [team_choice_one, team_choice_two, team_choice_three].filter(Boolean);
+        const uniqueChoices = new Set(choices);
+
+        if (choices.length !== uniqueChoices.size) {
             return false;
         }
 
-        const choices = [team_choice_one, team_choice_two, team_choice_three].filter(Boolean);
-        const uniqueChoices = new Set(choices);
-        
-        return choices.length === uniqueChoices.size;
+        return choices.length >= requiredTeamChoices;
     };
 
     const handleSubmit = async (e) => {
@@ -364,7 +365,8 @@ const CompleteRegistrationForm = () => {
                                         Team Preferences
                                     </Typography>
                                     <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                                        Choose up to 3 teams in order of preference. You must select at least one team.
+                                        Choose up to 3 teams in order of preference.
+                                        {requiredTeamChoices > 0 && ` You must list at least ${requiredTeamChoices} team${requiredTeamChoices === 1 ? '' : 's'}.`}
                                     </Typography>
                                 </Grid>
 

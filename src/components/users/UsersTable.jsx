@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { formatOffensivePlaybook, formatDefensivePlaybook, formatRole, formatPosition } from "../../utils/formatText";
+import { formatOffensivePlaybook, formatDefensivePlaybook, formatRole, formatPosition, formatWinPct } from "../../utils/formatText";
 
 const UsersTable = ({
                         users,
@@ -115,7 +115,7 @@ const UsersTable = ({
                                 <TableCell>{user.discord_id}</TableCell>
                                 <TableCell>{formatPosition(user.position)}</TableCell>
                                 <TableCell>{user.team || "N/A"}</TableCell>
-                                <TableCell>{user.win_percentage.toFixed(2)}%</TableCell>
+                                <TableCell>{formatWinPct(user.win_percentage)}</TableCell>
                                 <TableCell>{user.conference_wins}</TableCell>
                                 <TableCell>{user.bowl_wins}</TableCell>
                                 <TableCell>{user.playoff_wins}</TableCell>

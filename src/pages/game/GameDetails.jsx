@@ -1,677 +1,282 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import {Box, Typography, Card, CardContent, Chip, useTheme, IconButton, Grid, Button, CircularProgress, Alert, Avatar} from "@mui/material";
-import { ArrowBack, Assessment, Stop, AccessTime } from "@mui/icons-material";
-import { getAllPlaysByGameId } from "../../api/playApi";
-import { getGameById } from "../../api/gameApi";
-import { getLatestScorebugByGameId } from "../../api/scorebugApi";
-import PlaysTable from "../../components/game/plays/PlaysTable";
-import ErrorMessage from "../../components/message/ErrorMessage";
-import GameInfo from "../../components/game/GameInfo";
-import {getGameStatsByIdAndTeam} from "../../api/gameStatsApi.jsx";
-import GameStatsTable from "../../components/game/stats/GameStatsTable";
-import {getTeamByName} from "../../api/teamApi";
-import CustomScorebug from "../../components/game/CustomScorebug";
-import { formatGameType } from "../../utils/gameUtils";
-import PageLayout from "../../components/layout/PageLayout";
-import LoadingSpinner from "../../components/icons/LoadingSpinner";
-import { generateGameStats } from "../../api/gameStatsApi.jsx";
-import { endGameByGameId, chewGameByGameId } from "../../api/gameApi";
-import {
-    LineChart, Line, AreaChart, Area, XAxis, YAxis,
-    CartesianGrid, Tooltip as RechartsTooltip,
-    ResponsiveContainer
-} from 'recharts';
-import cfpLogo from '../../assets/images/playoff.png';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Box, CircularProgress, Alert, Button } from '@mui/material';
+import { ArrowBack, Assessment, RestaurantMenu } from '@mui/icons-material';
+import { useParams, useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
+import { getGameById, chewGameByGameId } from '../../api/gameApi';
+import { getAllPlaysByGameId } from '../../api/playApi';
+import { getGameStatsByIdAndTeam, generateGameStats } from '../../api/gameStatsApi.jsx';
+import { getTeamByName } from '../../api/teamApi';
+import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { useColorMode } from '../../theme/ColorModeContext';
+import { pickTeamColor } from '../../utils/teamColor';
+import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
+import { conferenceLabel } from '../../components/constants/conferences';
+import { STAT_GROUPS, statCell } from '../../utils/teamStatFields';
+import { gameHeaderTitle, gameTypeName, buildWinProbSeries, buildScoreSeries, quarterBoundaries } from '../../utils/gameDetail';
+import PageWrap from '../../components/layout/PageWrap';
+import PageHeading from '../../components/ui/PageHeading';
+import Panel from '../../components/ui/Panel';
+import SectionTitle from '../../components/ui/SectionTitle';
+import TeamMark from '../../components/ui/TeamMark';
+import ConferenceMark from '../../components/ui/ConferenceMark';
+import GameScorebug from '../../components/game/detail/GameScorebug';
+import ComparisonTable from '../../components/game/detail/ComparisonTable';
+import WinProbChart from '../../components/game/detail/WinProbChart';
+import ScoreChart from '../../components/game/detail/ScoreChart';
+import PlaysPanel from '../../components/game/detail/PlaysPanel';
 import { useSeo } from '../../hooks/useSeo';
 
-const GameDetails = ({ isAdmin }) => {
-    const theme = useTheme();
+const toDark = (logo) => (logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo);
+const unwrap = (result) => {
+    const data = result?.data ?? result;
+    return Array.isArray(data) ? data[0] : data;
+};
+const rankLabel = (rank) => (rank && rank <= 25 ? `#${rank}` : 'Unranked');
+
+const markFrom = (teamsMap, name, teamObject) => teamsMap[name] || (teamObject ? {
+    name: teamObject.name, abbreviation: teamObject.abbreviation, logo: teamObject.logo || null, logoDark: toDark(teamObject.logo),
+    primaryColor: teamObject.primary_color, secondaryColor: teamObject.secondary_color,
+} : { name });
+
+const CoachLink = ({ coach }) => {
     const navigate = useNavigate();
+    if (!coach) return '-';
+    return <Box component="span" onClick={() => navigate(`/user-details/${coach}`)} sx={{ color: 'var(--brand)', fontWeight: 700, cursor: 'pointer' }}>@{coach}</Box>;
+};
+
+CoachLink.propTypes = { coach: PropTypes.string };
+
+const GameDetails = ({ isAdmin }) => {
     const { gameId } = useParams();
+    const navigate = useNavigate();
+    const teamsMap = useTeamsMap();
+    const { mode } = useColorMode();
+    const [adminBusy, setAdminBusy] = useState('');
+    const [adminMessage, setAdminMessage] = useState(null);
 
-    const [plays, setPlays] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [game, setGame] = useState(null);
-    const [gameStats, setGameStats] = useState({ home: null, away: null });
-    const [homeTeam, setHomeTeam] = useState(null);
+    const [plays, setPlays] = useState([]);
+    const [awayStats, setAwayStats] = useState(null);
+    const [homeStats, setHomeStats] = useState(null);
     const [awayTeam, setAwayTeam] = useState(null);
-    const [scorebug, setScorebug] = useState(null);
-
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [orderBy, setOrderBy] = useState('play_number');
-    const [order, setOrder] = useState('desc');
-    const [generatingStats, setGeneratingStats] = useState(false);
-    const [generateError, setGenerateError] = useState(null);
-    const [endingGame, setEndingGame] = useState(false);
-    const [chewingGame, setChewingGame] = useState(false);
-    const [gameControlError, setGameControlError] = useState(null);
+    const [homeTeam, setHomeTeam] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useSeo({
-        title: game ? `${game.away_team} vs ${game.home_team} | FCFB` : 'Game Details | FCFB',
-        description: game
-            ? `Live play-by-play, box score, and stats for ${game.away_team} vs ${game.home_team} in Fake College Football.`
-            : 'Live play-by-play, box score, and stats for Fake College Football games.',
+        title: game ? `${game.away_team} at ${game.home_team} | FCFB` : 'Game Details | FCFB',
+        description: game ? `Box score, win probability, and play-by-play for ${game.away_team} at ${game.home_team}.` : 'Game details in Fake College Football.',
     });
 
     useEffect(() => {
-        let cancelled = false;
-        const fetchGame = async () => {
-            setLoading(true);
-            setError(null);
+        let active = true;
+        (async () => {
             try {
-                const gameResponse = await getGameById(gameId);
-                if (cancelled) return;
-                setGame(gameResponse);
-
-                const scorebugResponse = await getLatestScorebugByGameId(gameId);
-                if (cancelled) return;
-                setScorebug(scorebugResponse);
-
-                const homeTeamResponse = await getTeamByName(gameResponse.home_team);
-                const awayTeamResponse = await getTeamByName(gameResponse.away_team);
-                if (cancelled) return;
-                setHomeTeam(homeTeamResponse);
-                setAwayTeam(awayTeamResponse);
-
-                const [homeStats, awayStats] = await Promise.all([
-                    getGameStatsByIdAndTeam(gameId, gameResponse.home_team),
-                    getGameStatsByIdAndTeam(gameId, gameResponse.away_team)
+                setLoading(true);
+                const gameData = await getGameById(gameId);
+                if (!active) return;
+                setGame(gameData);
+                const [playsRes, awayStatsRes, homeStatsRes, awayTeamData, homeTeamData] = await Promise.all([
+                    getAllPlaysByGameId(gameId).catch(() => []),
+                    getGameStatsByIdAndTeam(gameId, gameData.away_team).catch(() => null),
+                    getGameStatsByIdAndTeam(gameId, gameData.home_team).catch(() => null),
+                    getTeamByName(gameData.away_team).catch(() => null),
+                    getTeamByName(gameData.home_team).catch(() => null),
                 ]);
-                if (cancelled) return;
-                setGameStats({
-                    home: homeStats.data,
-                    away: awayStats.data
-                });
-
-                setLoading(false);
-            } catch (error) {
-                if (cancelled) return;
-                setError(error.message);
-                setLoading(false);
+                if (!active) return;
+                const playList = playsRes?.data ?? playsRes;
+                setPlays(Array.isArray(playList) ? playList : []);
+                setAwayStats(unwrap(awayStatsRes));
+                setHomeStats(unwrap(homeStatsRes));
+                setAwayTeam(awayTeamData);
+                setHomeTeam(homeTeamData);
+            } catch {
+                if (active) setError('Failed to load game details. Please try again.');
+            } finally {
+                if (active) setLoading(false);
             }
-        };
-        fetchGame();
-        return () => { cancelled = true; };
+        })();
+        return () => { active = false; };
     }, [gameId]);
 
-    useEffect(() => {
-        let cancelled = false;
-        const fetchPlays = async () => {
-            if (game) {
-                try {
-                    const response = await getAllPlaysByGameId(gameId);
-                    if (cancelled) return;
-                    const sortedPlays = response.sort((a, b) =>
-                        a[orderBy] > b[orderBy] ? (order === 'asc' ? 1 : -1) :
-                            a[orderBy] < b[orderBy] ? (order === 'asc' ? -1 : 1) : 0
-                    );
-                    setPlays(sortedPlays);
-                } catch (error) {
-                    if (!cancelled) console.error("Failed to load plays:", error);
-                }
-            }
-        };
-        fetchPlays();
-        return () => { cancelled = true; };
-    }, [game, gameId, orderBy, order]);
-
-    const chartData = useMemo(() => {
-        if (!plays || plays.length === 0) return { scoreData: [], wpData: [] };
-
-        const sorted = [...plays].sort((a, b) => (a.play_number || 0) - (b.play_number || 0));
-
-        const scoreData = [];
-        const wpData = [];
-
-        let lastHomeWP = null;
-        sorted.forEach((play, idx) => {
-            const label = `P${play.play_number || idx + 1}`;
-            const homeScore = play.home_score ?? play.homeScore ?? 0;
-            const awayScore = play.away_score ?? play.awayScore ?? 0;
-
-            scoreData.push({ play: label, home: homeScore, away: awayScore });
-
-            const wp = play.win_probability != null ? parseFloat(play.win_probability) : null;
-            if (wp != null) {
-                const poss = play.possession || '';
-                const homeWP = poss === 'HOME' ? wp * 100 : poss === 'AWAY' ? (1 - wp) * 100 : null;
-                if (homeWP != null) {
-                    const rounded = Math.round(homeWP);
-                    lastHomeWP = rounded;
-                    wpData.push({ play: label, homeWP: rounded });
-                }
-            } else if (lastHomeWP != null) {
-                wpData.push({ play: label, homeWP: lastHomeWP });
-            }
-        });
-
-        const processedWp = [];
-        for (let i = 0; i < wpData.length; i++) {
-            const curr = wpData[i];
-            if (i > 0) {
-                const prev = wpData[i - 1];
-                if ((prev.homeWP - 50) * (curr.homeWP - 50) < 0) {
-                    processedWp.push({
-                        play: `${prev.play}x`, homeWP: 50,
-                        homeAbove: 50, homeBelow: 50,
-                        homeLineAbove: 50, homeLineBelow: 50,
-                    });
-                }
-            }
-            processedWp.push({
-                ...curr,
-                homeAbove: Math.max(curr.homeWP, 50),
-                homeBelow: Math.min(curr.homeWP, 50),
-                homeLineAbove: curr.homeWP >= 50 ? curr.homeWP : null,
-                homeLineBelow: curr.homeWP <= 50 ? curr.homeWP : null,
-            });
-        }
-
-        return { scoreData, wpData: processedWp };
-    }, [plays]);
-
-    const handleRequestSort = (property) => {
-        const isAsc = orderBy === property && order === 'asc';
-        setOrder(isAsc ? 'desc' : 'asc');
-        setOrderBy(property);
-    };
-
-    const handleChangePage = (event, newPage) => setPage(newPage);
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-    };
-
-    const handleGenerateStats = async () => {
-        if (!gameId) return;
-        
-        setGeneratingStats(true);
-        setGenerateError(null);
-        
-        try {
-            await generateGameStats(parseInt(gameId));
-            window.location.reload();
-        } catch (error) {
-            console.error('Error generating game stats:', error);
-            setGenerateError(error.response?.data?.message || error.message || 'Failed to generate game stats');
-        } finally {
-            setGeneratingStats(false);
-        }
-    };
-
-    const handleEndGame = async () => {
-        if (!gameId) return;
-        
-        setEndingGame(true);
-        setGameControlError(null);
-        
-        try {
-            await endGameByGameId(parseInt(gameId));
-            window.location.reload();
-        } catch (error) {
-            console.error('Error ending game:', error);
-            setGameControlError(error.response?.data?.message || error.message || 'Failed to end game');
-        } finally {
-            setEndingGame(false);
-        }
-    };
-
-    const handleChewGame = async () => {
-        if (!gameId) return;
-        
-        setChewingGame(true);
-        setGameControlError(null);
-        
-        try {
-            await chewGameByGameId(parseInt(gameId));
-            window.location.reload();
-        } catch (error) {
-            console.error('Error chewing game:', error);
-            setGameControlError(error.response?.data?.message || error.message || 'Failed to chew game');
-        } finally {
-            setChewingGame(false);
-        }
-    };
+    const awayMark = useMemo(() => (game ? markFrom(teamsMap, game.away_team, awayTeam) : null), [game, teamsMap, awayTeam]);
+    const homeMark = useMemo(() => (game ? markFrom(teamsMap, game.home_team, homeTeam) : null), [game, teamsMap, homeTeam]);
 
     if (loading) {
-        return (
-            <PageLayout
-                title="Game Details"
-                subtitle="Loading game information..."
-            >
-                <LoadingSpinner />
-            </PageLayout>
-        );
+        return <PageWrap><Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box></PageWrap>;
+    }
+    if (error || !game) {
+        return <PageWrap><Alert severity="error">{error || 'Game not found.'}</Alert></PageWrap>;
     }
 
-    if (error || !game) {
-        return (
-            <PageLayout
-                title="Game Details"
-                subtitle="Error loading game"
-            >
-                <ErrorMessage message={error || 'Game not found'} />
-            </PageLayout>
-        );
+    const awayColor = pickTeamColor(awayMark, mode);
+    const homeColor = pickTeamColor(homeMark, mode);
+    const headerTitle = gameHeaderTitle(game, conferenceLabel(homeTeam?.conference));
+    const isFinal = game.game_status === 'FINAL';
+    const homeWin = game.home_score > game.away_score;
+    const spreadText = game.home_vegas_spread != null ? `${homeMark?.abbreviation} ${game.home_vegas_spread > 0 ? '+' : ''}${game.home_vegas_spread}` : null;
+    const orderedPlays = [...plays].sort((a, b) =>
+        ((a.play_number ?? 0) - (b.play_number ?? 0))
+        || ((a.quarter ?? 0) - (b.quarter ?? 0))
+        || ((b.clock ?? 0) - (a.clock ?? 0))
+        || ((a.play_id ?? 0) - (b.play_id ?? 0)));
+
+    const runAdmin = async (key, action) => {
+        setAdminBusy(key);
+        setAdminMessage(null);
+        try {
+            await action();
+            setAdminMessage({ severity: 'success', text: key === 'chew' ? 'Chew mode set.' : 'Game stats regenerated.' });
+        } catch (actionError) {
+            setAdminMessage({ severity: 'error', text: actionError.message });
+        } finally {
+            setAdminBusy('');
+        }
+    };
+
+    const hasOt = Boolean(awayStats?.ot_score || homeStats?.ot_score);
+    const quarterKeys = ['q1_score', 'q2_score', 'q3_score', 'q4_score', ...(hasOt ? ['ot_score'] : [])];
+    const columns = ['Q1', 'Q2', 'Q3', 'Q4', ...(hasOt ? ['OT'] : [])];
+    const awayQuarters = quarterKeys.map((key) => awayStats?.[key]);
+    const homeQuarters = quarterKeys.map((key) => homeStats?.[key]);
+    const showQuarters = Boolean(awayStats && homeStats) && [...awayQuarters, ...homeQuarters].some((value) => value != null);
+
+    const infoRows = [
+        { label: 'Conference', away: <ConferenceMark conference={awayTeam?.conference} size={20} />, home: <ConferenceMark conference={homeTeam?.conference} size={20} /> },
+        { label: 'Record', away: `${game.away_wins || 0}-${game.away_losses || 0}`, home: `${game.home_wins || 0}-${game.home_losses || 0}` },
+        { label: 'Ranking', away: rankLabel(game.away_team_rank), home: rankLabel(game.home_team_rank) },
+        { label: 'ELO', away: awayTeam?.current_elo != null ? Math.round(awayTeam.current_elo) : '-', home: homeTeam?.current_elo != null ? Math.round(homeTeam.current_elo) : '-' },
+        { label: 'Offense', away: formatOffensivePlaybook(game.away_offensive_playbook), home: formatOffensivePlaybook(game.home_offensive_playbook) },
+        { label: 'Defense', away: formatDefensivePlaybook(game.away_defensive_playbook), home: formatDefensivePlaybook(game.home_defensive_playbook) },
+        { label: 'Coach', away: <CoachLink coach={game.away_coaches?.[0]} />, home: <CoachLink coach={game.home_coaches?.[0]} /> },
+    ];
+
+    const threadLink = game.home_platform === 'DISCORD' && game.home_platform_id
+        ? `https://discord.com/channels/862571689342533663/${game.home_platform_id}`
+        : null;
+
+    const coinWinner = game.coin_toss_winner === 'HOME' ? homeMark?.abbreviation : game.coin_toss_winner === 'AWAY' ? awayMark?.abbreviation : null;
+    const detailRows = [
+        ['Coin toss', coinWinner ? `${coinWinner}${game.coin_toss_choice ? `, ${String(game.coin_toss_choice).replace(/_/g, ' ').toLowerCase()}` : ''}` : '-'],
+        ['TV', game.tv_channel || '-'],
+        ['Vegas spread', game.home_vegas_spread != null ? `${homeMark?.abbreviation} ${game.home_vegas_spread > 0 ? '+' : ''}${game.home_vegas_spread}` : '-'],
+        ['Plays', game.num_plays || '-'],
+        ['Game type', gameTypeName(game.game_type)],
+        ['Game ID', game.game_id],
+    ];
+
+    const wpSeries = buildWinProbSeries(orderedPlays);
+    const scoreSeries = buildScoreSeries(orderedPlays);
+    if (isFinal && wpSeries.length > 0) {
+        const last = wpSeries[wpSeries.length - 1];
+        const terminal = homeWin ? 100 : 0;
+        if (last.homeWinProb !== terminal) {
+            wpSeries.push({ ...last, index: last.index + 1, homeWinProb: terminal, clock: '0:00', awayScore: game.away_score, homeScore: game.home_score });
+        }
     }
+    const wpMarks = quarterBoundaries(wpSeries);
+    const teamHeader = (mark, name) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+            <TeamMark team={mark} size={22} />
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{mark?.name || name}</Box>
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>{mark?.abbreviation || name}</Box>
+        </Box>
+    );
 
     return (
-        <PageLayout
-            title=""
-            subtitle=""
-        >
-            <Box component="a" href="/scoreboard" onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/scoreboard'); } }} sx={{ mb: 3, display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
-                <IconButton
-                    sx={{
-                        color: theme.palette.primary.main,
-                        '&:hover': { backgroundColor: theme.palette.primary.light + '20' }
-                    }}
-                >
-                    <ArrowBack />
-                </IconButton>
-                <Typography variant="body2" component="span" sx={{ ml: 1, color: 'text.secondary' }}>
-                    Back to Scoreboard
-                </Typography>
-            </Box>
-
-            <Box sx={{
-                mb: 4,
-                p: { xs: 2, md: 4 },
-                backgroundColor: 'background.paper',
-                borderRadius: 3,
-                border: `1px solid ${theme.palette.divider}`,
-                boxShadow: theme.shadows[2],
-                textAlign: 'center'
-            }}>
-                {(game?.game_type === 'BOWL' || game?.game_type === 'PLAYOFFS' || game?.game_type === 'CONFERENCE_CHAMPIONSHIP' || game?.game_type === 'NATIONAL_CHAMPIONSHIP') && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-                        {(() => {
-                            const isPlayoff = game?.game_type === 'PLAYOFFS' || game?.game_type === 'NATIONAL_CHAMPIONSHIP';
-                            const logoSrc = isPlayoff
-                                ? cfpLogo
-                                : game?.postseason_game_logo
-                                    ? (game.postseason_game_logo.startsWith('http') ? game.postseason_game_logo : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${game.postseason_game_logo}`)
-                                    : null;
-                            return logoSrc ? (
-                                <Box component="img" src={logoSrc} alt="" sx={{ width: 48, height: 48, objectFit: 'contain' }} />
-                            ) : null;
-                        })()}
-                        {game?.postseason_game_name && (
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '1.1rem' }}>
-                                {game.postseason_game_name}
-                            </Typography>
-                        )}
-                    </Box>
-                )}
-                <Typography variant="h3" sx={{
-                    fontWeight: 700,
-                    mb: 1,
-                    fontSize: { xs: '1.75rem', md: '2.5rem' },
-                    color: theme.palette.primary.main
-                }}>
-                    <Box
-                        component="a"
-                        href={awayTeam?.id ? `/team-details/${awayTeam.id}` : undefined}
-                        onClick={(e) => { if (awayTeam?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${awayTeam.id}`); } } }}
-                        sx={{
-                            cursor: awayTeam?.id ? 'pointer' : 'default',
-                            color: 'inherit', textDecoration: 'none',
-                            '&:hover': awayTeam?.id ? { textDecoration: 'underline' } : {},
-                        }}
-                    >
-                        {awayTeam?.name || game.away_team}
-                    </Box>
-                    {' vs '}
-                    <Box
-                        component="a"
-                        href={homeTeam?.id ? `/team-details/${homeTeam.id}` : undefined}
-                        onClick={(e) => { if (homeTeam?.id) { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate(`/team-details/${homeTeam.id}`); } } }}
-                        sx={{
-                            cursor: homeTeam?.id ? 'pointer' : 'default',
-                            color: 'inherit', textDecoration: 'none',
-                            '&:hover': homeTeam?.id ? { textDecoration: 'underline' } : {},
-                        }}
-                    >
-                        {homeTeam?.name || game.home_team}
-                    </Box>
-                </Typography>
-
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mb: 1, flexWrap: 'wrap' }}>
-                    {game.season && (
-                        <Chip
-                            label={`Season ${game.season}`}
-                            variant="outlined"
-                            sx={{ fontWeight: 600, borderColor: theme.palette.primary.main, color: theme.palette.primary.main }}
-                        />
-                    )}
-                    {game.week && (
-                        <Chip
-                            label={`Week ${game.week}`}
-                            variant="outlined"
-                            sx={{ fontWeight: 600, borderColor: theme.palette.primary.main, color: theme.palette.primary.main }}
-                        />
-                    )}
-                    {game.game_type && (
-                        <Chip
-                            label={
-                                (game.game_type === 'PLAYOFFS' || game.game_type === 'BOWL' || game.game_type === 'CONFERENCE_CHAMPIONSHIP' || game.game_type === 'NATIONAL_CHAMPIONSHIP') && game.postseason_game_name
-                                    ? game.postseason_game_name
-                                    : formatGameType(game.game_type)
-                            }
-                            variant="outlined"
-                            sx={{ fontWeight: 600, borderColor: theme.palette.primary.main, color: theme.palette.primary.main }}
-                        />
-                    )}
-                    {game.home_vegas_spread !== null && game.home_vegas_spread !== undefined && (
-                        <Chip
-                            label={`${homeTeam?.abbreviation || game.home_team} ${game.home_vegas_spread > 0 ? '+' : ''}${game.home_vegas_spread}`}
-                            variant="outlined"
-                            sx={{ 
-                                fontWeight: 600, 
-                                borderColor: theme.palette.secondary.main, 
-                                color: theme.palette.secondary.main,
-                                backgroundColor: theme.palette.secondary.light + '20'
-                            }}
-                        />
-                    )}
-                    {(game.game_mode === 'CHEW') && (
-                        <Chip
-                            label="Chew Mode"
-                            variant="filled"
-                            sx={{ 
-                                fontWeight: 600, 
-                                backgroundColor: theme.palette.error.main,
-                                color: 'white'
-                            }}
-                        />
-                    )}
+        <PageWrap>
+            <PageHeading eyebrow={headerTitle} title="Game detail">
+                <Box component="button" type="button" onClick={() => navigate('/scoreboard')} sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: 1.25, py: 0.6, fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
+                    <ArrowBack sx={{ fontSize: 15 }} /> Scoreboard
                 </Box>
+            </PageHeading>
 
+            <GameScorebug game={game} awayMark={awayMark} homeMark={homeMark} homeTeam={homeTeam} awayColor={awayColor} homeColor={homeColor} spreadText={spreadText} threadLink={threadLink} columns={columns} awayQuarters={awayQuarters} homeQuarters={homeQuarters} showQuarters={showQuarters} />
 
-                <Box sx={{
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
-                    gap: 2, 
-                    mb: 2,
-                    flexWrap: 'wrap'
-                }}>
-                    <Typography variant="body2" sx={{ 
-                        color: 'text.secondary',
-                        fontSize: '0.875rem'
-                    }}>
-                        Game ID: {game?.game_id || 'N/A'}
-                    </Typography>
-                    <Typography variant="body2" sx={{ 
-                        color: 'text.secondary',
-                        fontSize: '0.875rem'
-                    }}>
-                        |
-                    </Typography>
-                    <Typography variant="body2" sx={{ 
-                        color: 'text.secondary',
-                        fontSize: '0.875rem'
-                    }}>
-                        Plays: {game?.num_plays || 'N/A'}
-                    </Typography>
-                </Box>
-
-                {isAdmin && (
-                    <Box sx={{
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        alignItems: 'center', 
-                        gap: 2,
-                        mb: 2,
-                        flexWrap: 'wrap'
-                    }}>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={handleGenerateStats}
-                            disabled={generatingStats}
-                            startIcon={generatingStats ? <CircularProgress size={20} /> : <Assessment />}
-                            sx={{ 
-                                borderRadius: 2,
-                                textTransform: 'none',
-                                fontWeight: 600
-                            }}
-                        >
-                            {generatingStats ? 'Generating Stats...' : 'Generate Game Stats'}
+            {isAdmin && (
+                <Box sx={{ mt: '16px' }}>
+                    {adminMessage && <Alert severity={adminMessage.severity} sx={{ mb: 1 }} onClose={() => setAdminMessage(null)}>{adminMessage.text}</Alert>}
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <Button variant="outlined" size="small" startIcon={<Assessment />} disabled={adminBusy === 'stats'} onClick={() => runAdmin('stats', () => generateGameStats(game.game_id))}>
+                            Generate game stats
                         </Button>
-                        {game?.game_status !== 'FINAL' && (
-                            <>
-                                <Button
-                                    variant="contained"
-                                    color="warning"
-                                    onClick={handleChewGame}
-                                    disabled={chewingGame}
-                                    startIcon={chewingGame ? <CircularProgress size={20} /> : <AccessTime />}
-                                    sx={{ 
-                                        borderRadius: 2,
-                                        textTransform: 'none',
-                                        fontWeight: 600
-                                    }}
-                                >
-                                    {chewingGame ? 'Chewing Game...' : 'Chew Game'}
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    color="error"
-                                    onClick={handleEndGame}
-                                    disabled={endingGame}
-                                    startIcon={endingGame ? <CircularProgress size={20} /> : <Stop />}
-                                    sx={{ 
-                                        borderRadius: 2,
-                                        textTransform: 'none',
-                                        fontWeight: 600
-                                    }}
-                                >
-                                    {endingGame ? 'Ending Game...' : 'End Game'}
-                                </Button>
-                            </>
+                        {!isFinal && (
+                            <Button variant="outlined" size="small" color="warning" startIcon={<RestaurantMenu />} disabled={adminBusy === 'chew'} onClick={() => runAdmin('chew', () => chewGameByGameId(game.game_id))}>
+                                Chew game
+                            </Button>
                         )}
                     </Box>
-                )}
+                </Box>
+            )}
 
-                {(generateError || gameControlError) && (
-                    <Box sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        mb: 2
-                    }}>
-                        <Alert 
-                            severity="error" 
-                            onClose={() => {
-                                setGenerateError(null);
-                                setGameControlError(null);
-                            }}
-                        >
-                            {generateError || gameControlError}
-                        </Alert>
-                    </Box>
-                )}
-
-                {scorebug && (
-                    <Box sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        mt: 1
-                    }}>
-                        <CustomScorebug
-                            game={game}
-                            homeTeam={homeTeam}
-                            awayTeam={awayTeam}
-                        />
-                    </Box>
-                )}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '16px', mt: '16px', alignItems: 'start' }}>
+                <Panel header="Game information">
+                    <ComparisonTable awayHeader={teamHeader(awayMark, game.away_team)} homeHeader={teamHeader(homeMark, game.home_team)} sections={[{ rows: infoRows }]} />
+                </Panel>
+                <Panel header="Game details">
+                    {detailRows.map(([label, value]) => (
+                        <Box key={label} sx={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 1, px: 1.75, py: 1.6, borderBottom: '1px solid var(--line-soft)', fontSize: '0.88rem', '&:last-of-type': { borderBottom: 'none' } }}>
+                            <Box component="span" sx={{ color: 'var(--text-muted)' }}>{label}</Box>
+                            <Box component="span" sx={{ fontWeight: 700, textAlign: 'right' }}>{value}</Box>
+                        </Box>
+                    ))}
+                </Panel>
             </Box>
 
-            {(chartData.scoreData.length > 0 || chartData.wpData.length > 0) && (() => {
-                const homeColor = homeTeam?.primary_color || theme.palette.primary.main;
-                const awayColor = awayTeam?.primary_color || theme.palette.error.main;
+            {(wpSeries.length > 1 || scoreSeries.length > 1) && (
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '16px', mt: '16px', alignItems: 'start' }}>
+                    {wpSeries.length > 1 ? (
+                        <Panel header="Win probability">
+                            <Box sx={{ p: 2 }}>
+                                <WinProbChart series={wpSeries} homeColor={homeColor} awayColor={awayColor} homeMark={homeMark} awayMark={awayMark} quarterMarks={wpMarks} />
+                            </Box>
+                        </Panel>
+                    ) : <span />}
+                    {scoreSeries.length > 1 ? (
+                        <Panel header="Score">
+                            <Box sx={{ p: 2 }}>
+                                <ScoreChart series={scoreSeries} homeColor={homeColor} awayColor={awayColor} homeAbbr={homeMark?.abbreviation} awayAbbr={awayMark?.abbreviation} />
+                                <Box sx={{ display: 'flex', gap: 2, mt: 1, fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}><Box sx={{ width: 11, height: 3, borderRadius: '2px', background: awayColor }} />{awayMark?.name || game.away_team}</Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}><Box sx={{ width: 11, height: 3, borderRadius: '2px', background: homeColor }} />{homeMark?.name || game.home_team}</Box>
+                                </Box>
+                            </Box>
+                        </Panel>
+                    ) : <span />}
+                </Box>
+            )}
 
-                return (
-                    <Box sx={{ mb: 4 }}>
-                        <Grid container spacing={3}>
-                            {chartData.scoreData.length > 0 && (
-                                <Grid item xs={12} md={6}>
-                                    <Card sx={{ borderRadius: 3, boxShadow: theme.shadows[1] }}>
-                                        <CardContent>
-                                            <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5, fontSize: '1rem', color: theme.palette.primary.main }}>
-                                                Score by Play
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                    <Box sx={{ width: 14, height: 3, backgroundColor: homeColor, borderRadius: 1 }} />
-                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{homeTeam?.name || game.home_team}</Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                    <Box sx={{ width: 14, height: 3, backgroundColor: awayColor, borderRadius: 1 }} />
-                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{awayTeam?.name || game.away_team}</Typography>
-                                                </Box>
-                                            </Box>
-                                            <ResponsiveContainer width="100%" height={240}>
-                                                <LineChart data={chartData.scoreData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                                    <XAxis dataKey="play" tick={false} axisLine={false} />
-                                                    <YAxis fontSize={11} />
-                                                    <RechartsTooltip
-                                                        formatter={(value, name) => [value, name === 'home' ? (homeTeam?.name || game.home_team) : (awayTeam?.name || game.away_team)]}
-                                                        labelFormatter={(label) => `Play ${label?.replace('P', '')}`}
-                                                    />
-                                                    <Line type="stepAfter" dataKey="home" name="home" stroke={homeColor} strokeWidth={2} dot={false} />
-                                                    <Line type="stepAfter" dataKey="away" name="away" stroke={awayColor} strokeWidth={2} dot={false} />
-                                                </LineChart>
-                                            </ResponsiveContainer>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-                            )}
+            {plays.length > 0 && (
+                <Box sx={{ mt: '16px' }}>
+                    <PlaysPanel plays={plays} homeAbbr={homeMark?.abbreviation} awayAbbr={awayMark?.abbreviation} homeName={game.home_team} awayName={game.away_team} />
+                </Box>
+            )}
 
-                            {chartData.wpData.length > 0 && (
-                                <Grid item xs={12} md={6}>
-                                    <Card sx={{ borderRadius: 3, boxShadow: theme.shadows[1] }}>
-                                        <CardContent>
-                                            <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5, fontSize: '1rem', color: theme.palette.primary.main }}>
-                                                Win Probability
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: homeColor }} />
-                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{homeTeam?.name || homeTeam?.abbreviation || game.home_team}</Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: awayColor }} />
-                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>{awayTeam?.name || awayTeam?.abbreviation || game.away_team}</Typography>
-                                                </Box>
-                                            </Box>
-                                            <ResponsiveContainer width="100%" height={240}>
-                                                <AreaChart data={chartData.wpData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                                                    <XAxis dataKey="play" tick={false} axisLine={false} />
-                                                    <YAxis reversed domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={v => `${v}%`} fontSize={11} />
-                                                    <RechartsTooltip
-                                                        content={({ active, payload, label }) => {
-                                                            if (!active || !payload?.length) return null;
-                                                            const wp = payload[0]?.payload?.homeWP;
-                                                            if (wp == null) return null;
-                                                            const isHome = wp >= 50;
-                                                            const name = isHome
-                                                                ? (homeTeam?.name || homeTeam?.abbreviation || game.home_team)
-                                                                : (awayTeam?.name || awayTeam?.abbreviation || game.away_team);
-                                                            const pct = isHome ? wp : 100 - wp;
-                                                            return (
-                                                                <Box sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 1, px: 1.5, py: 0.75 }}>
-                                                                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{`Play ${String(label).replace('P', '').replace(/x$/, '')}`}</Typography>
-                                                                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: isHome ? homeColor : awayColor }}>{`${name}: ${pct}%`}</Typography>
-                                                                </Box>
-                                                            );
-                                                        }}
-                                                    />
-                                                    <Area type="linear" dataKey="homeAbove" stroke="none" fill={homeColor} fillOpacity={0.25} baseValue={50} dot={false} activeDot={false} />
-                                                    <Area type="linear" dataKey="homeBelow" stroke="none" fill={awayColor} fillOpacity={0.25} baseValue={50} dot={false} activeDot={false} />
-                                                    <Line type="linear" dataKey="homeLineAbove" stroke={homeColor} strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />
-                                                    <Line type="linear" dataKey="homeLineBelow" stroke={awayColor} strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />
-                                                </AreaChart>
-                                            </ResponsiveContainer>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-                            )}
-                        </Grid>
+            {awayStats && homeStats && (
+                <>
+                    <SectionTitle title="Game statistics" />
+                    <Box sx={{ columnCount: { xs: 1, sm: 2, lg: 3 }, columnGap: '16px' }}>
+                        {STAT_GROUPS.map(([group, rows]) => (
+                            <Box key={group} sx={{ breakInside: 'avoid', mb: '16px' }}>
+                                <Panel header={group}>
+                                    <ComparisonTable
+                                        awayHeader={<TeamMark team={awayMark} size={20} />}
+                                        homeHeader={<TeamMark team={homeMark} size={20} />}
+                                        sections={[{ rows: rows.map((row) => ({ label: row.label, away: statCell(row, awayStats), home: statCell(row, homeStats) })) }]}
+                                    />
+                                </Panel>
+                            </Box>
+                        ))}
                     </Box>
-                );
-            })()}
-
-            <Box sx={{ mb: 4 }}>
-                <Grid container spacing={4}>
-                    <Grid item xs={12} md={6}>
-                        <Card sx={{ p: 0, borderRadius: 3, boxShadow: theme.shadows[2], height: '100%' }}>
-                            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                                <Typography variant="h5" sx={{
-                                    fontWeight: 700,
-                                    mb: 3,
-                                    textAlign: 'center',
-                                    color: theme.palette.primary.main
-                                }}>
-                                    Game Information
-                                </Typography>
-                                <GameInfo game={game} homeTeam={homeTeam} awayTeam={awayTeam} />
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                        <Card sx={{ p: 0, borderRadius: 3, boxShadow: theme.shadows[2], height: '100%' }}>
-                            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                                <Typography variant="h5" sx={{
-                                    fontWeight: 700,
-                                    mb: 3,
-                                    textAlign: 'center',
-                                    color: theme.palette.primary.main
-                                }}>
-                                    Game Statistics
-                                </Typography>
-                                <GameStatsTable
-                                    homeTeam={homeTeam}
-                                    awayTeam={awayTeam}
-                                    homeStats={gameStats.home}
-                                    awayStats={gameStats.away}
-                                />
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                </Grid>
-            </Box>
-
-            <Card sx={{ p: 0, borderRadius: 3, boxShadow: theme.shadows[2], overflow: 'hidden' }}>
-                <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                    <Typography variant="h5" sx={{
-                        fontWeight: 700,
-                        mb: 3,
-                        textAlign: 'center',
-                        color: theme.palette.primary.main
-                    }}>
-                        Game Plays
-                    </Typography>
-                    <PlaysTable
-                        plays={plays}
-                        page={page}
-                        rowsPerPage={rowsPerPage}
-                        handleChangePage={handleChangePage}
-                        handleChangeRowsPerPage={handleChangeRowsPerPage}
-                        orderBy={orderBy}
-                        order={order}
-                        handleRequestSort={handleRequestSort}
-                    />
-                </CardContent>
-            </Card>
-        </PageLayout>
+                </>
+            )}
+        </PageWrap>
     );
+};
+
+GameDetails.propTypes = {
+    isAdmin: PropTypes.bool,
 };
 
 export default GameDetails;

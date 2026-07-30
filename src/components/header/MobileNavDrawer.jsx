@@ -3,7 +3,7 @@ import { Drawer, Box, List, ListItem, ListItemButton, ListItemText, Divider } fr
 import { useLocation, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import mainLogo from '../../assets/graphics/main_logo.png';
-import { NAV_ITEMS, STATS_ITEMS } from './navConfig';
+import { NAV_ITEMS } from './navConfig';
 
 const MobileNavDrawer = ({ open, onClose, isAuthenticated, isAdmin, onLogout }) => {
     const location = useLocation();
@@ -38,13 +38,6 @@ const MobileNavDrawer = ({ open, onClose, isAuthenticated, isAdmin, onLogout }) 
             </Box>
             <List>
                 {NAV_ITEMS.map((item) => (
-                    <ListItem key={item.path} disablePadding>
-                        <ListItemButton onClick={() => go(item.path)} sx={itemSx(isActive(item.path))}>
-                            <ListItemText primary={item.label} />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-                {STATS_ITEMS.map((item) => (
                     <ListItem key={item.path} disablePadding>
                         <ListItemButton onClick={() => go(item.path)} sx={itemSx(isActive(item.path))}>
                             <ListItemText primary={item.label} />

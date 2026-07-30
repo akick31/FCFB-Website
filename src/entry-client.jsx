@@ -1,4 +1,4 @@
-import { hydrateRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 import App from './App';
 import { reportFrontendError } from './api/frontendErrorsApi';
 
@@ -19,4 +19,17 @@ window.onunhandledrejection = (event) => {
     });
 };
 
-hydrateRoot(document.getElementById('root'), <App />);
+const normalizePath = (path) => (path.length > 1 ? path.replace(/\/$/, '') : path);
+
+const container = document.getElementById('root');
+const prerenderedPath = container.dataset.prerenderedPath;
+
+const servedHtmlMatchesRoute =
+    prerenderedPath && normalizePath(prerenderedPath) === normalizePath(window.location.pathname);
+
+if (servedHtmlMatchesRoute) {
+    hydrateRoot(container, <App />);
+} else {
+    container.innerHTML = '';
+    createRoot(container).render(<App />);
+}

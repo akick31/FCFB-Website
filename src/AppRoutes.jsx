@@ -16,7 +16,8 @@ import {
     Verify,
     NotFound,
     Error,
-    UserDetails
+    UserDetails,
+    Coaches
 } from './pages';
 import { getUserById } from './api/userApi';
 import { checkIfUserIsAdmin } from "./utils/utils";
@@ -32,6 +33,7 @@ import {
     Schedule,
     TeamManagement,
     EditTeam,
+    EditCoach,
     GameManagement,
     UserManagement,
     CoachManagement,
@@ -42,12 +44,13 @@ import {
     Scheduling,
     GameWeek,
     RankingsManagement,
-    Records,
+    Stats,
+    RecordsBoard,
     SeasonStats,
     LeagueStats,
     Leaderboard,
     EloHistory,
-    Charts
+    Graphs
 } from './pages';
 
 const ConditionalHeader = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, setIsAdmin }) => {
@@ -213,6 +216,11 @@ const AppRoutes = () => {
                                 <EditTeam user={user} />
                             </ProtectedRoute>
                         } />
+                        <Route path="/admin/edit-coach/:username" element={
+                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                <EditCoach user={user} />
+                            </ProtectedRoute>
+                        } />
                         <Route path="/admin/scheduling" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <Scheduling user={user} />
@@ -251,9 +259,12 @@ const AppRoutes = () => {
                         <Route path="/scoreboard/:tab/:season/:week" element={<Scoreboard />} />
                         <Route path="/teams" element={<Teams />} />
                         <Route path="/teams/:conference/:availability" element={<Teams />} />
-                        <Route path="/records" element={<Records />} />
-                        <Route path="/records/:tab" element={<Records />} />
-                        <Route path="/records/:tab/:record" element={<Records />} />
+                        <Route path="/coaches" element={<Coaches />} />
+                        <Route path="/stats" element={<Stats />} />
+                        <Route path="/stats/:sub" element={<Stats />} />
+                        <Route path="/stats/:sub/:statKey" element={<Stats />} />
+                        <Route path="/records" element={<RecordsBoard user={user} />} />
+                        <Route path="/records/:tab" element={<RecordsBoard user={user} />} />
                         <Route path="/season-stats" element={<SeasonStats user={user} />} />
                         <Route path="/season-stats/:team/:season" element={<SeasonStats user={user} />} />
                         <Route path="/league-stats" element={<LeagueStats />} />
@@ -262,8 +273,8 @@ const AppRoutes = () => {
                         <Route path="/league-stats/:tab/:season/:p1/:p2" element={<LeagueStats />} />
                         <Route path="/leaderboard" element={<Leaderboard />} />
                         <Route path="/elo-history" element={<EloHistory />} />
-                        <Route path="/charts" element={<Charts />} />
-                        <Route path="/charts/:tab" element={<Charts />} />
+                        <Route path="/graphs" element={<Graphs />} />
+                        <Route path="/graphs/:tab" element={<Graphs />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
 
                         <Route path="/error" element={<Error />} />

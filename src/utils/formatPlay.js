@@ -34,6 +34,10 @@ export const describePlay = (play, context = {}) => {
     const possessionTeam = play.possession === 'HOME' ? homeName : awayName;
     const verb = call === 'PASS' ? 'Pass' : call === 'RUN' || call === 'RUSH' ? 'Run' : null;
 
+    if (outcome === 'END_OF_GAME' || scenario === 'END_OF_GAME' || scenario === 'GAME_OVER') return 'End of game';
+    if (call === 'KNEEL') return 'Kneel';
+    if (call === 'SPIKE') return 'Spike';
+
     const gainPhrase = () => {
         if (verb) {
             if (yards == null) return verb;

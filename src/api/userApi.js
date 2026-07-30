@@ -58,6 +58,43 @@ export const updateUserDetails = async (userId, updates) => {
     }
 };
 
+export const updateUser = async (user) => {
+    const body = {
+        id: user.id,
+        username: user.username,
+        coach_name: user.coach_name,
+        discord_tag: user.discord_tag,
+        discord_id: user.discord_id ?? null,
+        position: user.position,
+        role: user.role,
+        team: user.team || null,
+        wins: user.wins || 0,
+        losses: user.losses || 0,
+        conference_wins: user.conference_wins || 0,
+        conference_losses: user.conference_losses || 0,
+        conference_championship_wins: user.conference_championship_wins || 0,
+        conference_championship_losses: user.conference_championship_losses || 0,
+        bowl_wins: user.bowl_wins || 0,
+        bowl_losses: user.bowl_losses || 0,
+        playoff_wins: user.playoff_wins || 0,
+        playoff_losses: user.playoff_losses || 0,
+        national_championship_wins: user.national_championship_wins || 0,
+        national_championship_losses: user.national_championship_losses || 0,
+        offensive_playbook: user.offensive_playbook,
+        defensive_playbook: user.defensive_playbook,
+    };
+    try {
+        const response = await apiClient.put('/user/update', body);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to update user:', error);
+        if (error.response) {
+            throw new Error(error.response.data.error || 'Failed to update user');
+        }
+        throw new Error('An unexpected error occurred while updating user');
+    }
+};
+
 export const validateUser = async (formData) => {
     try {
         const response = await apiClient.post("/user/validate", {
@@ -91,6 +128,31 @@ export const getFreeAgents = async () => {
         throw new Error("An unexpected error occurred while fetching free agents");
     }
 }
+
+export const generateApiKey = async () => {
+    try {
+        const response = await apiClient.post('/user/api-key');
+        return response.data.apiKey;
+    } catch (error) {
+        console.error('Failed to generate API key:', error);
+        if (error.response) {
+            throw new Error(error.response.data.error || 'Failed to generate API key');
+        }
+        throw new Error('An unexpected error occurred while generating the API key');
+    }
+};
+
+export const revokeApiKey = async () => {
+    try {
+        await apiClient.post('/user/api-key/revoke');
+    } catch (error) {
+        console.error('Failed to revoke API key:', error);
+        if (error.response) {
+            throw new Error(error.response.data.error || 'Failed to revoke API key');
+        }
+        throw new Error('An unexpected error occurred while revoking the API key');
+    }
+};
 
 export const updateUsername = async (userId, newUsername) => {
     if (!userId) throw new Error("User ID is required");

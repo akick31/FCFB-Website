@@ -86,3 +86,30 @@ export const STAT_GROUPS = [
 ];
 
 export const STAT_ROWS = STAT_GROUPS.flatMap(([, rows]) => rows);
+
+const num = (value) => (value == null ? null : (typeof value === 'number' ? value.toLocaleString() : value));
+const clock = (value) => {
+    if (value == null) return null;
+    const total = Math.round(value);
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+};
+
+const FORMATS = {
+    num,
+    clock,
+    dec1: (value) => (value == null ? null : Number(value).toFixed(1)),
+    dec2: (value) => (value == null ? null : Number(value).toFixed(2)),
+    pct: (value) => (value == null ? null : `${Number(value).toFixed(1)}%`),
+    sgn: (value) => (value == null ? null : (value > 0 ? `+${value}` : `${value}`)),
+};
+
+const ratio = (made, att) => (made == null && att == null ? null : `${num(made) ?? 0}/${num(att) ?? 0}`);
+
+export const statCell = (row, stats, prefix = '') => {
+    if (row.fmt === 'fgratio') return ratio(stats[`${prefix}${row.made}`], stats[`${prefix}${row.att}`]);
+    if (prefix && !(`${prefix}${row.key}` in stats)) return null;
+    return FORMATS[row.fmt](stats[`${prefix}${row.key}`]);
+};

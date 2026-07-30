@@ -75,3 +75,8 @@ export const formatGameType = (gameType) => {
 
     return gameType;
 }
+export const formatWinPct = (value) => {
+    const pct = Number(value) || 0;
+    const fixed = pct.toFixed(3);
+    return fixed.startsWith('0.') ? fixed.slice(1) : fixed;
+};

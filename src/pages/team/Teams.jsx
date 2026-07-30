@@ -51,7 +51,8 @@ const Teams = () => {
             .filter((team) => availability === 'all' || (availability === 'open' ? isTeamAvailable(team) : !isTeamAvailable(team)))
             .filter((team) => !query
                 || team.name.toLowerCase().includes(query)
-                || (team.coach_usernames || []).some((coach) => coach.toLowerCase().includes(query)))
+                || (team.coach_usernames || []).some((coach) => coach.toLowerCase().includes(query))
+                || (team.coach_discord_tags || []).some((tag) => tag.toLowerCase().includes(query)))
             .sort(SORTS[sort]);
     }, [teams, conference, availability, search, sort]);
 
@@ -69,7 +70,7 @@ const Teams = () => {
             <PageHeading eyebrow={`${teams.length} programs, ${openCount} open`} title="Teams">
                 <Box
                     component="input"
-                    placeholder="Search teams or coaches…"
+                    placeholder="Search teams, coaches, or Discord tags…"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', padding: '6px 10px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, minWidth: 210, '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 } }}

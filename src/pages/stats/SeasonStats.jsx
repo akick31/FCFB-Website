@@ -19,6 +19,7 @@ import {
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
+import { formatWinPct } from '../../utils/formatText';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
@@ -142,8 +143,9 @@ const SeasonStats = ({ user }) => {
         const recordStats = [
             { label: 'Wins', value: teamSeasonStats.wins },
             { label: 'Losses', value: teamSeasonStats.losses },
-            { label: 'Win %', value: teamSeasonStats.wins + teamSeasonStats.losses > 0 ? 
-                ((teamSeasonStats.wins / (teamSeasonStats.wins + teamSeasonStats.losses)) * 100).toFixed(1) + '%' : '0%' }
+            { label: 'Win Pct', value: teamSeasonStats.wins + teamSeasonStats.losses > 0
+                ? formatWinPct(teamSeasonStats.wins / (teamSeasonStats.wins + teamSeasonStats.losses))
+                : formatWinPct(0) }
         ];
 
         const offensiveStats = [

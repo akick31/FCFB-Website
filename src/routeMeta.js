@@ -6,13 +6,14 @@ export const routeList = [
     { path: '/rankings', title: 'Rankings | FCFB', description: 'Weekly national rankings for every team in the Fake College Football simulation league.' },
     { path: '/scoreboard', title: 'Scoreboard | FCFB', description: 'Live and final scores for every Fake College Football game, including ongoing games, completed matchups, and scrimmages.' },
     { path: '/teams', title: 'Teams | FCFB', description: 'Browse every team in the Fake College Football league, filter by conference, and view team pages and rosters.' },
+    { path: '/coaches', title: 'Coaches | FCFB', description: 'Every coach in the Fake College Football league, their current team, record, and status — active, free agent, or retired.' },
     { path: '/schedules', title: 'Schedules | FCFB', description: 'Full season and postseason schedules for every Fake College Football team and conference.' },
     { path: '/records', title: 'Records | FCFB', description: 'All-time and single-season records across the Fake College Football league, from top offenses to record-breaking performances.' },
     { path: '/season-stats', title: 'Season Stats | FCFB', description: 'Team and player statistics for every season in Fake College Football, covering offense, defense, and special teams.' },
     { path: '/league-stats', title: 'League Stats | FCFB', description: 'League-wide statistical leaders and team comparisons across Fake College Football seasons.' },
     { path: '/leaderboard', title: 'Leaderboard | FCFB', description: 'Career and season leaderboards for Fake College Football coaches and teams.' },
     { path: '/elo-history', title: 'ELO History | FCFB', description: "Track how every Fake College Football team's ELO rating has changed week by week and season by season." },
-    { path: '/charts', title: 'Charts | FCFB', description: 'Interactive charts visualizing ELO history, ranking movement, and statistical trends across Fake College Football.' },
+    { path: '/graphs', title: 'Graphs | FCFB', description: 'Interactive graphs visualizing ELO history, ranking movement, and statistical trends across Fake College Football.' },
 ];
 
 export const ROUTE_META = Object.fromEntries(routeList.map(route => [route.path, route]));

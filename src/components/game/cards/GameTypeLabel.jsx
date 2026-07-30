@@ -2,7 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import { conferences } from '../../constants/conferences';
-import playoffLogo from '../../../assets/images/playoff.png';
+import PlayoffLogo from '../../ui/PlayoffLogo';
 
 const PLAYOFF_ROUNDS = { 1: 'First Round', 2: 'Second Round', 3: 'Quarterfinal', 4: 'Semifinal' };
 
@@ -15,13 +15,15 @@ const resolve = (game, homeTeam) => {
     const conference = conferences.find((c) => c.value === homeTeam?.conference);
     switch (game.game_type) {
         case 'NATIONAL_CHAMPIONSHIP':
-            return { logo: playoffLogo, text: 'National Championship' };
+            return { node: <PlayoffLogo size={16} />, text: 'National Championship' };
         case 'PLAYOFFS':
-            return { logo: playoffLogo, text: PLAYOFF_ROUNDS[game.playoff_round] || 'Playoff' };
+            return { node: <PlayoffLogo size={16} />, text: PLAYOFF_ROUNDS[game.playoff_round] || 'Playoff' };
         case 'BOWL':
             return { logo: game.postseason_game_logo || null, text: game.postseason_game_name || 'Bowl' };
         case 'CONFERENCE_CHAMPIONSHIP':
-            return { logo: conference?.logo || null, text: `${conference?.label || 'Conference'} Championship` };
+            return { logo: conference?.logo || null, text: 'Championship Game' };
+        case 'CONFERENCE_GAME':
+            return { logo: conference?.logo || null, text: 'Conference Game' };
         case 'OUT_OF_CONFERENCE':
             return { logo: null, text: 'Out of Conference' };
         default:
@@ -30,7 +32,7 @@ const resolve = (game, homeTeam) => {
 };
 
 const GameTypeLabel = ({ game, homeTeam }) => {
-    const { logo, text } = resolve(game, homeTeam);
+    const { logo, node, text } = resolve(game, homeTeam);
     return (
         <Box
             sx={{
@@ -45,7 +47,7 @@ const GameTypeLabel = ({ game, homeTeam }) => {
                 minWidth: 0,
             }}
         >
-            <LogoImg src={logo} />
+            {node || <LogoImg src={logo} />}
             <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</Box>
         </Box>
     );

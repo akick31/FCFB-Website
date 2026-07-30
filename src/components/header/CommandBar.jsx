@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Box, Button, IconButton, Avatar, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
-import { Menu as MenuIcon, ArrowDropDown, Person, Logout, SportsFootball } from '@mui/icons-material';
+import { Menu as MenuIcon, Person, Logout, SportsFootball } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import mainLogo from '../../assets/graphics/main_logo.png';
-import { NAV_ITEMS, STATS_ITEMS, STATS_PATHS } from './navConfig';
+import { NAV_ITEMS } from './navConfig';
 
 const navButtonSx = (active) => ({
     color: '#cfe3ee',
@@ -23,15 +23,12 @@ const navButtonSx = (active) => ({
 const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, onLogout }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const [statsAnchor, setStatsAnchor] = useState(null);
     const [userAnchor, setUserAnchor] = useState(null);
 
     const isActive = (path) => (path === '/' ? location.pathname === '/' : location.pathname.startsWith(path));
-    const isStatsActive = STATS_PATHS.some((path) => location.pathname.startsWith(path));
 
     const goTo = (path) => {
         navigate(path);
-        setStatsAnchor(null);
         setUserAnchor(null);
     };
 
@@ -61,9 +58,6 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, on
                         {item.label}
                     </Button>
                 ))}
-                <Button onClick={(e) => setStatsAnchor(e.currentTarget)} endIcon={<ArrowDropDown />} disableRipple sx={navButtonSx(isStatsActive)}>
-                    Stats
-                </Button>
                 {isAdmin && (
                     <Button onClick={() => goTo('/admin')} disableRipple sx={navButtonSx(isActive('/admin'))}>
                         Admin
@@ -93,12 +87,6 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, on
                     <MenuIcon />
                 </IconButton>
             </Box>
-
-            <Menu anchorEl={statsAnchor} open={Boolean(statsAnchor)} onClose={() => setStatsAnchor(null)}>
-                {STATS_ITEMS.map((item) => (
-                    <MenuItem key={item.path} onClick={() => goTo(item.path)}>{item.label}</MenuItem>
-                ))}
-            </Menu>
 
             <Menu anchorEl={userAnchor} open={Boolean(userAnchor)} onClose={() => setUserAnchor(null)}>
                 <MenuItem onClick={() => goTo('/profile')}>
