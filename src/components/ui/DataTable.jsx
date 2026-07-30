@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 const HOVER = 'color-mix(in srgb, var(--brand) 7%, var(--surface))';
 
-const DataTable = ({ minWidth = 600, children }) => (
+const DataTable = ({ minWidth = 600, tableLayout = 'auto', children }) => (
     <Box sx={{ border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', overflowX: 'auto', background: 'var(--surface)' }}>
         <Box
             component="table"
@@ -12,6 +12,7 @@ const DataTable = ({ minWidth = 600, children }) => (
                 borderCollapse: 'collapse',
                 width: '100%',
                 minWidth,
+                tableLayout,
                 fontSize: '0.85rem',
                 color: 'var(--text)',
                 '& thead th': {
@@ -53,6 +54,7 @@ const DataTable = ({ minWidth = 600, children }) => (
 
 DataTable.propTypes = {
     minWidth: PropTypes.number,
+    tableLayout: PropTypes.string,
     children: PropTypes.node.isRequired,
 };
 

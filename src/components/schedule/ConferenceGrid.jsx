@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../ui/TeamMark';
 
-const REGULAR_WEEKS = Array.from({ length: 13 }, (_, index) => index + 1);
+const REGULAR_WEEKS = Array.from({ length: 12 }, (_, index) => index + 1);
 
 const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
     const navigate = useNavigate();

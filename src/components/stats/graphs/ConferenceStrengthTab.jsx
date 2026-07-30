@@ -56,12 +56,15 @@ const ConferenceStrengthTab = ({ season, teams }) => {
         return row.total_yards || 0;
     };
 
+    const ascending = metric === 'off';
+
     const rows = useMemo(() => {
         const list = confs.map((row) => ({ conf: confValue(row.conference), v: valueOf(row) })).filter((r) => r.conf);
-        return list.sort((a, b) => b.v - a.v);
-    }, [confs, metric, eloByConf]);
+        return list.sort((a, b) => (ascending ? a.v - b.v : b.v - a.v));
+    }, [confs, metric, eloByConf, ascending]);
 
     const max = useMemo(() => Math.max(1, ...rows.map((r) => r.v)), [rows]);
+    const barPct = (v) => Math.max(2, (v / max) * 100);
     const dec = StatPlotsMetrics.find((m) => m.key === metric)?.dec ?? 0;
     const fmt = (v) => (dec === 2 ? v.toFixed(2) : Math.round(v).toLocaleString());
 
@@ -87,7 +90,7 @@ const ConferenceStrengthTab = ({ season, teams }) => {
                                     <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conferenceLabel(r.conf)}</Box>
                                 </Box>
                                 <Box sx={{ height: 16, background: 'var(--surface-2)', borderRadius: '3px', overflow: 'hidden' }}>
-                                    <Box sx={{ height: '100%', borderRadius: '3px', background: 'var(--brand)', width: `${Math.max(2, (r.v / max) * 100)}%` }} />
+                                    <Box sx={{ height: '100%', borderRadius: '3px', background: 'var(--brand)', width: `${barPct(r.v)}%` }} />
                                 </Box>
                                 <Box className="num" sx={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(r.v)}</Box>
                             </Box>
