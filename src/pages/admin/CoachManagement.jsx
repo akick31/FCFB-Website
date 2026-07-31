@@ -1,122 +1,97 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    Box, 
-    Typography,
-    CircularProgress,
-    IconButton,
-    Tooltip,
-    Avatar,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Alert,
-    Autocomplete,
-    TextField,
-    Grid
-} from '@mui/material';
-import { PersonAdd, PersonRemove } from '@mui/icons-material';
-import DashboardLayout from '../../components/layout/DashboardLayout';
-import { getAllTeams } from '../../api/teamApi';
-import { getAllUsers } from '../../api/userApi';
-import { hireCoach, hireInterimCoach, fireCoach } from '../../api/teamApi';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControl, InputLabel, Select, MenuItem, Alert, Autocomplete, TextField, Typography } from '@mui/material';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import StyledTable from '../../components/ui/StyledTable';
-import { formatConference } from '../../utils/formatText';
-import { conferences as conferencesList } from '../../components/constants/conferences';
-import { adminNavigationItems } from '../../config/adminNavigation.jsx';
-import { CONFERENCES } from '../../constants/teamEnums';
-import { isRealTeam } from '../../utils/teamDataUtils';
+import AdminLayout from '../../components/layout/AdminLayout';
+import Panel from '../../components/ui/Panel';
+import DataTable from '../../components/ui/DataTable';
+import SelectPill from '../../components/ui/SelectPill';
+import TeamMark from '../../components/ui/TeamMark';
+import ConferenceMark from '../../components/ui/ConferenceMark';
+import { getAllTeams, hireCoach, hireInterimCoach, fireSingleCoach } from '../../api/teamApi';
+import { getAllUsers } from '../../api/userApi';
+import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
+import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { useConferencesMap, allConferenceList } from '../../components/constants/conferences';
+import { isRealTeam, getTeamCoaches } from '../../utils/teamDataUtils';
+import { formatPosition } from '../../utils/formatText';
+import { currentRosterByTeam } from '../../utils/coachHistory';
 
-const REAL_CONFERENCES = CONFERENCES.filter(c => c !== 'FAKE_TEAM');
+const searchSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', font: 'inherit', fontSize: '0.82rem', minWidth: 200, boxSizing: 'border-box' };
+const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
+const coachChipSx = { display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid var(--line)', background: 'var(--surface-2)', borderRadius: 'var(--r-sm)', px: '8px', py: '4px', fontSize: '0.76rem', mr: '6px', mb: '4px' };
+const fireXSx = { border: 0, background: 'transparent', color: 'var(--live)', cursor: 'pointer', font: 'inherit', fontSize: '0.85rem', lineHeight: 1, p: 0, ml: '2px' };
+const hireBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--field)', borderRadius: 'var(--r-sm)', px: '10px', py: '5px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--field)' } };
+
+const CONFERENCE_OPTIONS = () => [{ value: 'ALL', label: 'All conferences' }, ...allConferenceList().filter((c) => c.code !== 'FAKE_TEAM').map((c) => ({ value: c.code, label: c.label }))];
+const TAKEN_OPTIONS = [{ value: 'ALL', label: 'All teams' }, { value: 'OPEN', label: 'Open teams' }, { value: 'TAKEN', label: 'Taken teams' }];
 
 const CoachManagement = ({ user }) => {
+    useConferencesMap();
+    const teamsMap = useTeamsMap();
     const navigate = useNavigate();
     const [teams, setTeams] = useState([]);
-    const [filteredTeams, setFilteredTeams] = useState([]);
     const [users, setUsers] = useState([]);
+    const [roster, setRoster] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const [conferenceFilter, setConferenceFilter] = useState('ALL');
     const [takenFilter, setTakenFilter] = useState('ALL');
-    const [activeFilter, setActiveFilter] = useState('ALL');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [hireDialogOpen, setHireDialogOpen] = useState(false);
-    const [fireDialogOpen, setFireDialogOpen] = useState(false);
+    const [fireTarget, setFireTarget] = useState(null);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [selectedPosition, setSelectedPosition] = useState('');
     const [processing, setProcessing] = useState(false);
     const [dialogError, setDialogError] = useState('');
 
-    const navigationItems = adminNavigationItems;
-
     useEffect(() => {
-        if (!user || !user.role) {
-            setLoading(true);
-            return;
-        }
-
-        if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
-            navigate('*');
-        } else {
-            setLoading(false);
-        }
+        if (!user || !user.role) return;
+        if (user.role !== 'ADMIN' && user.role !== 'CONFERENCE_COMMISSIONER') navigate('*');
     }, [user, navigate]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [teamsResponse, usersResponse] = await Promise.all([
-                    getAllTeams(),
-                    getAllUsers()
-                ]);
-                setTeams(teamsResponse);
-                setUsers(usersResponse);
-                setLoading(false);
-            } catch (error) {
-                console.error('Failed to fetch data:', error);
-                setError('Failed to load data');
-                setLoading(false);
-            }
-        };
-
-        if (user?.role === "ADMIN" || user?.role === "CONFERENCE_COMMISSIONER") {
-            fetchData();
+    const loadData = async () => {
+        try {
+            const [teamsResponse, usersResponse, transactions] = await Promise.all([
+                getAllTeams(),
+                getAllUsers(),
+                getEntireCoachTransactionLog(),
+            ]);
+            setTeams(teamsResponse);
+            setUsers(usersResponse);
+            setRoster(currentRosterByTeam(transactions));
+        } catch (err) {
+            console.error('Failed to fetch data:', err);
+            setError('Failed to load data');
+        } finally {
+            setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        if (user?.role === 'ADMIN' || user?.role === 'CONFERENCE_COMMISSIONER') loadData();
     }, [user]);
 
-    useEffect(() => {
+    const filteredTeams = useMemo(() => {
         let filtered = teams.filter(isRealTeam);
-
-        if (conferenceFilter !== 'ALL') {
-            filtered = filtered.filter(team => team.conference === conferenceFilter);
-        }
-
+        if (conferenceFilter !== 'ALL') filtered = filtered.filter((team) => team.conference === conferenceFilter);
         if (takenFilter !== 'ALL') {
-            if (takenFilter === 'TAKEN') {
-                filtered = filtered.filter(team => team.is_taken);
-            } else if (takenFilter === 'OPEN') {
-                filtered = filtered.filter(team => !team.is_taken);
-            }
+            filtered = filtered.filter((team) => (takenFilter === 'TAKEN' ? team.is_taken : !team.is_taken));
         }
-
-        if (activeFilter !== 'ALL') {
-            if (activeFilter === 'ACTIVE') {
-                filtered = filtered.filter(team => team.active);
-            } else if (activeFilter === 'INACTIVE') {
-                filtered = filtered.filter(team => !team.active);
-            }
+        if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
+            filtered = filtered.filter((team) => team.name?.toLowerCase().includes(searchLower));
         }
+        return filtered;
+    }, [teams, conferenceFilter, takenFilter, searchTerm]);
 
-        setFilteredTeams(filtered);
-    }, [teams, conferenceFilter, takenFilter, activeFilter]);
+    const rosterFor = (team) => getTeamCoaches(team).map((coach) => ({
+        ...coach,
+        position: roster[team.name]?.[coach.username]?.position || 'HEAD_COACH',
+    }));
 
     const handleHireCoach = (team) => {
         setSelectedTeam(team);
@@ -126,39 +101,23 @@ const CoachManagement = ({ user }) => {
         setHireDialogOpen(true);
     };
 
-    const handleFireCoach = (team) => {
-        setSelectedTeam(team);
-        setDialogError('');
-        setFireDialogOpen(true);
-    };
-
     const handleHireSubmit = async () => {
         if (!selectedUser || !selectedPosition) {
             setDialogError('Please select both a user and position');
             return;
         }
-
         setProcessing(true);
         setDialogError('');
-
         try {
             if (!selectedUser.discord_id) {
                 setDialogError('Selected user does not have a Discord ID');
                 return;
             }
-
-            await hireCoach({
-                team: selectedTeam.name,
-                discordId: selectedUser.discord_id,
-                coachPosition: selectedPosition,
-                processedBy: user.username
-            });
-
+            await hireCoach({ team: selectedTeam.name, discordId: selectedUser.discord_id, coachPosition: selectedPosition, processedBy: user.username });
             setHireDialogOpen(false);
-            const updatedTeams = await getAllTeams();
-            setTeams(updatedTeams);
-        } catch (error) {
-            setDialogError(error.message || 'Failed to hire coach');
+            await loadData();
+        } catch (err) {
+            setDialogError(err.message || 'Failed to hire coach');
         } finally {
             setProcessing(false);
         }
@@ -169,207 +128,99 @@ const CoachManagement = ({ user }) => {
             setDialogError('Please select a user');
             return;
         }
-
         setProcessing(true);
         setDialogError('');
-
         try {
             if (!selectedUser.discord_id) {
                 setDialogError('Selected user does not have a Discord ID');
                 return;
             }
-
-            await hireInterimCoach({
-                team: selectedTeam.name,
-                discordId: selectedUser.discord_id,
-                processedBy: user.username
-            });
-
+            await hireInterimCoach({ team: selectedTeam.name, discordId: selectedUser.discord_id, processedBy: user.username });
             setHireDialogOpen(false);
-            const updatedTeams = await getAllTeams();
-            setTeams(updatedTeams);
-        } catch (error) {
-            setDialogError(error.message || 'Failed to hire interim coach');
+            await loadData();
+        } catch (err) {
+            setDialogError(err.message || 'Failed to hire interim coach');
         } finally {
             setProcessing(false);
         }
     };
 
     const handleFireSubmit = async () => {
+        if (!fireTarget) return;
         setProcessing(true);
         setDialogError('');
-
         try {
-            await fireCoach({
-                team: selectedTeam.name,
-                processedBy: user.username
-            });
-
-            setFireDialogOpen(false);
-            const updatedTeams = await getAllTeams();
-            setTeams(updatedTeams);
-        } catch (error) {
-            setDialogError(error.message || 'Failed to fire coach');
+            await fireSingleCoach({ team: fireTarget.team.name, discordId: fireTarget.coach.discordId, coachPosition: fireTarget.coach.position, processedBy: user.username });
+            setFireTarget(null);
+            await loadData();
+        } catch (err) {
+            setDialogError(err.message || 'Failed to fire coach');
         } finally {
             setProcessing(false);
         }
     };
 
-    const coachColumns = [
-        { id: 'logo', label: '', width: 60 },
-        { id: 'name', label: 'Team Name', width: 200 },
-        { id: 'conference', label: 'Conference', width: 150 },
-        { id: 'actions', label: 'Actions', width: 200 },
-    ];
-
-    const tableData = filteredTeams.map(team => ({
-        ...team,
-        logo: (
-            <Avatar
-                src={team.logo}
-                alt={team.name}
-                sx={{ width: 40, height: 40 }}
-            >
-                {team.abbreviation || team.name?.charAt(0)}
-            </Avatar>
-        ),
-        name: team.name,
-        conference: (() => {
-            const confData = conferencesList.find(c => c.value === team.conference);
-            return confData?.logo ? (
-                <Tooltip title={confData.label} arrow>
-                    <Avatar src={confData.logo} sx={{ width: 24, height: 24 }} variant="rounded" />
-                </Tooltip>
-            ) : (formatConference(team.conference) || 'No Conference');
-        })(),
-        actions: (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-                <Tooltip title="Hire Coach">
-                    <IconButton
-                        size="small"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleHireCoach(team);
-                        }}
-                        sx={{ color: 'success.main' }}
-                    >
-                        <PersonAdd fontSize="small" />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Fire Coach">
-                    <IconButton
-                        size="small"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleFireCoach(team);
-                        }}
-                        sx={{ color: 'error.main' }}
-                    >
-                        <PersonRemove fontSize="small" />
-                    </IconButton>
-                </Tooltip>
-            </Box>
-        )
-    }));
-
     if (loading) {
         return (
-            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
-
-    if (error) {
-        return (
-            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Typography color="error">{error}</Typography>
-            </Box>
+            <AdminLayout title="Coach Management">
+                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
+            </AdminLayout>
         );
     }
 
     return (
-        <DashboardLayout
+        <AdminLayout
             title="Coach Management"
-            navigationItems={navigationItems}
-            hideHeader={true}
-            textColor="primary.main"
+            controls={(
+                <>
+                    <Box component="input" placeholder="Search teams..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
+                    <SelectPill label="Conference" value={conferenceFilter} onChange={setConferenceFilter} options={CONFERENCE_OPTIONS()} sx={pillHeightSx} />
+                    <SelectPill label="Status" value={takenFilter} onChange={setTakenFilter} options={TAKEN_OPTIONS} sx={pillHeightSx} />
+                </>
+            )}
         >
-            <Box sx={{ p: 3 }}>
-                <Typography variant="h4" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
-                    Coach Management
-                </Typography>
+            {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
 
-                <Box sx={{ mb: 3 }}>
-                    <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth>
-                                <InputLabel>Conference</InputLabel>
-                                <Select
-                                    value={conferenceFilter}
-                                    onChange={(e) => setConferenceFilter(e.target.value)}
-                                    label="Conference"
-                                    sx={{
-                                        color: 'primary.main',
-                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                    }}
-                                >
-                                    <MenuItem value="ALL">All Conferences</MenuItem>
-                                    {REAL_CONFERENCES.map(conference => (
-                                        <MenuItem key={conference} value={conference}>
-                                            {formatConference(conference)}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth>
-                                <InputLabel>Taken Status</InputLabel>
-                                <Select
-                                    value={takenFilter}
-                                    onChange={(e) => setTakenFilter(e.target.value)}
-                                    label="Taken Status"
-                                    sx={{
-                                        color: 'primary.main',
-                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                    }}
-                                >
-                                    <MenuItem value="ALL">All Teams</MenuItem>
-                                    <MenuItem value="OPEN">Open Teams</MenuItem>
-                                    <MenuItem value="TAKEN">Taken Teams</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth>
-                                <InputLabel>Active Status</InputLabel>
-                                <Select
-                                    value={activeFilter}
-                                    onChange={(e) => setActiveFilter(e.target.value)}
-                                    label="Active Status"
-                                    sx={{
-                                        color: 'primary.main',
-                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                    }}
-                                >
-                                    <MenuItem value="ALL">All Teams</MenuItem>
-                                    <MenuItem value="ACTIVE">Active Teams</MenuItem>
-                                    <MenuItem value="INACTIVE">Inactive Teams</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                    </Grid>
-                </Box>
-                
-                <StyledTable
-                    columns={coachColumns}
-                    data={tableData}
-                    maxHeight={600}
-                    headerBackground="primary.main"
-                    headerTextColor="white"
-                />
-            </Box>
+            <Panel header="Teams" more={`${filteredTeams.length} teams`}>
+                <DataTable minWidth={640}>
+                    <thead>
+                        <tr>
+                            <th className="lft stick">Team</th>
+                            <th className="lft">Conference</th>
+                            <th className="lft">Coaches</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredTeams.map((team) => (
+                            <tr key={team.name}>
+                                <td className="lft stick">
+                                    <Box className="teamcell">
+                                        <TeamMark team={teamsMap[team.name]} size={22} />
+                                        <span className="nm">{team.name}</span>
+                                    </Box>
+                                </td>
+                                <td className="lft"><ConferenceMark conference={team.conference} size={20} /></td>
+                                <td className="lft">
+                                    {rosterFor(team).length === 0 ? (
+                                        <Box component="span" sx={{ color: 'var(--text-dim)' }}>Vacant</Box>
+                                    ) : (
+                                        rosterFor(team).map((coach) => (
+                                            <Box key={coach.username} component="span" sx={coachChipSx}>
+                                                {coach.name}
+                                                <Box component="button" type="button" title={`Fire ${coach.name}`} onClick={() => setFireTarget({ team, coach })} sx={fireXSx}>&times;</Box>
+                                            </Box>
+                                        ))
+                                    )}
+                                </td>
+                                <td>
+                                    <Box component="button" type="button" onClick={() => handleHireCoach(team)} sx={hireBtnSx}>+ Hire</Box>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </DataTable>
+            </Panel>
 
             <Dialog open={hireDialogOpen} onClose={() => setHireDialogOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Hire Coach for {selectedTeam?.name}</DialogTitle>
@@ -381,97 +232,48 @@ const CoachManagement = ({ user }) => {
                             value={selectedUser}
                             onChange={(event, newValue) => setSelectedUser(newValue)}
                             renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    label="Select User"
-                                    placeholder="Start typing to search users..."
-                                    fullWidth
-                                    sx={{ mb: 2 }}
-                                />
+                                <TextField {...params} label="Select User" placeholder="Start typing to search users..." fullWidth sx={{ mb: 2 }} />
                             )}
                             filterOptions={(options, { inputValue }) => {
                                 const filterValue = inputValue.toLowerCase();
-                                return options.filter((option) =>
-                                    option.username.toLowerCase().includes(filterValue)
-                                );
+                                return options.filter((option) => option.username.toLowerCase().includes(filterValue));
                             }}
                         />
-                        
                         <FormControl fullWidth sx={{ mb: 2 }}>
                             <InputLabel>Coach Position</InputLabel>
-                            <Select
-                                value={selectedPosition}
-                                onChange={(e) => setSelectedPosition(e.target.value)}
-                                label="Coach Position"
-                            >
+                            <Select value={selectedPosition} onChange={(e) => setSelectedPosition(e.target.value)} label="Coach Position">
                                 <MenuItem value="HEAD_COACH">Head Coach</MenuItem>
                                 <MenuItem value="OFFENSIVE_COORDINATOR">Offensive Coordinator</MenuItem>
                                 <MenuItem value="DEFENSIVE_COORDINATOR">Defensive Coordinator</MenuItem>
                             </Select>
                         </FormControl>
-
-                        {dialogError && (
-                            <Alert severity="error" sx={{ mb: 2 }}>
-                                {dialogError}
-                            </Alert>
-                        )}
+                        {dialogError && <Alert severity="error" sx={{ mb: 2 }}>{dialogError}</Alert>}
                     </Box>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setHireDialogOpen(false)} disabled={processing}>
-                        Cancel
-                    </Button>
-                    <Button 
-                        onClick={handleHireInterimSubmit} 
-                        color="warning" 
-                        variant="contained"
-                        disabled={processing}
-                    >
-                        Hire Interim Coach
-                    </Button>
-                    <Button 
-                        onClick={handleHireSubmit} 
-                        color="primary" 
-                        variant="contained"
-                        disabled={processing}
-                    >
-                        Hire Coach
-                    </Button>
+                    <Button onClick={() => setHireDialogOpen(false)} disabled={processing}>Cancel</Button>
+                    <Button onClick={handleHireInterimSubmit} color="warning" variant="contained" disabled={processing}>Hire Interim Coach</Button>
+                    <Button onClick={handleHireSubmit} color="primary" variant="contained" disabled={processing}>Hire Coach</Button>
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={fireDialogOpen} onClose={() => setFireDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Fire Coach from {selectedTeam?.name}</DialogTitle>
+            <Dialog open={Boolean(fireTarget)} onClose={() => setFireTarget(null)} maxWidth="sm" fullWidth>
+                <DialogTitle>Fire {fireTarget?.coach.name} from {fireTarget?.team.name}?</DialogTitle>
                 <DialogContent>
-                    <Box sx={{ pt: 2 }}>
-                        <Typography>
-                            Are you sure you want to fire the current coach from {selectedTeam?.name}? 
-                            This action cannot be undone.
-                        </Typography>
-
-                        {dialogError && (
-                            <Alert severity="error" sx={{ mt: 2 }}>
-                                {dialogError}
-                            </Alert>
-                        )}
-                    </Box>
+                    <Typography>
+                        Are you sure you want to fire {fireTarget?.coach.name} ({formatPosition(fireTarget?.coach.position)}) from {fireTarget?.team.name}? This action cannot be undone.
+                    </Typography>
+                    {dialogError && <Alert severity="error" sx={{ mt: 2 }}>{dialogError}</Alert>}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setFireDialogOpen(false)} disabled={processing}>
-                        Cancel
-                    </Button>
-                    <Button 
-                        onClick={handleFireSubmit} 
-                        color="error" 
-                        variant="contained"
-                        disabled={processing}
-                    >
-                        Fire Coach
-                    </Button>
+                    <Button onClick={() => setFireTarget(null)} disabled={processing}>Cancel</Button>
+                    <Button onClick={handleFireSubmit} color="error" variant="contained" disabled={processing}>Fire Coach</Button>
                 </DialogActions>
             </Dialog>
-        </DashboardLayout>
+        </AdminLayout>
     );
 };
+
+CoachManagement.propTypes = { user: PropTypes.object };
 
 export default CoachManagement;

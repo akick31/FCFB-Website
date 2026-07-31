@@ -11,7 +11,7 @@ import {
 } from '../../../utils/gameUtils';
 import { getPreviousPlay } from '../../../api/playApi';
 import { getGameStatsByIdAndTeam } from '../../../api/gameStatsApi.jsx';
-import { conferences } from '../../constants/conferences';
+import { getConference } from '../../constants/conferences';
 import cfpLogo from '../../../assets/images/playoff.png';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:1313';
@@ -100,9 +100,7 @@ const GameTypeInfo = ({ game, homeTeamData }) => {
         ? (rawLogo.startsWith('http') ? rawLogo : `${API_BASE}/images/${rawLogo}`)
         : null;
     const bowlName = game.postseason_game_name;
-    const confData = homeTeamData?.conference
-        ? conferences.find(c => c.value === homeTeamData.conference)
-        : null;
+    const confData = homeTeamData?.conference ? getConference(homeTeamData.conference) : null;
 
     const logoBox = (src) =>
         src ? (
@@ -121,8 +119,8 @@ const GameTypeInfo = ({ game, homeTeamData }) => {
     );
 
     switch (gameType) {
-        case 'CONFERENCE_GAME': return label(confData?.label || 'Conference', confData?.logo);
-        case 'CONFERENCE_CHAMPIONSHIP': return label(`${confData?.label || 'Conf'} Championship`, confData?.logo);
+        case 'CONFERENCE_GAME': return label(confData?.label || 'Conference', confData?.logo_url);
+        case 'CONFERENCE_CHAMPIONSHIP': return label(`${confData?.label || 'Conf'} Championship`, confData?.logo_url);
         case 'PLAYOFFS': return label(bowlName || 'Playoffs', cfpLogo);
         case 'NATIONAL_CHAMPIONSHIP': return label('Natl Championship', postseasonLogo);
         case 'BOWL': return label(bowlName || 'Bowl Game', postseasonLogo);

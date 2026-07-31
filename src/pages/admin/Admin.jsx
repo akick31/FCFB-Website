@@ -1,266 +1,180 @@
 import React, { useState, useEffect } from 'react';
-import {
-    Chip,
-    Box,
-    Grid,
-    Typography,
-    Avatar,
-    Tooltip
-} from '@mui/material';
-import {
-    People,
-    SportsFootball,
-    EmojiEvents,
-    CheckCircle,
-    Cancel,
-    Headset
-} from '@mui/icons-material';
-import DashboardLayout from '../../components/layout/DashboardLayout';
-import StyledCard from '../../components/ui/StyledCard';
-import StyledTable from '../../components/ui/StyledTable';
+import { Box } from '@mui/material';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { getNewSignups } from '../../api/newSignupsApi';
+import PeopleIcon from '@mui/icons-material/People';
+import SportsFootballIcon from '@mui/icons-material/SportsFootball';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import HeadsetIcon from '@mui/icons-material/Headset';
+import AdminLayout from '../../components/layout/AdminLayout';
+import Panel from '../../components/ui/Panel';
+import DataTable from '../../components/ui/DataTable';
+import StatTile, { TileGrid } from '../../components/ui/StatTile';
+import TeamMark from '../../components/ui/TeamMark';
+import ConferenceMark from '../../components/ui/ConferenceMark';
+import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { getNewSignups, deleteNewSignup } from '../../api/newSignupsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
-import { formatPosition, formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
-import { conferences as conferencesList } from '../../components/constants/conferences';
-import { adminNavigationItems } from '../../config/adminNavigation.jsx';
+import { formatPosition, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
+
+const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', px: '8px', py: '3px', borderRadius: 'var(--r-sm)', lineHeight: 1 };
+
+const actionCardSx = { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', p: '18px', textAlign: 'center', cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', '&:hover': { transform: 'translateY(-2px)', borderColor: 'color-mix(in srgb, var(--brand) 50%, var(--line))' }, transition: 'transform 0.14s, border-color 0.14s' };
+
+const QUICK_ACTIONS = [
+    { label: 'Create game', path: '/admin/game-management', icon: <SportsFootballIcon sx={{ fontSize: 32, color: 'var(--field)' }} /> },
+    { label: 'Manage teams', path: '/admin/team-management', icon: <EmojiEventsIcon sx={{ fontSize: 32, color: 'var(--gold)' }} /> },
+    { label: 'Manage users', path: '/admin/user-management', icon: <PeopleIcon sx={{ fontSize: 32, color: 'var(--brand)' }} /> },
+    { label: 'Manage coaches', path: '/admin/coach-management', icon: <HeadsetIcon sx={{ fontSize: 32, color: 'var(--text-muted)' }} /> },
+];
 
 const Admin = ({ user }) => {
     const navigate = useNavigate();
+    const teamsMap = useTeamsMap();
     const [newSignups, setNewSignups] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [openTeams, setOpenTeams] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [clearingId, setClearingId] = useState(null);
 
     useEffect(() => {
-        const fetchNewSignups = async () => {
-            try {
-                const response = await getNewSignups();
-                setNewSignups(response);
-                setLoading(false);
-            } catch (error) {
-                console.error('Failed to fetch new signups:', error);
-                setLoading(false);
-            }
-        };
-
-        fetchNewSignups();
+        Promise.all([getNewSignups(), getAllTeams()])
+            .then(([signups, teams]) => {
+                setNewSignups(signups);
+                setOpenTeams(teams.filter((team) => !team.is_taken && team.active && isRealTeam(team)));
+            })
+            .catch((error) => console.error('Failed to load admin dashboard data:', error))
+            .finally(() => setLoading(false));
     }, []);
 
-    useEffect(() => {
-        const fetchOpenTeams = async () => {
-            try {
-                const response = await getAllTeams();
-                setOpenTeams(response);
-            } catch (error) {
-                console.error('Failed to fetch open teams:', error);
-            }
-        };
-
-        fetchOpenTeams();
-    }, []);
-
-    const newSignupColumns = [
-        { id: 'username', label: 'Username', width: 70 },
-        { id: 'coach_name', label: 'Coach', width: 80 },
-        { id: 'discord_tag', label: 'Discord', width: 70 },
-        { id: 'position', label: 'Position', width: 80 },
-        { id: 'team_choice_one', label: 'Team 1', width: 60 },
-        { id: 'team_choice_two', label: 'Team 2', width: 60 },
-        { id: 'team_choice_three', label: 'Team 3', width: 60 },
-        { id: 'offensive_playbook', label: 'Offense', width: 60 },
-        { id: 'defensive_playbook', label: 'Defense', width: 60 },
-        { id: 'approved', label: 'Status', width: 50 },
-    ];
-
-    const openTeamColumns = [
-        { id: 'name', label: 'Team Name', width: 120 },
-        { id: 'conference', label: 'Conference', width: 100 },
-        { id: 'status', label: 'Status', width: 80 },
-    ];
-
-    const transformedNewSignups = newSignups.map(signup => ({
-        ...signup,
-        offensive_playbook: formatOffensivePlaybook(signup.offensive_playbook),
-        defensive_playbook: formatDefensivePlaybook(signup.defensive_playbook),
-        coach_position: formatPosition(signup.coach_position),
-        approved: signup.approved ? (
-            <CheckCircle sx={{ color: 'success.main', fontSize: 20 }} />
-        ) : (
-            <Cancel sx={{ color: 'error.main', fontSize: 20 }} />
-        )
-    }));
-
-    const transformedOpenTeams = openTeams
-        .filter(team => !team.is_taken && team.active && isRealTeam(team))
-        .map(team => ({
-            ...team,
-            conference: (() => {
-                const confData = conferencesList.find(c => c.value === team.conference);
-                return confData?.logo ? (
-                    <Tooltip title={confData.label} arrow>
-                        <Avatar src={confData.logo} sx={{ width: 24, height: 24 }} variant="rounded" />
-                    </Tooltip>
-                ) : (formatConference(team.conference) || 'None');
-            })(),
-            status: (
-                <Chip
-                    label="Open"
-                    color="success"
-                    size="small"
-                />
-            )
-    }));
-
-    const navigationItems = adminNavigationItems;
+    const handleClearSignup = async (id) => {
+        setClearingId(id);
+        try {
+            await deleteNewSignup(id);
+            setNewSignups((prev) => prev.filter((signup) => signup.id !== id));
+        } catch (error) {
+            console.error('Failed to clear signup:', error);
+        } finally {
+            setClearingId(null);
+        }
+    };
 
     if (loading) {
         return (
-            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Typography variant="h4" sx={{ color: 'primary.main' }}>
-                    Loading...
-                </Typography>
-            </Box>
+            <AdminLayout title="Admin dashboard">
+                <Box sx={{ p: 4, textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</Box>
+            </AdminLayout>
         );
     }
 
     return (
-        <DashboardLayout
-            title="Admin Dashboard"
-            navigationItems={navigationItems}
-            hideHeader={true}
-            textColor="primary.main"
-        >
-            <Box sx={{ p: 3 }}>
-                <Box sx={{ mb: 4 }}>
-                    <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, color: 'primary.main' }}>
-                        Welcome back, {user?.username || 'Admin'}!
-                    </Typography>
-                    <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                        Here's what's happening with FCFB today.
-                    </Typography>
-                </Box>
-
-                <Grid container spacing={4}>
-                    <Grid item xs={12}>
-                        <StyledCard>
-                            <Box sx={{ p: 3 }}>
-                                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
-                                    New Signups
-                                </Typography>
-                                <StyledTable
-                                    columns={newSignupColumns}
-                                    data={transformedNewSignups}
-                                    maxHeight={400}
-                                    compact={true}
-                                    onRowClick={() => {
-                                    }}
-                                />
-                            </Box>
-                        </StyledCard>
-                    </Grid>
-
-                    <Grid item xs={12}>
-                        <StyledCard>
-                            <Box sx={{ p: 3 }}>
-                                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
-                                    Open Teams
-                                </Typography>
-                                <StyledTable
-                                    columns={openTeamColumns}
-                                    data={transformedOpenTeams}
-                                    maxHeight={400}
-                                    compact={true}
-                                    onRowClick={() => {
-                                    }}
-                                />
-                            </Box>
-                        </StyledCard>
-                    </Grid>
-
-                    <Grid item xs={12}>
-                        <StyledCard>
-                            <Box sx={{ p: 3 }}>
-                                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
-                                    Quick Actions
-                                </Typography>
-                                <Grid container spacing={2}>
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <StyledCard
-                                            hover
-                                            component="a"
-                                            href="/admin/game-management"
-                                            onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/admin/game-management'); } }}
-                                            sx={{
-                                                textAlign: 'center',
-                                                p: 2,
-                                                cursor: 'pointer',
-                                                textDecoration: 'none', color: 'inherit',
-                                            }}
-                                        >
-                                            <SportsFootball sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
-                                            <Typography variant="h6">Create Game</Typography>
-                                        </StyledCard>
-                                    </Grid>
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <StyledCard
-                                            hover
-                                            component="a"
-                                            href="/admin/team-management"
-                                            onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/admin/team-management'); } }}
-                                            sx={{
-                                                textAlign: 'center',
-                                                p: 2,
-                                                cursor: 'pointer',
-                                                textDecoration: 'none', color: 'inherit',
-                                            }}
-                                        >
-                                            <EmojiEvents sx={{ fontSize: 40, color: 'secondary.main', mb: 1 }} />
-                                            <Typography variant="h6">Manage Teams</Typography>
-                                        </StyledCard>
-                                    </Grid>
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <StyledCard
-                                            hover
-                                            component="a"
-                                            href="/admin/user-management"
-                                            onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/admin/user-management'); } }}
-                                            sx={{
-                                                textAlign: 'center',
-                                                p: 2,
-                                                cursor: 'pointer',
-                                                textDecoration: 'none', color: 'inherit',
-                                            }}
-                                        >
-                                            <People sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-                                            <Typography variant="h6">Manage Users</Typography>
-                                        </StyledCard>
-                                    </Grid>
-                                    <Grid item xs={12} sm={6} md={2.4}>
-                                        <StyledCard
-                                            hover
-                                            component="a"
-                                            href="/admin/coach-management"
-                                            onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/admin/coach-management'); } }}
-                                            sx={{
-                                                textAlign: 'center',
-                                                p: 2,
-                                                cursor: 'pointer',
-                                                textDecoration: 'none', color: 'inherit',
-                                            }}
-                                        >
-                                            <Headset sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
-                                            <Typography variant="h6">Manage Coaches</Typography>
-                                        </StyledCard>
-                                    </Grid>
-                                </Grid>
-                            </Box>
-                        </StyledCard>
-                    </Grid>
-                </Grid>
+        <AdminLayout title="Admin dashboard">
+            <Box sx={{ color: 'var(--text-muted)', fontSize: '0.85rem', mb: '16px' }}>
+                Welcome back, {user?.username || 'Admin'}.
             </Box>
-        </DashboardLayout>
+
+            <TileGrid minTile={160} sx={{ mb: '16px' }}>
+                <StatTile label="Pending signups" value={newSignups.length} />
+                <StatTile label="Open teams" value={openTeams.length} />
+            </TileGrid>
+
+            <Panel header="New signups" sx={{ mb: '16px' }}>
+                {newSignups.length === 0 ? (
+                    <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No pending signups.</Box>
+                ) : (
+                    <DataTable minWidth={760}>
+                        <thead>
+                            <tr>
+                                <th className="lft stick">Username</th>
+                                <th className="lft">Coach</th>
+                                <th className="lft">Discord</th>
+                                <th className="lft">Position</th>
+                                <th className="lft">Team choices</th>
+                                <th className="lft">Offense</th>
+                                <th className="lft">Defense</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {newSignups.map((signup) => (
+                                <tr key={signup.id}>
+                                    <td className="lft stick">@{signup.username}</td>
+                                    <td className="lft">{signup.coach_name}</td>
+                                    <td className="lft">{signup.discord_tag}</td>
+                                    <td className="lft">{formatPosition(signup.position)}</td>
+                                    <td className="lft">{[signup.team_choice_one, signup.team_choice_two, signup.team_choice_three].filter(Boolean).join(', ')}</td>
+                                    <td className="lft">{formatOffensivePlaybook(signup.offensive_playbook)}</td>
+                                    <td className="lft">{formatDefensivePlaybook(signup.defensive_playbook)}</td>
+                                    <td>
+                                        <Box component="span" sx={{ ...pillSx, background: signup.approved ? 'rgba(55,192,125,0.15)' : 'var(--surface-2)', color: signup.approved ? 'var(--field)' : 'var(--text-muted)' }}>
+                                            {signup.approved ? 'Approved' : 'Pending'}
+                                        </Box>
+                                    </td>
+                                    <td>
+                                        <Box
+                                            component="button"
+                                            type="button"
+                                            disabled={clearingId === signup.id}
+                                            onClick={(event) => { event.stopPropagation(); handleClearSignup(signup.id); }}
+                                            sx={{ border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--live)', borderRadius: 'var(--r-sm)', px: '9px', py: '5px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--live)' }, '&:disabled': { opacity: 0.6, cursor: 'default' } }}
+                                        >
+                                            {clearingId === signup.id ? 'Clearing...' : 'Clear'}
+                                        </Box>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </DataTable>
+                )}
+            </Panel>
+
+            <Panel header="Open teams" sx={{ mb: '16px' }}>
+                {openTeams.length === 0 ? (
+                    <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No open teams.</Box>
+                ) : (
+                    <DataTable minWidth={480}>
+                        <thead>
+                            <tr>
+                                <th className="lft stick">Team</th>
+                                <th className="lft">Conference</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {openTeams.map((team) => (
+                                <tr key={team.name} onClick={() => navigate(`/team-details/${teamsMap[team.name]?.id}`)}>
+                                    <td className="lft stick">
+                                        <Box className="teamcell">
+                                            <TeamMark team={teamsMap[team.name]} size={22} />
+                                            <span className="nm">{team.name}</span>
+                                        </Box>
+                                    </td>
+                                    <td className="lft"><ConferenceMark conference={team.conference} size={20} /></td>
+                                    <td>
+                                        <Box component="span" sx={{ ...pillSx, background: 'transparent', color: 'var(--field)', border: '1px solid color-mix(in srgb, var(--field) 55%, var(--line))' }}>Open</Box>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </DataTable>
+                )}
+            </Panel>
+
+            <Panel header="Quick actions">
+                <Box sx={{ p: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+                    {QUICK_ACTIONS.map((action) => (
+                        <Box key={action.path} onClick={() => navigate(action.path)} sx={actionCardSx}>
+                            {action.icon}
+                            <Box sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{action.label}</Box>
+                        </Box>
+                    ))}
+                </Box>
+            </Panel>
+        </AdminLayout>
     );
 };
+
+Admin.propTypes = { user: PropTypes.object };
 
 export default Admin;

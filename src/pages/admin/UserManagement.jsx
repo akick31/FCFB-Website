@@ -1,256 +1,105 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    Box,
-    Typography,
-    CircularProgress,
-    Chip,
-    IconButton,
-    Tooltip,
-    TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Grid
-} from '@mui/material';
-import { Edit, Search } from '@mui/icons-material';
-import DashboardLayout from '../../components/layout/DashboardLayout';
-import { getAllUsers } from '../../api/userApi';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, CircularProgress } from '@mui/material';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { adminNavigationItems } from '../../config/adminNavigation.jsx';
-import StyledTable from '../../components/ui/StyledTable';
+import AdminLayout from '../../components/layout/AdminLayout';
+import Panel from '../../components/ui/Panel';
+import DataTable from '../../components/ui/DataTable';
+import SelectPill from '../../components/ui/SelectPill';
+import { getAllUsers } from '../../api/userApi';
+
+const searchSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', font: 'inherit', fontSize: '0.82rem', minWidth: 210, boxSizing: 'border-box' };
+const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
+const editBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', py: '5px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+
+const ROLE_OPTIONS = [
+    { value: 'ALL', label: 'All roles' },
+    { value: 'ADMIN', label: 'Admin' },
+    { value: 'CONFERENCE_COMMISSIONER', label: 'Conference commissioner' },
+    { value: 'USER', label: 'User' },
+];
 
 const UserManagement = ({ user }) => {
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
-    const [filteredUsers, setFilteredUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('ALL');
-    const [statusFilter, setStatusFilter] = useState('ALL');
-
-    const navigationItems = adminNavigationItems;
 
     useEffect(() => {
-        if (!user || !user.role) {
-            setLoading(true);
-            return;
-        }
-
-        if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
-            navigate('*');
-        } else {
-            setLoading(false);
-        }
+        if (!user || !user.role) return;
+        if (user.role !== 'ADMIN' && user.role !== 'CONFERENCE_COMMISSIONER') navigate('*');
     }, [user, navigate]);
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const response = await getAllUsers();
-                setUsers(response);
-                setLoading(false);
-            } catch (error) {
-                console.error("Failed to fetch users:", error);
-                setLoading(false);
-            }
-        };
-
-        fetchUsers();
+        getAllUsers()
+            .then(setUsers)
+            .catch((error) => console.error('Failed to fetch users:', error))
+            .finally(() => setLoading(false));
     }, []);
 
-    useEffect(() => {
+    const filteredUsers = useMemo(() => {
         let filtered = users;
-
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
-            filtered = filtered.filter(user =>
-                user.username?.toLowerCase().includes(searchLower) ||
-                user.team?.toLowerCase().includes(searchLower)
-            );
+            filtered = filtered.filter((row) =>
+                row.username?.toLowerCase().includes(searchLower) ||
+                row.coach_name?.toLowerCase().includes(searchLower) ||
+                row.team?.toLowerCase().includes(searchLower) ||
+                row.discord_tag?.toLowerCase().includes(searchLower));
         }
-
-        if (roleFilter !== 'ALL') {
-            filtered = filtered.filter(user => user.role === roleFilter);
-        }
-
-        if (statusFilter !== 'ALL') {
-            if (statusFilter === 'ACTIVE') {
-                filtered = filtered.filter(user => user.isActive !== false);
-            } else if (statusFilter === 'INACTIVE') {
-                filtered = filtered.filter(user => user.isActive === false);
-            } else if (statusFilter === 'UNVERIFIED') {
-                filtered = filtered.filter(user => user.isVerified === false);
-            }
-        }
-
-        setFilteredUsers(filtered);
-    }, [users, searchTerm, roleFilter, statusFilter]);
-
-    const handleUserClick = (row) => {
-        if (row?.username) {
-            navigate(`/user-details/${row.username}`);
-        }
-    };
-
-    const getRoleColor = (role) => {
-        switch (role) {
-            case 'ADMIN':
-                return 'error';
-            case 'CONFERENCE_COMMISSIONER':
-                return 'warning';
-            case 'COACH':
-                return 'success';
-            default:
-                return 'default';
-        }
-    };
-
-    const getStatusColor = (user) => {
-        if (user.isActive === false) return 'error';
-        if (user.isVerified === false) return 'warning';
-        return 'success';
-    };
-
-    const getStatusText = (user) => {
-        if (user.isActive === false) return 'Inactive';
-        if (user.isVerified === false) return 'Unverified';
-        return 'Active';
-    };
-
-    const userColumns = [
-        { id: 'username', label: 'Username', width: 120 },
-        { id: 'role', label: 'Role', width: 120 },
-        { id: 'team', label: 'Team', width: 100 },
-        { id: 'status', label: 'Status', width: 100 },
-        { id: 'actions', label: '', width: 80 },
-    ];
-
-    const tableData = filteredUsers.map(user => ({
-        ...user,
-        role: (
-            <Chip
-                label={user.role || 'USER'}
-                color={getRoleColor(user.role)}
-                size="small"
-            />
-        ),
-        team: user.team || 'No Team',
-        status: (
-            <Chip
-                label={getStatusText(user)}
-                color={getStatusColor(user)}
-                size="small"
-            />
-        ),
-        actions: (
-            <Tooltip title="Edit User">
-                <IconButton
-                    size="small"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/user-details/${user.username}`);
-                    }}
-                    sx={{ color: 'primary.main' }}
-                >
-                    <Edit fontSize="small" />
-                </IconButton>
-            </Tooltip>
-        )
-    }));
+        if (roleFilter !== 'ALL') filtered = filtered.filter((row) => row.role === roleFilter);
+        return filtered;
+    }, [users, searchTerm, roleFilter]);
 
     if (loading) {
         return (
-            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <CircularProgress />
-            </Box>
+            <AdminLayout title="User Management">
+                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
+            </AdminLayout>
         );
     }
 
     return (
-        <DashboardLayout
+        <AdminLayout
             title="User Management"
-            navigationItems={navigationItems}
-            hideHeader={true}
-            textColor="primary.main"
+            controls={(
+                <>
+                    <Box component="input" placeholder="Search username, coach, team, or discord..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
+                    <SelectPill label="Role" value={roleFilter} onChange={setRoleFilter} options={ROLE_OPTIONS} sx={pillHeightSx} />
+                </>
+            )}
         >
-            <Box sx={{ p: 3 }}>
-                <Typography variant="h4" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>
-                    User Management
-                </Typography>
-
-                <Box sx={{ mb: 3 }}>
-                    <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                placeholder="Search username or team..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                InputProps={{
-                                    startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
-                                }}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        color: 'primary.main',
-                                        '& fieldset': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                    }
-                                }}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth>
-                                <InputLabel>Role</InputLabel>
-                                <Select
-                                    value={roleFilter}
-                                    onChange={(e) => setRoleFilter(e.target.value)}
-                                    label="Role"
-                                    sx={{
-                                        color: 'primary.main',
-                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                    }}
-                                >
-                                    <MenuItem value="ALL">All Roles</MenuItem>
-                                    <MenuItem value="ADMIN">Admin</MenuItem>
-                                    <MenuItem value="CONFERENCE_COMMISSIONER">Conference Commissioner</MenuItem>
-                                    <MenuItem value="COACH">Coach</MenuItem>
-                                    <MenuItem value="USER">User</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth>
-                                <InputLabel>Status</InputLabel>
-                                <Select
-                                    value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value)}
-                                    label="Status"
-                                    sx={{
-                                        color: 'primary.main',
-                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                    }}
-                                >
-                                    <MenuItem value="ALL">All Statuses</MenuItem>
-                                    <MenuItem value="ACTIVE">Active</MenuItem>
-                                    <MenuItem value="INACTIVE">Inactive</MenuItem>
-                                    <MenuItem value="UNVERIFIED">Unverified</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                    </Grid>
-                </Box>
-                
-                <StyledTable
-                    columns={userColumns}
-                    data={tableData}
-                    maxHeight={600}
-                    onRowClick={handleUserClick}
-                    headerBackground="primary.main"
-                    headerTextColor="white"
-                />
-            </Box>
-        </DashboardLayout>
+            <Panel header="Users" more={`${filteredUsers.length} users`}>
+                <DataTable minWidth={680}>
+                    <thead>
+                        <tr>
+                            <th className="lft stick">Username</th>
+                            <th className="lft">Coach</th>
+                            <th className="lft">Discord</th>
+                            <th className="lft">Team</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredUsers.map((row) => (
+                            <tr key={row.id} onClick={() => navigate(`/user-details/${row.username}`)}>
+                                <td className="lft stick">@{row.username}</td>
+                                <td className="lft">{row.coach_name}</td>
+                                <td className="lft">{row.discord_tag}</td>
+                                <td className="lft">{row.team || 'Free agent'}</td>
+                                <td>
+                                    <Box component="button" type="button" onClick={(e) => { e.stopPropagation(); navigate(`/admin/edit-coach/${row.username}`); }} sx={editBtnSx}>Edit</Box>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </DataTable>
+            </Panel>
+        </AdminLayout>
     );
 };
+
+UserManagement.propTypes = { user: PropTypes.object };
 
 export default UserManagement;

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
-import { updateUsername, updateEmail, updatePassword, updateCoachName } from '../../api/userApi';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { updateUsername, updateEmail, updatePassword, updateCoachName, getUserById } from '../../api/userApi';
 import { logout } from '../../api/authApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../theme/ColorModeContext';
@@ -108,11 +108,57 @@ const PasswordRow = ({ onSave }) => {
 
 PasswordRow.propTypes = { onSave: PropTypes.func.isRequired };
 
+const DiscordRow = ({ user }) => {
+    const [notice, setNotice] = useState('');
+
+    const handleLink = () => {
+        const clientId = import.meta.env.VITE_CLIENT_ID;
+        const redirectUri = import.meta.env.VITE_BASE_URL;
+        const token = localStorage.getItem('token');
+        if (!clientId || !token) {
+            setNotice('Discord sign-in is not configured yet.');
+            return;
+        }
+        const discordOAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify&state=${encodeURIComponent(token)}`;
+        window.location.href = discordOAuthUrl;
+    };
+
+    return (
+        <Box sx={rowSx}>
+            <Box>
+                <Box sx={lblSx}>Discord</Box>
+                <Box sx={descSx}>{user.discord_id ? `Linked${user.discord_tag ? ` as ${user.discord_tag}` : ''}` : 'Not linked'}</Box>
+                {notice && <Box sx={{ ...descSx, color: 'var(--gold)', mt: 0.5 }}>{notice}</Box>}
+            </Box>
+            <Box component="button" sx={ctrlSx} onClick={handleLink}>{user.discord_id ? 'Relink' : 'Link Discord account'}</Box>
+        </Box>
+    );
+};
+
+DiscordRow.propTypes = { user: PropTypes.object.isRequired };
+
 const Profile = ({ user, setUser }) => {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
     const { mode, setMode } = useColorMode();
     useSeo({ title: 'Profile & settings | Fake College Football', description: 'Manage your Fake College Football account, settings, and API access.' });
+
+    useEffect(() => {
+        if (!user?.id) return;
+        const linked = searchParams.get('discordLinked');
+        const discordError = searchParams.get('discordError');
+        if (!linked && !discordError) return;
+        if (linked) {
+            getUserById(user.id).then((fresh) => {
+                setUser?.((prev) => ({ ...prev, discord_id: fresh.discord_id, discord_tag: fresh.discord_tag }));
+            }).catch(() => {});
+        }
+        const next = new URLSearchParams(searchParams);
+        next.delete('discordLinked');
+        next.delete('discordError');
+        setSearchParams(next, { replace: true });
+    }, [user?.id]);
 
     if (!user) {
         return (
@@ -148,12 +194,7 @@ const Profile = ({ user, setUser }) => {
                         <FieldRow label="Username" desc={user.username} onSave={async (value) => { await updateUsername(user.id, value); patch({ username: value }); }} />
                         <FieldRow label="Email" type="email" desc="Change your account email" onSave={async (value) => { await updateEmail(user.id, value); }} />
                         <PasswordRow onSave={(current, next) => updatePassword(user.id, current, next)} />
-                        <Box sx={rowSx}>
-                            <Box>
-                                <Box sx={lblSx}>Discord</Box>
-                                <Box sx={descSx}>{user.discord_id ? `Linked${user.discord_tag ? ` as ${user.discord_tag}` : ''}` : 'Not linked'}</Box>
-                            </Box>
-                        </Box>
+                        <DiscordRow user={user} />
                     </Panel>
 
                     <ApiKeyPanel />

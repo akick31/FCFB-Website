@@ -11,7 +11,7 @@ import TeamMark from '../../components/ui/TeamMark';
 import { getFilteredRecords } from '../../api/recordsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
-import { conferences, conferenceLabel } from '../../components/constants/conferences';
+import { useConferencesMap, activeConferenceList, conferenceLabel } from '../../components/constants/conferences';
 import { recordGroup, recordOrder, recordLabel, RECORD_GROUP_ORDER, SEASON_EXCLUDED_RECORDS, EXCLUDED_RECORDS } from '../../utils/recordCategories';
 import { useSeo } from '../../hooks/useSeo';
 
@@ -87,11 +87,12 @@ const RecordsBoard = ({ user }) => {
     const { tab } = useParams();
     const navigate = useNavigate();
     const teamsMap = useTeamsMap();
+    const conferencesMap = useConferencesMap();
     const activeTab = TAB_VALUES.includes(tab) ? tab : 'single_game';
 
     const [scope, setScope] = useState('league');
     const [teams, setTeams] = useState([]);
-    const [conference, setConference] = useState(conferences[0]?.value);
+    const [conference, setConference] = useState('');
     const [team, setTeam] = useState('');
     const [rows, setRows] = useState({ highest: [], lowest: [] });
     const [category, setCategory] = useState('');
@@ -116,6 +117,11 @@ const RecordsBoard = ({ user }) => {
         })();
         return () => { active = false; };
     }, [user?.team]);
+
+    useEffect(() => {
+        if (conference || Object.keys(conferencesMap).length === 0) return;
+        setConference(activeConferenceList()[0]?.code || '');
+    }, [conferencesMap, conference]);
 
     const scopeValue = scope === 'conference' ? conference : scope === 'team' ? team : null;
     const scopeReady = scope === 'league' || (scope === 'conference' && conference) || (scope === 'team' && team);
@@ -179,7 +185,7 @@ const RecordsBoard = ({ user }) => {
             <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                 <SegTabs value={activeTab} onChange={(value) => navigate(`/records/${value}`)} options={RECORD_TABS} ariaLabel="Record type" />
                 {scope === 'conference' && (
-                    <SelectPill label="Conference" value={conference} onChange={setConference} options={conferences.map((entry) => ({ value: entry.value, label: entry.label }))} sx={{ height: 38 }} />
+                    <SelectPill label="Conference" value={conference} onChange={setConference} options={activeConferenceList().map((entry) => ({ value: entry.code, label: entry.label }))} sx={{ height: 38 }} />
                 )}
                 {scope === 'team' && teams.length > 0 && (
                     <SelectPill label="Team" value={team} onChange={setTeam} options={teams.map((entry) => ({ value: entry.name, label: entry.name }))} sx={{ height: 38 }} />

@@ -4,6 +4,8 @@ export { default as GameManagement } from './GameManagement';
 export { default as TeamManagement } from './TeamManagement';
 export { default as EditTeam } from './EditTeam';
 export { default as EditCoach } from './EditCoach';
+export { default as AdminConferences } from './AdminConferences';
+export { default as AdminConferenceDetail } from './AdminConferenceDetail';
 export { default as CoachManagement } from './CoachManagement';
 export { default as CoachTransactionLog } from './CoachTransactionLog';
 export { default as EditGame } from './EditGame';

@@ -28,7 +28,7 @@ import { getFilteredConferenceStats } from '../../api/conferenceStatsApi';
 import { getFilteredLeagueStats } from '../../api/leagueStatsApi';
 import { getFilteredPlaybookStats } from '../../api/playbookStatsApi';
 import { getCurrentSeasonOrLatest } from '../../api/seasonApi';
-import { conferences } from '../../components/constants/conferences';
+import { useConferencesMap, activeConferenceList, getConference } from '../../components/constants/conferences';
 import { offensivePlaybooks } from '../../components/constants/offensivePlaybooks';
 import { defensivePlaybooks } from '../../components/constants/defensivePlaybooks';
 import { formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
@@ -40,6 +40,8 @@ const TAB_SLUGS = ['conference', 'league', 'playbook'];
 const TAB_FROM_SLUG = { conference: 0, league: 1, playbook: 2 };
 
 const LeagueStats = () => {
+    useConferencesMap();
+    const conferences = activeConferenceList();
     useSeo(ROUTE_META['/league-stats']);
 
     const { tab, season: seasonParam, p1, p2 } = useParams();
@@ -361,10 +363,10 @@ const LeagueStats = () => {
                                     >
                                         <MenuItem value="">All Conferences</MenuItem>
                                         {conferences.map((conference) => (
-                                            <MenuItem key={conference.value} value={conference.value}>
+                                            <MenuItem key={conference.code} value={conference.code}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                    {conference.logo && (
-                                                        <Avatar src={conference.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                                                    {conference.logo_url && (
+                                                        <Avatar src={conference.logo_url} sx={{ width: 20, height: 20 }} variant="rounded" />
                                                     )}
                                                     {conference.label}
                                                 </Box>
@@ -425,9 +427,9 @@ const LeagueStats = () => {
                                                 <TableCell sx={{ fontSize: '0.75rem' }}>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                         {(() => {
-                                                            const conf = conferences.find(c => c.value === stat.conference);
-                                                            return conf?.logo ? (
-                                                                <Avatar src={conf.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                                                            const conf = getConference(stat.conference);
+                                                            return conf?.logo_url ? (
+                                                                <Avatar src={conf.logo_url} sx={{ width: 20, height: 20 }} variant="rounded" />
                                                             ) : null;
                                                         })()}
                                                         <Chip

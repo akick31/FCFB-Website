@@ -14,35 +14,6 @@ export const DEFENSIVE_PLAYBOOKS = [
     'THREE_THREE_FIVE'
 ];
 
-export const CONFERENCES = [
-    'BIG_12',
-    'SEC',
-    'ACC',
-    'PAC_12',
-    'BIG_TEN',
-    'AAC',
-    'CUSA',
-    'MAC',
-    'MWC',
-    'SUN_BELT',
-    'SOUTHLAND',
-    'MISSOURI_VALLEY',
-    'BIG_SKY',
-    'COLONIAL',
-    'OHIO_VALLEY',
-    'PATRIOT',
-    'NORTHEAST',
-    'PIONEER',
-    'IVY',
-    'INDEPENDENT',
-    'FCS_INDEPENDENT',
-    'D2',
-    'D3',
-    'NAIA',
-    'FAKE_TEAM',
-    'FBS_INDEPENDENT'
-];
-
 export const SUBDIVISIONS = [
     'FBS',
     'FCS',

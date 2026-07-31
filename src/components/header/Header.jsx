@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { logout } from '../../api/authApi';
 import { getTeamByName } from '../../api/teamApi';
+import { useConferencesMap } from '../constants/conferences';
 import CommandBar from './CommandBar';
 import LiveTicker from './LiveTicker';
 import MobileNavDrawer from './MobileNavDrawer';
@@ -12,6 +13,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
     const navigate = useNavigate();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [teamLogo, setTeamLogo] = useState(null);
+    useConferencesMap();
 
     useEffect(() => {
         if (!user?.team) {

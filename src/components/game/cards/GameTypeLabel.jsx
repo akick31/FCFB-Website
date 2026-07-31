@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
-import { conferences } from '../../constants/conferences';
+import { getConference } from '../../constants/conferences';
 import PlayoffLogo from '../../ui/PlayoffLogo';
 
 const PLAYOFF_ROUNDS = { 1: 'First Round', 2: 'Second Round', 3: 'Quarterfinal', 4: 'Semifinal' };
@@ -12,7 +12,7 @@ const LogoImg = ({ src }) =>
 LogoImg.propTypes = { src: PropTypes.string };
 
 const resolve = (game, homeTeam) => {
-    const conference = conferences.find((c) => c.value === homeTeam?.conference);
+    const conference = getConference(homeTeam?.conference);
     switch (game.game_type) {
         case 'NATIONAL_CHAMPIONSHIP':
             return { node: <PlayoffLogo size={16} />, text: 'National Championship' };
@@ -21,13 +21,13 @@ const resolve = (game, homeTeam) => {
         case 'BOWL':
             return { logo: game.postseason_game_logo || null, text: game.postseason_game_name || 'Bowl' };
         case 'CONFERENCE_CHAMPIONSHIP':
-            return { logo: conference?.logo || null, text: 'Championship Game' };
+            return { logo: conference?.logo_url || null, text: 'Championship Game' };
         case 'CONFERENCE_GAME':
-            return { logo: conference?.logo || null, text: 'Conference Game' };
+            return { logo: conference?.logo_url || null, text: 'Conference Game' };
         case 'OUT_OF_CONFERENCE':
             return { logo: null, text: 'Out of Conference' };
         default:
-            return { logo: conference?.logo || null, text: conference?.label || 'Game' };
+            return { logo: conference?.logo_url || null, text: conference?.label || 'Game' };
     }
 };
 

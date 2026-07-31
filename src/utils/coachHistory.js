@@ -40,6 +40,27 @@ export const buildCoachStints = (transactions) => {
         .sort((a, b) => timeOf(b.startDate) - timeOf(a.startDate));
 };
 
+export const currentRosterByTeam = (transactions) => {
+    const sorted = [...transactions].sort((a, b) => timeOf(a.transaction_date) - timeOf(b.transaction_date));
+    const roster = {};
+
+    sorted.forEach((entry) => {
+        const team = entry.team;
+        const type = (entry.transaction || '').toUpperCase();
+        const position = entry.position || 'HEAD_COACH';
+        const coaches = Array.isArray(entry.coach) ? entry.coach : [entry.coach];
+        if (!roster[team]) roster[team] = {};
+
+        if (type === 'HIRED' || type === 'HIRED_INTERIM') {
+            coaches.forEach((username) => { roster[team][username] = { position }; });
+        } else if (type === 'FIRED') {
+            coaches.forEach((username) => { delete roster[team][username]; });
+        }
+    });
+
+    return roster;
+};
+
 export const formatStintDate = (dateStr) => {
     if (!dateStr) return 'Present';
     const parsed = new Date(dateStr);

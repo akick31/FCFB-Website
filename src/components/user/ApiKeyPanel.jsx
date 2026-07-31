@@ -55,7 +55,7 @@ const ApiKeyPanel = () => {
 
                 {apiKey ? (
                     <>
-                        <Alert severity="warning" sx={{ mb: 1.5 }}>Copy this key now — it won&apos;t be shown again.</Alert>
+                        <Alert severity="warning" sx={{ mb: 1.5 }}>Copy this key now. It won&apos;t be shown again.</Alert>
                         <Box sx={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                             <Box component="code" sx={{ flex: '1 1 260px', minWidth: 0, overflowX: 'auto', whiteSpace: 'nowrap', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', py: '9px', fontSize: '0.8rem' }}>
                                 {apiKey}

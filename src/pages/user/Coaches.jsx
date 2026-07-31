@@ -154,7 +154,7 @@ const Coaches = () => {
                                             <span className="nm">{user.team}</span>
                                         </Box>
                                     ) : (
-                                        <Box sx={{ color: 'var(--text-dim)' }}>—</Box>
+                                        <Box sx={{ color: 'var(--text-dim)' }}>-</Box>
                                     )}
                                 </td>
                                 <td className="lft">{formatPosition(user.position)}</td>

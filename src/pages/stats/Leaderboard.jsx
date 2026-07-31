@@ -28,11 +28,13 @@ import {
 import { getLeaderboard } from '../../api/seasonStatsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
-import { conferences } from '../../components/constants/conferences';
+import { useConferencesMap, activeConferenceList, getConference } from '../../components/constants/conferences';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
 
 const Leaderboard = () => {
+    useConferencesMap();
+    const conferences = activeConferenceList();
     useSeo(ROUTE_META['/leaderboard']);
 
     const [leaderboard, setLeaderboard] = useState([]);
@@ -243,10 +245,10 @@ const Leaderboard = () => {
                                     >
                                         <MenuItem value="">All Conferences</MenuItem>
                                         {conferences.map((conference) => (
-                                            <MenuItem key={conference.value} value={conference.value}>
+                                            <MenuItem key={conference.code} value={conference.code}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                    {conference.logo && (
-                                                        <Avatar src={conference.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                                                    {conference.logo_url && (
+                                                        <Avatar src={conference.logo_url} sx={{ width: 20, height: 20 }} variant="rounded" />
                                                     )}
                                                     {conference.label}
                                                 </Box>
@@ -403,9 +405,9 @@ const Leaderboard = () => {
                                                                 <TableCell>
                                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                                         {(() => {
-                                                                            const conf = conferences.find(c => c.value === entry.conference);
-                                                                            return conf?.logo ? (
-                                                                                <Avatar src={conf.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                                                                            const conf = getConference(entry.conference);
+                                                                            return conf?.logo_url ? (
+                                                                                <Avatar src={conf.logo_url} sx={{ width: 20, height: 20 }} variant="rounded" />
                                                                             ) : null;
                                                                         })()}
                                                                         <Chip
@@ -485,9 +487,9 @@ const Leaderboard = () => {
                                                     <TableCell>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                             {(() => {
-                                                                const conf = conferences.find(c => c.value === entry.conference);
-                                                                return conf?.logo ? (
-                                                                    <Avatar src={conf.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                                                                const conf = getConference(entry.conference);
+                                                                return conf?.logo_url ? (
+                                                                    <Avatar src={conf.logo_url} sx={{ width: 20, height: 20 }} variant="rounded" />
                                                                 ) : null;
                                                             })()}
                                                             <Chip

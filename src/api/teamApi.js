@@ -159,6 +159,30 @@ export const fireCoach = async ({ team = null, processedBy }) => {
     }
 };
 
+export const fireSingleCoach = async ({ team, discordId, coachPosition, processedBy }) => {
+    if (!team || !discordId || !coachPosition || !processedBy) {
+        throw new Error("Missing required parameters: team, discordId, coachPosition, and processedBy are required.");
+    }
+
+    try {
+        const response = await apiClient.post('/team/fire/coach', null, {
+            params: {
+                team,
+                discordId,
+                coachPosition,
+                processedBy
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fire coach:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to fire coach");
+        }
+        throw new Error("An unexpected error occurred while firing coach");
+    }
+};
+
 export const createTeam = async (team) => {
     try {
         const response = await apiClient.post('/team', team);

@@ -74,13 +74,22 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, on
                         <Box sx={{ display: { xs: 'none', sm: 'block' }, color: '#fff', fontSize: '0.8rem', fontWeight: 600 }}>{user?.username}</Box>
                     </Box>
                 ) : (
-                    <Button
-                        onClick={() => goTo('/login')}
-                        variant="outlined"
-                        sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.4)', textTransform: 'none', fontWeight: 700, '&:hover': { borderColor: '#fff', backgroundColor: 'rgba(255,255,255,0.1)' } }}
-                    >
-                        Log in
-                    </Button>
+                    <>
+                        <Button
+                            onClick={() => goTo('/login')}
+                            variant="outlined"
+                            sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.4)', textTransform: 'none', fontWeight: 700, '&:hover': { borderColor: '#fff', backgroundColor: 'rgba(255,255,255,0.1)' } }}
+                        >
+                            Log in
+                        </Button>
+                        <Button
+                            onClick={() => goTo('/register')}
+                            variant="contained"
+                            sx={{ backgroundColor: 'var(--brand)', color: '#fff', textTransform: 'none', fontWeight: 700, boxShadow: 'none', '&:hover': { backgroundColor: 'var(--brand)', opacity: 0.9, boxShadow: 'none' } }}
+                        >
+                            Register
+                        </Button>
+                    </>
                 )}
 
                 <IconButton onClick={onMobileOpen} aria-label="Open menu" sx={{ display: { xs: 'inline-flex', md: 'none' }, color: '#fff' }}>

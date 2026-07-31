@@ -1,37 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import {
-    Box, 
-    Typography,
-    CircularProgress,
-    Chip,
-    IconButton,
-    Tooltip,
-    Avatar,
-    FormControlLabel,
-    Checkbox,
-    TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Grid,
-    Button
-} from '@mui/material';
-import { Edit, Search, Add } from '@mui/icons-material';
-import { CONFERENCES } from '../../constants/teamEnums';
-import DashboardLayout from '../../components/layout/DashboardLayout';
-import { getAllTeams } from '../../api/teamApi';
-import CreateTeamForm from '../../components/forms/CreateTeamForm';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import StyledTable from '../../components/ui/StyledTable';
-import { formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
-import { conferences as conferencesList } from '../../components/constants/conferences';
-import { adminNavigationItems } from '../../config/adminNavigation.jsx';
+import AdminLayout from '../../components/layout/AdminLayout';
+import Panel from '../../components/ui/Panel';
+import DataTable from '../../components/ui/DataTable';
+import SelectPill from '../../components/ui/SelectPill';
+import TeamMark from '../../components/ui/TeamMark';
+import ConferenceMark from '../../components/ui/ConferenceMark';
+import CreateTeamForm from '../../components/forms/CreateTeamForm';
+import { getAllTeams } from '../../api/teamApi';
+import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { useConferencesMap, allConferenceList } from '../../components/constants/conferences';
+
+const searchSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', font: 'inherit', fontSize: '0.82rem', minWidth: 200, boxSizing: 'border-box' };
+const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
+const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', px: '8px', py: '3px', borderRadius: 'var(--r-sm)', lineHeight: 1 };
+const editBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', py: '5px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const createBtnSx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '14px', py: '9px', font: 'inherit', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' };
+const toggleChipSx = (on) => ({ display: 'inline-flex', alignItems: 'center', gap: '7px', border: '1px solid var(--line)', background: 'var(--surface)', borderRadius: 'var(--r-sm)', px: '11px', py: '7px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', color: on ? 'var(--text)' : 'var(--text-muted)' });
+
+const TAKEN_OPTIONS = [{ value: 'ALL', label: 'All teams' }, { value: 'OPEN', label: 'Open teams' }, { value: 'TAKEN', label: 'Taken teams' }];
+
+const statusInfo = (team) => {
+    if (!team.active) return { label: 'Inactive', color: 'var(--live)' };
+    if (team.is_taken) return { label: 'Taken', color: 'var(--gold)' };
+    return { label: 'Open', color: 'var(--field)' };
+};
 
 const TeamManagement = () => {
+    useConferencesMap();
+    const teamsMap = useTeamsMap();
     const navigate = useNavigate();
     const [teams, setTeams] = useState([]);
-    const [filteredTeams, setFilteredTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [hideFakeTeams, setHideFakeTeams] = useState(true);
@@ -40,282 +40,102 @@ const TeamManagement = () => {
     const [takenFilter, setTakenFilter] = useState('ALL');
     const [createTeamOpen, setCreateTeamOpen] = useState(false);
 
-    const navigationItems = adminNavigationItems;
+    const conferenceOptions = useMemo(
+        () => [{ value: 'ALL', label: 'All conferences' }, ...allConferenceList().map((c) => ({ value: c.code, label: c.label }))],
+        [],
+    );
 
-    useEffect(() => {
-        const fetchTeams = async () => {
-            try {
-                const response = await getAllTeams();
-                setTeams(response);
-                setLoading(false);
-            } catch (error) {
-                console.error('Failed to fetch teams:', error);
-                setError('Failed to load teams');
-                setLoading(false);
-            }
-        };
+    const fetchTeams = () => {
+        getAllTeams()
+            .then(setTeams)
+            .catch((err) => { console.error('Failed to fetch teams:', err); setError('Failed to load teams'); })
+            .finally(() => setLoading(false));
+    };
 
-        fetchTeams();
-    }, []);
+    useEffect(() => { fetchTeams(); }, []);
 
-    useEffect(() => {
+    const filteredTeams = useMemo(() => {
         let filtered = teams;
-
-        if (hideFakeTeams) {
-            filtered = filtered.filter(team => team.subdivision !== 'FAKE');
-        }
-
-        if (conferenceFilter !== 'ALL') {
-            filtered = filtered.filter(team => team.conference === conferenceFilter);
-        }
-
-        if (takenFilter !== 'ALL') {
-            if (takenFilter === 'TAKEN') {
-                filtered = filtered.filter(team => team.is_taken);
-            } else if (takenFilter === 'OPEN') {
-                filtered = filtered.filter(team => !team.is_taken);
-            }
-        }
-
+        if (hideFakeTeams) filtered = filtered.filter((team) => team.subdivision !== 'FAKE');
+        if (conferenceFilter !== 'ALL') filtered = filtered.filter((team) => team.conference === conferenceFilter);
+        if (takenFilter !== 'ALL') filtered = filtered.filter((team) => (takenFilter === 'TAKEN' ? team.is_taken : !team.is_taken));
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
-            filtered = filtered.filter(team => 
+            filtered = filtered.filter((team) =>
                 team.name?.toLowerCase().includes(searchLower) ||
                 team.short_name?.toLowerCase().includes(searchLower) ||
-                team.abbreviation?.toLowerCase().includes(searchLower)
-            );
+                team.abbreviation?.toLowerCase().includes(searchLower));
         }
-
-        setFilteredTeams(filtered);
+        return filtered;
     }, [teams, hideFakeTeams, conferenceFilter, takenFilter, searchTerm]);
 
-    const handleTeamClick = (team, index, e) => {
-        if (e && (e.metaKey || e.ctrlKey || e.shiftKey)) return;
-        if (e) e.preventDefault();
-        navigate(`/admin/edit-team/${team.id}`);
-    };
-
-    const handleCreateTeam = () => {
-        setCreateTeamOpen(true);
-    };
-
-    const handleTeamCreated = async () => {
-        try {
-            const response = await getAllTeams();
-            setTeams(response);
-        } catch (error) {
-            console.error('Failed to refresh teams:', error);
-        }
-    };
-
-    const getStatusColor = (team) => {
-        if (!team.active) return 'error';
-        if (team.is_taken) return 'warning';
-        return 'success';
-    };
-
-    const getStatusText = (team) => {
-        if (!team.active) return 'Inactive';
-        if (team.is_taken) return 'Taken';
-        return 'Open';
-    };
-
-    const teamColumns = [
-        { id: 'logo', label: '', width: 40 },
-        { id: 'name', label: 'Team Name', width: 120 },
-        { id: 'conference', label: 'Conference', width: 100 },
-        { id: 'offensive_playbook', label: 'Offense', width: 80 },
-        { id: 'defensive_playbook', label: 'Defense', width: 80 },
-        { id: 'currentRecord', label: 'Current', width: 80 },
-        { id: 'overallRecord', label: 'Overall', width: 80 },
-        { id: 'status', label: 'Status', width: 80 },
-        { id: 'actions', label: '', width: 50 },
-    ];
-
-    const tableData = filteredTeams.map(team => ({
-        ...team,
-        logo: (
-            <Avatar
-                src={team.logo}
-                sx={{ width: 24, height: 24 }}
-                alt={`${team.name} Logo`}
-            >
-                {team.abbreviation?.charAt(0) || 'T'}
-            </Avatar>
-        ),
-        conference: (() => {
-            const confData = conferencesList.find(c => c.value === team.conference);
-            return confData?.logo ? (
-                <Tooltip title={confData.label} arrow>
-                    <Avatar src={confData.logo} sx={{ width: 24, height: 24 }} variant="rounded" />
-                </Tooltip>
-            ) : (formatConference(team.conference) || 'None');
-        })(),
-        offensive_playbook: formatOffensivePlaybook(team.offensive_playbook) || 'None',
-        defensive_playbook: formatDefensivePlaybook(team.defensive_playbook) || 'None',
-        currentRecord: `${team.current_wins}-${team.current_losses}`,
-        overallRecord: `${team.overall_wins}-${team.overall_losses}`,
-        status: (
-            <Chip
-                label={getStatusText(team)}
-                color={getStatusColor(team)}
-                size="small"
-            />
-        ),
-        actions: (
-            <Tooltip title="Edit Team">
-                <IconButton
-                    size="small"
-                    component="a"
-                    href={`/admin/edit-team/${team.id}`}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-                        e.preventDefault();
-                        navigate(`/admin/edit-team/${team.id}`);
-                    }}
-                    sx={{ color: 'primary.main' }}
-                >
-                    <Edit fontSize="small" />
-                </IconButton>
-            </Tooltip>
-        )
-    }));
+    const handleTeamCreated = () => fetchTeams();
 
     if (loading) {
         return (
-            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
-
-    if (error) {
-        return (
-            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Typography color="error">{error}</Typography>
-            </Box>
+            <AdminLayout title="Team Management">
+                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
+            </AdminLayout>
         );
     }
 
     return (
-        <DashboardLayout
+        <AdminLayout
             title="Team Management"
-            navigationItems={navigationItems}
-            hideHeader={true}
-            textColor="primary.main"
+            controls={(
+                <>
+                    <Box component="input" placeholder="Search teams..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
+                    <SelectPill label="Conference" value={conferenceFilter} onChange={setConferenceFilter} options={conferenceOptions} sx={pillHeightSx} />
+                    <SelectPill label="Status" value={takenFilter} onChange={setTakenFilter} options={TAKEN_OPTIONS} sx={pillHeightSx} />
+                    <Box component="button" type="button" onClick={() => setHideFakeTeams((v) => !v)} sx={toggleChipSx(hideFakeTeams)}>
+                        <Box component="span" sx={{ width: 14, height: 14, borderRadius: '3px', border: '1.5px solid', borderColor: hideFakeTeams ? 'var(--brand)' : 'var(--text-dim)', background: hideFakeTeams ? 'var(--brand)' : 'transparent' }} />
+                        Hide fake teams
+                    </Box>
+                    <Box component="button" type="button" onClick={() => setCreateTeamOpen(true)} sx={createBtnSx}>+ Create team</Box>
+                </>
+            )}
         >
-            <Box sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                        Team Management
-                    </Typography>
-                    <Button
-                        variant="contained"
-                        startIcon={<Add />}
-                        onClick={handleCreateTeam}
-                        sx={{
-                            backgroundColor: 'primary.main',
-                            '&:hover': {
-                                backgroundColor: 'primary.dark',
-                            },
-                        }}
-                    >
-                        Create Team
-                    </Button>
-                </Box>
+            {error && <Box sx={{ color: 'var(--live)', mb: '16px' }}>{error}</Box>}
 
-                <Box sx={{ mb: 3 }}>
-                    <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                placeholder="Search teams..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                InputProps={{
-                                    startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
-                                }}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        color: 'primary.main',
-                                        '& fieldset': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                    }
-                                }}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth>
-                                <InputLabel>Conference</InputLabel>
-                                <Select
-                                    value={conferenceFilter}
-                                    onChange={(e) => setConferenceFilter(e.target.value)}
-                                    label="Conference"
-                                    sx={{
-                                        color: 'primary.main',
-                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                    }}
-                                >
-                                    <MenuItem value="ALL">All Conferences</MenuItem>
-                                    {CONFERENCES.map(conference => (
-                                        <MenuItem key={conference} value={conference}>
-                                            {formatConference(conference)}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth>
-                                <InputLabel>Taken Status</InputLabel>
-                                <Select
-                                    value={takenFilter}
-                                    onChange={(e) => setTakenFilter(e.target.value)}
-                                    label="Taken Status"
-                                    sx={{
-                                        color: 'primary.main',
-                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                    }}
-                                >
-                                    <MenuItem value="ALL">All Teams</MenuItem>
-                                    <MenuItem value="OPEN">Open Teams</MenuItem>
-                                    <MenuItem value="TAKEN">Taken Teams</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={hideFakeTeams}
-                                        onChange={(e) => setHideFakeTeams(e.target.checked)}
-                                        sx={{ color: 'primary.main' }}
-                                    />
-                                }
-                                label="Filter out fake teams"
-                                sx={{ color: 'primary.main' }}
-                            />
-                        </Grid>
-                    </Grid>
-                </Box>
-                
-                <StyledTable
-                    columns={teamColumns}
-                    data={tableData}
-                    maxHeight={600}
-                    onRowClick={handleTeamClick}
-                    getRowHref={(team) => `/admin/edit-team/${team.id}`}
-                    headerBackground="primary.main"
-                    headerTextColor="white"
-                />
+            <Panel header="Teams" more={`${filteredTeams.length} teams`}>
+                <DataTable minWidth={480}>
+                    <thead>
+                        <tr>
+                            <th className="lft stick">Team</th>
+                            <th className="lft">Conference</th>
+                            <th>Record</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredTeams.map((team) => {
+                            const status = statusInfo(team);
+                            return (
+                                <tr key={team.name} onClick={() => navigate(`/admin/edit-team/${team.id}`)}>
+                                    <td className="lft stick">
+                                        <Box className="teamcell">
+                                            <TeamMark team={teamsMap[team.name]} size={22} />
+                                            <span className="nm">{team.name}</span>
+                                        </Box>
+                                    </td>
+                                    <td className="lft"><ConferenceMark conference={team.conference} size={20} /></td>
+                                    <td className="num">{team.current_wins}-{team.current_losses}</td>
+                                    <td>
+                                        <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: status.color }}>{status.label}</Box>
+                                    </td>
+                                    <td>
+                                        <Box component="button" type="button" onClick={(e) => { e.stopPropagation(); navigate(`/admin/edit-team/${team.id}`); }} sx={editBtnSx}>Edit</Box>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </DataTable>
+            </Panel>
 
-                <CreateTeamForm
-                    open={createTeamOpen}
-                    onClose={() => setCreateTeamOpen(false)}
-                    onTeamCreated={handleTeamCreated}
-                />
-            </Box>
-        </DashboardLayout>
+            <CreateTeamForm open={createTeamOpen} onClose={() => setCreateTeamOpen(false)} onTeamCreated={handleTeamCreated} />
+        </AdminLayout>
     );
 };
 

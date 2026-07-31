@@ -11,7 +11,7 @@ import { getCurrentSeason, getLatestCompletedSeason } from '../../api/seasonApi'
 import { getPostseasonSchedule } from '../../api/scheduleApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
-import { CONFERENCE_ORDER, conferenceLabel } from '../../components/constants/conferences';
+import { activeConferenceCodes, conferenceLabel } from '../../components/constants/conferences';
 import PageWrap from '../../components/layout/PageWrap';
 import SectionTitle from '../../components/ui/SectionTitle';
 import Panel from '../../components/ui/Panel';
@@ -144,7 +144,7 @@ const Home = () => {
 
     const conferenceRows = useMemo(() => {
         if (showChampions) {
-            return CONFERENCE_ORDER
+            return activeConferenceCodes()
                 .filter((conference) => confChampions[conference])
                 .map((conference) => ({ conference, team: teamsByName[confChampions[conference]], champion: true }));
         }
@@ -159,7 +159,7 @@ const Home = () => {
                 byConference[team.conference] = { team, rate };
             }
         });
-        return CONFERENCE_ORDER.filter((conference) => byConference[conference]).map((conference) => ({ conference, team: byConference[conference].team, champion: false }));
+        return activeConferenceCodes().filter((conference) => byConference[conference]).map((conference) => ({ conference, team: byConference[conference].team, champion: false }));
     }, [teams, teamsByName, confChampions, showChampions]);
 
     if (loading) {

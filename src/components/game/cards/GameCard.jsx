@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
+import FitTeamName from '../../ui/FitTeamName';
 import StatusPill from '../../ui/StatusPill';
 import GameTypeLabel from './GameTypeLabel';
 import { useColorMode } from '../../../theme/ColorModeContext';
@@ -53,9 +54,11 @@ const TeamRow = ({ team, name, rank, score, quarters, columns, isWinner, hasPoss
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
             <TeamMark team={team} size={size} />
             {rank > 0 && rank <= 25 && <Box component="span" sx={{ fontSize: '0.64rem', fontWeight: 800, color: 'var(--gold)' }}>#{rank}</Box>}
-            <Box component="span" sx={{ fontWeight: 700, fontSize: size >= 26 ? '1.35rem' : '1.05rem', color: isWinner ? 'var(--text)' : 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {team?.name || name}
-            </Box>
+            <FitTeamName
+                fullName={team?.name || name}
+                abbreviation={team?.abbreviation}
+                sx={{ fontWeight: 700, fontSize: size >= 26 ? '1.35rem' : '1.05rem', color: isWinner ? 'var(--text)' : 'var(--text-dim)' }}
+            />
         </Box>
         {columns.map((_, index) => (
             <Box key={index} sx={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: size >= 26 ? '1.28rem' : '1.02rem', color: 'var(--text-muted)' }}>

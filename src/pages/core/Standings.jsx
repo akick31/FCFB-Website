@@ -9,7 +9,7 @@ import TeamMark from '../../components/ui/TeamMark';
 import { getAllTeams } from '../../api/teamApi';
 import { getLatestCompletedSeason } from '../../api/seasonApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
-import { CONFERENCE_ORDER, conferenceLabel, conferenceLogo } from '../../components/constants/conferences';
+import { activeConferenceCodes, conferenceLabel, conferenceLogo } from '../../components/constants/conferences';
 import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 import { useOffseasonStatus } from '../../components/game/scoreboard/hooks/useOffseasonStatus';
 import { useSeo } from '../../hooks/useSeo';
@@ -47,7 +47,7 @@ const Standings = () => {
 
     const availableConferences = useMemo(() => {
         const present = new Set(teams.map((team) => team.conference));
-        return CONFERENCE_ORDER.filter((conf) => present.has(conf));
+        return activeConferenceCodes().filter((conf) => present.has(conf));
     }, [teams]);
 
     const selectedConference = confParam?.toUpperCase() || availableConferences[0];

@@ -9,23 +9,25 @@ const Footer = () => {
         <Box
             component="footer"
             sx={{
-                py: 2,
+                py: '18px',
                 px: 2,
                 textAlign: 'center',
-                backgroundColor: 'primary.main',
-                color: 'primary.contrastText',
+                background: 'var(--surface)',
+                borderTop: '1px solid var(--line)',
+                color: 'var(--text-dim)',
             }}
         >
-            <Typography variant="body2">
+            <Typography variant="body2" sx={{ fontSize: '0.78rem', color: 'var(--text-dim)', display: 'inline-flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <Link
                     href="https://www.buymeacoffee.com/flying_porygon"
                     target="_blank"
                     rel="noopener noreferrer"
-                    sx={{ color: 'inherit', textDecoration: 'underline', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 0.5, verticalAlign: 'middle' }}
+                    sx={{ color: 'var(--text-muted)', textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 0.5, '&:hover': { color: 'var(--brand)' } }}
                 >
-                    <Coffee sx={{ fontSize: 16 }} /> Buy Me a Coffee
+                    <Coffee sx={{ fontSize: 15 }} /> Buy Me a Coffee
                 </Link>
-                {'  |  '}© {year} Polyloon Studios. All rights reserved.
+                <Box component="span" sx={{ color: 'var(--line)' }}>|</Box>
+                © {year} Polyloon Studios. All rights reserved.
             </Typography>
         </Box>
     );

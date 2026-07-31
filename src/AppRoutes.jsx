@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import Header from './components/header/Header';
 import Footer from './components/layout/Footer';
 import {
@@ -34,6 +34,8 @@ import {
     TeamManagement,
     EditTeam,
     EditCoach,
+    AdminConferences,
+    AdminConferenceDetail,
     GameManagement,
     UserManagement,
     CoachManagement,
@@ -52,26 +54,6 @@ import {
     EloHistory,
     Graphs
 } from './pages';
-
-const ConditionalHeader = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, setIsAdmin }) => {
-    const location = useLocation();
-    const isAdminRoute = location.pathname.startsWith('/admin');
-
-    if (isAdminRoute) {
-        return null;
-    }
-
-    return (
-        <Header
-            isAuthenticated={isAuthenticated}
-            isAdmin={isAdmin}
-            user={user}
-            setIsAuthenticated={setIsAuthenticated}
-            setUser={setUser}
-            setIsAdmin={setIsAdmin}
-        />
-    );
-};
 
 const AppRoutes = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -139,7 +121,7 @@ const AppRoutes = () => {
                     backgroundColor: 'background.default',
                 }}
             >
-                <ConditionalHeader
+                <Header
                     isAuthenticated={isAuthenticated}
                     isAdmin={isAdmin}
                     user={user}
@@ -219,6 +201,16 @@ const AppRoutes = () => {
                         <Route path="/admin/edit-coach/:username" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <EditCoach user={user} />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/admin/conferences" element={
+                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                <AdminConferences />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/admin/conferences/:code" element={
+                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                <AdminConferenceDetail />
                             </ProtectedRoute>
                         } />
                         <Route path="/admin/scheduling" element={

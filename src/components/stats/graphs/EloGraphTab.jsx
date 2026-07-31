@@ -6,7 +6,7 @@ import SelectPill from '../../ui/SelectPill';
 import MultiLineChart from '../../charts/MultiLineChart';
 import { getEloHistory } from '../../../api/eloHistoryApi.jsx';
 import { pickTeamColor } from '../../../utils/teamColor';
-import { CONFERENCE_ORDER, conferenceLabel } from '../../constants/conferences';
+import { activeConferenceList, conferenceLabel } from '../../constants/conferences';
 
 const EloGraphTab = ({ season, teams, teamsMap, mode }) => {
     const [cf, setCf] = useState('TOP');
@@ -47,7 +47,7 @@ const EloGraphTab = ({ season, teams, teamsMap, mode }) => {
 
     const activeByName = useMemo(() => new Map(teams.map((t) => [t.name, t])), [teams]);
     const confOptions = useMemo(
-        () => CONFERENCE_ORDER.filter((c) => teams.some((t) => t.conference === c)).map((c) => ({ value: c, label: conferenceLabel(c) })),
+        () => activeConferenceList().filter((c) => teams.some((t) => t.conference === c.code)).map((c) => ({ value: c.code, label: conferenceLabel(c.code) })),
         [teams],
     );
 

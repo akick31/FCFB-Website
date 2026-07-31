@@ -39,7 +39,7 @@ const TeamSchedule = ({ teamName, schedule, season, teamsMap, loading, subtitle,
                             <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opponent}</Box>
                         </Box>
                         <Box sx={{ fontWeight: 800, fontFamily: 'var(--cond)', color: game.finished ? (win ? 'var(--field)' : 'var(--live)') : 'var(--text-dim)' }}>
-                            {game.finished ? `${win ? 'W' : 'L'} ${us}-${them}` : '—'}
+                            {game.finished ? `${win ? 'W' : 'L'} ${us}-${them}` : '-'}
                         </Box>
                     </Box>
                 );

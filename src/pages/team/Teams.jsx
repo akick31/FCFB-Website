@@ -6,7 +6,7 @@ import { isRealTeam, isTeamAvailable } from '../../utils/teamDataUtils';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../theme/ColorModeContext';
 import { pickTeamColor } from '../../utils/teamColor';
-import { CONFERENCE_ORDER, conferenceLabel } from '../../components/constants/conferences';
+import { activeConferenceCodes, conferenceLabel } from '../../components/constants/conferences';
 import { formatConference } from '../../utils/formatText';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
@@ -41,7 +41,7 @@ const Teams = () => {
 
     const availableConferences = useMemo(() => {
         const present = new Set(teams.map((team) => team.conference));
-        return CONFERENCE_ORDER.filter((conf) => present.has(conf));
+        return activeConferenceCodes().filter((conf) => present.has(conf));
     }, [teams]);
 
     const shown = useMemo(() => {

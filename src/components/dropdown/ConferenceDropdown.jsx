@@ -1,9 +1,11 @@
 import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem, Box, Avatar } from '@mui/material';
-import { conferences } from '../constants/conferences';
+import { useConferencesMap, activeConferenceList } from '../constants/conferences';
 import PropTypes from 'prop-types';
 
 const ConferenceDropdown = ({ value, onChange, sx = {}, fullWidth = false, size = "medium" }) => {
+    useConferencesMap();
+    const conferences = activeConferenceList();
 
     return (
         <FormControl fullWidth={fullWidth} margin="normal" size={size} sx={sx}>
@@ -15,10 +17,10 @@ const ConferenceDropdown = ({ value, onChange, sx = {}, fullWidth = false, size 
                 displayEmpty
             >
                 {conferences.map((conference) => (
-                    <MenuItem key={conference.value} value={conference.value}>
+                    <MenuItem key={conference.code} value={conference.code}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {conference.logo && (
-                                <Avatar src={conference.logo} sx={{ width: 20, height: 20 }} variant="rounded" />
+                            {conference.logo_url && (
+                                <Avatar src={conference.logo_url} sx={{ width: 20, height: 20 }} variant="rounded" />
                             )}
                             {conference.label}
                         </Box>

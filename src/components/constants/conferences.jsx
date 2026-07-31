@@ -1,28 +1,63 @@
-export const conferences = [
-    { value: "ACC", label: "ACC", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/1.png" },
-    { value: "AMERICAN", label: "American", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/151.png" },
-    { value: "BIG_12", label: "Big 12", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/4.png" },
-    { value: "BIG_TEN", label: "Big Ten", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/5.png" },
-    { value: "FBS_INDEPENDENT", label: "FBS Independent", logo: "https://logos-world.net/wp-content/uploads/2025/01/Division-I-FBS-Independents-Logo-500x281.png" },
-    { value: "MAC", label: "MAC", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/15.png" },
-    { value: "MOUNTAIN_WEST", label: "Mountain West", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/17.png" },
-    { value: "PAC_12", label: "Pac-12", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/9.png" },
-    { value: "SEC", label: "SEC", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/8.png" },
-    { value: "SUN_BELT", label: "Sun Belt", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/37.png" },
-    { value: "MISSOURI_VALLEY", label: "Missouri Valley", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/21.png" },
-    { value: "COLONIAL", label: "Colonial", logo: "https://images.seeklogo.com/logo-png/49/2/colonial-athletic-association-logo-png_seeklogo-490062.png" },
-    { value: "NEC", label: "NEC", logo: "https://a.espncdn.com/i/teamlogos/ncaa_conf/500/25.png" },
-];
+import { useEffect, useState } from 'react';
+import { getConferences } from '../../api/conferenceApi';
 
-export const CONFERENCE_ORDER = [
-    'SEC', 'BIG_TEN', 'ACC', 'BIG_12', 'PAC_12', 'AMERICAN', 'MOUNTAIN_WEST',
-    'MAC', 'SUN_BELT', 'MISSOURI_VALLEY', 'COLONIAL', 'NEC', 'FBS_INDEPENDENT',
-];
+let bulk = null;
+let bulkInflight = null;
+const listeners = new Set();
 
-export const getConference = (value) => conferences.find((c) => c.value === value) || null;
-export const conferenceLabel = (value) => getConference(value)?.label || value;
-export const conferenceLogo = (value) => getConference(value)?.logo || null;
-export const conferenceLogoDark = (value) => {
-    const logo = conferenceLogo(value);
-    return logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : null;
+const notify = () => listeners.forEach((listener) => listener());
+
+const loadBulk = () => {
+    if (bulk || bulkInflight) return;
+    bulkInflight = getConferences()
+        .then((conferences) => {
+            const map = {};
+            for (const conference of conferences || []) {
+                if (conference?.code) map[conference.code] = conference;
+            }
+            bulk = map;
+            notify();
+        })
+        .catch(() => {
+            bulkInflight = null;
+        });
 };
+
+export const ensureConferences = () => loadBulk();
+
+export const refreshConferences = () => {
+    bulk = null;
+    bulkInflight = null;
+    loadBulk();
+};
+
+export const useConferencesMap = () => {
+    const [, setVersion] = useState(0);
+
+    useEffect(() => {
+        loadBulk();
+        const listener = () => setVersion((version) => version + 1);
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+    }, []);
+
+    return bulk || {};
+};
+
+export const getConference = (code) => (bulk && bulk[code]) || null;
+
+export const conferenceLabel = (code) => getConference(code)?.label || code;
+
+export const conferenceLogo = (code) => getConference(code)?.logo_url || null;
+
+export const conferenceLogoDark = (code) => getConference(code)?.logo_url_dark || conferenceLogo(code);
+
+export const activeConferenceList = () =>
+    Object.values(bulk || {})
+        .filter((conference) => conference.active)
+        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+export const allConferenceList = () =>
+    Object.values(bulk || {}).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+export const activeConferenceCodes = () => activeConferenceList().map((conference) => conference.code);

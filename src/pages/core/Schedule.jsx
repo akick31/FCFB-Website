@@ -6,7 +6,7 @@ import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedul
 import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { getStorageItem } from '../../utils/utils';
 import { isRealTeam } from '../../utils/teamDataUtils';
-import { CONFERENCE_ORDER } from '../../components/constants/conferences';
+import { activeConferenceCodes } from '../../components/constants/conferences';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
@@ -58,7 +58,7 @@ const Schedule = () => {
     );
     const availableConferences = useMemo(() => {
         const present = new Set(teams.filter((team) => team.active).map((team) => team.conference));
-        return CONFERENCE_ORDER.filter((conf) => present.has(conf));
+        return activeConferenceCodes().filter((conf) => present.has(conf));
     }, [teams]);
     const conferenceTeams = useMemo(
         () => activeTeams.filter((team) => team.conference === selectedConference),

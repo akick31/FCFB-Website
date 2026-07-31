@@ -68,11 +68,18 @@ const MobileNavDrawer = ({ open, onClose, isAuthenticated, isAdmin, onLogout }) 
                         </ListItem>
                     </>
                 ) : (
-                    <ListItem disablePadding>
-                        <ListItemButton onClick={() => go('/login')} sx={itemSx(false)}>
-                            <ListItemText primary="Log in" />
-                        </ListItemButton>
-                    </ListItem>
+                    <>
+                        <ListItem disablePadding>
+                            <ListItemButton onClick={() => go('/login')} sx={itemSx(false)}>
+                                <ListItemText primary="Log in" />
+                            </ListItemButton>
+                        </ListItem>
+                        <ListItem disablePadding>
+                            <ListItemButton onClick={() => go('/register')} sx={itemSx(false)}>
+                                <ListItemText primary="Register" />
+                            </ListItemButton>
+                        </ListItem>
+                    </>
                 )}
             </List>
         </Drawer>

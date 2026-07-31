@@ -1,259 +1,136 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import {
-    Box, Grid, Typography, Alert, TextField, useTheme
-} from "@mui/material";
-import { 
-    SportsFootball, Email, Lock, Visibility, VisibilityOff 
-} from "@mui/icons-material";
-import { login } from "../../api/authApi";
-import { checkIfUserIsAdmin } from "../../utils/utils";
-import StyledCard from "../ui/StyledCard";
-import StyledButton from "../ui/StyledButton";
-import ForgotPasswordForm from "./ForgotPasswordForm";
-import PropTypes from "prop-types";
+import React, { useEffect, useState } from 'react';
+import { Box, Alert } from '@mui/material';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDiscord } from '@fortawesome/free-brands-svg-icons';
+import PropTypes from 'prop-types';
+import { login } from '../../api/authApi';
+import { getUserById } from '../../api/userApi';
+import { checkIfUserIsAdmin } from '../../utils/utils';
+import ForgotPasswordForm from './ForgotPasswordForm';
+import logo from '../../assets/graphics/main_logo.png';
+
+const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
+const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', py: '10px', font: 'inherit', fontSize: '0.88rem' };
+const btnBaseSx = { width: '100%', border: 0, borderRadius: 'var(--r-sm)', py: '11px', font: 'inherit', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
 
 const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
-    const theme = useTheme();
     const navigate = useNavigate();
-    
-    const [formData, setFormData] = useState({
-        email: '',
-        password: ''
-    });
-    const [showPassword, setShowPassword] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const [usernameOrEmail, setUsernameOrEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+    const [discordError, setDiscordError] = useState('');
+    const [forgotOpen, setForgotOpen] = useState(false);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-        if (error) setError('');
-    };
+    useEffect(() => {
+        const discordToken = searchParams.get('discordToken');
+        const discordUserId = searchParams.get('discordUserId');
+        if (!discordToken || !discordUserId) return;
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+        const completeDiscordLogin = async () => {
+            try {
+                localStorage.setItem('token', discordToken);
+                localStorage.setItem('userId', discordUserId);
+                const discordRole = searchParams.get('discordRole');
+                if (discordRole) localStorage.setItem('role', discordRole);
+
+                const userData = await getUserById(discordUserId);
+                setIsAuthenticated(true);
+                setUser(userData);
+                setIsAdmin(checkIfUserIsAdmin());
+                navigate('/');
+            } catch {
+                setDiscordError('Discord sign-in failed. Please try again.');
+                const next = new URLSearchParams(searchParams);
+                next.delete('discordToken');
+                next.delete('discordUserId');
+                next.delete('discordRole');
+                setSearchParams(next, { replace: true });
+            }
+        };
+
+        completeDiscordLogin();
+    }, []);
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
         setLoading(true);
         setError('');
-
         try {
-            const loginSuccess = await login(
-                formData.email,
-                formData.password,
-                setIsAuthenticated,
-                setUser
-            );
-
-            if (loginSuccess) {
+            const success = await login(usernameOrEmail, password, setIsAuthenticated, setUser);
+            if (success) {
                 setIsAdmin(checkIfUserIsAdmin());
-                navigate("/");
+                navigate('/');
             } else {
-                setError("Invalid username/email or password");
+                setError('Invalid username/email or password');
             }
-        } catch (err) {
+        } catch {
             setError('An error occurred during login. Please try again.');
-            console.error('Login error:', err);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleTogglePasswordVisibility = () => {
-        setShowPassword(!showPassword);
-    };
-
-    const handleForgotPasswordClick = () => {
-        setForgotPasswordOpen(true);
+    const handleDiscordOAuth = () => {
+        const clientId = import.meta.env.VITE_CLIENT_ID;
+        const redirectUri = import.meta.env.VITE_BASE_URL;
+        if (!clientId) {
+            setDiscordError('Discord sign-in is not configured yet. Use your username and password below.');
+            return;
+        }
+        window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify`;
     };
 
     return (
-        <Grid container spacing={4} alignItems="center" justifyContent="center" sx={{ 
-            minHeight: '80vh',
-            pt: { xs: 8, md: 10 }
-        }}>
-            <Grid item xs={12} md={6} lg={5}>
-                <StyledCard
-                    elevation={8}
-                    hover={false}
-                    sx={{
-                        p: { xs: 3, md: 4 },
-                        textAlign: 'center',
-                        position: 'relative',
-                        overflow: 'visible',
-                    }}
-                >
-                    <Box sx={{ 
-                        mb: 4,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
+        <>
+            <Box sx={{ maxWidth: 400, mx: 'auto', my: '36px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+                <Box sx={{ background: 'linear-gradient(160deg, var(--brand-deep), #01293b)', p: '26px', textAlign: 'center' }}>
+                    <Box component="img" src={logo} alt="FCFB" sx={{ height: 70 }} />
+                </Box>
+
+                <Box sx={{ p: '22px' }}>
+                    {discordError && <Alert severity="warning" sx={{ mb: '16px' }}>{discordError}</Alert>}
+
+                    <Box component="button" type="button" onClick={handleDiscordOAuth} sx={{ ...btnBaseSx, background: 'var(--disc, #5865F2)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px' }}>
+                        <FontAwesomeIcon icon={faDiscord} /> Continue with Discord
+                    </Box>
+
+                    <Box sx={{
+                        display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-dim)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', my: '16px',
+                        '&::before, &::after': { content: '""', flex: 1, height: '1px', background: 'var(--line)' },
                     }}>
-                        <Box sx={{
-                            width: 80,
-                            height: 80,
-                            borderRadius: '50%',
-                            background: theme.palette.primary.main,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: theme.shadows[4],
-                            mb: 2
-                        }}>
-                            <SportsFootball 
-                                sx={{ 
-                                    fontSize: 40, 
-                                    color: 'white'
-                                }} 
-                            />
-                        </Box>
+                        or
                     </Box>
 
-                    <Typography variant="h4" sx={{ mb: 1, fontWeight: 700 }}>
-                        Sign In
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
-                        Access your FCFB dashboard and manage your team
-                    </Typography>
+                    {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
 
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 3, textAlign: 'left' }}>
-                            {error}
-                        </Alert>
-                    )}
-
-                    <Box component="form" onSubmit={handleSubmit} sx={{ textAlign: 'left' }}>
-                        <TextField
-                            fullWidth
-                            label="Email Address"
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            required
-                            InputProps={{
-                                startAdornment: <Email sx={{ mr: 1, color: 'text.secondary' }} />,
-                            }}
-                            sx={{ mb: 3 }}
-                        />
-
-                        <TextField
-                            fullWidth
-                            label="Password"
-                            name="password"
-                            type={showPassword ? 'text' : 'password'}
-                            value={formData.password}
-                            onChange={handleChange}
-                            required
-                            InputProps={{
-                                startAdornment: <Lock sx={{ mr: 1, color: 'text.secondary' }} />,
-                                endAdornment: (
-                                    <Box
-                                        component="span"
-                                        onClick={handleTogglePasswordVisibility}
-                                        sx={{
-                                            cursor: 'pointer',
-                                            color: 'text.secondary',
-                                            '&:hover': { color: 'text.primary' },
-                                        }}
-                                    >
-                                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                                    </Box>
-                                ),
-                            }}
-                            sx={{ mb: 4 }}
-                        />
-
-                        <StyledButton
-                            type="submit"
-                            fullWidth
-                            size="large"
-                            disabled={loading}
-                            sx={{ mb: 3 }}
-                        >
-                            {loading ? 'Signing In...' : 'Sign In'}
-                        </StyledButton>
-
-                        <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="body2" sx={{ mb: 2 }}>
-                                Don't have an account?{' '}
-                                <Link to="/register" style={{ color: theme.palette.primary.main }}>
-                                    Sign up here
-                                </Link>
-                            </Typography>
-                            
-                            <Typography
-                                component="span"
-                                onClick={handleForgotPasswordClick}
-                                sx={{
-                                    color: theme.palette.text.secondary,
-                                    cursor: 'pointer',
-                                    fontSize: '0.875rem',
-                                    '&:hover': {
-                                        color: theme.palette.primary.main,
-                                    },
-                                }}
-                            >
-                                Forgot your password?
-                            </Typography>
+                    <Box component="form" onSubmit={handleSubmit}>
+                        <Box sx={{ mb: '12px' }}>
+                            <Box component="label" htmlFor="loginUsername" sx={labelSx}>Username or email</Box>
+                            <Box component="input" id="loginUsername" placeholder="Username" value={usernameOrEmail} onChange={(event) => setUsernameOrEmail(event.target.value)} required sx={inputSx} />
                         </Box>
-                    </Box>
-                </StyledCard>
-            </Grid>
+                        <Box sx={{ mb: '12px' }}>
+                            <Box component="label" htmlFor="loginPassword" sx={labelSx}>Password</Box>
+                            <Box component="input" id="loginPassword" type="password" placeholder="Password" value={password} onChange={(event) => setPassword(event.target.value)} required sx={inputSx} />
+                        </Box>
 
-            <Grid item xs={12} md={6} lg={5} sx={{ display: { xs: 'none', md: 'block' } }}>
-                <Box sx={{ textAlign: 'center', p: 4 }}>
-                    <Typography
-                        variant="h3"
-                        sx={{
-                            fontWeight: 800,
-                            mb: 3,
-                            color: theme.palette.primary.main,
-                        }}
-                    >
-                        Join the FCFB Community
-                    </Typography>
-                    <Typography
-                        variant="h6"
-                        sx={{
-                            color: 'text.secondary',
-                            mb: 4,
-                            lineHeight: 1.6,
-                        }}
-                    >
-                        Experience the thrill of college football simulation with the FCFB community. 
-                        Build your dynasty, compete for championships, and be part of something special.
-                    </Typography>
-                    
-                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <StyledButton
-                            variant="outlined"
-                            size="large"
-                            component={Link}
-                            to="/register"
-                        >
-                            Create Account
-                        </StyledButton>
-                        <StyledButton
-                            variant="contained"
-                            size="large"
-                            component={Link}
-                            to="/scoreboard"
-                        >
-                            View Games
-                        </StyledButton>
+                        <Box component="button" type="submit" disabled={loading} sx={{ ...btnBaseSx, background: 'var(--brand-deep)', color: '#fff' }}>
+                            {loading ? 'Signing in…' : 'Log in'}
+                        </Box>
+
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: '14px', fontSize: '0.76rem' }}>
+                            <Box component="span" onClick={() => setForgotOpen(true)} sx={{ color: 'var(--brand)', cursor: 'pointer' }}>Forgot password?</Box>
+                            <Box component={Link} to="/register" sx={{ color: 'var(--brand)', cursor: 'pointer', textDecoration: 'none' }}>Create account</Box>
+                        </Box>
                     </Box>
                 </Box>
-            </Grid>
+            </Box>
 
-            <ForgotPasswordForm 
-                open={forgotPasswordOpen}
-                onClose={() => setForgotPasswordOpen(false)}
-            />
-        </Grid>
+            <ForgotPasswordForm open={forgotOpen} onClose={() => setForgotOpen(false)} />
+        </>
     );
 };
 

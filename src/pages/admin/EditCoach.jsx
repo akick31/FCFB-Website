@@ -1,36 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import {
-    Box,
-    Typography,
-    TextField,
-    Button,
-    Grid,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Card,
-    CardContent,
-    Alert,
-    CircularProgress,
-    IconButton,
-} from '@mui/material';
-import { ArrowBack, Save, Cancel } from '@mui/icons-material';
-import { useParams, useNavigate } from 'react-router-dom';
-import DashboardLayout from '../../components/layout/DashboardLayout';
+import { Box, Alert, CircularProgress } from '@mui/material';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
+import AdminLayout from '../../components/layout/AdminLayout';
+import Panel from '../../components/ui/Panel';
 import { getAllUsers, updateUser } from '../../api/userApi';
 import { getAllTeams } from '../../api/teamApi';
-import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS } from '../../constants/teamEnums';
 import { formatOffensivePlaybook, formatDefensivePlaybook, formatRole, formatPosition } from '../../utils/formatText';
 
 const ROLES = ['USER', 'CONFERENCE_COMMISSIONER', 'ADMIN'];
 const POSITIONS = ['HEAD_COACH', 'OFFENSIVE_COORDINATOR', 'DEFENSIVE_COORDINATOR', 'RETIRED'];
 
-const fieldSx = {
-    '& .MuiInputLabel-root': { color: 'primary.main' },
-    '& .MuiOutlinedInput-root': { color: 'primary.main', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' } },
-};
+const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
+const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', py: '10px', font: 'inherit', fontSize: '0.85rem' };
+const selectSx = { ...inputSx, cursor: 'pointer', '& option': { background: 'var(--surface-2)', color: 'var(--text)' } };
+const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '18px', py: '10px', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
+const btnGhostSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '18px', py: '10px', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const backSx = { color: 'var(--brand)', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none', display: 'inline-block', mb: '14px' };
+const gridSx = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0 16px', p: '16px' };
+
+const Field = ({ label, children }) => (
+    <Box sx={{ mb: '14px' }}>
+        <Box sx={labelSx}>{label}</Box>
+        {children}
+    </Box>
+);
+
+Field.propTypes = { label: PropTypes.string.isRequired, children: PropTypes.node.isRequired };
+
+const NumberField = ({ label, value, onChange }) => (
+    <Field label={label}>
+        <Box component="input" type="number" value={value ?? 0} onChange={(e) => onChange(parseInt(e.target.value, 10) || 0)} sx={inputSx} />
+    </Field>
+);
+
+NumberField.propTypes = { label: PropTypes.string.isRequired, value: PropTypes.number, onChange: PropTypes.func.isRequired };
 
 const EditCoach = () => {
     const { username } = useParams();
@@ -79,126 +84,92 @@ const EditCoach = () => {
     };
 
     if (loading) {
-        return <Box sx={{ py: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>;
-    }
-    if (!user) {
-        return <Box sx={{ py: 2, textAlign: 'center' }}><Typography color="error">{error || 'Coach not found'}</Typography></Box>;
+        return (
+            <AdminLayout title="Edit Coach">
+                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
+            </AdminLayout>
+        );
     }
 
-    const numberField = (field, label) => (
-        <Grid item xs={12} sm={6} md={3}>
-            <TextField fullWidth type="number" label={label} value={user[field] || 0} onChange={(e) => handleChange(field, parseInt(e.target.value, 10) || 0)} sx={fieldSx} />
-        </Grid>
-    );
+    if (!user) {
+        return (
+            <AdminLayout title="Edit Coach">
+                <Alert severity="error">{error || 'Coach not found'}</Alert>
+            </AdminLayout>
+        );
+    }
 
     return (
-        <DashboardLayout title={`Edit Coach: ${user.coach_name || user.username}`} navigationItems={adminNavigationItems} hideHeader textColor="primary.main">
-            <Box sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <IconButton onClick={() => navigate('/admin/coach-management')} sx={{ color: 'primary.main', mr: 2 }}><ArrowBack /></IconButton>
-                    <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>Edit Coach: {user.coach_name || user.username}</Typography>
+        <AdminLayout title={`Edit Coach: ${user.coach_name || user.username}`}>
+            <Box component={Link} to="/admin/coach-management" sx={backSx}>&larr; Coach management</Box>
+
+            {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
+            {success && <Alert severity="success" sx={{ mb: '16px' }}>Coach updated successfully. Redirecting...</Alert>}
+
+            <Panel header="Basic information" sx={{ mb: '16px' }}>
+                <Box sx={gridSx}>
+                    <Field label="Coach name">
+                        <Box component="input" value={user.coach_name || ''} onChange={(e) => handleChange('coach_name', e.target.value)} sx={inputSx} />
+                    </Field>
+                    <Field label="Discord tag">
+                        <Box component="input" value={user.discord_tag || ''} onChange={(e) => handleChange('discord_tag', e.target.value)} sx={inputSx} />
+                    </Field>
+                    <Field label="Role">
+                        <Box component="select" value={user.role || ''} onChange={(e) => handleChange('role', e.target.value)} sx={selectSx}>
+                            {ROLES.map((role) => <option key={role} value={role}>{formatRole(role)}</option>)}
+                        </Box>
+                    </Field>
+                    <Field label="Position">
+                        <Box component="select" value={user.position || ''} onChange={(e) => handleChange('position', e.target.value)} sx={selectSx}>
+                            {POSITIONS.map((position) => <option key={position} value={position}>{formatPosition(position)}</option>)}
+                        </Box>
+                    </Field>
+                    <Field label="Team">
+                        <Box component="select" value={user.team || ''} onChange={(e) => handleChange('team', e.target.value || null)} sx={selectSx}>
+                            <option value="">None (free agent)</option>
+                            {teams.map((team) => <option key={team} value={team}>{team}</option>)}
+                        </Box>
+                    </Field>
                 </Box>
+            </Panel>
 
-                {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-                {success && <Alert severity="success" sx={{ mb: 3 }}>Coach updated successfully! Redirecting...</Alert>}
-
-                <Grid container spacing={3}>
-                    <Grid item xs={12} lg={6}>
-                        <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
-                            <CardContent>
-                                <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>Basic Information</Typography>
-                                <Grid container spacing={2}>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField fullWidth label="Coach Name" value={user.coach_name || ''} onChange={(e) => handleChange('coach_name', e.target.value)} sx={fieldSx} />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField fullWidth label="Discord Tag" value={user.discord_tag || ''} onChange={(e) => handleChange('discord_tag', e.target.value)} sx={fieldSx} />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth>
-                                            <InputLabel sx={{ color: 'primary.main' }}>Role</InputLabel>
-                                            <Select label="Role" value={user.role || ''} onChange={(e) => handleChange('role', e.target.value)} sx={fieldSx}>
-                                                {ROLES.map((role) => <MenuItem key={role} value={role}>{formatRole(role)}</MenuItem>)}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth>
-                                            <InputLabel sx={{ color: 'primary.main' }}>Position</InputLabel>
-                                            <Select label="Position" value={user.position || ''} onChange={(e) => handleChange('position', e.target.value)} sx={fieldSx}>
-                                                {POSITIONS.map((position) => <MenuItem key={position} value={position}>{formatPosition(position)}</MenuItem>)}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <FormControl fullWidth>
-                                            <InputLabel sx={{ color: 'primary.main' }}>Team</InputLabel>
-                                            <Select label="Team" value={user.team || ''} onChange={(e) => handleChange('team', e.target.value || null)} sx={fieldSx}>
-                                                <MenuItem value=""><em>None (free agent)</em></MenuItem>
-                                                {teams.map((team) => <MenuItem key={team} value={team}>{team}</MenuItem>)}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                </Grid>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-
-                    <Grid item xs={12} lg={6}>
-                        <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
-                            <CardContent>
-                                <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>Playbooks</Typography>
-                                <Grid container spacing={2}>
-                                    <Grid item xs={12}>
-                                        <FormControl fullWidth>
-                                            <InputLabel sx={{ color: 'primary.main' }}>Offensive Playbook</InputLabel>
-                                            <Select label="Offensive Playbook" value={user.offensive_playbook || ''} onChange={(e) => handleChange('offensive_playbook', e.target.value)} sx={fieldSx}>
-                                                {OFFENSIVE_PLAYBOOKS.map((playbook) => <MenuItem key={playbook} value={playbook}>{formatOffensivePlaybook(playbook)}</MenuItem>)}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <FormControl fullWidth>
-                                            <InputLabel sx={{ color: 'primary.main' }}>Defensive Playbook</InputLabel>
-                                            <Select label="Defensive Playbook" value={user.defensive_playbook || ''} onChange={(e) => handleChange('defensive_playbook', e.target.value)} sx={fieldSx}>
-                                                {DEFENSIVE_PLAYBOOKS.map((playbook) => <MenuItem key={playbook} value={playbook}>{formatDefensivePlaybook(playbook)}</MenuItem>)}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                </Grid>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-
-                    <Grid item xs={12}>
-                        <Card sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
-                            <CardContent>
-                                <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}>Record</Typography>
-                                <Grid container spacing={2}>
-                                    {numberField('wins', 'Wins')}
-                                    {numberField('losses', 'Losses')}
-                                    {numberField('conference_wins', 'Conference Wins')}
-                                    {numberField('conference_losses', 'Conference Losses')}
-                                    {numberField('conference_championship_wins', 'Conf Championship Wins')}
-                                    {numberField('conference_championship_losses', 'Conf Championship Losses')}
-                                    {numberField('bowl_wins', 'Bowl Wins')}
-                                    {numberField('bowl_losses', 'Bowl Losses')}
-                                    {numberField('playoff_wins', 'Playoff Wins')}
-                                    {numberField('playoff_losses', 'Playoff Losses')}
-                                    {numberField('national_championship_wins', 'National Championship Wins')}
-                                    {numberField('national_championship_losses', 'National Championship Losses')}
-                                </Grid>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                </Grid>
-
-                <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'flex-end' }}>
-                    <Button variant="outlined" onClick={() => navigate('/admin/coach-management')} startIcon={<Cancel />} sx={{ borderColor: 'rgba(255, 255, 255, 0.5)', color: 'white', '&:hover': { borderColor: 'white' } }}>Cancel</Button>
-                    <Button variant="contained" onClick={handleSave} disabled={saving} startIcon={saving ? <CircularProgress size={20} /> : <Save />} sx={{ backgroundColor: 'primary.main', color: 'white', '&:hover': { backgroundColor: 'primary.dark' } }}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+            <Panel header="Playbooks" sx={{ mb: '16px' }}>
+                <Box sx={gridSx}>
+                    <Field label="Offensive playbook">
+                        <Box component="select" value={user.offensive_playbook || ''} onChange={(e) => handleChange('offensive_playbook', e.target.value)} sx={selectSx}>
+                            {OFFENSIVE_PLAYBOOKS.map((playbook) => <option key={playbook} value={playbook}>{formatOffensivePlaybook(playbook)}</option>)}
+                        </Box>
+                    </Field>
+                    <Field label="Defensive playbook">
+                        <Box component="select" value={user.defensive_playbook || ''} onChange={(e) => handleChange('defensive_playbook', e.target.value)} sx={selectSx}>
+                            {DEFENSIVE_PLAYBOOKS.map((playbook) => <option key={playbook} value={playbook}>{formatDefensivePlaybook(playbook)}</option>)}
+                        </Box>
+                    </Field>
                 </Box>
+            </Panel>
+
+            <Panel header="Record" sx={{ mb: '16px' }}>
+                <Box sx={gridSx}>
+                    <NumberField label="Wins" value={user.wins} onChange={(v) => handleChange('wins', v)} />
+                    <NumberField label="Losses" value={user.losses} onChange={(v) => handleChange('losses', v)} />
+                    <NumberField label="Conference wins" value={user.conference_wins} onChange={(v) => handleChange('conference_wins', v)} />
+                    <NumberField label="Conference losses" value={user.conference_losses} onChange={(v) => handleChange('conference_losses', v)} />
+                    <NumberField label="Conf champ wins" value={user.conference_championship_wins} onChange={(v) => handleChange('conference_championship_wins', v)} />
+                    <NumberField label="Conf champ losses" value={user.conference_championship_losses} onChange={(v) => handleChange('conference_championship_losses', v)} />
+                    <NumberField label="Bowl wins" value={user.bowl_wins} onChange={(v) => handleChange('bowl_wins', v)} />
+                    <NumberField label="Bowl losses" value={user.bowl_losses} onChange={(v) => handleChange('bowl_losses', v)} />
+                    <NumberField label="Playoff wins" value={user.playoff_wins} onChange={(v) => handleChange('playoff_wins', v)} />
+                    <NumberField label="Playoff losses" value={user.playoff_losses} onChange={(v) => handleChange('playoff_losses', v)} />
+                    <NumberField label="National champ wins" value={user.national_championship_wins} onChange={(v) => handleChange('national_championship_wins', v)} />
+                    <NumberField label="National champ losses" value={user.national_championship_losses} onChange={(v) => handleChange('national_championship_losses', v)} />
+                </Box>
+            </Panel>
+
+            <Box sx={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <Box component="button" type="button" onClick={() => navigate('/admin/coach-management')} sx={btnGhostSx}>Cancel</Box>
+                <Box component="button" type="button" onClick={handleSave} disabled={saving} sx={btnPrimarySx}>{saving ? 'Saving...' : 'Save changes'}</Box>
             </Box>
-        </DashboardLayout>
+        </AdminLayout>
     );
 };
 

@@ -1,19 +1,16 @@
 import React from 'react';
 import CompleteRegistrationForm from '../../components/forms/CompleteRegistrationForm';
-import PageLayout from '../../components/layout/PageLayout';
+import PageWrap from '../../components/layout/PageWrap';
+import { useSeo } from '../../hooks/useSeo';
 
 const Complete = () => {
+    useSeo({ title: 'Complete registration | Fake College Football', description: 'Finish setting up your Fake College Football coach account.' });
+
     return (
-        <PageLayout
-            title="Complete Your Registration"
-            subtitle="Finish setting up your FCFB account and choose your team preferences"
-            background="background.default"
-            showHeader={false}
-            fullWidth={true}
-        >
+        <PageWrap>
             <CompleteRegistrationForm />
-        </PageLayout>
+        </PageWrap>
     );
-}
+};
 
 export default Complete;

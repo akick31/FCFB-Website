@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { conferences } from "../constants/conferences";
+import { useConferencesMap, allConferenceList } from "../constants/conferences";
 import { offensivePlaybooks } from "../constants/offensivePlaybooks";
 import { defensivePlaybooks } from "../constants/defensivePlaybooks";
 import {
@@ -20,6 +20,8 @@ import { updateTeam } from '../../api/teamApi';
 import {Header} from "../../styles/GamesStyles";
 
 const ModifyTeamForm = ({ team }) => {
+    useConferencesMap();
+    const conferences = allConferenceList();
     const theme = useTheme();
     const [validation, setValidation] = useState({ errorMessage: null });
     const [formData, setFormData] = useState({
@@ -157,8 +159,8 @@ const ModifyTeamForm = ({ team }) => {
                                 label="Conference"
                             >
                                 {conferences.map((conference) => (
-                                    <MenuItem key={conference.value} value={conference.value}>
-                                        {conference.label}
+                                    <MenuItem key={conference.code} value={conference.code}>
+                                        {conference.label}{!conference.active ? ' (inactive)' : ''}
                                     </MenuItem>
                                 ))}
                             </Select>
