@@ -88,7 +88,7 @@ const StatsManagement = () => {
                         </Box>
                         <Box component="button" type="button" onClick={() => handleGenerate(action.id, action.action, action.title)} disabled={loading[action.id]} sx={runBtnSx}>
                             {loading[action.id] ? <CircularProgress size={14} /> : null}
-                            {loading[action.id] ? 'Generating...' : '▶ Run'}
+                            {loading[action.id] ? 'Generating...' : 'Run'}
                         </Box>
                     </Box>
                 ))}

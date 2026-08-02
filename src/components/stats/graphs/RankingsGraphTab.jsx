@@ -6,9 +6,10 @@ import SelectPill from '../../ui/SelectPill';
 import MultiLineChart from '../../charts/MultiLineChart';
 import { getRankingsHistory } from '../../../api/rankingsHistoryApi.jsx';
 import { pickTeamColor } from '../../../utils/teamColor';
-import { activeConferenceList, conferenceLabel } from '../../constants/conferences';
+import { useConferencesMap, activeConferenceList, conferenceLabel } from '../../constants/conferences';
 
 const RankingsGraphTab = ({ season, teams, teamsMap, mode }) => {
+    const conferencesMap = useConferencesMap();
     const [cf, setCf] = useState('TOP');
     const [hidden, setHidden] = useState(() => new Set());
     const [games, setGames] = useState([]);
@@ -54,7 +55,7 @@ const RankingsGraphTab = ({ season, teams, teamsMap, mode }) => {
     const activeByName = useMemo(() => new Map(teams.map((t) => [t.name, t])), [teams]);
     const confOptions = useMemo(
         () => activeConferenceList().filter((c) => teams.some((t) => t.conference === c.code)).map((c) => ({ value: c.code, label: conferenceLabel(c.code) })),
-        [teams],
+        [teams, conferencesMap],
     );
 
     const lines = useMemo(() => {

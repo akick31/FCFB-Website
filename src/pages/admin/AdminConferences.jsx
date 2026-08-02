@@ -5,16 +5,15 @@ import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
 import Toggle from '../../components/ui/Toggle';
-import { getConferences, createConference, updateConference, setConferenceActive } from '../../api/conferenceApi';
+import { getConferences, createConference, setConferenceActive } from '../../api/conferenceApi';
 import { refreshConferences } from '../../components/constants/conferences';
 
 const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
-const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', py: '8px', font: 'inherit', fontSize: '0.85rem' };
-const btnSx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', py: '10px', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
-const orderInputSx = { width: 64, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '8px', py: '5px', font: 'inherit', fontSize: '0.8rem', textAlign: 'right' };
-const manageBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', py: '5px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem' };
+const btnSx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
+const manageBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 
-const emptyForm = { code: '', label: '', logoUrl: '', logoUrlDark: '', displayOrder: 0 };
+const emptyForm = { code: '', label: '', logoUrl: '', logoUrlDark: '' };
 
 const AdminConferences = () => {
     const navigate = useNavigate();
@@ -50,34 +49,19 @@ const AdminConferences = () => {
         }
     };
 
-    const handleUpdateOrder = async (conference, displayOrder) => {
-        try {
-            await updateConference(conference.code, {
-                code: conference.code,
-                label: conference.label,
-                logoUrl: conference.logo_url,
-                logoUrlDark: conference.logo_url_dark,
-                displayOrder,
-            });
-            refreshConferences();
-            await load();
-        } catch (err) {
-            setError(err.message || 'Failed to update conference');
-        }
-    };
-
     const handleCreate = async (event) => {
         event.preventDefault();
         setSaving(true);
         setError(null);
         setSuccess(null);
         try {
+            const nextOrder = conferences.reduce((max, conference) => Math.max(max, conference.display_order || 0), -1) + 1;
             await createConference({
                 code: form.code.trim().toUpperCase().replace(/\s+/g, '_'),
                 label: form.label.trim(),
                 logoUrl: form.logoUrl.trim() || null,
                 logoUrlDark: form.logoUrlDark.trim() || null,
-                displayOrder: Number(form.displayOrder) || 0,
+                displayOrder: nextOrder,
             });
             refreshConferences();
             setForm(emptyForm);
@@ -110,9 +94,7 @@ const AdminConferences = () => {
                     <thead>
                         <tr>
                             <th className="lft stick">Conference</th>
-                            <th className="lft">Code</th>
-                            <th>Order</th>
-                            <th>Active</th>
+                            <th style={{ textAlign: 'center' }}>Active</th>
                             <th className="lft">Teams</th>
                         </tr>
                     </thead>
@@ -125,21 +107,8 @@ const AdminConferences = () => {
                                         <span className="nm">{conference.label}</span>
                                     </Box>
                                 </td>
-                                <td className="lft">{conference.code}</td>
-                                <td>
-                                    <Box
-                                        component="input"
-                                        type="number"
-                                        defaultValue={conference.display_order || 0}
-                                        onBlur={(event) => {
-                                            const next = Number(event.target.value) || 0;
-                                            if (next !== conference.display_order) handleUpdateOrder(conference, next);
-                                        }}
-                                        sx={orderInputSx}
-                                    />
-                                </td>
-                                <td>
-                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                <td style={{ textAlign: 'center' }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                         <Toggle on={!!conference.active} onClick={() => handleToggleActive(conference)} />
                                     </Box>
                                 </td>
@@ -171,10 +140,6 @@ const AdminConferences = () => {
                     <Box>
                         <Box sx={labelSx}>Dark logo URL</Box>
                         <Box component="input" value={form.logoUrlDark} onChange={(e) => setForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))} sx={inputSx} />
-                    </Box>
-                    <Box>
-                        <Box sx={labelSx}>Order</Box>
-                        <Box component="input" type="number" value={form.displayOrder} onChange={(e) => setForm((prev) => ({ ...prev, displayOrder: e.target.value }))} sx={inputSx} />
                     </Box>
                     <Box component="button" type="submit" disabled={saving} sx={btnSx}>
                         {saving ? 'Adding...' : 'Add conference'}

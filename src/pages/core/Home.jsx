@@ -11,7 +11,7 @@ import { getCurrentSeason, getLatestCompletedSeason } from '../../api/seasonApi'
 import { getPostseasonSchedule } from '../../api/scheduleApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
-import { activeConferenceCodes, conferenceLabel } from '../../components/constants/conferences';
+import { useConferencesMap, activeConferenceCodes, conferenceLabel } from '../../components/constants/conferences';
 import PageWrap from '../../components/layout/PageWrap';
 import SectionTitle from '../../components/ui/SectionTitle';
 import Panel from '../../components/ui/Panel';
@@ -60,6 +60,7 @@ const Home = () => {
     const [champion, setChampion] = useState(null);
     const [confChampions, setConfChampions] = useState(null);
     const [loading, setLoading] = useState(true);
+    const conferencesMap = useConferencesMap();
 
     useEffect(() => {
         let active = true;
@@ -160,7 +161,7 @@ const Home = () => {
             }
         });
         return activeConferenceCodes().filter((conference) => byConference[conference]).map((conference) => ({ conference, team: byConference[conference].team, champion: false }));
-    }, [teams, teamsByName, confChampions, showChampions]);
+    }, [teams, teamsByName, confChampions, showChampions, conferencesMap]);
 
     if (loading) {
         return <PageWrap><Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box></PageWrap>;

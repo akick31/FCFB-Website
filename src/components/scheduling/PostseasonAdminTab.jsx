@@ -570,7 +570,7 @@ const PostseasonAdminTab = ({
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', mb: '16px', alignItems: 'center' }}>
                 <Box component="button" type="button" onClick={() => { setCcgConference(''); setCcgHome(null); setCcgAway(null); setCcgDialogOpen(true); }} sx={btnPrimarySx}>+ Add CCG</Box>
                 <Box component="button" type="button" onClick={handleOpenPlayoffDialog} sx={btnLiveSx}>
-                    {postseasonPlayoffs.length > 0 ? '✓ Edit playoff bracket' : '✓ Set up playoff bracket'}
+                    {postseasonPlayoffs.length > 0 ? 'Edit playoff bracket' : 'Set up playoff bracket'}
                 </Box>
                 <Box component="button" type="button" onClick={() => onOpenAddGameDialog('BOWL', 14)} sx={ctrlSx}>+ Add bowl game</Box>
                 <Box component="button" type="button" onClick={() => onOpenAddGameDialog('PLAYOFFS', null)} sx={ctrlSx}>+ Add playoff game</Box>

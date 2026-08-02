@@ -4,9 +4,10 @@ import { Box, CircularProgress, Alert } from '@mui/material';
 import { getAllTeams } from '../../api/teamApi';
 import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedule, getScheduleBySeason } from '../../api/scheduleApi';
 import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
+import { getTeamSeasonConference } from '../../api/teamSeasonConferenceApi';
 import { getStorageItem } from '../../utils/utils';
 import { isRealTeam } from '../../utils/teamDataUtils';
-import { activeConferenceCodes } from '../../components/constants/conferences';
+import { useConferencesMap, activeConferenceCodes, allConferenceList } from '../../components/constants/conferences';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
@@ -33,6 +34,7 @@ const Schedule = () => {
     const navigate = useNavigate();
     useSeo(ROUTE_META['/schedules']);
     const teamsMap = useTeamsMap();
+    const conferencesMap = useConferencesMap();
 
     const tabIndex = TAB_FROM_SLUG[tab] ?? 0;
 
@@ -40,8 +42,10 @@ const Schedule = () => {
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [schedule, setSchedule] = useState([]);
     const [season, setSeason] = useState(null);
+    const [liveSeason, setLiveSeason] = useState(null);
     const [allSeasons, setAllSeasons] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [seasonConferenceMap, setSeasonConferenceMap] = useState({});
     const [scheduleLoading, setScheduleLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -52,18 +56,32 @@ const Schedule = () => {
     const [allSeasonSchedule, setAllSeasonSchedule] = useState([]);
     const [confLoading, setConfLoading] = useState(false);
 
+    const isLiveSeason = season != null && season === liveSeason;
+
     const activeTeams = useMemo(
         () => teams.filter((team) => team.active && isRealTeam(team)).sort((a, b) => (a.name || '').localeCompare(b.name || '')),
         [teams],
     );
+
+    useEffect(() => {
+        if (!season || isLiveSeason) { setSeasonConferenceMap({}); return; }
+        let active = true;
+        getTeamSeasonConference(season).then((map) => { if (active) setSeasonConferenceMap(map || {}); });
+        return () => { active = false; };
+    }, [season, isLiveSeason]);
+
+    const conferenceOfTeam = (team) => (isLiveSeason ? team.conference : seasonConferenceMap[team.name]);
+
     const availableConferences = useMemo(() => {
-        const present = new Set(teams.filter((team) => team.active).map((team) => team.conference));
-        return activeConferenceCodes().filter((conf) => present.has(conf));
-    }, [teams]);
-    const conferenceTeams = useMemo(
-        () => activeTeams.filter((team) => team.conference === selectedConference),
-        [activeTeams, selectedConference],
-    );
+        const present = new Set(teams.map((team) => conferenceOfTeam(team)));
+        const codes = isLiveSeason ? activeConferenceCodes() : allConferenceList().map((c) => c.code);
+        return codes.filter((conf) => present.has(conf));
+    }, [teams, conferencesMap, isLiveSeason, seasonConferenceMap]);
+
+    const conferenceTeams = useMemo(() => {
+        const pool = isLiveSeason ? activeTeams : teams.filter((team) => isRealTeam(team)).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        return pool.filter((team) => conferenceOfTeam(team) === selectedConference);
+    }, [activeTeams, teams, selectedConference, isLiveSeason, seasonConferenceMap]);
 
     useEffect(() => {
         if (!tab && !loading) navigate('/schedules/team', { replace: true });
@@ -89,6 +107,7 @@ const Schedule = () => {
                 setTeams(teamsData);
                 const seasonNumbers = seasonsData.map((entry) => entry.season_number ?? entry.seasonNumber).filter((value) => value != null);
                 setAllSeasons(seasonNumbers);
+                setLiveSeason(currentSeason);
 
                 const rawUrlSeason = tab === 'postseason' ? selection : seasonParam;
                 const urlSeason = rawUrlSeason ? parseInt(rawUrlSeason, 10) : null;

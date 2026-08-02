@@ -6,7 +6,7 @@ import SelectPill from '../../ui/SelectPill';
 import SegTabs from '../../ui/SegTabs';
 import LogoScatterChart from '../../charts/LogoScatterChart';
 import { getFilteredSeasonStats } from '../../../api/seasonStatsApi';
-import { activeConferenceList, conferenceLabel } from '../../constants/conferences';
+import { useConferencesMap, activeConferenceList, conferenceLabel } from '../../constants/conferences';
 
 const PLOTS = [
     { key: 'avgdiff', label: 'Average Difference', title: 'Average Difference', xl: 'Offense (avg diff)', yl: 'Defense (avg diff)', invX: true },
@@ -18,6 +18,7 @@ const num = (stat, key) => stat[key] ?? 0;
 const round1 = (v) => Math.round(v * 10) / 10;
 
 const StatPlotsGraphTab = ({ season, teams, teamsMap, mode }) => {
+    const conferencesMap = useConferencesMap();
     const [cf, setCf] = useState('ALL');
     const [plotIndex, setPlotIndex] = useState(0);
     const [resetNonce, setResetNonce] = useState(0);
@@ -42,7 +43,7 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode }) => {
     );
     const confOptions = useMemo(
         () => activeConferenceList().filter((c) => teams.some((t) => t.conference === c.code)).map((c) => ({ value: c.code, label: conferenceLabel(c.code) })),
-        [teams],
+        [teams, conferencesMap],
     );
 
     const plot = PLOTS[plotIndex];

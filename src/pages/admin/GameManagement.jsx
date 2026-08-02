@@ -22,10 +22,11 @@ import { GAME_TYPES, GAME_STATUSES, GAME_TYPE_DESCRIPTIONS, GAME_STATUS_DESCRIPT
 
 const POLL_INTERVAL_MS = 3000;
 
-const selectSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', py: '8px', font: 'inherit', fontSize: '0.82rem', cursor: 'pointer', '& option': { background: 'var(--surface-2)', color: 'var(--text)' } };
+const selectSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', cursor: 'pointer', '& option': { background: 'var(--surface-2)', color: 'var(--text)' } };
 const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', py: '11px', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', width: '100%', '&:disabled': { opacity: 0.6, cursor: 'default' } };
 const btnGhostSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '14px', py: '10px', font: 'inherit', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', width: '100%', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' }, '&:disabled': { opacity: 0.6, cursor: 'default' } };
 const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', px: '8px', py: '3px', borderRadius: 'var(--r-sm)', lineHeight: 1 };
+const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
 const editBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', py: '5px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 
 const GameManagement = () => {
@@ -350,7 +351,7 @@ const GameManagement = () => {
                                 {isStarting ? 'Starting...' : `Start Week ${selectedStartWeek}`}
                             </Box>
                             {stats.notStarted === 0 && stats.total > 0 && (
-                                <Box component="span" sx={{ ...pillSx, background: 'transparent', color: 'var(--field)', border: '1px solid color-mix(in srgb, var(--field) 55%, var(--line))' }}>✓ All games started</Box>
+                                <Box component="span" sx={{ ...pillSx, background: 'transparent', color: 'var(--field)', border: '1px solid color-mix(in srgb, var(--field) 55%, var(--line))' }}>All games started</Box>
                             )}
                             {jobData && jobData.failedGames > 0 && (jobData.status === 'COMPLETED' || jobData.status === 'FAILED') && (
                                 <Box component="button" type="button" onClick={handleRetryFailed} disabled={isStarting} sx={{ ...btnGhostSx, width: 'auto', color: 'var(--gold)' }}>
@@ -375,17 +376,17 @@ const GameManagement = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '16px', mb: '16px' }}>
                 <Panel header="Create new game">
                     <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <Box component="button" type="button" onClick={openStartGameDialog} disabled={loading} sx={btnPrimarySx}>▶ Start game</Box>
-                        <Box component="button" type="button" onClick={() => openScrimmageDialog('Standard')} disabled={loading} sx={btnPrimarySx}>▶ Start scrimmage</Box>
-                        <Box component="button" type="button" onClick={() => openScrimmageDialog('Overtime')} disabled={loading} sx={btnPrimarySx}>▶ Start overtime scrimmage</Box>
+                        <Box component="button" type="button" onClick={openStartGameDialog} disabled={loading} sx={btnPrimarySx}>Start game</Box>
+                        <Box component="button" type="button" onClick={() => openScrimmageDialog('Standard')} disabled={loading} sx={btnPrimarySx}>Start scrimmage</Box>
+                        <Box component="button" type="button" onClick={() => openScrimmageDialog('Overtime')} disabled={loading} sx={btnPrimarySx}>Start overtime scrimmage</Box>
                     </Box>
                 </Panel>
 
                 <Panel header="Quick actions">
                     <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <Box component="button" type="button" onClick={() => fetchGames(filters, currentPage)} disabled={gamesLoading} sx={btnGhostSx}>&#8635; Refresh games</Box>
-                        <Box component="button" type="button" onClick={handleMarkAllAsChewMode} disabled={loading} sx={btnGhostSx}>⏱ Put all games in chew mode</Box>
-                        <Box component="button" type="button" onClick={handleEndAllGames} disabled={loading} sx={{ ...btnGhostSx, color: 'var(--live)' }}>■ End all ongoing games</Box>
+                        <Box component="button" type="button" onClick={handleMarkAllAsChewMode} disabled={loading} sx={btnGhostSx}>Put all games in chew mode</Box>
+                        <Box component="button" type="button" onClick={handleEndAllGames} disabled={loading} sx={{ ...btnGhostSx, color: 'var(--live)' }}>End all ongoing games</Box>
                     </Box>
                 </Panel>
             </Box>
@@ -394,10 +395,10 @@ const GameManagement = () => {
                 header={`Games (${filteredGames.length})`}
             >
                 <Box sx={{ p: '16px 16px 0', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    <SelectPill label="Season" value={filters.season || ''} onChange={(v) => handleFilterChange('season', v ? Number(v) : '')} options={[{ value: '', label: 'All seasons' }, { value: 10, label: 'Season 10' }, { value: 11, label: 'Season 11' }]} />
-                    <SelectPill label="Week" value={filters.week || ''} onChange={(v) => handleFilterChange('week', v ? Number(v) : '')} options={[{ value: '', label: 'All weeks' }, ...Array.from({ length: currentWeek || 18 }, (_, i) => ({ value: i + 1, label: `Week ${i + 1}` }))]} />
-                    <SelectPill label="Type" value={filters.gameType || 'ALL'} onChange={(v) => handleFilterChange('gameType', v)} options={[{ value: 'ALL', label: 'All types' }, ...GAME_TYPES.map((t) => ({ value: t, label: GAME_TYPE_DESCRIPTIONS[t] }))]} />
-                    <SelectPill label="Status" value={filters.gameStatus || 'ALL'} onChange={(v) => handleFilterChange('gameStatus', v)} options={[{ value: 'ALL', label: 'All statuses' }, ...GAME_STATUSES.map((s) => ({ value: s, label: GAME_STATUS_DESCRIPTIONS[s] }))]} />
+                    <SelectPill label="Season" value={filters.season || ''} onChange={(v) => handleFilterChange('season', v ? Number(v) : '')} options={[{ value: '', label: 'All seasons' }, { value: 10, label: 'Season 10' }, { value: 11, label: 'Season 11' }]} sx={pillHeightSx} />
+                    <SelectPill label="Week" value={filters.week || ''} onChange={(v) => handleFilterChange('week', v ? Number(v) : '')} options={[{ value: '', label: 'All weeks' }, ...Array.from({ length: currentWeek || 18 }, (_, i) => ({ value: i + 1, label: `Week ${i + 1}` }))]} sx={pillHeightSx} />
+                    <SelectPill label="Type" value={filters.gameType || 'ALL'} onChange={(v) => handleFilterChange('gameType', v)} options={[{ value: 'ALL', label: 'All types' }, ...GAME_TYPES.map((t) => ({ value: t, label: GAME_TYPE_DESCRIPTIONS[t] }))]} sx={pillHeightSx} />
+                    <SelectPill label="Status" value={filters.gameStatus || 'ALL'} onChange={(v) => handleFilterChange('gameStatus', v)} options={[{ value: 'ALL', label: 'All statuses' }, ...GAME_STATUSES.map((s) => ({ value: s, label: GAME_STATUS_DESCRIPTIONS[s] }))]} sx={pillHeightSx} />
                 </Box>
 
                 {gamesLoading ? (

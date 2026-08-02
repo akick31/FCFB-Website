@@ -4,13 +4,18 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
+import SelectPill from '../../components/ui/SelectPill';
 import { getConferences } from '../../api/conferenceApi';
 import { getAllTeams, updateTeam } from '../../api/teamApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
 
-const selectSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', py: '6px', font: 'inherit', fontSize: '0.82rem', cursor: 'pointer', minWidth: 200 };
-const btnSx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '14px', py: '9px', font: 'inherit', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
+const searchSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', minWidth: 200 };
 const backSx = { color: 'var(--brand)', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none', display: 'inline-block', mb: '14px' };
+const rowSx = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', px: '16px', py: '10px', borderBottom: '1px solid var(--line-soft)', '&:last-of-type': { borderBottom: 0 } };
+const addBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--field)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--field)' }, '&:disabled': { opacity: 0.6, cursor: 'default' } };
+const removeBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--live)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--live)' }, '&:disabled': { opacity: 0.6, cursor: 'default' } };
+
+const MAX_ADD_RESULTS = 20;
 
 const AdminConferenceDetail = () => {
     const { code } = useParams();
@@ -19,9 +24,9 @@ const AdminConferenceDetail = () => {
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [movingTeam, setMovingTeam] = useState(null);
-    const [addTeamName, setAddTeamName] = useState('');
-    const [adding, setAdding] = useState(false);
+    const [pendingTeam, setPendingTeam] = useState(null);
+    const [search, setSearch] = useState('');
+    const [addSearch, setAddSearch] = useState('');
 
     const load = async () => {
         setLoading(true);
@@ -39,43 +44,68 @@ const AdminConferenceDetail = () => {
     useEffect(() => { load(); }, [code]);
 
     const conference = conferences.find((c) => c.code === code);
+
     const teamsInConference = useMemo(
-        () => teams.filter((team) => team.conference === code).sort((a, b) => a.name.localeCompare(b.name)),
-        [teams, code],
-    );
-    const availableTeams = useMemo(
-        () => teams.filter((team) => team.conference !== code && team.active && isRealTeam(team)).sort((a, b) => a.name.localeCompare(b.name)),
-        [teams, code],
+        () => teams
+            .filter((team) => team.conference === code)
+            .filter((team) => team.name.toLowerCase().includes(search.trim().toLowerCase()))
+            .sort((a, b) => a.name.localeCompare(b.name)),
+        [teams, code, search],
     );
 
+    const moveToOptions = useMemo(() => [
+        { value: '', label: 'Move to...' },
+        ...conferences
+            .filter((c) => c.code !== code)
+            .sort((a, b) => (a.active === b.active ? 0 : a.active ? -1 : 1))
+            .map((c) => ({ value: c.code, label: `${c.label}${!c.active ? ' (inactive)' : ''}` })),
+    ], [conferences, code]);
+
+    const availableTeams = useMemo(() => {
+        const query = addSearch.trim().toLowerCase();
+        return teams
+            .filter((team) => team.conference !== code && team.active && isRealTeam(team))
+            .filter((team) => !query || team.name.toLowerCase().includes(query))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [teams, code, addSearch]);
+
     const moveTeamToConference = async (team, newConference) => {
+        if (!newConference) return;
         setError(null);
-        setMovingTeam(team.name);
+        setPendingTeam(team.name);
         try {
             await updateTeam({ ...team, conference: newConference });
             await load();
         } catch (err) {
             setError(err.message || `Failed to update ${team.name}`);
         } finally {
-            setMovingTeam(null);
+            setPendingTeam(null);
         }
     };
 
-    const handleAddTeam = async (event) => {
-        event.preventDefault();
-        if (!addTeamName) return;
-        const team = teams.find((t) => t.name === addTeamName);
-        if (!team) return;
-        setAdding(true);
+    const removeFromConference = async (team) => {
         setError(null);
+        setPendingTeam(team.name);
+        try {
+            await updateTeam({ ...team, conference: null });
+            await load();
+        } catch (err) {
+            setError(err.message || `Failed to remove ${team.name}`);
+        } finally {
+            setPendingTeam(null);
+        }
+    };
+
+    const addTeam = async (team) => {
+        setError(null);
+        setPendingTeam(team.name);
         try {
             await updateTeam({ ...team, conference: code });
-            setAddTeamName('');
             await load();
         } catch (err) {
             setError(err.message || `Failed to add ${team.name}`);
         } finally {
-            setAdding(false);
+            setPendingTeam(null);
         }
     };
 
@@ -99,15 +129,24 @@ const AdminConferenceDetail = () => {
                 <Alert severity="warning" sx={{ mb: '16px' }}>No conference found for code &quot;{code}&quot;.</Alert>
             )}
 
-            <Panel header={`Teams in ${conference ? conference.label : code}`} more={`${teamsInConference.length} teams`} sx={{ mb: '16px' }}>
+            <Panel
+                header={`Teams in ${conference ? conference.label : code}`}
+                more={(
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Box component="input" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} sx={{ ...searchSx, minWidth: 160 }} />
+                        <span>{teamsInConference.length} teams</span>
+                    </Box>
+                )}
+                sx={{ mb: '16px' }}
+            >
                 {teamsInConference.length === 0 ? (
-                    <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No teams currently assigned to this conference.</Box>
+                    <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No teams found.</Box>
                 ) : (
-                    <DataTable minWidth={480}>
+                    <DataTable minWidth={560}>
                         <thead>
                             <tr>
                                 <th className="lft stick">Team</th>
-                                <th className="lft">Conference</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -116,17 +155,18 @@ const AdminConferenceDetail = () => {
                                     <td className="lft stick" onClick={() => navigate(`/team-details/${team.id}`)} style={{ cursor: 'pointer' }}>
                                         <span className="nm">{team.name}</span>
                                     </td>
-                                    <td className="lft">
-                                        <Box
-                                            component="select"
-                                            value={team.conference || ''}
-                                            disabled={movingTeam === team.name}
-                                            onChange={(event) => moveTeamToConference(team, event.target.value)}
-                                            sx={selectSx}
-                                        >
-                                            {conferences.map((c) => (
-                                                <option key={c.code} value={c.code}>{c.label}{!c.active ? ' (inactive)' : ''}</option>
-                                            ))}
+                                    <td>
+                                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                            <SelectPill
+                                                value=""
+                                                onChange={(value) => moveTeamToConference(team, value)}
+                                                options={moveToOptions}
+                                                ariaLabel={`Move ${team.name} to conference`}
+                                                sx={{ height: '30px' }}
+                                            />
+                                            <Box component="button" type="button" disabled={pendingTeam === team.name} onClick={() => removeFromConference(team)} sx={removeBtnSx}>
+                                                Remove
+                                            </Box>
                                         </Box>
                                     </td>
                                 </tr>
@@ -137,17 +177,31 @@ const AdminConferenceDetail = () => {
             </Panel>
 
             <Panel header="Add a team to this conference">
-                <Box component="form" onSubmit={handleAddTeam} sx={{ p: '16px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <Box component="select" value={addTeamName} onChange={(event) => setAddTeamName(event.target.value)} sx={selectSx}>
-                        <option value="">Select a team...</option>
-                        {availableTeams.map((team) => (
-                            <option key={team.name} value={team.name}>{team.name}</option>
-                        ))}
-                    </Box>
-                    <Box component="button" type="submit" disabled={!addTeamName || adding} sx={btnSx}>
-                        {adding ? 'Adding...' : 'Add team'}
-                    </Box>
+                <Box sx={{ p: '16px', pb: 0 }}>
+                    <Box component="input" placeholder="Search teams..." value={addSearch} onChange={(e) => setAddSearch(e.target.value)} sx={{ ...searchSx, width: '100%' }} />
                 </Box>
+                {availableTeams.length === 0 ? (
+                    <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No matching teams.</Box>
+                ) : (
+                    <Box sx={{ py: '6px' }}>
+                        {availableTeams.slice(0, MAX_ADD_RESULTS).map((team) => (
+                            <Box key={team.name} sx={rowSx}>
+                                <Box>
+                                    <Box sx={{ fontWeight: 700 }}>{team.name}</Box>
+                                    <Box sx={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{team.conference ? conferences.find((c) => c.code === team.conference)?.label || team.conference : 'No conference'}</Box>
+                                </Box>
+                                <Box component="button" type="button" disabled={pendingTeam === team.name} onClick={() => addTeam(team)} sx={addBtnSx}>
+                                    + Add
+                                </Box>
+                            </Box>
+                        ))}
+                        {availableTeams.length > MAX_ADD_RESULTS && (
+                            <Box sx={{ px: '16px', py: '10px', fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+                                Showing {MAX_ADD_RESULTS} of {availableTeams.length} teams. Refine your search to see more.
+                            </Box>
+                        )}
+                    </Box>
+                )}
             </Panel>
         </AdminLayout>
     );

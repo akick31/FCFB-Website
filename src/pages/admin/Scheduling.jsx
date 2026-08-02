@@ -18,7 +18,7 @@ import {
     Snackbar,
     CircularProgress,
 } from '@mui/material';
-import { CloudUpload as UploadIcon } from '@mui/icons-material';
+import { CloudUpload as UploadIcon, Lock as LockIcon, LockOpen as LockOpenIcon } from '@mui/icons-material';
 import AdminLayout from '../../components/layout/AdminLayout';
 import SegTabs from '../../components/ui/SegTabs';
 import { getAllTeams } from '../../api/teamApi';
@@ -51,8 +51,8 @@ const DEFAULT_CONFERENCE_GAMES = 9;
 
 const EXCLUDED_ADMIN_CONFERENCES = ['FBS_INDEPENDENT'];
 
-const selectSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', py: '7px', font: 'inherit', fontSize: '0.82rem', cursor: 'pointer', '& option': { background: 'var(--surface)', color: 'var(--text)' } };
-const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '12px', py: '8px', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const selectSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', cursor: 'pointer', '& option': { background: 'var(--surface)', color: 'var(--text)' } };
+const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 const ctrlLockedSx = { ...ctrlSx, color: 'var(--live)', borderColor: 'color-mix(in srgb, var(--live) 40%, var(--line))' };
 const ctrlUnlockedSx = { ...ctrlSx, color: 'var(--field)', borderColor: 'color-mix(in srgb, var(--field) 40%, var(--line))' };
 
@@ -695,8 +695,9 @@ const Scheduling = () => {
                     }} sx={ctrlSx}>
                         + New season
                     </Box>
-                    <Box component="button" type="button" onClick={handleToggleLock} title={scheduleLocked ? 'Schedule is locked (click to unlock)' : 'Schedule is unlocked (click to lock)'} sx={scheduleLocked ? ctrlLockedSx : ctrlUnlockedSx}>
-                        {scheduleLocked ? '🔒 Locked' : '🔓 Unlocked'}
+                    <Box component="button" type="button" onClick={handleToggleLock} title={scheduleLocked ? 'Schedule is locked (click to unlock)' : 'Schedule is unlocked (click to lock)'} sx={{ ...(scheduleLocked ? ctrlLockedSx : ctrlUnlockedSx), display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        {scheduleLocked ? <LockIcon sx={{ fontSize: 15 }} /> : <LockOpenIcon sx={{ fontSize: 15 }} />}
+                        {scheduleLocked ? 'Locked' : 'Unlocked'}
                     </Box>
                 </>
             )}

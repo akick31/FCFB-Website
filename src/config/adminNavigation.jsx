@@ -3,7 +3,6 @@ import {
     People,
     SportsFootball,
     EmojiEvents,
-    Headset,
     Assessment,
     TrendingUp,
     CalendarMonth,
@@ -14,7 +13,6 @@ import {
 export const adminNavigationItems = [
     { label: 'Dashboard', icon: <Dashboard />, path: '/admin' },
     { label: 'User Management', icon: <People />, path: '/admin/user-management' },
-    { label: 'Coach Management', icon: <Headset />, path: '/admin/coach-management' },
     { label: 'Team Management', icon: <EmojiEvents />, path: '/admin/team-management' },
     { label: 'Conference Management', icon: <AccountTree />, path: '/admin/conferences' },
     { label: 'Game Management', icon: <SportsFootball />, path: '/admin/game-management' },

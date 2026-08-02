@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import Header from './components/header/Header';
 import Footer from './components/layout/Footer';
 import {
@@ -38,7 +38,6 @@ import {
     AdminConferenceDetail,
     GameManagement,
     UserManagement,
-    CoachManagement,
     CoachTransactionLog,
     EditGame,
     StatsManagement,
@@ -158,11 +157,7 @@ const AppRoutes = () => {
                                 <UserManagement user={user} />
                             </ProtectedRoute>
                         } />
-                        <Route path="/admin/coach-management" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <CoachManagement user={user} />
-                            </ProtectedRoute>
-                        } />
+                        <Route path="/admin/coach-management" element={<Navigate to="/admin/team-management" replace />} />
                         <Route path="/admin/game-management" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <GameManagement user={user} />

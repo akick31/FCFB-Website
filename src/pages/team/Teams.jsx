@@ -6,7 +6,7 @@ import { isRealTeam, isTeamAvailable } from '../../utils/teamDataUtils';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../theme/ColorModeContext';
 import { pickTeamColor } from '../../utils/teamColor';
-import { activeConferenceCodes, conferenceLabel } from '../../components/constants/conferences';
+import { useConferencesMap, activeConferenceCodes, conferenceLabel } from '../../components/constants/conferences';
 import { formatConference } from '../../utils/formatText';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
@@ -22,6 +22,7 @@ const Teams = () => {
     const { conference: confParam, availability: availParam } = useParams();
     useSeo(ROUTE_META['/teams']);
     const teamsMap = useTeamsMap();
+    const conferencesMap = useConferencesMap();
     const { mode } = useColorMode();
 
     const [teams, setTeams] = useState([]);
@@ -42,7 +43,7 @@ const Teams = () => {
     const availableConferences = useMemo(() => {
         const present = new Set(teams.map((team) => team.conference));
         return activeConferenceCodes().filter((conf) => present.has(conf));
-    }, [teams]);
+    }, [teams, conferencesMap]);
 
     const shown = useMemo(() => {
         const query = search.trim().toLowerCase();

@@ -75,7 +75,7 @@ const EditCoach = () => {
         try {
             await updateUser(user);
             setSuccess(true);
-            setTimeout(() => navigate('/admin/coach-management'), 1500);
+            setTimeout(() => navigate('/admin/team-management'), 1500);
         } catch (err) {
             setError(err.message || 'Failed to update coach');
         } finally {
@@ -101,7 +101,7 @@ const EditCoach = () => {
 
     return (
         <AdminLayout title={`Edit Coach: ${user.coach_name || user.username}`}>
-            <Box component={Link} to="/admin/coach-management" sx={backSx}>&larr; Coach management</Box>
+            <Box component={Link} to="/admin/team-management" sx={backSx}>&larr; Team management</Box>
 
             {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
             {success && <Alert severity="success" sx={{ mb: '16px' }}>Coach updated successfully. Redirecting...</Alert>}
@@ -166,7 +166,7 @@ const EditCoach = () => {
             </Panel>
 
             <Box sx={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <Box component="button" type="button" onClick={() => navigate('/admin/coach-management')} sx={btnGhostSx}>Cancel</Box>
+                <Box component="button" type="button" onClick={() => navigate('/admin/team-management')} sx={btnGhostSx}>Cancel</Box>
                 <Box component="button" type="button" onClick={handleSave} disabled={saving} sx={btnPrimarySx}>{saving ? 'Saving...' : 'Save changes'}</Box>
             </Box>
         </AdminLayout>
