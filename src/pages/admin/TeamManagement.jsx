@@ -9,7 +9,8 @@ import SelectPill from '../../components/ui/SelectPill';
 import TeamMark from '../../components/ui/TeamMark';
 import ConferenceMark from '../../components/ui/ConferenceMark';
 import CreateTeamForm from '../../components/forms/CreateTeamForm';
-import { getAllTeams, hireCoach, hireInterimCoach, fireSingleCoach } from '../../api/teamApi';
+import Toggle from '../../components/ui/Toggle';
+import { getAllTeams, updateTeam, hireCoach, hireInterimCoach, fireSingleCoach } from '../../api/teamApi';
 import { getAllUsers } from '../../api/userApi';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
@@ -31,9 +32,10 @@ const createBtnSx = { border: 0, background: 'var(--brand-deep)', color: '#fff',
 const toggleChipSx = (on) => ({ display: 'inline-flex', alignItems: 'center', gap: '7px', border: '1px solid var(--line)', background: 'var(--surface)', borderRadius: 'var(--r-sm)', px: '11px', height: '38px', boxSizing: 'border-box', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', color: on ? 'var(--text)' : 'var(--text-muted)' });
 
 const TAKEN_OPTIONS = [{ value: 'ALL', label: 'All teams' }, { value: 'OPEN', label: 'Open teams' }, { value: 'TAKEN', label: 'Taken teams' }];
+const ACTIVE_OPTIONS = [{ value: 'ALL', label: 'Active + inactive' }, { value: 'ACTIVE', label: 'Active teams' }, { value: 'INACTIVE', label: 'Inactive teams' }];
 
-const statusInfo = (team) => {
-    if (!team.active) return { label: 'Inactive', color: 'var(--live)' };
+const statusInfo = (team, active) => {
+    if (!active) return { label: 'Inactive', color: 'var(--live)' };
     if (team.is_taken) return { label: 'Taken', color: 'var(--gold)' };
     return { label: 'Open', color: 'var(--field)' };
 };
@@ -51,7 +53,10 @@ const TeamManagement = ({ user }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [conferenceFilter, setConferenceFilter] = useState('ALL');
     const [takenFilter, setTakenFilter] = useState('ALL');
+    const [activeFilter, setActiveFilter] = useState('ALL');
     const [createTeamOpen, setCreateTeamOpen] = useState(false);
+    const [activeOverrides, setActiveOverrides] = useState({});
+    const [savingActive, setSavingActive] = useState(false);
 
     const [hireDialogOpen, setHireDialogOpen] = useState(false);
     const [fireTarget, setFireTarget] = useState(null);
@@ -87,11 +92,17 @@ const TeamManagement = ({ user }) => {
 
     useEffect(() => { loadData(); }, []);
 
+    const effectiveActive = (team) => activeOverrides[team.name] ?? team.active;
+
     const filteredTeams = useMemo(() => {
         let filtered = teams;
-        if (hideFakeTeams) filtered = filtered.filter((team) => team.subdivision !== 'FAKE');
+        if (hideFakeTeams) filtered = filtered.filter(isRealTeam);
         if (conferenceFilter !== 'ALL') filtered = filtered.filter((team) => team.conference === conferenceFilter);
         if (takenFilter !== 'ALL') filtered = filtered.filter((team) => (takenFilter === 'TAKEN' ? team.is_taken : !team.is_taken));
+        if (activeFilter !== 'ALL') {
+            filtered = filtered.filter(isRealTeam);
+            filtered = filtered.filter((team) => (activeFilter === 'ACTIVE' ? effectiveActive(team) : !effectiveActive(team)));
+        }
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
             filtered = filtered.filter((team) =>
@@ -100,7 +111,7 @@ const TeamManagement = ({ user }) => {
                 team.abbreviation?.toLowerCase().includes(searchLower));
         }
         return filtered;
-    }, [teams, hideFakeTeams, conferenceFilter, takenFilter, searchTerm]);
+    }, [teams, hideFakeTeams, conferenceFilter, takenFilter, activeFilter, activeOverrides, searchTerm]);
 
     const rosterFor = (team) => getTeamCoaches(team).map((coach) => ({
         ...coach,
@@ -108,6 +119,37 @@ const TeamManagement = ({ user }) => {
     }));
 
     const handleTeamCreated = () => loadData();
+
+    const handleToggleActive = (team) => {
+        if (!isRealTeam(team)) return;
+        setActiveOverrides((prev) => {
+            const next = { ...prev };
+            const newValue = !effectiveActive(team);
+            if (newValue === team.active) delete next[team.name];
+            else next[team.name] = newValue;
+            return next;
+        });
+    };
+
+    const pendingActiveCount = Object.keys(activeOverrides).length;
+
+    const handleSaveActive = async () => {
+        if (pendingActiveCount === 0) return;
+        setSavingActive(true);
+        setError(null);
+        try {
+            await Promise.all(Object.entries(activeOverrides).map(([name, active]) => {
+                const team = teams.find((entry) => entry.name === name);
+                return updateTeam({ ...team, active });
+            }));
+            setActiveOverrides({});
+            await loadData();
+        } catch (err) {
+            setError(err.message || 'Failed to save team status changes');
+        } finally {
+            setSavingActive(false);
+        }
+    };
 
     const handleFireClick = (team) => {
         const roster = rosterFor(team);
@@ -201,30 +243,35 @@ const TeamManagement = ({ user }) => {
                     <Box component="input" placeholder="Search teams..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
                     <SelectPill label="Conference" value={conferenceFilter} onChange={setConferenceFilter} options={conferenceOptions} sx={pillHeightSx} />
                     <SelectPill label="Status" value={takenFilter} onChange={setTakenFilter} options={TAKEN_OPTIONS} sx={pillHeightSx} />
+                    <SelectPill label="Active" value={activeFilter} onChange={setActiveFilter} options={ACTIVE_OPTIONS} sx={pillHeightSx} />
                     <Box component="button" type="button" onClick={() => setHideFakeTeams((v) => !v)} sx={toggleChipSx(hideFakeTeams)}>
                         <Box component="span" sx={{ width: 14, height: 14, borderRadius: '3px', border: '1.5px solid', borderColor: hideFakeTeams ? 'var(--brand)' : 'var(--text-dim)', background: hideFakeTeams ? 'var(--brand)' : 'transparent' }} />
                         Hide fake teams
                     </Box>
                     <Box component="button" type="button" onClick={() => setCreateTeamOpen(true)} sx={createBtnSx}>+ Create team</Box>
+                    <Box component="button" type="button" onClick={handleSaveActive} disabled={pendingActiveCount === 0 || savingActive} sx={{ ...createBtnSx, background: 'var(--field)', '&:disabled': { opacity: 0.5, cursor: 'default' } }}>
+                        {savingActive ? 'Saving...' : pendingActiveCount > 0 ? `Save status changes (${pendingActiveCount})` : 'Save status changes'}
+                    </Box>
                 </>
             )}
         >
             {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
 
             <Panel header="Teams" more={`${filteredTeams.length} teams`}>
-                <DataTable minWidth={820}>
+                <DataTable minWidth={900}>
                     <thead>
                         <tr>
                             <th className="lft stick">Team</th>
                             <th className="lft">Conference</th>
                             <th className="lft">Coaches</th>
                             <th>Status</th>
+                            <th style={{ textAlign: 'center' }}>Active</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredTeams.map((team) => {
-                            const status = statusInfo(team);
+                            const status = statusInfo(team, effectiveActive(team));
                             return (
                                 <tr key={team.name}>
                                     <td className="lft stick">
@@ -248,6 +295,11 @@ const TeamManagement = ({ user }) => {
                                     </td>
                                     <td>
                                         <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: status.color }}>{status.label}</Box>
+                                    </td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                            <Toggle on={effectiveActive(team)} onClick={() => handleToggleActive(team)} disabled={!isRealTeam(team)} />
+                                        </Box>
                                     </td>
                                     <td>
                                         <Box sx={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>

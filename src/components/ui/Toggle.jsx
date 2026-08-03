@@ -2,13 +2,15 @@ import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const Toggle = ({ on, onClick }) => (
+const Toggle = ({ on, onClick, disabled = false }) => (
     <Box
-        onClick={onClick}
+        onClick={disabled ? undefined : onClick}
         role="switch"
         aria-checked={on}
+        aria-disabled={disabled}
         sx={{
-            width: 40, height: 22, borderRadius: 99, flexShrink: 0, cursor: 'pointer', position: 'relative',
+            width: 40, height: 22, borderRadius: 99, flexShrink: 0, cursor: disabled ? 'default' : 'pointer', position: 'relative',
+            opacity: disabled ? 0.45 : 1,
             background: on ? 'color-mix(in srgb, var(--brand) 45%, var(--surface))' : 'var(--surface-raise)',
             border: '1px solid', borderColor: on ? 'var(--brand)' : 'var(--line)',
             '&::after': {
@@ -19,6 +21,6 @@ const Toggle = ({ on, onClick }) => (
     />
 );
 
-Toggle.propTypes = { on: PropTypes.bool, onClick: PropTypes.func.isRequired };
+Toggle.propTypes = { on: PropTypes.bool, onClick: PropTypes.func.isRequired, disabled: PropTypes.bool };
 
 export default Toggle;

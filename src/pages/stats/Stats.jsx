@@ -20,7 +20,7 @@ import { getFilteredPlaybookStats } from '../../api/playbookStatsApi';
 import { getAllSeasons } from '../../api/seasonApi';
 import { conferenceLabel } from '../../components/constants/conferences';
 import { formatOffensivePlaybook } from '../../utils/formatText';
-import { STAT_CATALOG, STAT_BY_KEY, buildLeaderboard, seasonHasStarted, formatValue, LEAGUE_STAT_GROUPS, CONFERENCE_COLUMNS } from '../../utils/statsCatalog';
+import { STAT_CATALOG, STAT_BY_KEY, buildLeaderboard, seasonHasStarted, formatValue, LEAGUE_STAT_GROUPS, CONFERENCE_COLUMNS, aggregateAllTimeStats } from '../../utils/statsCatalog';
 import { useSeo } from '../../hooks/useSeo';
 
 const SUB_TABS = [
@@ -80,13 +80,21 @@ const Stats = () => {
     }, []);
 
     useEffect(() => {
+        if (activeSub !== 'leaderboard' && season === 'all') setSeason(seasons[0] ?? 11);
+    }, [activeSub, season, seasons]);
+
+    useEffect(() => {
         if (season == null) return;
         let active = true;
         (async () => {
             try {
                 setLoading(true);
                 setError('');
-                if (activeSub === 'leaderboard') {
+                if (activeSub === 'leaderboard' && season === 'all') {
+                    const perSeason = await Promise.all(seasons.map((number) => getFilteredSeasonStats(null, null, number, null, 0, 1000)));
+                    const rows = perSeason.flatMap((result) => unwrapContent(result));
+                    if (active) setSeasonStatRows(aggregateAllTimeStats(rows));
+                } else if (activeSub === 'leaderboard') {
                     const rows = unwrapContent(await getFilteredSeasonStats(null, null, season, null, 0, 1000));
                     if (active) setSeasonStatRows(rows);
                 } else if (activeSub === 'league') {
@@ -139,8 +147,12 @@ const Stats = () => {
     const sortedConferences = useMemo(() => [...conferences].sort((a, b) => (b.average_offensive_diff || 0) - (a.average_offensive_diff || 0)), [conferences]);
 
     const controlSx = { flex: '1 1 200px', minWidth: 180, height: 38 };
+    const seasonOptions = [
+        ...(activeSub === 'leaderboard' ? [{ value: 'all', label: 'All-time' }] : []),
+        ...seasons.map((number) => ({ value: number, label: `Season ${number}` })),
+    ];
     const seasonControl = season != null && seasons.length > 0 && (
-        <SelectPill label="Season" value={season} onChange={(value) => setSeason(Number(value))} options={seasons.map((number) => ({ value: number, label: `Season ${number}` }))} sx={controlSx} />
+        <SelectPill label="Season" value={season} onChange={(value) => setSeason(value === 'all' ? 'all' : Number(value))} options={seasonOptions} sx={controlSx} />
     );
 
     const detailStat = statKey ? STAT_BY_KEY[statKey] : null;

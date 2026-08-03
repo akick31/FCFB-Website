@@ -47,10 +47,6 @@ import {
     RankingsManagement,
     Stats,
     RecordsBoard,
-    SeasonStats,
-    LeagueStats,
-    Leaderboard,
-    EloHistory,
     Graphs
 } from './pages';
 
@@ -252,14 +248,14 @@ const AppRoutes = () => {
                         <Route path="/stats/:sub/:statKey" element={<Stats />} />
                         <Route path="/records" element={<RecordsBoard user={user} />} />
                         <Route path="/records/:tab" element={<RecordsBoard user={user} />} />
-                        <Route path="/season-stats" element={<SeasonStats user={user} />} />
-                        <Route path="/season-stats/:team/:season" element={<SeasonStats user={user} />} />
-                        <Route path="/league-stats" element={<LeagueStats />} />
-                        <Route path="/league-stats/:tab/:season" element={<LeagueStats />} />
-                        <Route path="/league-stats/:tab/:season/:p1" element={<LeagueStats />} />
-                        <Route path="/league-stats/:tab/:season/:p1/:p2" element={<LeagueStats />} />
-                        <Route path="/leaderboard" element={<Leaderboard />} />
-                        <Route path="/elo-history" element={<EloHistory />} />
+                        <Route path="/season-stats" element={<Navigate to="/stats" replace />} />
+                        <Route path="/season-stats/:team/:season" element={<Navigate to="/stats" replace />} />
+                        <Route path="/league-stats" element={<Navigate to="/stats/league" replace />} />
+                        <Route path="/league-stats/:tab/:season" element={<Navigate to="/stats/league" replace />} />
+                        <Route path="/league-stats/:tab/:season/:p1" element={<Navigate to="/stats/league" replace />} />
+                        <Route path="/league-stats/:tab/:season/:p1/:p2" element={<Navigate to="/stats/league" replace />} />
+                        <Route path="/leaderboard" element={<Navigate to="/stats/leaderboard" replace />} />
+                        <Route path="/elo-history" element={<Navigate to="/graphs/elo" replace />} />
                         <Route path="/graphs" element={<Graphs />} />
                         <Route path="/graphs/:tab" element={<Graphs />} />
                         <Route path="/reset-password" element={<ResetPassword />} />

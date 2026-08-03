@@ -9,10 +9,6 @@ export const routeList = [
     { path: '/coaches', title: 'Coaches | FCFB', description: 'Every coach in the Fake College Football league, their current team, record, and status: active, free agent, or retired.' },
     { path: '/schedules', title: 'Schedules | FCFB', description: 'Full season and postseason schedules for every Fake College Football team and conference.' },
     { path: '/records', title: 'Records | FCFB', description: 'All-time and single-season records across the Fake College Football league, from top offenses to record-breaking performances.' },
-    { path: '/season-stats', title: 'Season Stats | FCFB', description: 'Team and player statistics for every season in Fake College Football, covering offense, defense, and special teams.' },
-    { path: '/league-stats', title: 'League Stats | FCFB', description: 'League-wide statistical leaders and team comparisons across Fake College Football seasons.' },
-    { path: '/leaderboard', title: 'Leaderboard | FCFB', description: 'Career and season leaderboards for Fake College Football coaches and teams.' },
-    { path: '/elo-history', title: 'ELO History | FCFB', description: "Track how every Fake College Football team's ELO rating has changed week by week and season by season." },
     { path: '/graphs', title: 'Graphs | FCFB', description: 'Interactive graphs visualizing ELO history, ranking movement, and statistical trends across Fake College Football.' },
 ];
 

@@ -11,7 +11,7 @@ export { Home, Profile, Standings, Rankings, Schedule, Error, NotFound } from '.
 
 export { UserDetails, Coaches } from './user';
 
-export { Stats, RecordsBoard, Records, SeasonStats, LeagueStats, Leaderboard, EloHistory, Graphs } from './stats';
+export { Stats, RecordsBoard, Graphs } from './stats';
 
 export { default as Complete } from './register/Complete';
 export { default as RegistrationSuccess } from './register/Success';

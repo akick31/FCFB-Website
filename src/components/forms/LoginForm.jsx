@@ -36,6 +36,7 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
                 localStorage.setItem('userId', discordUserId);
                 const discordRole = searchParams.get('discordRole');
                 if (discordRole) localStorage.setItem('role', discordRole);
+                else localStorage.removeItem('role');
 
                 const userData = await getUserById(discordUserId);
                 setIsAuthenticated(true);

@@ -1,3 +1,5 @@
+import { sum, max, mean, rate, yardsPerPlay, weightedAverage } from './statAggregation';
+
 const PERCENT = new Set([
     'pass_completion_percentage', 'pass_success_percentage', 'rush_success_percentage', 'red_zone_success_percentage',
     'third_down_conversion_percentage', 'fourth_down_conversion_percentage', 'field_goal_percentage', 'touchback_percentage',
@@ -23,49 +25,50 @@ const LOWER_IS_BETTER = new Set([
 
 export const STAT_GROUPS = [
     ['Offense', [
-        ['total_yards', 'Total yards'], ['pass_yards', 'Passing yards'], ['rush_yards', 'Rushing yards'],
-        ['touchdowns', 'Touchdowns'], ['pass_touchdowns', 'Passing touchdowns'], ['rush_touchdowns', 'Rushing touchdowns'],
-        ['first_downs', 'First downs'], ['average_yards_per_play', 'Yards per play'],
-        ['pass_attempts', 'Pass attempts'], ['pass_completions', 'Pass completions'], ['pass_completion_percentage', 'Completion %'],
-        ['pass_successes', 'Pass successes'], ['pass_success_percentage', 'Pass success %'],
-        ['rush_attempts', 'Rush attempts'], ['rush_successes', 'Rush successes'], ['rush_success_percentage', 'Rush success %'],
-        ['longest_pass', 'Longest pass'], ['longest_run', 'Longest run'],
-        ['red_zone_attempts', 'Red zone trips'], ['red_zone_successes', 'Red zone scores'], ['red_zone_success_percentage', 'Red zone %'],
-        ['third_down_conversion_success', 'Third downs converted'], ['third_down_conversion_percentage', 'Third down %'],
-        ['fourth_down_conversion_success', 'Fourth downs converted'], ['fourth_down_conversion_percentage', 'Fourth down %'],
-        ['time_of_possession', 'Time of possession'], ['number_of_drives', 'Drives'], ['largest_lead', 'Largest lead'],
+        ['total_yards', 'Total yards', { agg: 'sum' }], ['pass_yards', 'Passing yards', { agg: 'sum' }], ['rush_yards', 'Rushing yards', { agg: 'sum' }],
+        ['touchdowns', 'Touchdowns', { agg: 'sum' }], ['pass_touchdowns', 'Passing touchdowns', { agg: 'sum' }], ['rush_touchdowns', 'Rushing touchdowns', { agg: 'sum' }],
+        ['first_downs', 'First downs', { agg: 'sum' }], ['average_yards_per_play', 'Yards per play', { agg: 'ypp', yards: 'total_yards' }],
+        ['pass_attempts', 'Pass attempts', { agg: 'sum' }], ['pass_completions', 'Pass completions', { agg: 'sum' }], ['pass_completion_percentage', 'Completion %', { agg: 'rate', num: 'pass_completions', den: 'pass_attempts' }],
+        ['pass_successes', 'Pass successes', { agg: 'sum' }], ['pass_success_percentage', 'Pass success %', { agg: 'rate', num: 'pass_successes', den: 'pass_attempts' }],
+        ['rush_attempts', 'Rush attempts', { agg: 'sum' }], ['rush_successes', 'Rush successes', { agg: 'sum' }], ['rush_success_percentage', 'Rush success %', { agg: 'rate', num: 'rush_successes', den: 'rush_attempts' }],
+        ['longest_pass', 'Longest pass', { agg: 'max' }], ['longest_run', 'Longest run', { agg: 'max' }],
+        ['red_zone_attempts', 'Red zone trips', { agg: 'sum' }], ['red_zone_successes', 'Red zone scores', { agg: 'sum' }], ['red_zone_success_percentage', 'Red zone %', { agg: 'rate', num: 'red_zone_successes', den: 'red_zone_attempts' }],
+        ['third_down_conversion_success', 'Third downs converted', { agg: 'sum' }], ['third_down_conversion_percentage', 'Third down %', { agg: 'rate', num: 'third_down_conversion_success', den: 'third_down_conversion_attempts' }],
+        ['fourth_down_conversion_success', 'Fourth downs converted', { agg: 'sum' }], ['fourth_down_conversion_percentage', 'Fourth down %', { agg: 'rate', num: 'fourth_down_conversion_success', den: 'fourth_down_conversion_attempts' }],
+        ['time_of_possession', 'Time of possession', { agg: 'sum' }], ['number_of_drives', 'Drives', { agg: 'sum' }], ['largest_lead', 'Largest lead', { agg: 'max' }],
     ]],
     ['Defense', [
-        ['sacks_forced', 'Sacks'], ['opponent_total_yards', 'Yards allowed'], ['opponent_pass_yards', 'Pass yards allowed'],
-        ['opponent_rush_yards', 'Rush yards allowed'], ['opponent_touchdowns', 'Touchdowns allowed'],
-        ['opponent_pass_touchdowns', 'Pass TDs allowed'], ['opponent_rush_touchdowns', 'Rush TDs allowed'],
-        ['opponent_first_downs', 'First downs allowed'], ['opponent_average_yards_per_play', 'Yards per play allowed'],
-        ['opponent_third_down_conversion_percentage', 'Third down % allowed'], ['opponent_fourth_down_conversion_percentage', 'Fourth down % allowed'],
-        ['opponent_red_zone_success_percentage', 'Red zone % allowed'], ['largest_deficit', 'Largest deficit'],
+        ['sacks_forced', 'Sacks', { agg: 'sum' }], ['opponent_total_yards', 'Yards allowed', { agg: 'sum' }], ['opponent_pass_yards', 'Pass yards allowed', { agg: 'sum' }],
+        ['opponent_rush_yards', 'Rush yards allowed', { agg: 'sum' }], ['opponent_touchdowns', 'Touchdowns allowed', { agg: 'sum' }],
+        ['opponent_pass_touchdowns', 'Pass TDs allowed', { agg: 'sum' }], ['opponent_rush_touchdowns', 'Rush TDs allowed', { agg: 'sum' }],
+        ['opponent_first_downs', 'First downs allowed', { agg: 'sum' }], ['opponent_average_yards_per_play', 'Yards per play allowed', { agg: 'ypp', yards: 'opponent_total_yards' }],
+        ['opponent_third_down_conversion_percentage', 'Third down % allowed', { agg: 'rate', num: 'opponent_third_down_conversion_success', den: 'opponent_third_down_conversion_attempts' }],
+        ['opponent_fourth_down_conversion_percentage', 'Fourth down % allowed', { agg: 'rate', num: 'opponent_fourth_down_conversion_success', den: 'opponent_fourth_down_conversion_attempts' }],
+        ['opponent_red_zone_success_percentage', 'Red zone % allowed', { agg: 'rate', num: 'opponent_red_zone_successes', den: 'opponent_red_zone_attempts' }], ['largest_deficit', 'Largest deficit', { agg: 'max' }],
     ]],
     ['Turnovers', [
-        ['turnover_differential', 'Turnover differential'], ['turnovers_forced', 'Turnovers forced'], ['turnovers_lost', 'Turnovers lost'],
-        ['interceptions_forced', 'Interceptions forced'], ['interceptions_lost', 'Interceptions thrown'],
-        ['fumbles_forced', 'Fumbles forced'], ['fumbles_lost', 'Fumbles lost'],
-        ['pick_sixes_forced', 'Pick sixes'], ['pick_sixes_thrown', 'Pick sixes thrown'],
-        ['turnover_touchdowns_forced', 'Turnover TDs'], ['turnover_touchdowns_lost', 'Turnover TDs allowed'],
-        ['fumble_return_tds_forced', 'Fumble return TDs'], ['fumble_return_tds_committed', 'Fumble return TDs allowed'],
-        ['safeties_forced', 'Safeties forced'], ['safeties_committed', 'Safeties committed'], ['sacks_allowed', 'Sacks allowed'],
+        ['turnover_differential', 'Turnover differential', { agg: 'sum' }], ['turnovers_forced', 'Turnovers forced', { agg: 'sum' }], ['turnovers_lost', 'Turnovers lost', { agg: 'sum' }],
+        ['interceptions_forced', 'Interceptions forced', { agg: 'sum' }], ['interceptions_lost', 'Interceptions thrown', { agg: 'sum' }],
+        ['fumbles_forced', 'Fumbles forced', { agg: 'sum' }], ['fumbles_lost', 'Fumbles lost', { agg: 'sum' }],
+        ['pick_sixes_forced', 'Pick sixes', { agg: 'sum' }], ['pick_sixes_thrown', 'Pick sixes thrown', { agg: 'sum' }],
+        ['turnover_touchdowns_forced', 'Turnover TDs', { agg: 'sum' }], ['turnover_touchdowns_lost', 'Turnover TDs allowed', { agg: 'sum' }],
+        ['fumble_return_tds_forced', 'Fumble return TDs', { agg: 'sum' }], ['fumble_return_tds_committed', 'Fumble return TDs allowed', { agg: 'sum' }],
+        ['safeties_forced', 'Safeties forced', { agg: 'sum' }], ['safeties_committed', 'Safeties committed', { agg: 'sum' }], ['sacks_allowed', 'Sacks allowed', { agg: 'sum' }],
     ]],
     ['Special teams', [
-        ['field_goal_made', 'Field goals made'], ['field_goal_attempts', 'Field goal attempts'], ['field_goal_percentage', 'Field goal %'],
-        ['longest_field_goal', 'Longest field goal'], ['field_goal_touchdown', 'Field goal return TDs'],
-        ['blocked_opponent_field_goals', 'Field goals blocked'], ['blocked_opponent_punt', 'Punts blocked'],
-        ['punts_attempted', 'Punts'], ['longest_punt', 'Longest punt'], ['average_punt_length', 'Average punt'],
-        ['kick_return_td', 'Kick return TDs'], ['punt_return_td', 'Punt return TDs'],
-        ['touchbacks', 'Touchbacks'], ['touchback_percentage', 'Touchback %'],
-        ['onside_attempts', 'Onside attempts'], ['onside_success', 'Onside recoveries'], ['onside_success_percentage', 'Onside %'],
+        ['field_goal_made', 'Field goals made', { agg: 'sum' }], ['field_goal_attempts', 'Field goal attempts', { agg: 'sum' }], ['field_goal_percentage', 'Field goal %', { agg: 'rate', num: 'field_goal_made', den: 'field_goal_attempts' }],
+        ['longest_field_goal', 'Longest field goal', { agg: 'max' }], ['field_goal_touchdown', 'Field goal return TDs', { agg: 'sum' }],
+        ['blocked_opponent_field_goals', 'Field goals blocked', { agg: 'sum' }], ['blocked_opponent_punt', 'Punts blocked', { agg: 'sum' }],
+        ['punts_attempted', 'Punts', { agg: 'sum' }], ['longest_punt', 'Longest punt', { agg: 'max' }], ['average_punt_length', 'Average punt', { agg: 'wavg', weight: 'punts_attempted' }],
+        ['kick_return_td', 'Kick return TDs', { agg: 'sum' }], ['punt_return_td', 'Punt return TDs', { agg: 'sum' }],
+        ['touchbacks', 'Touchbacks', { agg: 'sum' }], ['touchback_percentage', 'Touchback %', { agg: 'rate', num: 'touchbacks', den: 'number_of_kickoffs' }],
+        ['onside_attempts', 'Onside attempts', { agg: 'sum' }], ['onside_success', 'Onside recoveries', { agg: 'sum' }], ['onside_success_percentage', 'Onside %', { agg: 'rate', num: 'onside_success', den: 'onside_attempts' }],
     ]],
     ['Ratings & record', [
-        ['wins', 'Wins'], ['losses', 'Losses'],
-        ['average_offensive_diff', 'Average offensive difference'], ['average_defensive_diff', 'Average defensive difference'],
-        ['average_offensive_special_teams_diff', 'Average offensive special teams difference'], ['average_defensive_special_teams_diff', 'Average defensive special teams difference'],
-        ['average_response_speed', 'Average response time'],
+        ['wins', 'Wins', { agg: 'sum' }], ['losses', 'Losses', { agg: 'sum' }],
+        ['average_offensive_diff', 'Average offensive difference', { agg: 'mean' }], ['average_defensive_diff', 'Average defensive difference', { agg: 'mean' }],
+        ['average_offensive_special_teams_diff', 'Average offensive special teams difference', { agg: 'mean' }], ['average_defensive_special_teams_diff', 'Average defensive special teams difference', { agg: 'mean' }],
+        ['average_response_speed', 'Average response time', { agg: 'mean' }],
     ]],
 ];
 
@@ -84,10 +87,11 @@ const formatterFor = (key) => {
     return (value) => Math.round(Number(value)).toLocaleString();
 };
 
-export const STAT_CATALOG = STAT_GROUPS.flatMap(([group, items]) => items.map(([key, label]) => ({
+export const STAT_CATALOG = STAT_GROUPS.flatMap(([group, items]) => items.map(([key, label, agg]) => ({
     key,
     label,
     group,
+    agg,
     ascending: LOWER_IS_BETTER.has(key),
     format: formatterFor(key),
 })));
@@ -98,6 +102,29 @@ export const buildLeaderboard = (rows, stat) => {
     if (!stat) return [];
     const valid = rows.filter((row) => row[stat.key] != null && !Number.isNaN(Number(row[stat.key])));
     return valid.sort((a, b) => (stat.ascending ? a[stat.key] - b[stat.key] : b[stat.key] - a[stat.key]));
+};
+
+export const aggregateAllTimeStats = (rows) => {
+    const byTeam = {};
+    (rows || []).forEach((row) => {
+        if (!row.team) return;
+        (byTeam[row.team] = byTeam[row.team] || []).push(row);
+    });
+    return Object.entries(byTeam).map(([team, teamRows]) => {
+        const latest = teamRows.reduce((best, row) => ((row.season_number || 0) > (best.season_number || 0) ? row : best), teamRows[0]);
+        const result = { team, conference: latest.conference };
+        STAT_CATALOG.forEach((stat) => {
+            if (!stat.agg) return;
+            const { agg, num, den, yards, weight } = stat.agg;
+            if (agg === 'sum') result[stat.key] = sum(teamRows, stat.key);
+            else if (agg === 'max') result[stat.key] = max(teamRows, stat.key);
+            else if (agg === 'mean') result[stat.key] = mean(teamRows, stat.key);
+            else if (agg === 'rate') result[stat.key] = rate(teamRows, num, den);
+            else if (agg === 'ypp') result[stat.key] = yardsPerPlay(teamRows, yards, stat.key);
+            else if (agg === 'wavg') result[stat.key] = weightedAverage(teamRows, stat.key, weight);
+        });
+        return result;
+    });
 };
 
 export const seasonHasStarted = (season) => Boolean(season?.start_date || season?.end_date || season?.national_championship_winning_team);
