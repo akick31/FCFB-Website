@@ -214,14 +214,14 @@ const Rankings = () => {
                 )}
             </PageHeading>
 
-            <DataTable minWidth={640}>
+            <DataTable minWidth={640} tableLayout="fixed">
                 <thead>
                     <tr>
-                        <th className="lft stick">Rk</th>
-                        <th className="lft">Team</th>
-                        <th>Record</th>
-                        <th>Conf</th>
-                        <th>Prev</th>
+                        <th className="lft stick" style={{ width: 50 }}>Rk</th>
+                        <th className="lft" style={{ width: 220 }}>Team</th>
+                        <th style={{ width: 100, textAlign: 'center' }}>Record</th>
+                        <th style={{ width: 100, textAlign: 'center' }}>Conference</th>
+                        <th style={{ width: 100, textAlign: 'center' }}>Previous</th>
                         <th>Δ</th>
                         <th>ELO</th>
                         <th>Coach</th>
@@ -242,9 +242,9 @@ const Rankings = () => {
                                         <span className="nm">{team.name}</span>
                                     </div>
                                 </td>
-                                <td className="num">{wins != null ? `${wins}-${losses ?? 0}` : '-'}</td>
+                                <td className="num" style={{ textAlign: 'center' }}>{wins != null ? `${wins}-${losses ?? 0}` : '-'}</td>
                                 <td style={{ textAlign: 'center' }}><ConferenceMark conference={team.conference} /></td>
-                                <td className="num">{prev != null ? prev : '-'}</td>
+                                <td className="num" style={{ textAlign: 'center' }}>{prev != null ? prev : '-'}</td>
                                 <td className="num"><RankDelta prev={prev} rank={rank} /></td>
                                 <td className="num">{elo != null ? elo : '-'}</td>
                                 <td>

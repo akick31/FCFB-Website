@@ -242,7 +242,7 @@ const Standings = () => {
                         <tr>
                             <th className="lft stick" style={{ width: 280 }}>Team</th>
                             <th>Overall</th>
-                            <th>Conf</th>
+                            <th>Conference</th>
                             <th>ELO</th>
                             <th className="lft">Offense</th>
                             <th className="lft">Defense</th>

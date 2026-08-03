@@ -112,7 +112,7 @@ const OOCScheduleAdminTab = ({
                                                         <Box component="button" type="button" title="Remove game" onClick={() => onDeleteGame(game.id)} disabled={scheduleLocked} sx={{ ...iconBtnSx, color: 'var(--live)' }}>&times;</Box>
                                                     </Box>
                                                 ) : (
-                                                    <Box sx={{ color: 'var(--text-dim)', fontSize: '0.74rem' }}>Conf</Box>
+                                                    <Box sx={{ color: 'var(--text-dim)', fontSize: '0.74rem' }}>Conference game</Box>
                                                 )}
                                             </td>
                                         </tr>
