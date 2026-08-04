@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Panel from '../ui/Panel';
 import TeamMark from '../ui/TeamMark';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
+import { clickableProps } from '../../utils/a11y';
 
 const StatLeaderboardCard = ({ title, statKey, rows, count, format, onOpen }) => {
     const teamsMap = useTeamsMap();
@@ -16,14 +17,14 @@ const StatLeaderboardCard = ({ title, statKey, rows, count, format, onOpen }) =>
     };
 
     return (
-        <Panel header={<Box component="span" onClick={onOpen} sx={{ cursor: 'pointer' }}>{title}</Box>}>
+        <Panel header={<Box component="span" {...clickableProps(onOpen)} sx={{ cursor: 'pointer' }}>{title}</Box>}>
             {top.map((entry, index) => {
                 const name = entry.team;
                 ensureTeam(name);
                 return (
                     <Box
                         key={`${name}-${index}`}
-                        onClick={() => openTeam(name)}
+                        {...clickableProps(() => openTeam(name))}
                         sx={{
                             display: 'grid',
                             gridTemplateColumns: '18px 1fr auto',
@@ -35,6 +36,7 @@ const StatLeaderboardCard = ({ title, statKey, rows, count, format, onOpen }) =>
                             cursor: 'pointer',
                             '&:last-of-type': { borderBottom: 'none' },
                             '&:hover': { background: 'var(--surface-2)' },
+                            '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' },
                         }}
                     >
                         <Box component="span" sx={{ color: 'var(--text-dim)', fontWeight: 800, fontSize: '0.72rem', textAlign: 'right' }}>{index + 1}</Box>

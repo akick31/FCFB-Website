@@ -14,6 +14,7 @@ import { describePlay } from '../../../utils/formatPlay';
 import { getGameStatsByIdAndTeam } from '../../../api/gameStatsApi';
 import { getPreviousPlay } from '../../../api/playApi';
 import { ensureTeam } from '../../../hooks/useTeamsMap';
+import { clickableProps } from '../../../utils/a11y';
 
 const QUARTER_KEYS = ['q1_score', 'q2_score', 'q3_score', 'q4_score'];
 const sum = (values) => values.reduce((total, value) => total + (value || 0), 0);
@@ -132,7 +133,7 @@ const GameCard = ({ game, teamsMap, compact = false }) => {
 
     return (
         <Box
-            onClick={() => navigate(`/game-details/${game.game_id}`)}
+            {...clickableProps(() => navigate(`/game-details/${game.game_id}`))}
             sx={{
                 backgroundColor: 'var(--surface)',
                 border: '1px solid',
@@ -140,6 +141,7 @@ const GameCard = ({ game, teamsMap, compact = false }) => {
                 borderRadius: 'var(--r)',
                 overflow: 'hidden',
                 cursor: 'pointer',
+                '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' },
                 transition: 'transform .14s, border-color .14s, box-shadow .14s',
                 '&:hover': { transform: 'translateY(-2px)', borderColor: 'color-mix(in srgb, var(--brand) 55%, var(--line))', boxShadow: 'var(--shadow)' },
             }}

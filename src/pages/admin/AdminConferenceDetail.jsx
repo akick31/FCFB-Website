@@ -133,7 +133,7 @@ const AdminConferenceDetail = () => {
                 header={`Teams in ${conference ? conference.label : code}`}
                 more={(
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Box component="input" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} sx={{ ...searchSx, minWidth: 160 }} />
+                        <Box component="input" placeholder="Search..." aria-label="Search teams in this conference" value={search} onChange={(e) => setSearch(e.target.value)} sx={{ ...searchSx, minWidth: 160 }} />
                         <span>{teamsInConference.length} teams</span>
                     </Box>
                 )}
@@ -178,7 +178,7 @@ const AdminConferenceDetail = () => {
 
             <Panel header="Add a team to this conference">
                 <Box sx={{ p: '16px', pb: 0 }}>
-                    <Box component="input" placeholder="Search teams..." value={addSearch} onChange={(e) => setAddSearch(e.target.value)} sx={{ ...searchSx, width: '100%' }} />
+                    <Box component="input" placeholder="Search teams..." aria-label="Search teams to add" value={addSearch} onChange={(e) => setAddSearch(e.target.value)} sx={{ ...searchSx, width: '100%' }} />
                 </Box>
                 {availableTeams.length === 0 ? (
                     <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No matching teams.</Box>

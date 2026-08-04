@@ -8,6 +8,7 @@ import { getAllUsers, updateUser } from '../../api/userApi';
 import { getAllTeams } from '../../api/teamApi';
 import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS } from '../../constants/teamEnums';
 import { formatOffensivePlaybook, formatDefensivePlaybook, formatRole, formatPosition } from '../../utils/formatText';
+import { slugId } from '../../utils/a11y';
 
 const ROLES = ['USER', 'CONFERENCE_COMMISSIONER', 'ADMIN'];
 const POSITIONS = ['HEAD_COACH', 'OFFENSIVE_COORDINATOR', 'DEFENSIVE_COORDINATOR', 'RETIRED'];
@@ -20,12 +21,15 @@ const btnGhostSx = { border: '1px solid var(--line)', background: 'var(--surface
 const backSx = { color: 'var(--brand)', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none', display: 'inline-block', mb: '14px' };
 const gridSx = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0 16px', p: '16px' };
 
-const Field = ({ label, children }) => (
-    <Box sx={{ mb: '14px' }}>
-        <Box sx={labelSx}>{label}</Box>
-        {children}
-    </Box>
-);
+const Field = ({ label, children }) => {
+    const id = slugId(label);
+    return (
+        <Box sx={{ mb: '14px' }}>
+            <Box component="label" htmlFor={id} sx={labelSx}>{label}</Box>
+            {React.cloneElement(children, { id })}
+        </Box>
+    );
+};
 
 Field.propTypes = { label: PropTypes.string.isRequired, children: PropTypes.node.isRequired };
 

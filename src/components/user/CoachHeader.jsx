@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { formatConference, formatPosition, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
+import { clickableProps } from '../../utils/a11y';
 
 const luminance = (hex) => {
     if (!hex) return 0.5;
@@ -38,7 +39,7 @@ const CoachHeader = ({ user, team, mark, championSeason }) => {
             }}>
                 {team && (
                     <Box
-                        onClick={() => team.id && navigate(`/team-details/${team.id}`)}
+                        {...(team.id ? clickableProps(() => navigate(`/team-details/${team.id}`)) : {})}
                         sx={{ width: 72, height: 72, flexShrink: 0, zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: team.id ? 'pointer' : 'default' }}
                     >
                         {logo
@@ -48,12 +49,12 @@ const CoachHeader = ({ user, team, mark, championSeason }) => {
                 )}
                 <Box sx={{ zIndex: 1, color: '#fff', minWidth: 0 }}>
                     <Box
-                        onClick={() => team?.id && navigate(`/team-details/${team.id}`)}
+                        {...(team?.id ? clickableProps(() => navigate(`/team-details/${team.id}`)) : {})}
                         sx={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800, color: '#9fd6ec', cursor: team?.id ? 'pointer' : 'default' }}
                     >
                         {affiliation}
                     </Box>
-                    <Box component="h1" sx={{ m: '4px 0', fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.01em', fontSize: '2rem', lineHeight: 1 }}>
+                    <Box component="h2" sx={{ m: '4px 0', fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.01em', fontSize: '2rem', lineHeight: 1 }}>
                         @{name}
                     </Box>
                     <Box sx={{ opacity: 0.9, fontWeight: 600, fontSize: '0.85rem' }}>

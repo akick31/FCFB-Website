@@ -20,7 +20,7 @@ import { getFilteredPlaybookStats } from '../../api/playbookStatsApi';
 import { getAllSeasons } from '../../api/seasonApi';
 import { conferenceLabel } from '../../components/constants/conferences';
 import { formatOffensivePlaybook } from '../../utils/formatText';
-import { STAT_CATALOG, STAT_BY_KEY, buildLeaderboard, seasonHasStarted, formatValue, LEAGUE_STAT_GROUPS, CONFERENCE_COLUMNS, aggregateAllTimeStats } from '../../utils/statsCatalog';
+import { STAT_CATALOG, STAT_BY_KEY, buildLeaderboard, seasonHasStarted, formatValue, LEAGUE_STAT_GROUPS, CONFERENCE_COLUMNS, aggregateAllTimeStats, aggregateStatRows, aggregateStatRowsByKey } from '../../utils/statsCatalog';
 import { useSeo } from '../../hooks/useSeo';
 
 const SUB_TABS = [
@@ -31,6 +31,36 @@ const SUB_TABS = [
 ];
 const SUB_VALUES = SUB_TABS.map((tab) => tab.value);
 const CARDS_PER_PAGE = 9;
+
+const LEAGUE_FIELD_AGGS = {
+    total_teams: 'latest',
+    total_yards: { agg: 'sum' }, pass_yards: { agg: 'sum' }, rush_yards: { agg: 'sum' },
+    pass_touchdowns: { agg: 'sum' }, rush_touchdowns: { agg: 'sum' }, first_downs: { agg: 'sum' },
+    average_yards_per_play: { agg: 'ypp', yards: 'total_yards' },
+    pass_attempts: { agg: 'sum' }, pass_completions: { agg: 'sum' }, pass_completion_percentage: { agg: 'rate', num: 'pass_completions', den: 'pass_attempts' },
+    pass_successes: { agg: 'sum' }, pass_success_percentage: { agg: 'rate', num: 'pass_successes', den: 'pass_attempts' },
+    pass_interceptions: { agg: 'sum' }, longest_pass: { agg: 'max' },
+    rush_attempts: { agg: 'sum' }, rush_successes: { agg: 'sum' }, rush_success_percentage: { agg: 'rate', num: 'rush_successes', den: 'rush_attempts' }, longest_run: { agg: 'max' },
+    sacks_forced: { agg: 'sum' }, sacks_allowed: { agg: 'sum' }, interceptions_forced: { agg: 'sum' },
+    fumbles_forced: { agg: 'sum' }, fumbles_recovered: { agg: 'sum' }, defensive_touchdowns: { agg: 'sum' },
+    field_goals_made: { agg: 'sum' }, field_goals_attempted: { agg: 'sum' }, field_goal_percentage: { agg: 'rate', num: 'field_goals_made', den: 'field_goals_attempted' },
+    longest_field_goal: { agg: 'max' }, punts: { agg: 'sum' }, longest_punt: { agg: 'max' },
+    kickoff_return_touchdowns: { agg: 'sum' }, punt_return_touchdowns: { agg: 'sum' },
+    average_offensive_diff: { agg: 'mean' }, average_defensive_diff: { agg: 'mean' },
+    average_offensive_special_teams_diff: { agg: 'mean' }, average_defensive_special_teams_diff: { agg: 'mean' },
+    average_diff: { agg: 'mean' }, average_response_speed: { agg: 'mean' },
+};
+
+const CONFERENCE_FIELD_AGGS = {
+    total_teams: 'latest',
+    total_yards: { agg: 'sum' }, average_yards_per_play: { agg: 'ypp', yards: 'total_yards' },
+    pass_touchdowns: { agg: 'sum' }, rush_touchdowns: { agg: 'sum' }, first_downs: { agg: 'sum' },
+    third_down_conversion_percentage: { agg: 'rate', num: 'third_down_conversion_success', den: 'third_down_conversion_attempts' },
+    red_zone_success_percentage: { agg: 'rate', num: 'red_zone_successes', den: 'red_zone_attempts' },
+    sacks_forced: { agg: 'sum' }, interceptions_forced: { agg: 'sum' }, turnover_differential: { agg: 'sum' },
+    longest_field_goal: { agg: 'max' }, average_punt_length: { agg: 'wavg', weight: 'punts_attempted' },
+    average_response_speed: { agg: 'mean' }, average_offensive_diff: { agg: 'mean' }, average_defensive_diff: { agg: 'mean' },
+};
 
 const fmt = (value) => (value == null ? '-' : Number(value).toLocaleString());
 const dec = (value, places = 2) => (value == null ? '-' : Number(value).toFixed(places));
@@ -80,10 +110,6 @@ const Stats = () => {
     }, []);
 
     useEffect(() => {
-        if (activeSub !== 'leaderboard' && season === 'all') setSeason(seasons[0] ?? 11);
-    }, [activeSub, season, seasons]);
-
-    useEffect(() => {
         if (season == null) return;
         let active = true;
         (async () => {
@@ -97,12 +123,24 @@ const Stats = () => {
                 } else if (activeSub === 'leaderboard') {
                     const rows = unwrapContent(await getFilteredSeasonStats(null, null, season, null, 0, 1000));
                     if (active) setSeasonStatRows(rows);
+                } else if (activeSub === 'league' && season === 'all') {
+                    const perSeason = await Promise.all(seasons.map((number) => getFilteredLeagueStats(null, number, 0, 1000)));
+                    const rows = perSeason.flatMap((result) => unwrapContent(result));
+                    if (active) setLeague(rows.length ? aggregateStatRows(rows, LEAGUE_FIELD_AGGS) : null);
                 } else if (activeSub === 'league') {
                     const rows = unwrapContent(await getFilteredLeagueStats(null, season, 0, 1000));
                     if (active) setLeague(rows[0] || null);
+                } else if (activeSub === 'conference' && season === 'all') {
+                    const perSeason = await Promise.all(seasons.map((number) => getFilteredConferenceStats(null, number, null, 0, 1000)));
+                    const rows = perSeason.flatMap((result) => unwrapContent(result));
+                    if (active) setConferences(aggregateStatRowsByKey(rows, 'conference', CONFERENCE_FIELD_AGGS));
                 } else if (activeSub === 'conference') {
                     const rows = unwrapContent(await getFilteredConferenceStats(null, season, null, 0, 1000));
                     if (active) setConferences(rows);
+                } else if (activeSub === 'playbooks' && season === 'all') {
+                    const perSeason = await Promise.all(seasons.map((number) => getFilteredPlaybookStats(null, null, number, 0, 1000)));
+                    const rows = perSeason.flatMap((result) => unwrapContent(result));
+                    if (active) setPlaybooks(rows);
                 } else if (activeSub === 'playbooks') {
                     const rows = unwrapContent(await getFilteredPlaybookStats(null, null, season, 0, 1000));
                     if (active) setPlaybooks(rows);
@@ -114,7 +152,7 @@ const Stats = () => {
             }
         })();
         return () => { active = false; };
-    }, [activeSub, season]);
+    }, [activeSub, season, seasons]);
 
     useEffect(() => { setCardPage(0); }, [statFilter, season]);
 
@@ -148,7 +186,7 @@ const Stats = () => {
 
     const controlSx = { flex: '1 1 200px', minWidth: 180, height: 38 };
     const seasonOptions = [
-        ...(activeSub === 'leaderboard' ? [{ value: 'all', label: 'All-time' }] : []),
+        { value: 'all', label: 'All-time' },
         ...seasons.map((number) => ({ value: number, label: `Season ${number}` })),
     ];
     const seasonControl = season != null && seasons.length > 0 && (
@@ -191,7 +229,7 @@ const Stats = () => {
     );
 
     const renderLeague = () => {
-        if (!league) return <Box sx={{ color: 'var(--text-muted)', py: 4, textAlign: 'center' }}>No league data for this season.</Box>;
+        if (!league) return <Box sx={{ color: 'var(--text-muted)', py: 4, textAlign: 'center' }}>No league data available.</Box>;
         return (
             <>
                 <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>{seasonControl}</Box>
@@ -283,7 +321,7 @@ const Stats = () => {
             <Panel>
                 <Box sx={{ p: 2 }}>
                     {aggregatedPlaybooks.map((row) => (
-                        <Box key={row.offensive_playbook} sx={{ display: 'grid', gridTemplateColumns: '170px 1fr 66px', alignItems: 'center', gap: 1.25, py: 0.75, fontSize: '0.8rem' }}>
+                        <Box key={row.offensive_playbook} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px 1fr 50px', sm: '170px 1fr 66px' }, alignItems: 'center', gap: 1.25, py: 0.75, fontSize: '0.8rem' }}>
                             <Box component="span" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatOffensivePlaybook(row.offensive_playbook)}</Box>
                             <Box sx={{ height: 16, background: 'var(--surface-2)', borderRadius: '3px', overflow: 'hidden' }}>
                                 <Box sx={{ height: '100%', borderRadius: '3px', width: `${(row.total_yards / maxPlaybookYards) * 100}%`, background: 'var(--brand)' }} />

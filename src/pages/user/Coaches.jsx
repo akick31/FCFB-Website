@@ -12,6 +12,7 @@ import DataTable from '../../components/ui/DataTable';
 import TeamMark from '../../components/ui/TeamMark';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
+import { clickableRowProps } from '../../utils/a11y';
 
 const coachStatus = (user) => {
     if (user.position === 'RETIRED') return 'retired';
@@ -89,6 +90,7 @@ const Coaches = () => {
                 <Box
                     component="input"
                     placeholder="Search name, Discord tag, or team…"
+                    aria-label="Search coaches"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', padding: '6px 10px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, minWidth: 210, '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 } }}
@@ -138,7 +140,7 @@ const Coaches = () => {
                     {shown.map((user) => {
                         const teamId = user.team ? teamsMap[user.team]?.id : null;
                         return (
-                            <tr key={user.id ?? user.username} onClick={() => navigate(`/user-details/${user.username}`)}>
+                            <tr key={user.id ?? user.username} {...clickableRowProps(() => navigate(`/user-details/${user.username}`))}>
                                 <td className="lft stick">
                                     <Box sx={{ fontWeight: 700 }}>{user.coach_name || user.username}</Box>
                                     <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem' }}>@{user.username}</Box>

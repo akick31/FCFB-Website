@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import TeamMark from '../ui/TeamMark';
 import { R2_BYE_SEEDS, R1_GAMES, R2_OPPONENT_R1, playoffWeekForRound, QF_SEED_GROUPS, SF_SEED_GROUPS } from '../constants/playoffBracket';
 import { field } from '../../utils/fieldHelper';
+import { clickableProps } from '../../utils/a11y';
 
 const LINE = 'var(--line)';
 
@@ -217,7 +218,7 @@ const Postseason = ({
         return (
             <Box
                 className="bmatch"
-                onClick={() => { if (clickable) navigate(`/game-details/${gid}`); }}
+                {...(clickable ? clickableProps(() => navigate(`/game-details/${gid}`)) : {})}
             >
                 {teamRow(home, hs, (fin || started) ? hsc : null, homeWon)}
                 {teamRow(away, as_, (fin || started) ? asc : null, awayWon, customAwayLabel)}

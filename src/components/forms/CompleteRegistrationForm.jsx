@@ -9,6 +9,7 @@ import { validateUser } from '../../api/userApi';
 import { formatOffensivePlaybook, formatDefensivePlaybook, formatPosition } from '../../utils/formatText';
 import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS } from '../../constants/teamEnums';
 import logo from '../../assets/graphics/main_logo.png';
+import { slugId } from '../../utils/a11y';
 
 const POSITIONS = ['HEAD_COACH', 'OFFENSIVE_COORDINATOR', 'DEFENSIVE_COORDINATOR', 'SPECIAL_TEAMS_COORDINATOR'];
 
@@ -17,13 +18,16 @@ const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'v
 const selectSx = { ...inputSx, cursor: 'pointer', '& option': { background: 'var(--surface-2)', color: 'var(--text)' } };
 const btnBaseSx = { width: '100%', border: 0, borderRadius: 'var(--r-sm)', py: '11px', font: 'inherit', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
 
-const Field = ({ label, helper, children }) => (
-    <Box sx={{ mb: '12px' }}>
-        <Box sx={labelSx}>{label}</Box>
-        {children}
-        {helper && <Box sx={{ mt: '4px', fontSize: '0.7rem', color: 'var(--text-dim)' }}>{helper}</Box>}
-    </Box>
-);
+const Field = ({ label, helper, children }) => {
+    const id = slugId(label);
+    return (
+        <Box sx={{ mb: '12px' }}>
+            <Box component="label" htmlFor={id} sx={labelSx}>{label}</Box>
+            {React.cloneElement(children, { id, 'aria-describedby': helper ? `${id}-helper` : undefined })}
+            {helper && <Box id={`${id}-helper`} sx={{ mt: '4px', fontSize: '0.7rem', color: 'var(--text-dim)' }}>{helper}</Box>}
+        </Box>
+    );
+};
 
 Field.propTypes = { label: PropTypes.string.isRequired, helper: PropTypes.string, children: PropTypes.node.isRequired };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControl, InputLabel, Select, MenuItem, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import PeopleIcon from '@mui/icons-material/People';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -16,12 +16,13 @@ import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { getNewSignups, deleteNewSignup, hireFromSignup } from '../../api/newSignupsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { isRealTeam, getTeamCoaches } from '../../utils/teamDataUtils';
+import { clickableRowProps } from '../../utils/a11y';
 
 const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', px: '8px', py: '3px', borderRadius: 'var(--r-sm)', lineHeight: 1 };
 
 const hireBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--field)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--field)' } };
 
-const actionCardSx = { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', p: '18px', textAlign: 'center', cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', '&:hover': { transform: 'translateY(-2px)', borderColor: 'color-mix(in srgb, var(--brand) 50%, var(--line))' }, transition: 'transform 0.14s, border-color 0.14s' };
+const actionCardSx = { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', p: '18px', textAlign: 'center', cursor: 'pointer', textDecoration: 'none', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', '&:hover': { transform: 'translateY(-2px)', borderColor: 'color-mix(in srgb, var(--brand) 50%, var(--line))' }, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' }, transition: 'transform 0.14s, border-color 0.14s' };
 
 const QUICK_ACTIONS = [
     { label: 'Create game', path: '/admin/game-management', icon: <SportsFootballIcon sx={{ fontSize: 32, color: 'var(--field)' }} /> },
@@ -36,6 +37,7 @@ const Admin = ({ user }) => {
     const [newSignups, setNewSignups] = useState([]);
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [clearingId, setClearingId] = useState(null);
 
     const [hireSignup, setHireSignup] = useState(null);
@@ -50,7 +52,7 @@ const Admin = ({ user }) => {
                 setNewSignups(signups);
                 setTeams(allTeams);
             })
-            .catch((error) => console.error('Failed to load admin dashboard data:', error))
+            .catch((err) => setError(err.message || 'Failed to load admin dashboard data'))
             .finally(() => setLoading(false));
     }, []);
 
@@ -65,8 +67,8 @@ const Admin = ({ user }) => {
         try {
             await deleteNewSignup(id);
             setNewSignups((prev) => prev.filter((signup) => signup.id !== id));
-        } catch (error) {
-            console.error('Failed to clear signup:', error);
+        } catch (err) {
+            setError(err.message || 'Failed to clear signup');
         } finally {
             setClearingId(null);
         }
@@ -110,6 +112,8 @@ const Admin = ({ user }) => {
             <Box sx={{ color: 'var(--text-muted)', fontSize: '0.85rem', mb: '16px' }}>
                 Welcome back, {user?.username || 'Admin'}.
             </Box>
+
+            {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
 
             <TileGrid minTile={160} sx={{ mb: '16px' }}>
                 <StatTile label="Pending signups" value={newSignups.length} />
@@ -178,7 +182,7 @@ const Admin = ({ user }) => {
                         </thead>
                         <tbody>
                             {openTeams.map((team) => (
-                                <tr key={team.name} onClick={() => navigate(`/team-details/${teamsMap[team.name]?.id}`)}>
+                                <tr key={team.name} {...clickableRowProps(() => navigate(`/team-details/${teamsMap[team.name]?.id}`))}>
                                     <td className="lft stick">
                                         <Box className="teamcell">
                                             <TeamMark team={teamsMap[team.name]} size={22} />
@@ -199,7 +203,7 @@ const Admin = ({ user }) => {
             <Panel header="Quick actions">
                 <Box sx={{ p: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
                     {QUICK_ACTIONS.map((action) => (
-                        <Box key={action.path} onClick={() => navigate(action.path)} sx={actionCardSx}>
+                        <Box key={action.path} component={Link} to={action.path} sx={actionCardSx}>
                             {action.icon}
                             <Box sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{action.label}</Box>
                         </Box>

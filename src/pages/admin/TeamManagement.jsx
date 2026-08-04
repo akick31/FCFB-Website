@@ -240,7 +240,7 @@ const TeamManagement = ({ user }) => {
             title="Team Management"
             controls={(
                 <>
-                    <Box component="input" placeholder="Search teams..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
+                    <Box component="input" placeholder="Search teams..." aria-label="Search teams" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
                     <SelectPill label="Conference" value={conferenceFilter} onChange={setConferenceFilter} options={conferenceOptions} sx={pillHeightSx} />
                     <SelectPill label="Status" value={takenFilter} onChange={setTakenFilter} options={TAKEN_OPTIONS} sx={pillHeightSx} />
                     <SelectPill label="Active" value={activeFilter} onChange={setActiveFilter} options={ACTIVE_OPTIONS} sx={pillHeightSx} />

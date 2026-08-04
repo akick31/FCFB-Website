@@ -14,6 +14,7 @@ import {
     GAME_STATUS_DESCRIPTIONS, GAME_TYPE_DESCRIPTIONS, GAME_MODE_DESCRIPTIONS,
 } from '../../constants/gameEnums';
 import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS } from '../../constants/teamEnums';
+import { slugId } from '../../utils/a11y';
 
 const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
 const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', py: '10px', font: 'inherit', fontSize: '0.85rem' };
@@ -25,12 +26,15 @@ const ctrlLiveSx = { ...ctrlSx, color: 'var(--live)', '&:hover': { borderColor: 
 const backSx = { color: 'var(--brand)', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none', display: 'inline-block', mb: '14px' };
 const gridSx = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0 16px', p: '16px' };
 
-const Field = ({ label, children }) => (
-    <Box sx={{ mb: '14px' }}>
-        <Box sx={labelSx}>{label}</Box>
-        {children}
-    </Box>
-);
+const Field = ({ label, children }) => {
+    const id = slugId(label);
+    return (
+        <Box sx={{ mb: '14px' }}>
+            <Box component="label" htmlFor={id} sx={labelSx}>{label}</Box>
+            {React.cloneElement(children, { id })}
+        </Box>
+    );
+};
 
 Field.propTypes = { label: PropTypes.string.isRequired, children: PropTypes.node.isRequired };
 

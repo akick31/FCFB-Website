@@ -1,11 +1,10 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 
 const AdminNav = () => {
     const location = useLocation();
-    const navigate = useNavigate();
 
     const isActive = (path) => (path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(path));
 
@@ -16,8 +15,8 @@ const AdminNav = () => {
                 return (
                     <Box
                         key={item.path}
-                        onClick={() => navigate(item.path)}
-                        role="link"
+                        component={Link}
+                        to={item.path}
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
@@ -31,8 +30,10 @@ const AdminNav = () => {
                             boxShadow: active ? 'inset 3px 0 0 var(--live)' : 'none',
                             borderBottom: '1px solid var(--line-soft)',
                             cursor: 'pointer',
+                            textDecoration: 'none',
                             '&:last-of-type': { borderBottom: 0 },
                             '&:hover': { background: active ? undefined : 'var(--surface-2)' },
+                            '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' },
                         }}
                     >
                         <Box sx={{ display: 'flex', '& svg': { fontSize: '1.05rem' } }}>{item.icon}</Box>

@@ -9,6 +9,7 @@ import { getTeamById, updateTeam } from '../../api/teamApi';
 import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS, SUBDIVISIONS } from '../../constants/teamEnums';
 import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 import { useConferencesMap, allConferenceList } from '../../components/constants/conferences';
+import { slugId } from '../../utils/a11y';
 
 const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
 const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', py: '10px', font: 'inherit', fontSize: '0.85rem' };
@@ -18,12 +19,15 @@ const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff'
 const btnGhostSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '18px', py: '10px', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 const backSx = { color: 'var(--brand)', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none', display: 'inline-block', mb: '14px' };
 
-const Field = ({ label, children }) => (
-    <Box sx={fieldWrapSx}>
-        <Box sx={labelSx}>{label}</Box>
-        {children}
-    </Box>
-);
+const Field = ({ label, children }) => {
+    const id = slugId(label);
+    return (
+        <Box sx={fieldWrapSx}>
+            <Box component="label" htmlFor={id} sx={labelSx}>{label}</Box>
+            {React.cloneElement(children, { id })}
+        </Box>
+    );
+};
 
 Field.propTypes = { label: PropTypes.string.isRequired, children: PropTypes.node.isRequired };
 
@@ -108,18 +112,20 @@ const EditTeam = () => {
                     <Field label="Short name">
                         <Box component="input" value={team.short_name || ''} onChange={(e) => handleChange('short_name', e.target.value)} sx={inputSx} />
                     </Field>
-                    <Field label="Primary color">
+                    <Box sx={fieldWrapSx}>
+                        <Box component="label" htmlFor="primary-color" sx={labelSx}>Primary color</Box>
                         <Box sx={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             <Box sx={{ width: 32, height: 32, flexShrink: 0, borderRadius: 'var(--r-sm)', border: '1px solid var(--line)', background: team.primary_color || 'transparent' }} />
-                            <Box component="input" value={team.primary_color || ''} onChange={(e) => handleChange('primary_color', e.target.value)} placeholder="#FF0000" sx={inputSx} />
+                            <Box component="input" id="primary-color" value={team.primary_color || ''} onChange={(e) => handleChange('primary_color', e.target.value)} placeholder="#FF0000" sx={inputSx} />
                         </Box>
-                    </Field>
-                    <Field label="Secondary color">
+                    </Box>
+                    <Box sx={fieldWrapSx}>
+                        <Box component="label" htmlFor="secondary-color" sx={labelSx}>Secondary color</Box>
                         <Box sx={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             <Box sx={{ width: 32, height: 32, flexShrink: 0, borderRadius: 'var(--r-sm)', border: '1px solid var(--line)', background: team.secondary_color || 'transparent' }} />
-                            <Box component="input" value={team.secondary_color || ''} onChange={(e) => handleChange('secondary_color', e.target.value)} placeholder="#0000FF" sx={inputSx} />
+                            <Box component="input" id="secondary-color" value={team.secondary_color || ''} onChange={(e) => handleChange('secondary_color', e.target.value)} placeholder="#0000FF" sx={inputSx} />
                         </Box>
-                    </Field>
+                    </Box>
                 </Box>
             </Panel>
 

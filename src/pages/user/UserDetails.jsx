@@ -31,6 +31,7 @@ import SeasonStatTable from '../../components/team/SeasonStatTable';
 import MultiLineChart from '../../components/charts/MultiLineChart';
 import CoachHeader from '../../components/user/CoachHeader';
 import CurrentTeamsPanel from '../../components/user/CurrentTeamsPanel';
+import { clickableRowProps, clickableProps } from '../../utils/a11y';
 
 const POLL_TICKS = [1, 5, 10, 15, 20, 25].map((v) => ({ v, label: String(v) }));
 
@@ -51,7 +52,7 @@ const resolveDefaultSeason = async () => {
 const TrendLegend = ({ lines, onTeam }) => (
     <Box sx={{ display: 'flex', gap: '14px', flexWrap: 'wrap', mt: '10px', px: 2, pb: 2 }}>
         {lines.map((line) => (
-            <Box key={line.team} onClick={() => onTeam(line.team)} sx={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <Box key={line.team} {...clickableProps(() => onTeam(line.team))} sx={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: 'var(--text-muted)', cursor: 'pointer', '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' } }}>
                 <Box sx={{ width: 11, height: 3, borderRadius: '2px', background: line.color }} />
                 {line.team}
             </Box>
@@ -306,7 +307,7 @@ const UserDetails = () => {
                         {stints.map((stint, index) => {
                             const active = !stint.endDate;
                             return (
-                                <tr key={`${stint.team}-${index}`} onClick={() => goTeam(stint.team)}>
+                                <tr key={`${stint.team}-${index}`} {...clickableRowProps(() => goTeam(stint.team))}>
                                     <td className="lft stick">
                                         <Box className="teamcell">
                                             <TeamMark team={teamsMap[stint.team]} size={22} />

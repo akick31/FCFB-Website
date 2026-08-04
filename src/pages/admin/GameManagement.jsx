@@ -14,7 +14,7 @@ import {
     endAllOngoingGames,
     getFilteredGames
 } from '../../api/gameApi';
-import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
+import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { getAllTeams } from '../../api/teamApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { getScheduleBySeasonAndWeek, startGameWeek, getGameWeekJobStatus, retryFailedGames } from '../../api/scheduleApi';
@@ -50,6 +50,7 @@ const GameManagement = () => {
 
     const [currentSeason, setCurrentSeason] = useState(null);
     const [currentWeek, setCurrentWeek] = useState(null);
+    const [filterSeasons, setFilterSeasons] = useState([]);
     const [selectedStartSeason, setSelectedStartSeason] = useState(null);
     const [selectedStartWeek, setSelectedStartWeek] = useState(null);
     const [weekSchedule, setWeekSchedule] = useState([]);
@@ -92,6 +93,14 @@ const GameManagement = () => {
                 season = 11;
                 week = 1;
             }
+
+            const allSeasons = await getAllSeasons().catch(() => []);
+            const seasonNumbers = allSeasons
+                .map((entry) => entry.season_number ?? entry.seasonNumber)
+                .filter((value) => value != null)
+                .sort((a, b) => b - a);
+            setFilterSeasons(seasonNumbers.length > 0 ? seasonNumbers : [season].filter(Boolean));
+
             setCurrentSeason(season);
             setCurrentWeek(week);
             setSelectedStartSeason(season);
@@ -102,6 +111,7 @@ const GameManagement = () => {
                     setWeekSchedule(schedule || []);
                 } catch (err) {
                     console.error('Failed to load week schedule:', err);
+                    setError('Failed to load week schedule');
                 }
             }
             const nextFilters = { season, week, gameType: null, gameStatus: null };
@@ -114,7 +124,7 @@ const GameManagement = () => {
     useEffect(() => {
         getAllTeams()
             .then((teams) => setAvailableTeams(teams.filter(isRealTeam)))
-            .catch((err) => console.error('Failed to load teams:', err));
+            .catch((err) => { console.error('Failed to load teams:', err); setError('Failed to load teams'); });
     }, []);
 
     const getGameStats = () => {
@@ -150,9 +160,9 @@ const GameManagement = () => {
         setIsStarting(true);
         setJobData(null);
         try {
-            const result = await startGameWeek(selectedStartSeason, selectedStartWeek);
-            setActiveJobId(result.jobId);
-            startPolling(result.jobId);
+            const startResult = await startGameWeek(selectedStartSeason, selectedStartWeek);
+            setActiveJobId(startResult.jobId);
+            startPolling(startResult.jobId);
         } catch (err) {
             console.error('Error starting week:', err);
             setIsStarting(false);
@@ -167,6 +177,7 @@ const GameManagement = () => {
             setWeekSchedule(schedule || []);
         } catch (err) {
             console.error('Failed to load schedule:', err);
+            setError('Failed to load schedule');
         }
     };
 
@@ -174,10 +185,10 @@ const GameManagement = () => {
         if (!activeJobId) return;
         setIsStarting(true);
         try {
-            const result = await retryFailedGames(activeJobId);
-            setActiveJobId(result.jobId);
+            const retryResult = await retryFailedGames(activeJobId);
+            setActiveJobId(retryResult.jobId);
             setJobData(null);
-            startPolling(result.jobId);
+            startPolling(retryResult.jobId);
         } catch (err) {
             console.error('Error retrying failed games:', err);
             setIsStarting(false);
@@ -395,7 +406,7 @@ const GameManagement = () => {
                 header={`Games (${filteredGames.length})`}
             >
                 <Box sx={{ p: '16px 16px 0', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    <SelectPill label="Season" value={filters.season || ''} onChange={(v) => handleFilterChange('season', v ? Number(v) : '')} options={[{ value: '', label: 'All seasons' }, { value: 10, label: 'Season 10' }, { value: 11, label: 'Season 11' }]} sx={pillHeightSx} />
+                    <SelectPill label="Season" value={filters.season || ''} onChange={(v) => handleFilterChange('season', v ? Number(v) : '')} options={[{ value: '', label: 'All seasons' }, ...filterSeasons.map((s) => ({ value: s, label: `Season ${s}` }))]} sx={pillHeightSx} />
                     <SelectPill label="Week" value={filters.week || ''} onChange={(v) => handleFilterChange('week', v ? Number(v) : '')} options={[{ value: '', label: 'All weeks' }, ...Array.from({ length: currentWeek || 18 }, (_, i) => ({ value: i + 1, label: `Week ${i + 1}` }))]} sx={pillHeightSx} />
                     <SelectPill label="Type" value={filters.gameType || 'ALL'} onChange={(v) => handleFilterChange('gameType', v)} options={[{ value: 'ALL', label: 'All types' }, ...GAME_TYPES.map((t) => ({ value: t, label: GAME_TYPE_DESCRIPTIONS[t] }))]} sx={pillHeightSx} />
                     <SelectPill label="Status" value={filters.gameStatus || 'ALL'} onChange={(v) => handleFilterChange('gameStatus', v)} options={[{ value: 'ALL', label: 'All statuses' }, ...GAME_STATUSES.map((s) => ({ value: s, label: GAME_STATUS_DESCRIPTIONS[s] }))]} sx={pillHeightSx} />

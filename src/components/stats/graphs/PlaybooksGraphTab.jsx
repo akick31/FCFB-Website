@@ -45,7 +45,7 @@ const PlaybooksGraphTab = ({ season }) => {
                     <Box sx={{ color: 'var(--text-muted)', py: 5, textAlign: 'center' }}>No playbook data for this season.</Box>
                 ) : (
                     playbooks.map((p) => (
-                        <Box key={p.offensive_playbook} sx={{ display: 'grid', gridTemplateColumns: '170px 1fr 66px', alignItems: 'center', gap: 1.25, py: 0.75, fontSize: '0.8rem' }}>
+                        <Box key={p.offensive_playbook} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px 1fr 50px', sm: '170px 1fr 66px' }, alignItems: 'center', gap: 1.25, py: 0.75, fontSize: '0.8rem' }}>
                             <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formatOffensivePlaybook(p.offensive_playbook)}</Box>
                             <Box sx={{ height: 16, background: 'var(--surface-2)', borderRadius: '3px', overflow: 'hidden' }}>
                                 <Box sx={{ height: '100%', borderRadius: '3px', background: 'var(--field)', width: `${Math.max(2, (p.ypp / max) * 100)}%` }} />

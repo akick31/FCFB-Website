@@ -17,6 +17,7 @@ import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { eloWeekBuckets, eloByTeamForWeek, eloRankingForWeek } from '../../utils/eloRankings';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
+import { clickableRowProps } from '../../utils/a11y';
 
 const POLL_TYPE = { coaches: 'COACHES_POLL', committee: 'PLAYOFF_COMMITTEE' };
 const TAB_LABEL = { coaches: 'Coaches Poll', committee: 'Playoff Committee', elo: 'ELO' };
@@ -232,7 +233,7 @@ const Rankings = () => {
                         const mark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation, logo: team.logo };
                         const coach = team.coach_usernames?.[0];
                         return (
-                            <tr key={team.id ?? team.name} onClick={() => team.id && navigate(`/team-details/${team.id}`)}>
+                            <tr key={team.id ?? team.name} {...clickableRowProps(() => team.id && navigate(`/team-details/${team.id}`))}>
                                 <td className="lft stick">
                                     <span style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1rem' }}>{rank}</span>
                                 </td>

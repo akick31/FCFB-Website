@@ -43,6 +43,7 @@ const ConferenceScheduleAdminTab = ({
 }) => {
     const [rulesExpanded, setRulesExpanded] = useState(false);
     const [savingRules, setSavingRules] = useState(false);
+    const [rulesError, setRulesError] = useState(null);
     const [dragSource, setDragSource] = useState(null);
 
     const grid = useMemo(() => {
@@ -125,6 +126,9 @@ const ConferenceScheduleAdminTab = ({
                         {conferenceTeams.length <= numConferenceGames + 1 && (
                             <Alert severity="info" sx={{ mb: '14px', py: 0.5 }}>Round robin format: each team plays every other team once.</Alert>
                         )}
+                        {rulesError && (
+                            <Alert severity="error" sx={{ mb: '14px', py: 0.5 }}>{rulesError}</Alert>
+                        )}
 
                         <Box sx={{ mb: '18px', maxWidth: 260 }}>
                             <Box sx={{ display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' }}>Conference games per team</Box>
@@ -174,10 +178,11 @@ const ConferenceScheduleAdminTab = ({
                                     onClick={async () => {
                                         if (!onSaveConferenceRules) return;
                                         setSavingRules(true);
+                                        setRulesError(null);
                                         try {
                                             await onSaveConferenceRules(selectedConference, numConferenceGames, protectedRivalries);
                                         } catch (err) {
-                                            console.error('Error saving conference rules:', err);
+                                            setRulesError(err.message || 'Failed to save conference rules');
                                         } finally {
                                             setSavingRules(false);
                                         }

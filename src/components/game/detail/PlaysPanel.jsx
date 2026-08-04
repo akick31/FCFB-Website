@@ -72,7 +72,7 @@ const PlaysPanel = ({ plays, homeAbbr, awayAbbr, homeName, awayName }) => {
                 <Box component="button" type="button" onClick={() => setSort((s) => (s === 'new' ? 'old' : 'new'))} sx={{ border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: 1.1, py: 0.5, fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}>
                     {sort === 'new' ? '↓ Newest first' : '↑ Oldest first'}
                 </Box>
-                <Box component="input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search plays (touchdown, first down…)" sx={{ flex: 1, minWidth: 150, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: 1.25, py: 0.75, font: 'inherit', fontSize: '0.8rem', '&::placeholder': { color: 'var(--text-dim)' } }} />
+                <Box component="input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search plays (touchdown, first down…)" aria-label="Search plays" sx={{ flex: 1, minWidth: 150, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: 1.25, py: 0.75, font: 'inherit', fontSize: '0.8rem', '&::placeholder': { color: 'var(--text-dim)' } }} />
             </Box>
             {shown.length === 0 ? (
                 <Box sx={{ p: 2.5, textAlign: 'center', color: 'var(--text-muted)' }}>No plays match.</Box>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
@@ -7,6 +7,7 @@ import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
 import SelectPill from '../../components/ui/SelectPill';
 import { getAllUsers } from '../../api/userApi';
+import { clickableRowProps } from '../../utils/a11y';
 
 const searchSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', font: 'inherit', fontSize: '0.82rem', minWidth: 210, boxSizing: 'border-box' };
 const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
@@ -23,6 +24,7 @@ const UserManagement = ({ user }) => {
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('ALL');
 
@@ -34,7 +36,7 @@ const UserManagement = ({ user }) => {
     useEffect(() => {
         getAllUsers()
             .then(setUsers)
-            .catch((error) => console.error('Failed to fetch users:', error))
+            .catch((err) => setError(err.message || 'Failed to load users'))
             .finally(() => setLoading(false));
     }, []);
 
@@ -65,11 +67,12 @@ const UserManagement = ({ user }) => {
             title="User Management"
             controls={(
                 <>
-                    <Box component="input" placeholder="Search username, coach, team, or discord..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
+                    <Box component="input" placeholder="Search username, coach, team, or discord..." aria-label="Search users" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
                     <SelectPill label="Role" value={roleFilter} onChange={setRoleFilter} options={ROLE_OPTIONS} sx={pillHeightSx} />
                 </>
             )}
         >
+            {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
             <Panel header="Users" more={`${filteredUsers.length} users`}>
                 <DataTable minWidth={680}>
                     <thead>
@@ -83,7 +86,7 @@ const UserManagement = ({ user }) => {
                     </thead>
                     <tbody>
                         {filteredUsers.map((row) => (
-                            <tr key={row.id} onClick={() => navigate(`/user-details/${row.username}`)}>
+                            <tr key={row.id} {...clickableRowProps(() => navigate(`/user-details/${row.username}`))}>
                                 <td className="lft stick">@{row.username}</td>
                                 <td className="lft">{row.coach_name}</td>
                                 <td className="lft">{row.discord_tag}</td>

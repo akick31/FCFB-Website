@@ -26,6 +26,7 @@ import WinProbChart from '../../components/game/detail/WinProbChart';
 import ScoreChart from '../../components/game/detail/ScoreChart';
 import PlaysPanel from '../../components/game/detail/PlaysPanel';
 import { useSeo } from '../../hooks/useSeo';
+import { clickableProps } from '../../utils/a11y';
 
 const toDark = (logo) => (logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo);
 const unwrap = (result) => {
@@ -42,7 +43,7 @@ const markFrom = (teamsMap, name, teamObject) => teamsMap[name] || (teamObject ?
 const CoachLink = ({ coach }) => {
     const navigate = useNavigate();
     if (!coach) return '-';
-    return <Box component="span" onClick={() => navigate(`/user-details/${coach}`)} sx={{ color: 'var(--brand)', fontWeight: 700, cursor: 'pointer' }}>@{coach}</Box>;
+    return <Box component="span" {...clickableProps(() => navigate(`/user-details/${coach}`))} sx={{ color: 'var(--brand)', fontWeight: 700, cursor: 'pointer' }}>@{coach}</Box>;
 };
 
 CoachLink.propTypes = { coach: PropTypes.string };

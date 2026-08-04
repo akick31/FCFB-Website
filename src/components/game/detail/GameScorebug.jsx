@@ -5,9 +5,10 @@ import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
 import TvLogo from '../../ui/TvLogo';
 import GameTypeLabel from '../cards/GameTypeLabel';
+import { clickableProps } from '../../../utils/a11y';
 
 const CoachlessName = ({ mark, name, rank, record, align, onClick }) => (
-    <Box onClick={onClick} sx={{ cursor: 'pointer', textAlign: align, minWidth: 0 }}>
+    <Box {...clickableProps(onClick)} sx={{ cursor: 'pointer', textAlign: align, minWidth: 0, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' } }}>
         <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.05, overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {rank > 0 && rank <= 25 && <Box component="span" sx={{ color: 'var(--gold)', fontSize: '0.72em', mr: 0.5 }}>{rank}</Box>}
             {mark?.name || name}
@@ -39,7 +40,7 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
     const homeRecord = `${game.home_wins || 0}-${game.home_losses || 0}`;
     const quarterCols = [...columns, 'T'];
     const quarterRow = (abbr, quarters, total) => (
-        <Box sx={{ display: 'grid', gridTemplateColumns: `28px repeat(${quarterCols.length}, 22px)`, alignItems: 'center', fontSize: '0.72rem' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: `20px repeat(${quarterCols.length}, 15px)`, sm: `28px repeat(${quarterCols.length}, 22px)` }, alignItems: 'center', fontSize: '0.72rem' }}>
             <Box sx={{ color: 'var(--text-dim)', fontWeight: 800, fontSize: '0.6rem' }}>{abbr}</Box>
             {quarters.map((value, i) => <Box key={i} sx={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums', color: 'var(--text-muted)' }}>{value ?? '-'}</Box>)}
             <Box sx={{ textAlign: 'center', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{total}</Box>
@@ -60,7 +61,7 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
                 </Box>
             </Box>
 
-            <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: { xs: '10px', sm: '18px' }, px: { xs: 1.5, sm: 3 }, py: '18px', overflow: 'hidden' }}>
+            <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: { xs: '10px', sm: '18px' }, px: { xs: 1.5, sm: 3 }, py: '18px', overflowX: 'auto', overflowY: 'hidden' }}>
                 <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '26%', background: `linear-gradient(90deg, ${awayColor}, transparent)`, opacity: 0.16, pointerEvents: 'none' }} />
                 <Box sx={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '26%', background: `linear-gradient(270deg, ${homeColor}, transparent)`, opacity: 0.16, pointerEvents: 'none' }} />
 

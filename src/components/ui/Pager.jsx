@@ -17,8 +17,8 @@ const pageItems = (current, pageCount) => {
 };
 
 const buttonSx = (active) => ({
-    minWidth: 30,
-    height: 30,
+    minWidth: 36,
+    height: 36,
     px: 1,
     border: '1px solid var(--line)',
     background: active ? 'var(--brand-deep)' : 'var(--surface)',
@@ -34,7 +34,7 @@ const buttonSx = (active) => ({
 const Pager = ({ page, pageCount, onChange }) => {
     if (pageCount <= 1) return null;
     return (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.75, mt: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, mt: 2, flexWrap: 'wrap' }}>
             <Box component="button" type="button" disabled={page === 0} onClick={() => onChange(page - 1)} sx={buttonSx(false)}>Prev</Box>
             {pageItems(page + 1, pageCount).map((item) => (
                 typeof item === 'number'

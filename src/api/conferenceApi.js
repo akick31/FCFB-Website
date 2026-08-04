@@ -6,7 +6,10 @@ export const getConferences = async () => {
         return response.data;
     } catch (error) {
         console.error('Failed to fetch conferences:', error);
-        return [];
+        if (error.response) {
+            throw new Error(error.response.data.error || 'Failed to fetch conferences');
+        }
+        throw new Error('An unexpected error occurred while fetching conferences');
     }
 };
 

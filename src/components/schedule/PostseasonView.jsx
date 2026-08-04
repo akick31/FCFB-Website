@@ -9,6 +9,7 @@ import TeamMark from '../ui/TeamMark';
 import ConferenceMark from '../ui/ConferenceMark';
 import PlayoffBracket from './PlayoffBracket';
 import { conferenceLabel } from '../constants/conferences';
+import { clickableProps } from '../../utils/a11y';
 
 const PostseasonRow = ({ game, label, teamsMap }) => {
     const navigate = useNavigate();
@@ -23,8 +24,8 @@ const PostseasonRow = ({ game, label, teamsMap }) => {
     );
     return (
         <Box
-            onClick={() => game.game_id && navigate(`/game-details/${game.game_id}`)}
-            sx={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '14px', alignItems: 'center', px: 1.75, py: 1.1, borderBottom: '1px solid var(--line-soft)', cursor: 'pointer', '&:hover': { background: 'var(--surface-2)' }, '&:last-of-type': { borderBottom: 'none' } }}
+            {...(game.game_id ? clickableProps(() => navigate(`/game-details/${game.game_id}`)) : {})}
+            sx={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '14px', alignItems: 'center', px: 1.75, py: 1.1, borderBottom: '1px solid var(--line-soft)', cursor: 'pointer', '&:hover': { background: 'var(--surface-2)' }, '&:last-of-type': { borderBottom: 'none' }, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' } }}
         >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0 }}>
                 {side(game.away_team, game.away_score, game.away_score > game.home_score)}

@@ -32,6 +32,7 @@ const GameWeek = () => {
     const [week, setWeek] = useState(null);
     const [selectedWeek, setSelectedWeek] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [weekSchedule, setWeekSchedule] = useState([]);
     const [scheduleLoading, setScheduleLoading] = useState(false);
 
@@ -54,6 +55,7 @@ const GameWeek = () => {
                 setSelectedWeek(currentWeek);
             } catch (err) {
                 console.error('Error initializing game week page:', err);
+                setError(err.message || 'Failed to load current season and week');
             } finally {
                 setLoading(false);
             }
@@ -68,6 +70,7 @@ const GameWeek = () => {
             setWeekSchedule(schedule || []);
         } catch (err) {
             console.error('Error fetching week schedule:', err);
+            setError(err.message || 'Failed to load week schedule');
             setWeekSchedule([]);
         } finally {
             setScheduleLoading(false);
@@ -119,9 +122,9 @@ const GameWeek = () => {
         setJobData(null);
 
         try {
-            const result = await startGameWeek(season, selectedWeek);
-            setActiveJobId(result.jobId);
-            startPolling(result.jobId);
+            const startResult = await startGameWeek(season, selectedWeek);
+            setActiveJobId(startResult.jobId);
+            startPolling(startResult.jobId);
         } catch (err) {
             console.error('Error starting week:', err);
             setIsStarting(false);
@@ -143,10 +146,10 @@ const GameWeek = () => {
         if (!activeJobId) return;
         setIsStarting(true);
         try {
-            const result = await retryFailedGames(activeJobId);
-            setActiveJobId(result.jobId);
+            const retryResult = await retryFailedGames(activeJobId);
+            setActiveJobId(retryResult.jobId);
             setJobData(null);
-            startPolling(result.jobId);
+            startPolling(retryResult.jobId);
         } catch (err) {
             console.error('Error retrying failed games:', err);
             setIsStarting(false);
@@ -168,6 +171,7 @@ const GameWeek = () => {
 
     return (
         <AdminLayout title="Game Week">
+            {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
             <TileGrid minTile={190} sx={{ mb: '16px' }}>
                 <StatTile label="Current season" value={season || '-'} />
                 <Box sx={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', px: '15px', py: '14px' }}>

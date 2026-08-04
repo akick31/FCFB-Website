@@ -1,35 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import {useLocation, useNavigate} from 'react-router-dom';
-import { resendVerificationEmail, verifyEmail } from "../../api/authApi";
-import {
-    CircularProgress,
-    Box,
-    Typography,
-    Button,
-    useTheme,
-    Card,
-    CardHeader,
-    CardContent,
-    Alert
-} from '@mui/material';
-import PropTypes from 'prop-types';
-import {Person} from "@mui/icons-material";
+import { Box, Alert, CircularProgress } from '@mui/material';
+import { useLocation, Link } from 'react-router-dom';
+import { resendVerificationEmail, verifyEmail } from '../../api/authApi';
+import PageWrap from '../../components/layout/PageWrap';
+import logo from '../../assets/graphics/main_logo.png';
+
+const btnBaseSx = { width: '100%', border: 0, borderRadius: 'var(--r-sm)', py: '11px', font: 'inherit', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
 
 const Verify = () => {
-    const theme = useTheme();
     const location = useLocation();
     const userId = new URLSearchParams(location.search).get('id');
+
     const [loading, setLoading] = useState(true);
     const [verificationSuccess, setVerificationSuccess] = useState(false);
-    const navigate = useNavigate();
+    const [resending, setResending] = useState(false);
+    const [resendMessage, setResendMessage] = useState(null);
+    const [resendError, setResendError] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const params = new URLSearchParams(location.search);
-                const token = params.get("token");
+                const token = params.get('token');
                 const response = await verifyEmail(token);
-                setVerificationSuccess(response === true);
+                setVerificationSuccess(Boolean(response));
             } catch (error) {
                 setVerificationSuccess(false);
             } finally {
@@ -41,85 +35,52 @@ const Verify = () => {
     }, [location]);
 
     const handleResendVerification = async () => {
+        setResending(true);
+        setResendMessage(null);
+        setResendError(null);
         try {
             await resendVerificationEmail(userId);
-            alert('Verification email has been resent. Please check your email.');
-            navigate('/');
+            setResendMessage('Verification email has been resent. Please check your email.');
         } catch (error) {
-            console.error('Error resending verification email:', error);
-            alert('Error resending verification email. Please try again later.');
+            setResendError('Error resending verification email. Please try again later.');
+        } finally {
+            setResending(false);
         }
     };
 
     return (
-        <Box sx={theme.root}>
-            <Card sx={theme.formCard}>
-                <CardHeader
-                    title={
-                        <Box textAlign="center" sx={{mb: -5}}>
-                            <Person fontSize="large" sx={{ fontSize: 48, color: "primary.main", mb: 1 }} />
-                            <Typography variant="h4" fontWeight={700} color="text.primary">
-                                User Verification
-                            </Typography>
-                        </Box>
-                    }
-                />
-                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+        <PageWrap>
+            <Box sx={{ maxWidth: 400, mx: 'auto', my: '36px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+                <Box sx={{ background: 'linear-gradient(160deg, var(--brand-deep), #01293b)', p: '26px', textAlign: 'center' }}>
+                    <Box component="img" src={logo} alt="FCFB" sx={{ height: 70 }} />
+                </Box>
+
+                <Box sx={{ p: '22px', textAlign: 'center' }}>
+                    <Box sx={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text)', mb: '18px' }}>Email verification</Box>
+
                     {loading ? (
-                        <CircularProgress color="primary" />
+                        <Box sx={{ py: 3, display: 'flex', justifyContent: 'center' }}><CircularProgress size={32} /></Box>
                     ) : verificationSuccess ? (
                         <>
-                            <Alert severity="success" sx={{ mt: 2 }}>Successfully verified user!</Alert>
-                            <Button
-                                variant="contained"
-                                component="a"
-                                href="/login"
-                                backgroundColor="#004260"
-                                onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); navigate('/login'); } }}
-                                sx={{
-                                    display: 'flex',
-                                    mt: 2,
-                                    py: 1.5,
-                                    backgroundColor: theme.primary,
-                                    borderRadius: 2,
-                                    fontWeight: 700,
-                                    fontSize: 16
-                                }}
-                            >
-                                Login
-                            </Button>
+                            <Alert severity="success" sx={{ mb: '16px', textAlign: 'left' }}>Successfully verified user!</Alert>
+                            <Box component={Link} to="/login" sx={{ ...btnBaseSx, background: 'var(--brand-deep)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                                Log in
+                            </Box>
                         </>
                     ) : (
                         <>
-                            <Alert severity="error" sx={{ mt: 2 }}>Failed to verify email. Please try again.</Alert>
-                            <Button
-                                variant="contained"
-                                backgroundColor="#004260"
-                                onClick={handleResendVerification}
-                                sx={{
-                                    display: 'flex',
-                                    mt: 2,
-                                    py: 1.5,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    backgroundColor: theme.primary,
-                                    borderRadius: 2,
-                                    fontWeight: 700,
-                                    fontSize: 16
-                                }}
-                            >
-                                Resend Verification Email
-                            </Button>
+                            <Alert severity="error" sx={{ mb: '16px', textAlign: 'left' }}>Failed to verify email. Please try again.</Alert>
+                            {resendMessage && <Alert severity="success" sx={{ mb: '16px', textAlign: 'left' }}>{resendMessage}</Alert>}
+                            {resendError && <Alert severity="error" sx={{ mb: '16px', textAlign: 'left' }}>{resendError}</Alert>}
+                            <Box component="button" type="button" onClick={handleResendVerification} disabled={resending} sx={{ ...btnBaseSx, background: 'var(--brand-deep)', color: '#fff' }}>
+                                {resending ? 'Sending…' : 'Resend verification email'}
+                            </Box>
                         </>
                     )}
-                </CardContent>
-            </Card>
-        </Box>
+                </Box>
+            </Box>
+        </PageWrap>
     );
-};
-
-Verify.propTypes = {
-    token: PropTypes.string.isRequired,
 };
 
 export default Verify;

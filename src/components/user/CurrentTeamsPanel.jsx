@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import Panel from '../ui/Panel';
 import TeamMark from '../ui/TeamMark';
 import { formatConference, formatPosition } from '../../utils/formatText';
+import { clickableProps } from '../../utils/a11y';
 
 const CurrentTeamsPanel = ({ entries, teamsMap }) => {
     const navigate = useNavigate();
@@ -14,7 +15,7 @@ const CurrentTeamsPanel = ({ entries, teamsMap }) => {
             {entries.map(({ team, position }) => (
                 <Box
                     key={team.id ?? team.name}
-                    onClick={() => team.id && navigate(`/team-details/${team.id}`)}
+                    {...(team.id ? clickableProps(() => navigate(`/team-details/${team.id}`)) : {})}
                     sx={{
                         display: 'grid', gridTemplateColumns: '38px 1fr auto', alignItems: 'center', gap: '12px',
                         px: 2, py: 1.5, borderBottom: '1px solid var(--line-soft)', cursor: team.id ? 'pointer' : 'default',

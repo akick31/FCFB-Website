@@ -9,6 +9,7 @@ import TeamMark from '../ui/TeamMark';
 import ConferenceMark from '../ui/ConferenceMark';
 import Pager from '../ui/Pager';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
+import { clickableRowProps } from '../../utils/a11y';
 
 const PAGE_SIZE = 25;
 
@@ -39,7 +40,7 @@ const StatLeaderboardDetail = ({ stat, rows, onBack }) => {
                 <Box component="button" type="button" onClick={onBack} sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, height: 38, px: 1.5, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}>
                     <ArrowBack sx={{ fontSize: 15 }} /> All leaderboards
                 </Box>
-                <Box component="input" value={teamQuery} onChange={(event) => { setTeamQuery(event.target.value); setPage(0); }} placeholder="Search a team…"
+                <Box component="input" value={teamQuery} onChange={(event) => { setTeamQuery(event.target.value); setPage(0); }} placeholder="Search a team…" aria-label="Search a team"
                     sx={{ flex: 1, minWidth: 200, height: 38, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: 1.5, font: 'inherit', fontSize: '0.82rem', '&::placeholder': { color: 'var(--text-dim)' } }} />
             </Box>
             <Panel header={stat.label} more={`${filtered.length} team${filtered.length === 1 ? '' : 's'}${stat.ascending ? ' · lowest is best' : ''}`}>
@@ -56,7 +57,7 @@ const StatLeaderboardDetail = ({ stat, rows, onBack }) => {
                         {slice.map((row) => {
                             ensureTeam(row.team);
                             return (
-                                <tr key={row.team} onClick={() => openTeam(row.team)}>
+                                <tr key={row.team} {...clickableRowProps(() => openTeam(row.team))}>
                                     <td className="lft stick num">{row.rank}</td>
                                     <td className="lft">
                                         <div className="teamcell">

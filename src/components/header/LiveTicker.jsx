@@ -8,6 +8,7 @@ import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { isGameOngoing } from '../game/scoreboard/utils/scoreboardFormatters';
 import { formatScoreboardQuarter } from '../../utils/gameUtils';
 import TeamMark from '../ui/TeamMark';
+import { clickableProps } from '../../utils/a11y';
 
 const POLL_MS = 30000;
 
@@ -41,7 +42,8 @@ const TickerItem = ({ game, teamsMap, onOpen }) => {
 
     return (
         <Box
-            onClick={() => onOpen(game.game_id)}
+            {...clickableProps(() => onOpen(game.game_id))}
+            aria-label={`${awayTeam.abbreviation || game.away_team} at ${homeTeam.abbreviation || game.home_team}, ${statusLabel(game)}`}
             sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -53,6 +55,7 @@ const TickerItem = ({ game, teamsMap, onOpen }) => {
                 fontSize: '0.78rem',
                 cursor: 'pointer',
                 '&:hover': { backgroundColor: 'var(--surface)' },
+                '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' },
             }}
         >
             <Box component="span" sx={{ fontSize: '0.56rem', fontWeight: 800, letterSpacing: '0.04em', color: isGameOngoing(game.game_status) ? 'var(--live)' : 'var(--text-dim)' }}>

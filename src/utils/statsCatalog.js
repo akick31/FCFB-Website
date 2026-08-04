@@ -104,6 +104,35 @@ export const buildLeaderboard = (rows, stat) => {
     return valid.sort((a, b) => (stat.ascending ? a[stat.key] - b[stat.key] : b[stat.key] - a[stat.key]));
 };
 
+export const aggregateStatRows = (rows, fieldAggs) => {
+    const result = {};
+    const latestRow = rows.reduce(
+        (best, row) => ((row.season_number ?? row.seasonNumber ?? 0) > (best?.season_number ?? best?.seasonNumber ?? 0) ? row : best),
+        rows[0],
+    );
+    Object.entries(fieldAggs).forEach(([key, spec]) => {
+        if (spec === 'latest') { result[key] = latestRow?.[key]; return; }
+        const { agg, num, den, yards, weight } = spec;
+        if (agg === 'sum') result[key] = sum(rows, key);
+        else if (agg === 'max') result[key] = max(rows, key);
+        else if (agg === 'mean') result[key] = mean(rows, key);
+        else if (agg === 'rate') result[key] = rate(rows, num, den);
+        else if (agg === 'ypp') result[key] = yardsPerPlay(rows, yards, key);
+        else if (agg === 'wavg') result[key] = weightedAverage(rows, key, weight);
+    });
+    return result;
+};
+
+export const aggregateStatRowsByKey = (rows, keyField, fieldAggs) => {
+    const byKey = {};
+    rows.forEach((row) => {
+        const key = row[keyField];
+        if (key == null) return;
+        (byKey[key] = byKey[key] || []).push(row);
+    });
+    return Object.entries(byKey).map(([key, groupRows]) => ({ [keyField]: key, ...aggregateStatRows(groupRows, fieldAggs) }));
+};
+
 export const aggregateAllTimeStats = (rows) => {
     const byTeam = {};
     (rows || []).forEach((row) => {

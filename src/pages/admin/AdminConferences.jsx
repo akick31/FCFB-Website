@@ -27,8 +27,8 @@ const AdminConferences = () => {
     const load = async () => {
         setLoading(true);
         try {
-            const data = await getConferences();
-            setConferences([...data].sort((a, b) => (a.display_order || 0) - (b.display_order || 0)));
+            const conferences = await getConferences();
+            setConferences([...conferences].sort((a, b) => (a.display_order || 0) - (b.display_order || 0)));
         } catch (err) {
             setError('Failed to load conferences');
         } finally {

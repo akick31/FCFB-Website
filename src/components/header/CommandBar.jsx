@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Box, Button, IconButton, Avatar, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import { Menu as MenuIcon, Person, Logout, SportsFootball } from '@mui/icons-material';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import mainLogo from '../../assets/graphics/main_logo.png';
 import { NAV_ITEMS } from './navConfig';
+import { clickableProps } from '../../utils/a11y';
 
 const navButtonSx = (active) => ({
     color: '#cfe3ee',
@@ -35,8 +36,8 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, on
     return (
         <Box sx={{ backgroundColor: 'var(--brand-deep)', display: 'flex', alignItems: 'stretch', height: 54 }}>
             <Box
-                onClick={() => goTo('/')}
-                role="link"
+                component={Link}
+                to="/"
                 aria-label="Home"
                 sx={{
                     position: 'relative',
@@ -45,8 +46,10 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, on
                     pl: '14px',
                     pr: '30px',
                     cursor: 'pointer',
+                    textDecoration: 'none',
                     '&::after': { content: '""', position: 'absolute', right: '-11px', top: 0, bottom: 0, width: '22px', backgroundColor: 'var(--live)', transform: 'skewX(-11deg)' },
                     '&::before': { content: '""', position: 'absolute', right: '-20px', top: 0, bottom: 0, width: '6px', backgroundColor: '#b9c2c8', transform: 'skewX(-11deg)' },
+                    '&:focus-visible': { outline: '2px solid #fff', outlineOffset: '2px' },
                 }}
             >
                 <Box component="img" src={mainLogo} alt="FCFB" sx={{ height: 46, width: 'auto', zIndex: 1, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
@@ -67,7 +70,12 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, on
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1.5, ml: { xs: 'auto', md: 0 } }}>
                 {isAuthenticated ? (
-                    <Box onClick={(e) => setUserAnchor(e.currentTarget)} sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', px: 1, py: 0.5, borderRadius: 1, '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+                    <Box
+                        {...clickableProps((e) => setUserAnchor(e.currentTarget))}
+                        aria-haspopup="true"
+                        aria-label={`Account menu for ${user?.username || 'user'}`}
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', px: 1, py: 0.5, borderRadius: 1, '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' }, '&:focus-visible': { outline: '2px solid #fff', outlineOffset: '2px' } }}
+                    >
                         <Avatar src={teamLogo || undefined} sx={{ width: 30, height: 30, borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.15)' }}>
                             {teamLogo ? null : <SportsFootball sx={{ fontSize: '1rem' }} />}
                         </Avatar>

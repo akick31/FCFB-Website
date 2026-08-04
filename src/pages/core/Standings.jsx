@@ -20,6 +20,7 @@ import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/fo
 import { useOffseasonStatus } from '../../components/game/scoreboard/hooks/useOffseasonStatus';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
+import { clickableRowProps } from '../../utils/a11y';
 
 const confPct = (row) => (row.confWins + row.confLosses > 0 ? row.confWins / (row.confWins + row.confLosses) : 0);
 
@@ -73,7 +74,7 @@ const buildHistoricalData = (conferenceMap, scheduleRows, eloRows, seasonStatsRo
 const Standings = () => {
     useSeo(ROUTE_META['/standings']);
 
-    const { conference: confParam } = useParams();
+    const { conference: confParam, seasonParam } = useParams();
     const navigate = useNavigate();
     const teamsMap = useTeamsMap();
     const conferencesMap = useConferencesMap();
@@ -98,11 +99,13 @@ const Standings = () => {
             getAllSeasons().catch(() => []),
         ])
             .then(([data, latest, currentSeason, seasonsData]) => {
+                const seasonNumbers = seasonsData.map((entry) => entry.season_number ?? entry.seasonNumber).filter((value) => value != null);
+                const urlSeason = seasonParam ? parseInt(seasonParam, 10) : null;
                 setTeams(data);
                 setFinalSeason(latest?.season_number ?? latest?.seasonNumber ?? null);
                 setLiveSeason(currentSeason);
-                setSeason(currentSeason);
-                setAllSeasons(seasonsData.map((entry) => entry.season_number ?? entry.seasonNumber).filter((value) => value != null));
+                setSeason(urlSeason && seasonNumbers.includes(urlSeason) ? urlSeason : currentSeason);
+                setAllSeasons(seasonNumbers);
             })
             .catch(() => setError('Failed to load standings data. Please try again.'))
             .finally(() => setLoading(false));
@@ -142,11 +145,18 @@ const Standings = () => {
     const selectedConference = confParam?.toUpperCase() || availableConferences[0];
 
     useEffect(() => {
-        if (loading || availableConferences.length === 0) return;
+        if (loading || availableConferences.length === 0 || season == null) return;
         if (!confParam || !availableConferences.includes(confParam.toUpperCase())) {
-            navigate(`/standings/${availableConferences[0].toLowerCase()}`, { replace: true });
+            navigate(`/standings/${availableConferences[0].toLowerCase()}/${season}`, { replace: true });
         }
-    }, [confParam, availableConferences, loading, navigate]);
+    }, [confParam, availableConferences, loading, season, navigate]);
+
+    const changeSeason = (nextSeason) => {
+        setSeason(nextSeason);
+        navigate(`/standings/${selectedConference.toLowerCase()}/${nextSeason}`, { replace: true });
+    };
+
+    const changeConference = (conf) => navigate(`/standings/${conf.toLowerCase()}/${season}`);
 
     const displayRows = useMemo(() => {
         if (isLiveSeason) {
@@ -215,7 +225,7 @@ const Standings = () => {
                     <SelectPill
                         label="Season"
                         value={season ?? ''}
-                        onChange={(next) => setSeason(Number(next))}
+                        onChange={(next) => changeSeason(Number(next))}
                         options={allSeasons.map((option) => ({ value: option, label: `Season ${option}` }))}
                     />
                 )}
@@ -230,7 +240,7 @@ const Standings = () => {
                 <ConferenceTabs
                     conferences={availableConferences}
                     value={selectedConference}
-                    onChange={(conf) => navigate(`/standings/${conf.toLowerCase()}`)}
+                    onChange={changeConference}
                 />
             </Box>
 
@@ -253,7 +263,7 @@ const Standings = () => {
                         {displayRows.map((row, index) => {
                             const mark = teamsMap[row.name] || { name: row.name };
                             return (
-                                <tr key={row.name} onClick={() => row.id != null && navigate(`/team-details/${row.id}`)}>
+                                <tr key={row.name} {...clickableRowProps(() => row.id != null && navigate(`/team-details/${row.id}`))}>
                                     <td className="lft stick">
                                         <div className="teamcell">
                                             <span className="rk">{index + 1}</span>

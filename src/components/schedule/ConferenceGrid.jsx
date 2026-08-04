@@ -3,6 +3,7 @@ import { Box, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../ui/TeamMark';
+import { clickableProps } from '../../utils/a11y';
 
 const REGULAR_WEEKS = Array.from({ length: 12 }, (_, index) => index + 1);
 
@@ -60,7 +61,7 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
                     {conferenceTeams.map((team) => (
                         <tr key={team.id || team.name}>
                             <td className="tcol">
-                                <Box onClick={() => team.id && navigate(`/team-details/${team.id}`)} sx={{ display: 'flex', alignItems: 'center', gap: '7px', cursor: team.id ? 'pointer' : 'default' }}>
+                                <Box {...(team.id ? clickableProps(() => navigate(`/team-details/${team.id}`)) : {})} sx={{ display: 'flex', alignItems: 'center', gap: '7px', cursor: team.id ? 'pointer' : 'default' }}>
                                     <TeamMark team={markFor(team.name)} size={20} />
                                     <Box component="b" sx={{ fontSize: '0.76rem' }}>{team.abbreviation && team.name.length > 14 ? team.abbreviation : team.name}</Box>
                                 </Box>
@@ -72,7 +73,7 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
                                 return (
                                     <td key={week}>
                                         <Box
-                                            onClick={() => cell.gameId && navigate(`/game-details/${cell.gameId}`)}
+                                            {...(cell.gameId ? clickableProps(() => navigate(`/game-details/${cell.gameId}`)) : {})}
                                             title={`${cell.home ? 'vs' : 'at'} ${cell.opp}${cell.finished ? `, ${cell.us}-${cell.them}` : ''}`}
                                             sx={{ display: 'inline-flex', alignItems: 'center', gap: '3px', justifyContent: 'center', cursor: cell.gameId ? 'pointer' : 'default' }}
                                         >

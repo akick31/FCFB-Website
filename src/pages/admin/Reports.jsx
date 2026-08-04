@@ -181,7 +181,7 @@ const Reports = ({ user }) => {
             {tab === 'delays' && (
                 <>
                     <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', mb: '16px' }}>
-                        <Box component="input" placeholder="Search users..." value={delaySearchTerm} onChange={(e) => setDelaySearchTerm(e.target.value)} sx={searchSx} />
+                        <Box component="input" placeholder="Search users..." aria-label="Search users" value={delaySearchTerm} onChange={(e) => setDelaySearchTerm(e.target.value)} sx={searchSx} />
                         <SelectPill label="Team" value={delayTeamFilter} onChange={setDelayTeamFilter} options={delayTeamOptions} sx={pillHeightSx} />
                     </Box>
 
@@ -220,7 +220,7 @@ const Reports = ({ user }) => {
             {tab === 'transactions' && (
                 <>
                     <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', mb: '16px' }}>
-                        <Box component="input" placeholder="Search transactions..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
+                        <Box component="input" placeholder="Search transactions..." aria-label="Search transactions" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
                         <SelectPill label="Team" value={teamFilter} onChange={setTeamFilter} options={teamOptions} sx={pillHeightSx} />
                         <SelectPill label="Position" value={positionFilter} onChange={setPositionFilter} options={positionOptions} sx={pillHeightSx} />
                         <SelectPill label="Type" value={transactionTypeFilter} onChange={setTransactionTypeFilter} options={typeOptions} sx={pillHeightSx} />

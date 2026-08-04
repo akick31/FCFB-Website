@@ -141,7 +141,7 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
                 <Typography variant="h5" sx={{ fontWeight: 600 }}>
                     Create New Team
                 </Typography>
-                <IconButton onClick={handleClose} size="small">
+                <IconButton onClick={handleClose} size="small" aria-label="Close">
                     <Close />
                 </IconButton>
             </DialogTitle>

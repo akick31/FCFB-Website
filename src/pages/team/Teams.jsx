@@ -14,6 +14,7 @@ import SelectPill from '../../components/ui/SelectPill';
 import TeamMark from '../../components/ui/TeamMark';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
+import { clickableProps } from '../../utils/a11y';
 
 const SORTS = { elo: (a, b) => (b.current_elo || 0) - (a.current_elo || 0), wins: (a, b) => (b.current_wins || 0) - (a.current_wins || 0), name: (a, b) => a.name.localeCompare(b.name) };
 
@@ -72,6 +73,7 @@ const Teams = () => {
                 <Box
                     component="input"
                     placeholder="Search teams, coaches, or Discord tags…"
+                    aria-label="Search teams"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', padding: '6px 10px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, minWidth: 210, '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 } }}
@@ -102,8 +104,8 @@ const Teams = () => {
                     return (
                         <Box
                             key={team.id}
-                            onClick={() => navigate(`/team-details/${team.id}`)}
-                            sx={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', p: '13px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'transform .14s, border-color .14s', '&:hover': { transform: 'translateY(-2px)', borderColor: 'color-mix(in srgb, var(--brand) 50%, var(--line))' } }}
+                            {...clickableProps(() => navigate(`/team-details/${team.id}`))}
+                            sx={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', p: '13px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'transform .14s, border-color .14s', '&:hover': { transform: 'translateY(-2px)', borderColor: 'color-mix(in srgb, var(--brand) 50%, var(--line))' }, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' } }}
                         >
                             <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '3px', background: pickTeamColor(teamMark, mode) }} />
                             <TeamMark team={teamMark} size={38} />

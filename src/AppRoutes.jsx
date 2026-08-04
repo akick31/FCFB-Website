@@ -116,6 +116,24 @@ const AppRoutes = () => {
                     backgroundColor: 'background.default',
                 }}
             >
+                <Box
+                    component="a"
+                    href="#main-content"
+                    sx={{
+                        position: 'absolute',
+                        left: '-9999px',
+                        top: 0,
+                        zIndex: 100,
+                        background: 'var(--brand-deep)',
+                        color: '#fff',
+                        px: 2,
+                        py: 1,
+                        borderRadius: 'var(--r-sm)',
+                        '&:focus': { left: '10px', top: '10px' },
+                    }}
+                >
+                    Skip to main content
+                </Box>
                 <Header
                     isAuthenticated={isAuthenticated}
                     isAdmin={isAdmin}
@@ -126,6 +144,7 @@ const AppRoutes = () => {
                 />
                 <Box
                     component="main"
+                    id="main-content"
                     sx={{
                         flexGrow: 1,
                         display: 'flex',
@@ -226,7 +245,7 @@ const AppRoutes = () => {
                         <Route path="/user-details/:coachName" element={<UserDetails />} />
                         <Route path="/modify-team/:teamId" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <ModifyTeam user={user} />
+                                <ModifyTeam />
                             </ProtectedRoute>
                         } />
                         <Route path="/schedules" element={<Schedule />} />
@@ -235,6 +254,7 @@ const AppRoutes = () => {
                         <Route path="/schedules/:tab/:selection/:seasonParam" element={<Schedule />} />
                         <Route path="/standings" element={<Standings />} />
                         <Route path="/standings/:conference" element={<Standings />} />
+                        <Route path="/standings/:conference/:seasonParam" element={<Standings />} />
                         <Route path="/rankings" element={<Rankings />} />
                         <Route path="/rankings/:type" element={<Rankings />} />
                         <Route path="/scoreboard" element={<Scoreboard />} />

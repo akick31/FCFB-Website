@@ -7,6 +7,7 @@ import StatusPill from '../../ui/StatusPill';
 import GameTypeLabel from './GameTypeLabel';
 import { isGameOngoing } from '../scoreboard/utils/scoreboardFormatters';
 import { ensureTeam } from '../../../hooks/useTeamsMap';
+import { clickableProps } from '../../../utils/a11y';
 
 const SideRow = ({ team, name, score, dim }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.84rem', color: dim ? 'var(--text-dim)' : 'var(--text)' }}>
@@ -32,12 +33,13 @@ const CompactGameRow = ({ game, teamsMap }) => {
 
     return (
         <Box
-            onClick={() => navigate(`/game-details/${game.game_id}`)}
+            {...clickableProps(() => navigate(`/game-details/${game.game_id}`))}
             sx={{
                 display: 'grid',
                 gridTemplateColumns: '1fr auto auto',
                 gap: 1.75,
                 alignItems: 'center',
+                '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' },
                 px: 1.75,
                 py: 1.1,
                 borderBottom: '1px solid var(--line-soft)',
