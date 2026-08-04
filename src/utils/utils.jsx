@@ -1,7 +1,7 @@
 export const checkIfUserIsAdmin = () => {
+    if (typeof window === 'undefined') return false;
     const role = localStorage.getItem('role');
-    const isAdmin = role === 'ADMIN' || role === 'CONFERENCE_COMMISSIONER';
-    return isAdmin;
+    return role === 'ADMIN' || role === 'CONFERENCE_COMMISSIONER';
 };
 
 export const getStorageItem = (storageArea, key, fallback = '') => {

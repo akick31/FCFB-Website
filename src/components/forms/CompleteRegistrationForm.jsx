@@ -1,57 +1,55 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import {
-    Box,
-    Grid,
-    Typography,
-    Alert,
-    TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    CircularProgress,
-    InputAdornment,
-    IconButton,
-    useTheme
-} from "@mui/material";
-import { 
-    Email, 
-    Lock, 
-    Visibility, 
-    VisibilityOff, 
-    Person,
-    SportsFootball,
-    School
-} from "@mui/icons-material";
-import { registerUser } from "../../api/authApi";
-import { validateEmail, isStrongPassword } from "../../utils/validations";
-import { getOpenTeams } from "../../api/teamApi";
-import { validateUser } from "../../api/userApi";
-import StyledCard from "../ui/StyledCard";
-import StyledButton from "../ui/StyledButton";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Box, Alert, CircularProgress } from '@mui/material';
+import PropTypes from 'prop-types';
+import { registerUser } from '../../api/authApi';
+import { validateEmail, isStrongPassword } from '../../utils/validations';
+import { getOpenTeams } from '../../api/teamApi';
+import { validateUser } from '../../api/userApi';
+import { formatOffensivePlaybook, formatDefensivePlaybook, formatPosition } from '../../utils/formatText';
+import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS } from '../../constants/teamEnums';
+import logo from '../../assets/graphics/main_logo.png';
+import { slugId } from '../../utils/a11y';
+
+const POSITIONS = ['HEAD_COACH', 'OFFENSIVE_COORDINATOR', 'DEFENSIVE_COORDINATOR', 'SPECIAL_TEAMS_COORDINATOR'];
+
+const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
+const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', py: '10px', font: 'inherit', fontSize: '0.88rem', '&:disabled': { opacity: 0.6 } };
+const selectSx = { ...inputSx, cursor: 'pointer', '& option': { background: 'var(--surface-2)', color: 'var(--text)' } };
+const btnBaseSx = { width: '100%', border: 0, borderRadius: 'var(--r-sm)', py: '11px', font: 'inherit', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
+
+const Field = ({ label, helper, children }) => {
+    const id = slugId(label);
+    return (
+        <Box sx={{ mb: '12px' }}>
+            <Box component="label" htmlFor={id} sx={labelSx}>{label}</Box>
+            {React.cloneElement(children, { id, 'aria-describedby': helper ? `${id}-helper` : undefined })}
+            {helper && <Box id={`${id}-helper`} sx={{ mt: '4px', fontSize: '0.7rem', color: 'var(--text-dim)' }}>{helper}</Box>}
+        </Box>
+    );
+};
+
+Field.propTypes = { label: PropTypes.string.isRequired, helper: PropTypes.string, children: PropTypes.node.isRequired };
 
 const CompleteRegistrationForm = () => {
-    const theme = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
 
     const [formData, setFormData] = useState({
-        username: "",
-        coach_name: "",
-        position: "HEAD_COACH",
-        offensive_playbook: "FLEXBONE",
-        defensive_playbook: "FOUR_THREE",
-        discord_tag: "",
-        discord_id: "",
-        email: "",
-        confirm_email: "",
-        password: "",
-        confirm_password: "",
-        show_password: false,
-        team_choice_one: "",
-        team_choice_two: "",
-        team_choice_three: "",
+        username: '',
+        coach_name: '',
+        position: 'HEAD_COACH',
+        offensive_playbook: 'FLEXBONE',
+        defensive_playbook: 'FOUR_THREE',
+        discord_tag: '',
+        discord_id: '',
+        email: '',
+        confirm_email: '',
+        password: '',
+        confirm_password: '',
+        team_choice_one: '',
+        team_choice_two: '',
+        team_choice_three: '',
     });
 
     const [validation, setValidation] = useState({
@@ -66,511 +64,195 @@ const CompleteRegistrationForm = () => {
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const discord_tag = params.get("discordTag");
-        const discord_id = params.get("discordId");
-        if (discord_tag) {
-            setFormData((prev) => ({ ...prev, discord_tag }));
-        }
-        if (discord_id) {
-            setFormData((prev) => ({ ...prev, discord_id }));
-        }
+        const discordTag = params.get('discordTag');
+        const discordId = params.get('discordId');
+        if (discordTag) setFormData((prev) => ({ ...prev, discord_tag: discordTag }));
+        if (discordId) setFormData((prev) => ({ ...prev, discord_id: discordId }));
 
-        const fetchOpenTeams = async () => {
-            try {
-                const teams = await getOpenTeams();
-                setOpenTeams(teams);
-            } catch {
-                setValidation((prev) => ({
-                    ...prev,
-                    errorMessage: "Failed to load available teams. Please refresh the page.",
-                }));
-            }
-        };
-        fetchOpenTeams();
+        getOpenTeams()
+            .then(setOpenTeams)
+            .catch(() => setValidation((prev) => ({ ...prev, errorMessage: 'Failed to load available teams. Please refresh the page.' })));
     }, [location.search]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
+    const handleChange = (event) => {
+        const { name, value } = event.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-
-        if (name === "email") {
-            setValidation((prev) => ({ ...prev, emailValid: validateEmail(value) }));
-        } else if (name === "password") {
-            setValidation((prev) => ({ ...prev, passwordValid: isStrongPassword(value) }));
-        }
-
-        if (validation.errorMessage) {
-            setValidation((prev) => ({ ...prev, errorMessage: null }));
-        }
+        if (name === 'email') setValidation((prev) => ({ ...prev, emailValid: validateEmail(value) }));
+        if (name === 'password') setValidation((prev) => ({ ...prev, passwordValid: isStrongPassword(value) }));
+        if (validation.errorMessage) setValidation((prev) => ({ ...prev, errorMessage: null }));
     };
 
-    const handleTogglePassword = () => {
-        setFormData((prev) => ({ ...prev, show_password: !prev.show_password }));
-    };
+    const requiredTeamChoices = Math.min(3, openTeams.length);
 
     const validateTeamChoices = () => {
         const { team_choice_one, team_choice_two, team_choice_three } = formData;
-        
-        if (!team_choice_one && !team_choice_two && !team_choice_three) {
-            return false;
-        }
-
         const choices = [team_choice_one, team_choice_two, team_choice_three].filter(Boolean);
-        const uniqueChoices = new Set(choices);
-        
-        return choices.length === uniqueChoices.size;
+        if (choices.length !== new Set(choices).size) return false;
+        return choices.length >= requiredTeamChoices;
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async (event) => {
+        event.preventDefault();
         const { email, confirm_email, password, confirm_password } = formData;
         const { emailValid, passwordValid } = validation;
-
         const teamChoicesValid = validateTeamChoices();
         setValidation((prev) => ({ ...prev, teamChoicesValid }));
 
         if (!emailValid || !passwordValid || !teamChoicesValid) {
-            setValidation((prev) => ({
-                ...prev,
-                errorMessage: "Please fix the highlighted errors.",
-            }));
+            setValidation((prev) => ({ ...prev, errorMessage: 'Please fix the highlighted errors.' }));
             return;
         }
-
         if (email !== confirm_email) {
-            setValidation((prev) => ({
-                ...prev,
-                errorMessage: "Emails do not match.",
-            }));
+            setValidation((prev) => ({ ...prev, errorMessage: 'Emails do not match.' }));
             return;
         }
-
         if (password !== confirm_password) {
-            setValidation((prev) => ({
-                ...prev,
-                errorMessage: "Passwords do not match.",
-            }));
+            setValidation((prev) => ({ ...prev, errorMessage: 'Passwords do not match.' }));
             return;
         }
 
         setIsSubmitting(true);
-
         try {
             const validationResponse = await validateUser(formData);
-
             if (validationResponse.discord_id_exists) {
-                setValidation((prev) => ({
-                    ...prev,
-                    errorMessage: "Discord ID already exists.",
-                }));
+                setValidation((prev) => ({ ...prev, errorMessage: 'Discord ID already exists.' }));
                 return;
             }
-
             if (validationResponse.discord_username_exists) {
-                setValidation((prev) => ({
-                    ...prev,
-                    errorMessage: "Discord Username already exists.",
-                }));
+                setValidation((prev) => ({ ...prev, errorMessage: 'Discord Username already exists.' }));
                 return;
             }
-
             if (validationResponse.username_exists) {
-                setValidation((prev) => ({
-                    ...prev,
-                    errorMessage: "Username already exists.",
-                }));
+                setValidation((prev) => ({ ...prev, errorMessage: 'Username already exists.' }));
                 return;
             }
-
             if (validationResponse.email_exists) {
-                setValidation((prev) => ({
-                    ...prev,
-                    errorMessage: "Email already exists.",
-                }));
+                setValidation((prev) => ({ ...prev, errorMessage: 'Email already exists.' }));
                 return;
             }
 
             await registerUser({ ...formData });
-            navigate("/register/success");
-        } catch (error) {
-            setValidation((prev) => ({
-                ...prev,
-                errorMessage: "Registration failed. Please try again.",
-            }));
+            navigate('/register/success');
+        } catch {
+            setValidation((prev) => ({ ...prev, errorMessage: 'Registration failed. Please try again.' }));
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const teamChoiceError = !validation.teamChoicesValid;
+    const teamOptions = (excludeA, excludeB) => (
+        <>
+            <option value="">No selection</option>
+            {openTeams.length > 0 ? (
+                openTeams.map((team) => (
+                    <option key={team} value={team} disabled={team === excludeA || team === excludeB}>{team}</option>
+                ))
+            ) : (
+                <option value="" disabled>Loading teams…</option>
+            )}
+        </>
+    );
 
     return (
-        <Box sx={{ 
-            pt: { xs: 8, md: 10 },
-            pb: { xs: 4, md: 6 }
-        }}>
-            <Grid container spacing={4} alignItems="flex-start" justifyContent="center">
-                <Grid item xs={12} md={8} lg={6}>
-                    <StyledCard
-                        elevation={8}
-                        hover={false}
-                        sx={{
-                            p: { xs: 3, md: 4 },
-                            textAlign: 'center',
-                            position: 'relative',
-                            overflow: 'visible',
-                        }}
-                    >
-                        <Box sx={{ 
-                            mb: 4,
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center'
-                        }}>
-                            <Box sx={{
-                                width: 80,
-                                height: 80,
-                                borderRadius: '50%',
-                                background: theme.palette.primary.main,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                boxShadow: theme.shadows[4],
-                                mb: 2
-                            }}>
-                                <School 
-                                    sx={{ 
-                                        fontSize: 40, 
-                                        color: 'white'
-                                    }} 
-                                />
-                            </Box>
+        <Box sx={{ maxWidth: 460, mx: 'auto', my: '36px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+            <Box sx={{ background: 'linear-gradient(160deg, var(--brand-deep), #01293b)', p: '26px', textAlign: 'center' }}>
+                <Box component="img" src={logo} alt="FCFB" sx={{ height: 70 }} />
+            </Box>
+
+            <Box sx={{ p: '22px' }}>
+                <Box sx={{ mb: '18px', textAlign: 'center' }}>
+                    <Box sx={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text)', mb: '4px' }}>Complete your registration</Box>
+                    <Box sx={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>Finish setting up your FCFB account and choose your team preferences</Box>
+                </Box>
+
+                {validation.errorMessage && <Alert severity="error" sx={{ mb: '16px' }}>{validation.errorMessage}</Alert>}
+
+                <Box component="form" onSubmit={handleSubmit}>
+                    <Field label="Username">
+                        <Box component="input" name="username" value={formData.username} onChange={handleChange} required sx={inputSx} />
+                    </Field>
+
+                    <Field label="Coach name">
+                        <Box component="input" name="coach_name" value={formData.coach_name} onChange={handleChange} required sx={inputSx} />
+                    </Field>
+
+                    <Field label="Discord tag" helper="Set from Discord OAuth">
+                        <Box component="input" name="discord_tag" value={formData.discord_tag} disabled sx={inputSx} />
+                    </Field>
+
+                    <Field label="Position">
+                        <Box component="select" name="position" value={formData.position} onChange={handleChange} sx={selectSx}>
+                            {POSITIONS.map((position) => <option key={position} value={position}>{formatPosition(position)}</option>)}
                         </Box>
+                    </Field>
 
-                        <Typography variant="h4" sx={{ mb: 1, fontWeight: 700 }}>
-                            Complete Your Registration
-                        </Typography>
-                        <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
-                            Finish setting up your FCFB account and choose your team preferences
-                        </Typography>
-
-                        {validation.errorMessage && (
-                            <Alert severity="error" sx={{ mb: 3, textAlign: 'left' }}>
-                                {validation.errorMessage}
-                            </Alert>
-                        )}
-
-                        <Box component="form" onSubmit={handleSubmit} sx={{ textAlign: 'left' }}>
-                            <Grid container spacing={3}>
-                                <Grid item xs={12}>
-                                    <TextField
-                                        fullWidth
-                                        label="Username"
-                                        name="username"
-                                        value={formData.username}
-                                        onChange={handleChange}
-                                        required
-                                        InputProps={{
-                                            startAdornment: <Person sx={{ mr: 1, color: 'text.secondary' }} />,
-                                        }}
-                                    />
-                                </Grid>
-
-                                <Grid item xs={12}>
-                                    <TextField
-                                        fullWidth
-                                        label="Coach Name"
-                                        name="coach_name"
-                                        value={formData.coach_name}
-                                        onChange={handleChange}
-                                        required
-                                        InputProps={{
-                                            startAdornment: <Person sx={{ mr: 1, color: 'text.secondary' }} />,
-                                        }}
-                                    />
-                                </Grid>
-
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth>
-                                        <InputLabel>Position</InputLabel>
-                                        <Select
-                                            name="position"
-                                            value={formData.position}
-                                            onChange={handleChange}
-                                            label="Position"
-                                        >
-                                            <MenuItem value="HEAD_COACH">Head Coach</MenuItem>
-                                            <MenuItem value="OFFENSIVE_COORDINATOR">Offensive Coordinator</MenuItem>
-                                            <MenuItem value="DEFENSIVE_COORDINATOR">Defensive Coordinator</MenuItem>
-                                            <MenuItem value="SPECIAL_TEAMS_COORDINATOR">Special Teams Coordinator</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Discord Tag"
-                                        name="discord_tag"
-                                        value={formData.discord_tag}
-                                        onChange={handleChange}
-                                        required
-                                        disabled
-                                        InputProps={{
-                                            startAdornment: <SportsFootball sx={{ mr: 1, color: 'text.secondary' }} />,
-                                        }}
-                                        helperText="Set from Discord OAuth"
-                                    />
-                                </Grid>
-
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth>
-                                        <InputLabel>Offensive Playbook</InputLabel>
-                                        <Select
-                                            name="offensive_playbook"
-                                            value={formData.offensive_playbook}
-                                            onChange={handleChange}
-                                            label="Offensive Playbook"
-                                        >
-                                            <MenuItem value="FLEXBONE">Flexbone</MenuItem>
-                                            <MenuItem value="SPREAD">Spread</MenuItem>
-                                            <MenuItem value="WEST_COAST">West Coast</MenuItem>
-                                            <MenuItem value="PRO">Pro</MenuItem>
-                                            <MenuItem value="AIR_RAID">Air Raid</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth>
-                                        <InputLabel>Defensive Playbook</InputLabel>
-                                        <Select
-                                            name="defensive_playbook"
-                                            value={formData.defensive_playbook}
-                                            onChange={handleChange}
-                                            label="Defensive Playbook"
-                                        >
-                                            <MenuItem value="FOUR_THREE">4-3</MenuItem>
-                                            <MenuItem value="THREE_FOUR">3-4</MenuItem>
-                                            <MenuItem value="FIVE_TWO">5-2</MenuItem>
-                                            <MenuItem value="FOUR_FOUR">4-4</MenuItem>
-                                            <MenuItem value="THREE_THREE_FIVE">3-3-5</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-
-                                <Grid item xs={12}>
-                                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
-                                        Team Preferences
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                                        Choose up to 3 teams in order of preference. You must select at least one team.
-                                    </Typography>
-                                </Grid>
-
-                                <Grid item xs={12} sm={4}>
-                                    <FormControl fullWidth error={teamChoiceError}>
-                                        <InputLabel sx={{ color: 'text.primary' }}>1st Choice</InputLabel>
-                                        <Select
-                                            name="team_choice_one"
-                                            value={formData.team_choice_one}
-                                            onChange={handleChange}
-                                            label="1st Choice"
-                                            sx={{
-                                                '& .MuiSelect-select': {
-                                                    color: 'text.primary'
-                                                },
-                                                '& .MuiMenuItem-root': {
-                                                    color: 'text.primary'
-                                                }
-                                            }}
-                                        >
-                                            <MenuItem value="" sx={{ color: 'text.primary' }}>No Selection</MenuItem>
-                                            {openTeams.length > 0 ? (
-                                                openTeams.map((team) => (
-                                                    <MenuItem 
-                                                        key={team} 
-                                                        value={team}
-                                                        disabled={
-                                                            team === formData.team_choice_two || 
-                                                            team === formData.team_choice_three
-                                                        }
-                                                        sx={{ color: 'text.primary' }}
-                                                    >
-                                                        {team}
-                                                    </MenuItem>
-                                                ))
-                                            ) : (
-                                                <MenuItem value="" disabled sx={{ color: 'text.secondary' }}>
-                                                    Loading teams...
-                                                </MenuItem>
-                                            )}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-
-                                <Grid item xs={12} sm={4}>
-                                    <FormControl fullWidth error={teamChoiceError}>
-                                        <InputLabel>2nd Choice</InputLabel>
-                                        <Select
-                                            name="team_choice_two"
-                                            value={formData.team_choice_two}
-                                            onChange={handleChange}
-                                            label="2nd Choice"
-                                        >
-                                            <MenuItem value="">No Selection</MenuItem>
-                                            {openTeams.length > 0 ? (
-                                                openTeams.map((team) => (
-                                                    <MenuItem
-                                                        key={team}
-                                                        value={team}
-                                                        disabled={
-                                                            team === formData.team_choice_one ||
-                                                            team === formData.team_choice_three
-                                                        }
-                                                    >
-                                                        {team}
-                                                    </MenuItem>
-                                                ))
-                                            ) : (
-                                                <MenuItem value="" disabled>
-                                                    Loading teams...
-                                                </MenuItem>
-                                            )}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-
-                                <Grid item xs={12} sm={4}>
-                                    <FormControl fullWidth error={teamChoiceError}>
-                                        <InputLabel>3rd Choice</InputLabel>
-                                        <Select
-                                            name="team_choice_three"
-                                            value={formData.team_choice_three}
-                                            onChange={handleChange}
-                                            label="3rd Choice"
-                                        >
-                                            <MenuItem value="">No Selection</MenuItem>
-                                            {openTeams.length > 0 ? (
-                                                openTeams.map((team) => (
-                                                    <MenuItem 
-                                                        key={team} 
-                                                        value={team}
-                                                        disabled={
-                                                            team === formData.team_choice_one || 
-                                                            team === formData.team_choice_two
-                                                        }
-                                                    >
-                                                        {team}
-                                                    </MenuItem>
-                                                ))
-                                            ) : (
-                                                <MenuItem value="" disabled>
-                                                    Loading teams...
-                                                </MenuItem>
-                                            )}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-
-                                <Grid item xs={12}>
-                                    <TextField
-                                        fullWidth
-                                        label="Email Address"
-                                        name="email"
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        required
-                                        error={!validation.emailValid}
-                                        helperText={!validation.emailValid ? "Invalid email address" : ""}
-                                        InputProps={{
-                                            startAdornment: <Email sx={{ mr: 1, color: 'text.secondary' }} />,
-                                        }}
-                                    />
-                                </Grid>
-
-                                <Grid item xs={12}>
-                                    <TextField
-                                        fullWidth
-                                        label="Confirm Email"
-                                        name="confirm_email"
-                                        type="email"
-                                        value={formData.confirm_email}
-                                        onChange={handleChange}
-                                        required
-                                        error={formData.email !== formData.confirm_email && formData.confirm_email !== ""}
-                                        helperText={formData.confirm_email !== "" && formData.email !== formData.confirm_email ? "Emails do not match" : ""}
-                                        InputProps={{
-                                            startAdornment: <Email sx={{ mr: 1, color: 'text.secondary' }} />,
-                                        }}
-                                    />
-                                </Grid>
-
-                                <Grid item xs={12}>
-                                    <TextField
-                                        fullWidth
-                                        label="Password"
-                                        name="password"
-                                        type={formData.show_password ? "text" : "password"}
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        required
-                                        error={!validation.passwordValid}
-                                        helperText={!validation.passwordValid ? "Must be 8+ chars & include a special character" : ""}
-                                        InputProps={{
-                                            startAdornment: <Lock sx={{ mr: 1, color: 'text.secondary' }} />,
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <IconButton onClick={handleTogglePassword} edge="end">
-                                                        {formData.show_password ? <VisibilityOff /> : <Visibility />}
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
-                                </Grid>
-
-                                <Grid item xs={12}>
-                                    <TextField
-                                        fullWidth
-                                        label="Confirm Password"
-                                        name="confirm_password"
-                                        type={formData.show_password ? "text" : "password"}
-                                        value={formData.confirm_password}
-                                        onChange={handleChange}
-                                        required
-                                        error={formData.password !== formData.confirm_password && formData.confirm_password !== ""}
-                                        helperText={formData.confirm_password !== "" && formData.password !== formData.confirm_password ? "Passwords do not match" : ""}
-                                        InputProps={{
-                                            startAdornment: <Lock sx={{ mr: 1, color: 'text.secondary' }} />,
-                                        }}
-                                    />
-                                </Grid>
-                            </Grid>
-
-                            <Box sx={{ mt: 4, textAlign: 'center' }}>
-                                <StyledButton
-                                    type="submit"
-                                    fullWidth
-                                    size="large"
-                                    disabled={isSubmitting}
-                                    sx={{ mb: 3 }}
-                                >
-                                    {isSubmitting ? (
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <CircularProgress size={20} sx={{ color: 'white' }} />
-                                            <span>Completing Registration...</span>
-                                        </Box>
-                                    ) : (
-                                        'Complete Registration'
-                                    )}
-                                </StyledButton>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <Field label="Offensive playbook">
+                            <Box component="select" name="offensive_playbook" value={formData.offensive_playbook} onChange={handleChange} sx={selectSx}>
+                                {OFFENSIVE_PLAYBOOKS.map((playbook) => <option key={playbook} value={playbook}>{formatOffensivePlaybook(playbook)}</option>)}
                             </Box>
+                        </Field>
+                        <Field label="Defensive playbook">
+                            <Box component="select" name="defensive_playbook" value={formData.defensive_playbook} onChange={handleChange} sx={selectSx}>
+                                {DEFENSIVE_PLAYBOOKS.map((playbook) => <option key={playbook} value={playbook}>{formatDefensivePlaybook(playbook)}</option>)}
+                            </Box>
+                        </Field>
+                    </Box>
+
+                    <Box sx={{ mt: '18px', mb: '10px' }}>
+                        <Box sx={{ fontWeight: 800, fontSize: '0.8rem', color: 'var(--text)' }}>Team preferences</Box>
+                        <Box sx={{ color: 'var(--text-dim)', fontSize: '0.74rem', mt: '2px' }}>
+                            Choose up to 3 teams in order of preference.
+                            {requiredTeamChoices > 0 && ` You must list at least ${requiredTeamChoices} team${requiredTeamChoices === 1 ? '' : 's'}.`}
                         </Box>
-                    </StyledCard>
-                </Grid>
-            </Grid>
+                    </Box>
+
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                        <Field label="1st choice">
+                            <Box component="select" name="team_choice_one" value={formData.team_choice_one} onChange={handleChange} sx={{ ...selectSx, borderColor: teamChoiceError ? 'var(--live)' : 'var(--line)' }}>
+                                {teamOptions(formData.team_choice_two, formData.team_choice_three)}
+                            </Box>
+                        </Field>
+                        <Field label="2nd choice">
+                            <Box component="select" name="team_choice_two" value={formData.team_choice_two} onChange={handleChange} sx={{ ...selectSx, borderColor: teamChoiceError ? 'var(--live)' : 'var(--line)' }}>
+                                {teamOptions(formData.team_choice_one, formData.team_choice_three)}
+                            </Box>
+                        </Field>
+                        <Field label="3rd choice">
+                            <Box component="select" name="team_choice_three" value={formData.team_choice_three} onChange={handleChange} sx={{ ...selectSx, borderColor: teamChoiceError ? 'var(--live)' : 'var(--line)' }}>
+                                {teamOptions(formData.team_choice_one, formData.team_choice_two)}
+                            </Box>
+                        </Field>
+                    </Box>
+
+                    <Box sx={{ mt: '18px' }}>
+                        <Field label="Email address">
+                            <Box component="input" type="email" name="email" value={formData.email} onChange={handleChange} required sx={{ ...inputSx, borderColor: !validation.emailValid ? 'var(--live)' : 'var(--line)' }} />
+                        </Field>
+                        {!validation.emailValid && <Box sx={{ mt: '-8px', mb: '12px', fontSize: '0.7rem', color: 'var(--live)' }}>Invalid email address</Box>}
+
+                        <Field label="Confirm email">
+                            <Box component="input" type="email" name="confirm_email" value={formData.confirm_email} onChange={handleChange} required sx={{ ...inputSx, borderColor: formData.confirm_email && formData.email !== formData.confirm_email ? 'var(--live)' : 'var(--line)' }} />
+                        </Field>
+                        {formData.confirm_email !== '' && formData.email !== formData.confirm_email && <Box sx={{ mt: '-8px', mb: '12px', fontSize: '0.7rem', color: 'var(--live)' }}>Emails do not match</Box>}
+
+                        <Field label="Password" helper="Must be 8+ chars & include a special character">
+                            <Box component="input" type="password" name="password" value={formData.password} onChange={handleChange} required sx={{ ...inputSx, borderColor: !validation.passwordValid ? 'var(--live)' : 'var(--line)' }} />
+                        </Field>
+
+                        <Field label="Confirm password">
+                            <Box component="input" type="password" name="confirm_password" value={formData.confirm_password} onChange={handleChange} required sx={{ ...inputSx, borderColor: formData.confirm_password && formData.password !== formData.confirm_password ? 'var(--live)' : 'var(--line)' }} />
+                        </Field>
+                        {formData.confirm_password !== '' && formData.password !== formData.confirm_password && <Box sx={{ mt: '-8px', mb: '12px', fontSize: '0.7rem', color: 'var(--live)' }}>Passwords do not match</Box>}
+                    </Box>
+
+                    <Box component="button" type="submit" disabled={isSubmitting} sx={{ ...btnBaseSx, background: 'var(--brand-deep)', color: '#fff', mt: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        {isSubmitting && <CircularProgress size={16} sx={{ color: '#fff' }} />}
+                        {isSubmitting ? 'Completing registration…' : 'Complete registration'}
+                    </Box>
+                </Box>
+            </Box>
         </Box>
     );
 };

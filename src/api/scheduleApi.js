@@ -160,7 +160,9 @@ export const startGameWeek = async (season, week) => {
     } catch (error) {
         console.error("Failed to start game week:", error);
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to start game week");
+            const startError = new Error(error.response.data.error || "Failed to start game week");
+            startError.status = error.response.status;
+            throw startError;
         }
         throw new Error("An unexpected error occurred while starting game week");
     }

@@ -1,13 +1,15 @@
 import apiClient from './apiClient';
 
-export const getFilteredRecords = async (season = null, conference = null, recordType = null, recordName = null, page = 0, size = 20) => {
+export const getFilteredRecords = async (season = null, conference = null, recordType = null, recordName = null, page = 0, size = 20, recordScope = null, scopeValue = null) => {
     try {
         const params = { page, size };
         if (season) params.season = season;
         if (conference) params.conference = conference;
         if (recordType) params.recordType = recordType;
         if (recordName) params.recordName = recordName;
-        
+        if (recordScope) params.recordScope = recordScope;
+        if (scopeValue) params.scopeValue = scopeValue;
+
         const response = await apiClient.get('/records', { params });
         return response.data;
     } catch (error) {

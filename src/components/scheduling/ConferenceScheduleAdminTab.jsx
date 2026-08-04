@@ -1,43 +1,21 @@
 import React, { useState, useMemo } from 'react';
-import {
-    Box,
-    Typography,
-    Button,
-    TextField,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
-    Autocomplete,
-    Avatar,
-    Chip,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    IconButton,
-    Alert,
-    Tooltip,
-    Collapse,
-} from '@mui/material';
-import {
-    Add as AddIcon,
-    Delete as DeleteIcon,
-    AutoFixHigh as GenerateIcon,
-    ExpandMore as ExpandMoreIcon,
-    ExpandLess as ExpandLessIcon,
-    Settings as SettingsIcon,
-    WarningAmber as WarningIcon,
-} from '@mui/icons-material';
-import StyledCard from '../ui/StyledCard';
+import { Box, CircularProgress, Alert } from '@mui/material';
+import { WarningAmber } from '@mui/icons-material';
+import PropTypes from 'prop-types';
+import Panel from '../ui/Panel';
+import TeamMark from '../ui/TeamMark';
 import { formatConference } from '../../utils/formatText';
-import CircularProgress from '@mui/material/CircularProgress';
 import { field } from '../../utils/fieldHelper';
 
 const TOTAL_WEEKS = 12;
 const DEFAULT_CONFERENCE_GAMES = 9;
+
+const selectSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', cursor: 'pointer', '& option': { background: 'var(--surface)', color: 'var(--text)' } };
+const inputSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem' };
+const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '14px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:disabled': { opacity: 0.6, cursor: 'default' } };
+const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' }, '&:disabled': { opacity: 0.6, cursor: 'default' } };
+const removeBtnSx = { border: 0, background: 'transparent', color: 'var(--live)', cursor: 'pointer', fontSize: '0.9rem', px: '6px' };
+const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em', px: '7px', py: '3px', borderRadius: 'var(--r-sm)', lineHeight: 1 };
 
 const ConferenceScheduleAdminTab = ({
     selectedConference,
@@ -65,6 +43,7 @@ const ConferenceScheduleAdminTab = ({
 }) => {
     const [rulesExpanded, setRulesExpanded] = useState(false);
     const [savingRules, setSavingRules] = useState(false);
+    const [rulesError, setRulesError] = useState(null);
     const [dragSource, setDragSource] = useState(null);
 
     const grid = useMemo(() => {
@@ -106,370 +85,258 @@ const ConferenceScheduleAdminTab = ({
         return { home, away };
     };
 
+    const incompleteTeams = conferenceTeams.filter(t => {
+        const c = getGameCounts(t.name);
+        return c.home + c.away < numConferenceGames;
+    });
+
     return (
         <Box>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'center' }}>
-                <FormControl size="small" sx={{ minWidth: 200 }}>
-                    <InputLabel>Conference</InputLabel>
-                    <Select
-                        value={selectedConference}
-                        label="Conference"
-                        onChange={(e) => onConferenceChange(e.target.value)}
-                    >
-                        {adminConferences.map(conf => (
-                            <MenuItem key={conf.value} value={conf.value}>
-                                {conf.label}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-
-                <Button
-                    variant="contained"
-                    startIcon={<GenerateIcon />}
-                    onClick={onGenerateSchedule}
-                    color="primary"
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', mb: '16px', alignItems: 'center' }}>
+                <Box component="select" value={selectedConference} onChange={(e) => onConferenceChange(e.target.value)} sx={selectSx}>
+                    {adminConferences.map(conf => <option key={conf.code} value={conf.code}>{conf.label}</option>)}
+                </Box>
+                <Box
+                    component="button" type="button" onClick={onGenerateSchedule}
                     disabled={scheduleLocked || hasGamesPlayed}
                     title={hasGamesPlayed ? 'Cannot auto-generate: games have already been played this season' : scheduleLocked ? 'Schedule is locked' : ''}
+                    sx={btnPrimarySx}
                 >
-                    Auto-Generate Schedule
-                </Button>
-
-                <Button
-                    variant="outlined"
-                    startIcon={<AddIcon />}
-                    onClick={onAddGameManually}
-                    disabled={scheduleLocked}
-                >
-                    Add Game Manually
-                </Button>
+                    Auto-generate schedule
+                </Box>
+                <Box component="button" type="button" onClick={onAddGameManually} disabled={scheduleLocked} sx={ctrlSx}>+ Add game manually</Box>
             </Box>
 
-            <StyledCard hover={false} sx={{ mb: 3 }}>
-                <Box sx={{ p: 2 }}>
-                    <Box
-                        sx={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            cursor: 'pointer',
-                        }}
-                        onClick={() => setRulesExpanded(!rulesExpanded)}
-                    >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <SettingsIcon color="primary" fontSize="small" />
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                                Conference Rules: {formatConference(selectedConference)}
-                            </Typography>
+            <Panel sx={{ mb: '16px' }}>
+                <Box
+                    onClick={() => setRulesExpanded(!rulesExpanded)}
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: '14px 16px', cursor: 'pointer', flexWrap: 'wrap', gap: '8px' }}
+                >
+                    <Box sx={{ fontWeight: 700, fontSize: '0.88rem' }}>Conference rules: {formatConference(selectedConference)}</Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Box sx={{ color: 'var(--text-dim)', fontSize: '0.76rem' }}>
+                            {numConferenceGames} conf games &middot; {TOTAL_WEEKS - numConferenceGames} OOC &middot; {conferenceTeams.length} teams &middot; {protectedRivalries.filter(r => r.team1 && r.team2).length} rivalries
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                {numConferenceGames} conf games | {TOTAL_WEEKS - numConferenceGames} OOC | {conferenceTeams.length} teams |
-                                {' '}{protectedRivalries.filter(r => r.team1 && r.team2).length} rivalries
-                            </Typography>
-                            {rulesExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                        </Box>
+                        <Box component="span" sx={{ color: 'var(--text-dim)' }}>{rulesExpanded ? '▲' : '▼'}</Box>
                     </Box>
+                </Box>
 
-                    <Collapse in={rulesExpanded}>
-                        <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            {conferenceTeams.length <= numConferenceGames + 1 && (
-                                <Alert severity="info" sx={{ py: 0.5 }}>
-                                    Round robin format: each team plays every other team once.
-                                </Alert>
+                {rulesExpanded && (
+                    <Box sx={{ p: '0 16px 16px', borderTop: '1px solid var(--line-soft)', pt: '16px' }}>
+                        {conferenceTeams.length <= numConferenceGames + 1 && (
+                            <Alert severity="info" sx={{ mb: '14px', py: 0.5 }}>Round robin format: each team plays every other team once.</Alert>
+                        )}
+                        {rulesError && (
+                            <Alert severity="error" sx={{ mb: '14px', py: 0.5 }}>{rulesError}</Alert>
+                        )}
+
+                        <Box sx={{ mb: '18px', maxWidth: 260 }}>
+                            <Box sx={{ display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' }}>Conference games per team</Box>
+                            <Box component="input" type="number" min={1} max={TOTAL_WEEKS} value={numConferenceGames} onChange={(e) => onNumConferenceGamesChange(parseInt(e.target.value, 10) || DEFAULT_CONFERENCE_GAMES)} sx={{ ...inputSx, width: '100%' }} />
+                            <Box sx={{ mt: '4px', fontSize: '0.72rem', color: 'var(--text-dim)' }}>OOC games: {TOTAL_WEEKS - numConferenceGames}</Box>
+                        </Box>
+
+                        <Box sx={{ borderTop: '1px solid var(--line-soft)', pt: '16px' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: '6px' }}>
+                                <Box sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Protected rivalries</Box>
+                                <Box component="button" type="button" onClick={onAddRivalry} sx={ctrlSx}>+ Add rivalry</Box>
+                            </Box>
+                            <Box sx={{ color: 'var(--text-dim)', fontSize: '0.76rem', mb: '12px' }}>
+                                Protected rivalries are always scheduled when auto-generating. The schedule cannot be finalized if any protected rivalry is missing.
+                            </Box>
+
+                            {protectedRivalries.length === 0 && (
+                                <Box sx={{ color: 'var(--text-dim)', fontSize: '0.8rem', fontStyle: 'italic', mb: '12px' }}>
+                                    No protected rivalries set. Click &quot;Add rivalry&quot; to define guaranteed matchups.
+                                </Box>
                             )}
 
-                            <TextField
-                                label="Conference Games Per Team"
-                                type="number"
-                                size="small"
-                                value={numConferenceGames}
-                                onChange={(e) => onNumConferenceGamesChange(parseInt(e.target.value) || DEFAULT_CONFERENCE_GAMES)}
-                                inputProps={{ min: 1, max: TOTAL_WEEKS }}
-                                helperText={`OOC games: ${TOTAL_WEEKS - numConferenceGames}`}
-                                sx={{ maxWidth: 300 }}
-                            />
-
-                            <Box sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                        Protected Rivalries
-                                    </Typography>
-                                    <Button size="small" startIcon={<AddIcon />} onClick={onAddRivalry}>
-                                        Add Rivalry
-                                    </Button>
-                                </Box>
-                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
-                                    Protected rivalries are always scheduled when auto-generating.
-                                    The schedule cannot be finalized if any protected rivalry is missing.
-                                </Typography>
-
-                                {protectedRivalries.length === 0 && (
-                                    <Typography variant="body2" sx={{ color: 'text.disabled', fontStyle: 'italic' }}>
-                                        No protected rivalries set. Click "Add Rivalry" to define guaranteed matchups.
-                                    </Typography>
-                                )}
-
-                                {protectedRivalries.map((rivalry, index) => {
-                                    const isLocked = rivalry.team1 && rivalry.team2;
-                                    return (
-                                        <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-                                            <Autocomplete
-                                                options={conferenceTeams}
-                                                getOptionLabel={(option) => option.name || ''}
-                                                value={conferenceTeams.find(t => t.name === rivalry.team1) || null}
-                                                onChange={(_, v) => onUpdateRivalry(index, 'team1', v?.name || '')}
-                                                renderInput={(params) => (
-                                                    <TextField {...params} label="Team 1" size="small" />
-                                                )}
-                                                sx={{ flex: 1 }}
-                                                isOptionEqualToValue={(option, value) => option.name === value?.name}
-                                                disabled={isLocked}
-                                            />
-                                            <Typography variant="body2" sx={{ mx: 1 }}>vs</Typography>
-                                            <Autocomplete
-                                                options={conferenceTeams}
-                                                getOptionLabel={(option) => option.name || ''}
-                                                value={conferenceTeams.find(t => t.name === rivalry.team2) || null}
-                                                onChange={(_, v) => onUpdateRivalry(index, 'team2', v?.name || '')}
-                                                renderInput={(params) => (
-                                                    <TextField {...params} label="Team 2" size="small" />
-                                                )}
-                                                sx={{ flex: 1 }}
-                                                isOptionEqualToValue={(option, value) => option.name === value?.name}
-                                                disabled={isLocked}
-                                            />
-                                            <FormControl size="small" sx={{ minWidth: 100 }}>
-                                                <InputLabel>Week</InputLabel>
-                                                <Select
-                                                    value={rivalry.week || ''}
-                                                    label="Week"
-                                                    onChange={(e) => onUpdateRivalry(index, 'week', e.target.value || null)}
-                                                >
-                                                    <MenuItem value="">Any</MenuItem>
-                                                    {Array.from({ length: TOTAL_WEEKS }, (_, i) => (
-                                                        <MenuItem key={i + 1} value={i + 1}>Wk {i + 1}</MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-                                            <IconButton size="small" color="error" onClick={() => onRemoveRivalry(index)}>
-                                                <DeleteIcon fontSize="small" />
-                                            </IconButton>
+                            {protectedRivalries.map((rivalry, index) => {
+                                const isLocked = rivalry.team1 && rivalry.team2;
+                                return (
+                                    <Box key={index} sx={{ display: 'flex', gap: '8px', mb: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                        <Box component="select" value={rivalry.team1 || ''} onChange={(e) => onUpdateRivalry(index, 'team1', e.target.value)} disabled={isLocked} sx={{ ...selectSx, flex: '1 1 160px' }}>
+                                            <option value="">Team 1</option>
+                                            {conferenceTeams.map((t) => <option key={t.name} value={t.name}>{t.name}</option>)}
                                         </Box>
-                                    );
-                                })}
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        onClick={async () => {
-                                            if (!onSaveConferenceRules) return;
-                                            setSavingRules(true);
-                                            try {
-                                                await onSaveConferenceRules(selectedConference, numConferenceGames, protectedRivalries);
-                                            } catch (err) {
-                                                console.error('Error saving conference rules:', err);
-                                            } finally {
-                                                setSavingRules(false);
-                                            }
-                                        }}
-                                        disabled={savingRules || scheduleLocked}
-                                    >
-                                        {savingRules ? 'Saving...' : 'Save Conference Rules'}
-                                    </Button>
+                                        <Box sx={{ color: 'var(--text-dim)', fontSize: '0.78rem' }}>vs</Box>
+                                        <Box component="select" value={rivalry.team2 || ''} onChange={(e) => onUpdateRivalry(index, 'team2', e.target.value)} disabled={isLocked} sx={{ ...selectSx, flex: '1 1 160px' }}>
+                                            <option value="">Team 2</option>
+                                            {conferenceTeams.map((t) => <option key={t.name} value={t.name}>{t.name}</option>)}
+                                        </Box>
+                                        <Box component="select" value={rivalry.week || ''} onChange={(e) => onUpdateRivalry(index, 'week', e.target.value ? Number(e.target.value) : null)} sx={{ ...selectSx, minWidth: 90 }}>
+                                            <option value="">Any week</option>
+                                            {Array.from({ length: TOTAL_WEEKS }, (_, i) => <option key={i + 1} value={i + 1}>Wk {i + 1}</option>)}
+                                        </Box>
+                                        <Box component="button" type="button" onClick={() => onRemoveRivalry(index)} sx={removeBtnSx}>&times;</Box>
+                                    </Box>
+                                );
+                            })}
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '14px' }}>
+                                <Box
+                                    component="button" type="button"
+                                    onClick={async () => {
+                                        if (!onSaveConferenceRules) return;
+                                        setSavingRules(true);
+                                        setRulesError(null);
+                                        try {
+                                            await onSaveConferenceRules(selectedConference, numConferenceGames, protectedRivalries);
+                                        } catch (err) {
+                                            setRulesError(err.message || 'Failed to save conference rules');
+                                        } finally {
+                                            setSavingRules(false);
+                                        }
+                                    }}
+                                    disabled={savingRules || scheduleLocked}
+                                    sx={btnPrimarySx}
+                                >
+                                    {savingRules ? 'Saving...' : 'Save conference rules'}
                                 </Box>
                             </Box>
                         </Box>
-                    </Collapse>
-                </Box>
-            </StyledCard>
+                    </Box>
+                )}
+            </Panel>
 
             {confLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-                    <CircularProgress />
-                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
             ) : (
-                <StyledCard hover={false}>
-                    <Box sx={{ p: 2 }}>
-                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
-                            {formatConference(selectedConference)} Conference Schedule
-                        </Typography>
-                        <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>
-                            Click on an empty cell to schedule a game for that team and week.
-                        </Typography>
-                        {(() => {
-                            const incompleteTeams = conferenceTeams.filter(t => {
-                                const c = getGameCounts(t.name);
-                                return c.home + c.away < numConferenceGames;
-                            });
-                            if (incompleteTeams.length === 0 || conferenceSchedule.length === 0) return null;
-                            return (
-                                <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 2, py: 0.5 }}>
-                                    {incompleteTeams.length} team{incompleteTeams.length > 1 ? 's have' : ' has'} fewer
-                                    than {numConferenceGames} conference games scheduled:
-                                    {' '}{incompleteTeams.map(t => t.abbreviation || t.name).join(', ')}
-                                </Alert>
-                            );
-                        })()}
-                        <TableContainer sx={{ maxHeight: 600 }}>
-                            <Table stickyHeader size="small">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell sx={{ fontWeight: 700, minWidth: 140, position: 'sticky', left: 0, backgroundColor: 'background.paper', zIndex: 3 }}>
-                                            Team
-                                        </TableCell>
-                                        {Array.from({ length: TOTAL_WEEKS }, (_, i) => (
-                                            <TableCell key={i + 1} sx={{ fontWeight: 700, textAlign: 'center', minWidth: 104 }}>
-                                                Wk {i + 1}
-                                            </TableCell>
-                                        ))}
-                                        <TableCell sx={{ fontWeight: 700, textAlign: 'center', minWidth: 64 }}>H</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, textAlign: 'center', minWidth: 64 }}>A</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {conferenceTeams.map(team => {
-                                        const counts = getGameCounts(team.name);
-                                        const totalGames = counts.home + counts.away;
-                                        const isIncomplete = totalGames < numConferenceGames;
-                                        return (
-                                            <TableRow
-                                                key={team.name}
-                                                hover
-                                                sx={isIncomplete ? {
-                                                    backgroundColor: 'rgba(211, 47, 47, 0.04)',
-                                                    '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.08)' },
-                                                } : {}}
-                                            >
-                                                <TableCell sx={{ position: 'sticky', left: 0, backgroundColor: isIncomplete ? 'rgba(211, 47, 47, 0.04)' : 'background.paper', zIndex: 1 }}>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                        <Avatar src={team.logo} sx={{ width: 24, height: 24 }}>
-                                                            {team.name?.charAt(0)}
-                                                        </Avatar>
-                                                        <Typography variant="body2" sx={{ fontWeight: 500, whiteSpace: 'nowrap' }}>
-                                                            {team.abbreviation || team.name}
-                                                        </Typography>
-                                                        {isIncomplete && (
-                                                            <Tooltip title={`${team.abbreviation || team.name} has ${totalGames}/${numConferenceGames} conference games scheduled`}>
-                                                                <WarningIcon sx={{ fontSize: 16, color: 'error.main', ml: 0.5 }} />
-                                                            </Tooltip>
-                                                        )}
-                                                    </Box>
-                                                </TableCell>
-                                                {Array.from({ length: TOTAL_WEEKS }, (_, i) => {
-                                                    const weekNum = i + 1;
-                                                    const cell = grid[team.name]?.[weekNum];
+                <Panel header={`${formatConference(selectedConference)} conference schedule`} more="Click an empty cell to schedule a game">
+                    {incompleteTeams.length > 0 && conferenceSchedule.length > 0 && (
+                        <Box sx={{ p: '12px 16px 0' }}>
+                            <Alert severity="warning" sx={{ py: 0.5 }}>
+                                {incompleteTeams.length} team{incompleteTeams.length > 1 ? 's have' : ' has'} fewer than {numConferenceGames} conference games scheduled: {incompleteTeams.map(t => t.abbreviation || t.name).join(', ')}
+                            </Alert>
+                        </Box>
+                    )}
+                    <Box sx={{ overflowX: 'auto', p: '16px' }}>
+                        <Box
+                            component="table"
+                            sx={{
+                                borderCollapse: 'collapse', fontSize: '0.76rem', minWidth: 900, width: '100%',
+                                '& th, & td': { borderBottom: '1px solid var(--line-soft)', borderRight: '1px solid var(--line-soft)', padding: '6px 8px', textAlign: 'center', whiteSpace: 'nowrap' },
+                                '& thead th': { background: 'var(--surface-2)', color: 'var(--text-dim)', fontSize: '0.62rem', textTransform: 'uppercase', fontWeight: 800, position: 'sticky', top: 0 },
+                                '& .tcol': { position: 'sticky', left: 0, background: 'var(--surface)', textAlign: 'left', zIndex: 1, borderRight: '1px solid var(--line)' },
+                                '& thead .tcol': { zIndex: 2, background: 'var(--surface-2)' },
+                            }}
+                        >
+                            <thead>
+                                <tr>
+                                    <th className="tcol">Team</th>
+                                    {Array.from({ length: TOTAL_WEEKS }, (_, i) => <th key={i + 1}>Wk {i + 1}</th>)}
+                                    <th>H</th>
+                                    <th>A</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {conferenceTeams.map(team => {
+                                    const counts = getGameCounts(team.name);
+                                    const totalGames = counts.home + counts.away;
+                                    const isIncomplete = totalGames < numConferenceGames;
+                                    return (
+                                        <tr key={team.name} style={isIncomplete ? { background: 'color-mix(in srgb, var(--live) 6%, transparent)' } : undefined}>
+                                            <td className="tcol">
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                                                    <TeamMark team={teamMap[team.name] || team} size={20} />
+                                                    <Box component="b" sx={{ fontSize: '0.78rem' }}>{team.abbreviation || team.name}</Box>
+                                                    {isIncomplete && <WarningAmber titleAccess={`${team.abbreviation || team.name} has ${totalGames}/${numConferenceGames} conference games scheduled`} sx={{ color: 'var(--live)', fontSize: '0.85rem' }} />}
+                                                </Box>
+                                            </td>
+                                            {Array.from({ length: TOTAL_WEEKS }, (_, i) => {
+                                                const weekNum = i + 1;
+                                                const cell = grid[team.name]?.[weekNum];
+                                                if (cell) {
                                                     return (
-                                                        <TableCell key={weekNum} sx={{ textAlign: 'center', p: 0.5 }}>
-                                                            {cell ? (
-                                                                <Tooltip title={`${cell.isHome ? 'vs' : '@'} ${cell.opponent} (click to move/delete, or drag to another week)`}>
-                                                                    <Box
-                                                                        draggable={!scheduleLocked}
-                                                                        onDragStart={(e) => {
-                                                                            e.dataTransfer.effectAllowed = 'move';
-                                                                            setDragSource({ team: team.name, week: weekNum, cell });
-                                                                        }}
-                                                                        onDragEnd={() => setDragSource(null)}
-                                                                        sx={{
-                                                                            display: 'flex',
-                                                                            alignItems: 'center',
-                                                                            justifyContent: 'center',
-                                                                            gap: 0.5,
-                                                                            cursor: scheduleLocked ? 'pointer' : 'grab',
-                                                                            p: 0.5,
-                                                                            borderRadius: 1,
-                                                                            backgroundColor: cell.isHome
-                                                                                ? 'rgba(5, 150, 105, 0.08)'
-                                                                                : 'rgba(217, 119, 6, 0.08)',
-                                                                            '&:hover': {
-                                                                                backgroundColor: cell.isHome
-                                                                                    ? 'rgba(5, 150, 105, 0.15)'
-                                                                                    : 'rgba(217, 119, 6, 0.15)',
-                                                                            }
-                                                                        }}
-                                                                        onClick={() => onFilledCellClick(cell, weekNum)}
-                                                                    >
-                                                                        <Typography variant="caption" sx={{ fontWeight: 500, fontSize: '0.7rem' }}>
-                                                                            {cell.isHome ? 'vs' : '@'}
-                                                                        </Typography>
-                                                                        <Avatar
-                                                                            src={teamMap[cell.opponent]?.logo}
-                                                                            sx={{ width: 18, height: 18 }}
-                                                                        >
-                                                                            {cell.opponent?.charAt(0)}
-                                                                        </Avatar>
-                                                                        <Typography variant="caption" sx={{ fontWeight: 500, fontSize: '0.65rem', maxWidth: 50, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                                            {teamMap[cell.opponent]?.abbreviation || cell.opponent?.substring(0, 4)}
-                                                                        </Typography>
-                                                                    </Box>
-                                                                </Tooltip>
-                                                            ) : (() => {
-                                                                const isOccupied = teamWeekOccupied.has(`${team.name}|${weekNum}`);
-                                                                return isOccupied ? (
-                                                                    <Tooltip title={`${team.name} already has a non-conference game in Week ${weekNum}`}>
-                                                                        <Box sx={{
-                                                                            p: 1, borderRadius: 1,
-                                                                            backgroundColor: 'rgba(156,39,176,0.06)',
-                                                                            textAlign: 'center',
-                                                                        }}>
-                                                                            <Typography variant="caption" sx={{ color: 'secondary.main', fontSize: '0.6rem', fontWeight: 500 }}>
-                                                                                OOC
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    </Tooltip>
-                                                                ) : (() => {
-                                                                    const isDropTarget = !scheduleLocked && dragSource && dragSource.team === team.name && dragSource.week !== weekNum;
-                                                                    return (
-                                                                        <Box
-                                                                            onClick={() => !scheduleLocked && onEmptyCellClick(team.name, weekNum)}
-                                                                            onDragOver={(e) => {
-                                                                                if (isDropTarget) e.preventDefault();
-                                                                            }}
-                                                                            onDrop={(e) => {
-                                                                                if (!isDropTarget) return;
-                                                                                e.preventDefault();
-                                                                                onGameDrop(dragSource.cell, weekNum);
-                                                                                setDragSource(null);
-                                                                            }}
-                                                                            sx={{
-                                                                                cursor: scheduleLocked ? 'default' : 'pointer',
-                                                                                p: 1,
-                                                                                borderRadius: 1,
-                                                                                outline: isDropTarget ? '2px dashed' : 'none',
-                                                                                outlineColor: 'success.main',
-                                                                                backgroundColor: isDropTarget ? 'rgba(5, 150, 105, 0.08)' : 'transparent',
-                                                                                '&:hover': scheduleLocked ? {} : {
-                                                                                    backgroundColor: isDropTarget ? 'rgba(5, 150, 105, 0.15)' : 'rgba(0,0,0,0.04)',
-                                                                                    outline: '1px dashed',
-                                                                                    outlineColor: isDropTarget ? 'success.main' : 'primary.main',
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                                                                                ---
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    );
-                                                                })();
-                                                            })()}
-                                                        </TableCell>
+                                                        <td key={weekNum}>
+                                                            <Box
+                                                                draggable={!scheduleLocked}
+                                                                onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; setDragSource({ team: team.name, week: weekNum, cell }); }}
+                                                                onDragEnd={() => setDragSource(null)}
+                                                                onClick={() => onFilledCellClick(cell, weekNum)}
+                                                                title={`${cell.isHome ? 'vs' : '@'} ${cell.opponent} (click to move/delete, or drag to another week)`}
+                                                                sx={{
+                                                                    display: 'inline-flex', alignItems: 'center', gap: '4px', justifyContent: 'center',
+                                                                    cursor: scheduleLocked ? 'pointer' : 'grab', px: '6px', py: '4px', borderRadius: 'var(--r-sm)',
+                                                                    background: cell.isHome ? 'color-mix(in srgb, var(--field) 12%, transparent)' : 'color-mix(in srgb, var(--gold) 12%, transparent)',
+                                                                    '&:hover': { background: cell.isHome ? 'color-mix(in srgb, var(--field) 20%, transparent)' : 'color-mix(in srgb, var(--gold) 20%, transparent)' },
+                                                                }}
+                                                            >
+                                                                <Box component="span" sx={{ fontSize: '0.62rem', color: 'var(--text-dim)' }}>{cell.isHome ? 'vs' : '@'}</Box>
+                                                                <TeamMark team={teamMap[cell.opponent] || { name: cell.opponent }} size={16} />
+                                                                <Box component="span" sx={{ fontSize: '0.62rem', maxWidth: 50, overflow: 'hidden', textOverflow: 'ellipsis' }}>{teamMap[cell.opponent]?.abbreviation || cell.opponent?.substring(0, 4)}</Box>
+                                                            </Box>
+                                                        </td>
                                                     );
-                                                })}
-                                                <TableCell sx={{ textAlign: 'center' }}>
-                                                    <Chip label={counts.home} size="small" color={isIncomplete ? 'error' : 'success'} variant="outlined" sx={{ minWidth: 32 }} />
-                                                </TableCell>
-                                                <TableCell sx={{ textAlign: 'center' }}>
-                                                    <Chip label={counts.away} size="small" color={isIncomplete ? 'error' : 'warning'} variant="outlined" sx={{ minWidth: 32 }} />
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                                                }
+                                                const isOccupied = teamWeekOccupied.has(`${team.name}|${weekNum}`);
+                                                if (isOccupied) {
+                                                    return (
+                                                        <td key={weekNum} title={`${team.name} already has a non-conference game in Week ${weekNum}`}>
+                                                            <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: 'var(--gold)' }}>OOC</Box>
+                                                        </td>
+                                                    );
+                                                }
+                                                const isDropTarget = !scheduleLocked && dragSource && dragSource.team === team.name && dragSource.week !== weekNum;
+                                                return (
+                                                    <td key={weekNum}>
+                                                        <Box
+                                                            onClick={() => !scheduleLocked && onEmptyCellClick(team.name, weekNum)}
+                                                            onDragOver={(e) => { if (isDropTarget) e.preventDefault(); }}
+                                                            onDrop={(e) => { if (!isDropTarget) return; e.preventDefault(); onGameDrop(dragSource.cell, weekNum); setDragSource(null); }}
+                                                            sx={{
+                                                                cursor: scheduleLocked ? 'default' : 'pointer', py: '6px', borderRadius: 'var(--r-sm)',
+                                                                outline: isDropTarget ? '2px dashed var(--field)' : 'none',
+                                                                background: isDropTarget ? 'color-mix(in srgb, var(--field) 12%, transparent)' : 'transparent',
+                                                                color: 'var(--text-dim)',
+                                                                '&:hover': scheduleLocked ? {} : { background: isDropTarget ? 'color-mix(in srgb, var(--field) 20%, transparent)' : 'var(--surface-2)' },
+                                                            }}
+                                                        >
+                                                            &mdash;
+                                                        </Box>
+                                                    </td>
+                                                );
+                                            })}
+                                            <td>
+                                                <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: isIncomplete ? 'var(--live)' : 'var(--field)' }}>{counts.home}</Box>
+                                            </td>
+                                            <td>
+                                                <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: isIncomplete ? 'var(--live)' : 'var(--gold)' }}>{counts.away}</Box>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </Box>
                     </Box>
-                </StyledCard>
+                </Panel>
             )}
         </Box>
     );
+};
+
+ConferenceScheduleAdminTab.propTypes = {
+    selectedConference: PropTypes.string.isRequired,
+    onConferenceChange: PropTypes.func.isRequired,
+    adminConferences: PropTypes.array.isRequired,
+    conferenceSchedule: PropTypes.array.isRequired,
+    conferenceTeams: PropTypes.array.isRequired,
+    confLoading: PropTypes.bool,
+    scheduleLocked: PropTypes.bool,
+    teamMap: PropTypes.object.isRequired,
+    teamWeekOccupied: PropTypes.instanceOf(Set),
+    onAddGameManually: PropTypes.func.isRequired,
+    onGenerateSchedule: PropTypes.func.isRequired,
+    onEmptyCellClick: PropTypes.func.isRequired,
+    onFilledCellClick: PropTypes.func.isRequired,
+    onGameDrop: PropTypes.func.isRequired,
+    numConferenceGames: PropTypes.number.isRequired,
+    onNumConferenceGamesChange: PropTypes.func.isRequired,
+    protectedRivalries: PropTypes.array.isRequired,
+    onAddRivalry: PropTypes.func.isRequired,
+    onRemoveRivalry: PropTypes.func.isRequired,
+    onUpdateRivalry: PropTypes.func.isRequired,
+    hasGamesPlayed: PropTypes.bool,
+    onSaveConferenceRules: PropTypes.func,
 };
 
 export default ConferenceScheduleAdminTab;

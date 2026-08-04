@@ -1,23 +1,15 @@
 import React, {useEffect, useState} from 'react';
 import ModifyTeamForm from '../../components/forms/ModifyTeamForm';
-import {useNavigate, useParams} from "react-router-dom";
+import {useParams} from "react-router-dom";
 import {getTeamById} from "../../api/teamApi";
 import LoadingSpinner from "../../components/icons/LoadingSpinner";
 import ErrorMessage from "../../components/message/ErrorMessage";
 
-const ModifyTeam = ({ user }) => {
+const ModifyTeam = () => {
     const { teamId } = useParams();
-    const navigate = useNavigate();
     const [team, setTeam] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    useEffect(() => {
-        if (user.role !== "ADMIN" &&
-            user.role !== "CONFERENCE_COMMISSIONER") {
-            navigate('*');
-        }
-    }, [user.role, navigate]);
 
     useEffect(() => {
         const fetchTeam = async () => {

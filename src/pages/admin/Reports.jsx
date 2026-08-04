@@ -1,40 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    Box, 
-    Typography,
-    CircularProgress,
-    Chip,
-    TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Grid,
-    Tabs,
-    Tab,
-    Avatar,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-} from '@mui/material';
-import { Search, History, People, TrendingUp, ArrowUpward, ArrowDownward } from '@mui/icons-material';
-import DashboardLayout from '../../components/layout/DashboardLayout';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, CircularProgress, Alert } from '@mui/material';
+import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
+import AdminLayout from '../../components/layout/AdminLayout';
+import Panel from '../../components/ui/Panel';
+import DataTable from '../../components/ui/DataTable';
+import SelectPill from '../../components/ui/SelectPill';
+import SegTabs from '../../components/ui/SegTabs';
+import TeamMark from '../../components/ui/TeamMark';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
 import { getAllUsers } from '../../api/userApi';
 import { getAllTeams } from '../../api/teamApi';
-import StyledTable from '../../components/ui/StyledTable';
-import { adminNavigationItems } from '../../config/adminNavigation.jsx';
-import { useNavigate } from 'react-router-dom';
+import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { formatPosition } from '../../utils/formatText';
+
+const searchSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', font: 'inherit', fontSize: '0.82rem', minWidth: 210, boxSizing: 'border-box' };
+const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
+const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', px: '8px', py: '3px', borderRadius: 'var(--r-sm)', lineHeight: 1 };
+const thBtnSx = { background: 'none', border: 0, color: 'inherit', font: 'inherit', fontSize: 'inherit', fontWeight: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: 0 };
+
+const transactionColor = (type) => {
+    if (type === 'FIRED') return 'var(--live)';
+    if (type === 'HIRED_INTERIM') return 'var(--gold)';
+    return 'var(--field)';
+};
+
+const delayColor = (count) => {
+    if (count > 5) return 'var(--live)';
+    if (count > 2) return 'var(--gold)';
+    return 'var(--field)';
+};
+
+const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return dateString;
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+};
+
+const SortHeader = ({ label, field, sortField, sortDirection, onSort }) => (
+    <Box component="button" type="button" onClick={() => onSort(field)} sx={thBtnSx}>
+        {label}
+        {sortField === field ? (sortDirection === 'asc' ? '▲' : '▼') : <Box component="span" sx={{ opacity: 0.35 }}>▲▼</Box>}
+    </Box>
+);
+
+SortHeader.propTypes = {
+    label: PropTypes.string.isRequired,
+    field: PropTypes.string.isRequired,
+    sortField: PropTypes.string.isRequired,
+    sortDirection: PropTypes.string.isRequired,
+    onSort: PropTypes.func.isRequired,
+};
 
 const Reports = ({ user }) => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState(0);
+    const teamsMap = useTeamsMap();
+    const [tab, setTab] = useState('delays');
 
     const [transactions, setTransactions] = useState([]);
-    const [filteredTransactions, setFilteredTransactions] = useState([]);
     const [transactionLoading, setTransactionLoading] = useState(true);
     const [transactionError, setTransactionError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -43,7 +67,6 @@ const Reports = ({ user }) => {
     const [transactionTypeFilter, setTransactionTypeFilter] = useState('ALL');
 
     const [userDelayData, setUserDelayData] = useState([]);
-    const [filteredUserDelayData, setFilteredUserDelayData] = useState([]);
     const [delayLoading, setDelayLoading] = useState(true);
     const [delayError, setDelayError] = useState(null);
     const [delaySearchTerm, setDelaySearchTerm] = useState('');
@@ -51,590 +74,192 @@ const Reports = ({ user }) => {
     const [delaySortField, setDelaySortField] = useState('delayInstances');
     const [delaySortDirection, setDelaySortDirection] = useState('desc');
 
-    const navigationItems = adminNavigationItems;
-
     useEffect(() => {
-        if (!user || !user.role) {
-            setTransactionLoading(true);
-            setDelayLoading(true);
-            return;
-        }
-
-        if (user.role !== "ADMIN" && user.role !== "CONFERENCE_COMMISSIONER") {
-            navigate('*');
-        } else {
-            setTransactionLoading(false);
-            setDelayLoading(false);
-        }
+        if (!user || !user.role) return;
+        if (user.role !== 'ADMIN' && user.role !== 'CONFERENCE_COMMISSIONER') navigate('*');
     }, [user, navigate]);
 
     useEffect(() => {
-        const fetchTransactionData = async () => {
-            try {
-                const response = await getEntireCoachTransactionLog();
-                setTransactions(response);
-                setTransactionLoading(false);
-            } catch (error) {
-                console.error('Failed to fetch transactions:', error);
-                setTransactionError('Failed to load coach transaction log');
-                setTransactionLoading(false);
-            }
-        };
-
-        if (user?.role === "ADMIN" || user?.role === "CONFERENCE_COMMISSIONER") {
-            fetchTransactionData();
-        }
+        if (user?.role !== 'ADMIN' && user?.role !== 'CONFERENCE_COMMISSIONER') return;
+        getEntireCoachTransactionLog()
+            .then(setTransactions)
+            .catch((err) => { console.error('Failed to fetch transactions:', err); setTransactionError('Failed to load coach transaction log'); })
+            .finally(() => setTransactionLoading(false));
     }, [user]);
 
     useEffect(() => {
-        const fetchDelayData = async () => {
-            try {
-                const [usersResponse, teamsResponse] = await Promise.all([
-                    getAllUsers(),
-                    getAllTeams()
-                ]);
-
-                const delayData = usersResponse.map(user => ({
-                    username: user.username,
-                    discordTag: user.discord_tag || 'N/A',
-                    team: user.team || 'No Team',
-                    teamLogo: teamsResponse.find(t => t.name === user.team)?.logo || null,
-                    delayInstances: user.delay_of_game_instances
-                }));
-
-                setUserDelayData(delayData);
-                setDelayLoading(false);
-            } catch (error) {
-                console.error('Failed to fetch delay data:', error);
-                setDelayError('Failed to load user delay data');
-                setDelayLoading(false);
-            }
-        };
-
-        if (user?.role === "ADMIN" || user?.role === "CONFERENCE_COMMISSIONER") {
-            fetchDelayData();
-        }
+        if (user?.role !== 'ADMIN' && user?.role !== 'CONFERENCE_COMMISSIONER') return;
+        Promise.all([getAllUsers(), getAllTeams()])
+            .then(([usersResponse, teamsResponse]) => {
+                setUserDelayData(usersResponse.map((u) => ({
+                    username: u.username,
+                    discordTag: u.discord_tag || '-',
+                    team: u.team || 'No team',
+                    teamLogo: teamsResponse.find((t) => t.name === u.team)?.logo || null,
+                    delayInstances: u.delay_of_game_instances,
+                })));
+            })
+            .catch((err) => { console.error('Failed to fetch delay data:', err); setDelayError('Failed to load user delay data'); })
+            .finally(() => setDelayLoading(false));
     }, [user]);
 
-    useEffect(() => {
+    const uniqueTeams = useMemo(() => [...new Set(transactions.map((t) => t.team))].filter(Boolean).sort(), [transactions]);
+    const uniquePositions = useMemo(() => [...new Set(transactions.map((t) => t.position))].filter(Boolean).sort(), [transactions]);
+    const uniqueTransactionTypes = useMemo(() => [...new Set(transactions.map((t) => t.transaction))].filter(Boolean).sort(), [transactions]);
+    const uniqueDelayTeams = useMemo(() => [...new Set(userDelayData.map((u) => u.team))].filter(Boolean).sort(), [userDelayData]);
+
+    const teamOptions = useMemo(() => [{ value: 'ALL', label: 'All teams' }, ...uniqueTeams.map((t) => ({ value: t, label: t }))], [uniqueTeams]);
+    const positionOptions = useMemo(() => [{ value: 'ALL', label: 'All positions' }, ...uniquePositions.map((p) => ({ value: p, label: formatPosition(p) }))], [uniquePositions]);
+    const typeOptions = useMemo(() => [{ value: 'ALL', label: 'All transactions' }, ...uniqueTransactionTypes.map((t) => ({ value: t, label: t.replace(/_/g, ' ') }))], [uniqueTransactionTypes]);
+    const delayTeamOptions = useMemo(() => [{ value: 'ALL', label: 'All teams' }, ...uniqueDelayTeams.map((t) => ({ value: t, label: t }))], [uniqueDelayTeams]);
+
+    const filteredTransactions = useMemo(() => {
         let filtered = transactions;
-
-        if (teamFilter !== 'ALL') {
-            filtered = filtered.filter(transaction => transaction.team === teamFilter);
-        }
-
-        if (positionFilter !== 'ALL') {
-            filtered = filtered.filter(transaction => transaction.position === positionFilter);
-        }
-
-        if (transactionTypeFilter !== 'ALL') {
-            filtered = filtered.filter(transaction => transaction.transaction === transactionTypeFilter);
-        }
-
+        if (teamFilter !== 'ALL') filtered = filtered.filter((t) => t.team === teamFilter);
+        if (positionFilter !== 'ALL') filtered = filtered.filter((t) => t.position === positionFilter);
+        if (transactionTypeFilter !== 'ALL') filtered = filtered.filter((t) => t.transaction === transactionTypeFilter);
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
-            filtered = filtered.filter(transaction => 
-                transaction.team?.toLowerCase().includes(searchLower) ||
-                transaction.processedBy?.toLowerCase().includes(searchLower) ||
-                (transaction.coach && transaction.coach.some(coach => 
-                    coach.toLowerCase().includes(searchLower)
-                ))
-            );
+            filtered = filtered.filter((t) =>
+                t.team?.toLowerCase().includes(searchLower) ||
+                t.processed_by?.toLowerCase().includes(searchLower) ||
+                (t.coach && t.coach.some((coach) => coach.toLowerCase().includes(searchLower))));
         }
-
-        setFilteredTransactions(filtered);
+        return filtered;
     }, [transactions, teamFilter, positionFilter, transactionTypeFilter, searchTerm]);
 
-    useEffect(() => {
+    const filteredUserDelayData = useMemo(() => {
         let filtered = userDelayData;
-
-        if (delayTeamFilter !== 'ALL') {
-            filtered = filtered.filter(user => user.team === delayTeamFilter);
-        }
-
+        if (delayTeamFilter !== 'ALL') filtered = filtered.filter((u) => u.team === delayTeamFilter);
         if (delaySearchTerm) {
             const searchLower = delaySearchTerm.toLowerCase();
-            filtered = filtered.filter(user => 
-                user.username?.toLowerCase().includes(searchLower) ||
-                user.discordTag?.toLowerCase().includes(searchLower) ||
-                user.team?.toLowerCase().includes(searchLower)
-            );
+            filtered = filtered.filter((u) =>
+                u.username?.toLowerCase().includes(searchLower) ||
+                u.discordTag?.toLowerCase().includes(searchLower) ||
+                u.team?.toLowerCase().includes(searchLower));
         }
-
-        filtered.sort((a, b) => {
+        return [...filtered].sort((a, b) => {
             let aValue = a[delaySortField];
             let bValue = b[delaySortField];
-
-            if (typeof aValue === 'string' && typeof bValue === 'string') {
-                aValue = aValue.toLowerCase();
-                bValue = bValue.toLowerCase();
-            }
-
-            if (aValue < bValue) {
-                return delaySortDirection === 'asc' ? -1 : 1;
-            }
-            if (aValue > bValue) {
-                return delaySortDirection === 'asc' ? 1 : -1;
-            }
+            if (typeof aValue === 'string' && typeof bValue === 'string') { aValue = aValue.toLowerCase(); bValue = bValue.toLowerCase(); }
+            if (aValue < bValue) return delaySortDirection === 'asc' ? -1 : 1;
+            if (aValue > bValue) return delaySortDirection === 'asc' ? 1 : -1;
             return 0;
         });
-
-        setFilteredUserDelayData(filtered);
     }, [userDelayData, delayTeamFilter, delaySearchTerm, delaySortField, delaySortDirection]);
-
-    const handleTabChange = (event, newValue) => {
-        setActiveTab(newValue);
-    };
 
     const handleDelaySort = (field) => {
         if (delaySortField === field) {
-            setDelaySortDirection(delaySortDirection === 'asc' ? 'desc' : 'asc');
+            setDelaySortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
         } else {
             setDelaySortField(field);
             setDelaySortDirection('asc');
         }
     };
 
-    const getTransactionTypeColor = (transactionType) => {
-        switch (transactionType) {
-            case 'HIRE':
-                return 'success';
-            case 'FIRE':
-                return 'error';
-            case 'PROMOTE':
-                return 'info';
-            case 'DEMOTE':
-                return 'warning';
-            default:
-                return 'default';
-        }
-    };
-
-    const getPositionColor = (position) => {
-        switch (position) {
-            case 'HEAD_COACH':
-                return 'primary';
-            case 'OFFENSIVE_COORDINATOR':
-                return 'success';
-            case 'DEFENSIVE_COORDINATOR':
-                return 'warning';
-            case 'SPECIAL_TEAMS_COORDINATOR':
-                return 'info';
-            default:
-                return 'default';
-        }
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        } catch (error) {
-            return dateString;
-        }
-    };
-
-    const formatCoachList = (coachList) => {
-        if (!coachList || !Array.isArray(coachList)) return 'N/A';
-        return coachList.join(', ');
-    };
-
-    const transactionColumns = [
-        { id: 'team', label: 'Team', width: 120 },
-        { id: 'position', label: 'Position', width: 150 },
-        { id: 'coach', label: 'Coach(es)', width: 200 },
-        { id: 'transaction', label: 'Transaction', width: 120 },
-        { id: 'transaction_date', label: 'Date', width: 150 },
-        { id: 'processed_by', label: 'Processed By', width: 150 },
-    ];
-
-    const userDelayColumns = [
-        { 
-            id: 'username', 
-            label: 'Username', 
-            width: 150, 
-            sortable: true,
-            onClick: () => handleDelaySort('username')
-        },
-        { 
-            id: 'discordTag', 
-            label: 'Discord Tag', 
-            width: 150, 
-            sortable: true,
-            onClick: () => handleDelaySort('discordTag')
-        },
-        { 
-            id: 'team', 
-            label: 'Team', 
-            width: 200, 
-            sortable: true,
-            onClick: () => handleDelaySort('team')
-        },
-        { 
-            id: 'delayInstances', 
-            label: 'Delay of Game Instances', 
-            width: 120, 
-            sortable: true,
-            onClick: () => handleDelaySort('delayInstances')
-        },
-    ];
-
-    const uniqueTeams = [...new Set(transactions.map(t => t.team))].filter(Boolean).sort();
-    const uniquePositions = [...new Set(transactions.map(t => t.position))].filter(Boolean).sort();
-    const uniqueTransactionTypes = [...new Set(transactions.map(t => t.transaction))].filter(Boolean).sort();
-    const uniqueDelayTeams = [...new Set(userDelayData.map(u => u.team))].filter(Boolean).sort();
-
-    const transactionTableData = filteredTransactions.map(transaction => ({
-        ...transaction,
-        team: transaction.team || 'N/A',
-        position: (
-            <Chip
-                label={transaction.position || 'N/A'}
-                color={getPositionColor(transaction.position)}
-                size="small"
-            />
-        ),
-        coach: formatCoachList(transaction.coach),
-        transaction: (
-            <Chip
-                label={transaction.transaction || 'N/A'}
-                color={getTransactionTypeColor(transaction.transaction)}
-                size="small"
-            />
-        ),
-        transactionDate: formatDate(transaction.transactionDate),
-        processedBy: transaction.processedBy || 'N/A',
-    }));
-
-    const userDelayTableData = filteredUserDelayData.map(user => ({
-        ...user,
-        username: user.username,
-        discordTag: user.discordTag,
-        team: (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {user.teamLogo && (
-                    <Avatar
-                        src={user.teamLogo}
-                        alt={user.team}
-                        sx={{ width: 24, height: 24 }}
-                    >
-                        {user.team?.charAt(0)}
-                    </Avatar>
-                )}
-                {user.team}
-            </Box>
-        ),
-        delayInstances: (
-            <Chip
-                label={user.delayInstances}
-                color={user.delayInstances > 5 ? 'error' : user.delayInstances > 2 ? 'warning' : 'success'}
-                size="small"
-            />
-        ),
-    }));
-
-    if (transactionLoading || delayLoading) {
+    if ((transactionLoading || delayLoading)) {
         return (
-            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <CircularProgress />
-            </Box>
+            <AdminLayout title="Reports">
+                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
+            </AdminLayout>
         );
     }
 
     if (transactionError || delayError) {
         return (
-            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Typography color="error">{transactionError || delayError}</Typography>
-            </Box>
+            <AdminLayout title="Reports">
+                <Alert severity="error">{transactionError || delayError}</Alert>
+            </AdminLayout>
         );
     }
 
     return (
-        <DashboardLayout
+        <AdminLayout
             title="Reports"
-            navigationItems={navigationItems}
-            hideHeader={true}
-            textColor="primary.main"
+            controls={<SegTabs value={tab} onChange={setTab} options={[{ value: 'delays', label: 'User delay instances' }, { value: 'transactions', label: 'Coach transaction log' }]} />}
         >
-            <Box sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <TrendingUp sx={{ mr: 2, color: 'primary.main' }} />
-                    <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                        Reports
-                    </Typography>
-                </Box>
-
-                <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-                    <Tabs value={activeTab} onChange={handleTabChange}>
-                        <Tab 
-                            icon={<People />} 
-                            label="User Delay Instances" 
-                            iconPosition="start"
-                        />
-                        <Tab 
-                            icon={<History />} 
-                            label="Coach Transaction Log" 
-                            iconPosition="start"
-                        />
-                    </Tabs>
-                </Box>
-
-                {activeTab === 0 && (
-                    <Box>
-                        <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-                            User Delay Instances
-                        </Typography>
-
-                        <Box sx={{ mb: 3 }}>
-                            <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={12} sm={6} md={4}>
-                                    <TextField
-                                        fullWidth
-                                        placeholder="Search users..."
-                                        value={delaySearchTerm}
-                                        onChange={(e) => setDelaySearchTerm(e.target.value)}
-                                        InputProps={{
-                                            startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
-                                        }}
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                color: 'primary.main',
-                                                '& fieldset': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6} md={4}>
-                                    <FormControl fullWidth>
-                                        <InputLabel>Team</InputLabel>
-                                        <Select
-                                            value={delayTeamFilter}
-                                            onChange={(e) => setDelayTeamFilter(e.target.value)}
-                                            label="Team"
-                                            sx={{
-                                                color: 'primary.main',
-                                                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                            }}
-                                        >
-                                            <MenuItem value="ALL">All Teams</MenuItem>
-                                            {uniqueDelayTeams.map(team => (
-                                                <MenuItem key={team} value={team}>
-                                                    {team}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                            </Grid>
-                        </Box>
-                        
-                        <TableContainer
-                            sx={{
-                                borderRadius: 0,
-                                border: 'none',
-                                boxShadow: 'none',
-                                overflow: 'auto',
-                                backgroundColor: 'transparent',
-                                maxHeight: 600,
-                            }}
-                        >
-                            <Table
-                                stickyHeader={true}
-                                sx={{
-                                    minWidth: 650,
-                                    '& .MuiTableCell-root': {
-                                        borderBottom: '1px solid rgba(224, 224, 224, 1)',
-                                    },
-                                }}
-                            >
-                                <TableHead>
-                                    <TableRow>
-                                        {userDelayColumns.map((column) => (
-                                            <TableCell
-                                                key={column.id}
-                                                align={column.align || 'left'}
-                                                sx={{
-                                                    backgroundColor: 'primary.main',
-                                                    fontWeight: 700,
-                                                    color: 'white',
-                                                    fontSize: '0.875rem',
-                                                    textTransform: 'uppercase',
-                                                    letterSpacing: '0.5px',
-                                                    py: 2,
-                                                    px: 3,
-                                                    borderBottom: '2px solid #1976d2',
-                                                    cursor: column.sortable ? 'pointer' : 'default',
-                                                    '&:hover': column.sortable ? {
-                                                        backgroundColor: 'primary.dark',
-                                                    } : {},
-                                                }}
-                                                onClick={column.onClick}
-                                            >
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                    {column.label}
-                                                    {column.sortable && (
-                                                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                                            {delaySortField === column.id ? (
-                                                                delaySortDirection === 'asc' ? (
-                                                                    <ArrowUpward sx={{ fontSize: 16 }} />
-                                                                ) : (
-                                                                    <ArrowDownward sx={{ fontSize: 16 }} />
-                                                                )
-                                                            ) : (
-                                                                <Box sx={{ display: 'flex', flexDirection: 'column', opacity: 0.3 }}>
-                                                                    <ArrowUpward sx={{ fontSize: 12, mb: -0.5 }} />
-                                                                    <ArrowDownward sx={{ fontSize: 12 }} />
-                                                                </Box>
-                                                            )}
-                                                        </Box>
-                                                    )}
-                                                </Box>
-                                            </TableCell>
-                                        ))}
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {userDelayTableData.map((row, index) => (
-                                        <TableRow
-                                            key={index}
-                                            sx={{
-                                                cursor: 'default',
-                                                transition: 'all 0.2s ease',
-                                                '&:hover': {
-                                                    backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                                                },
-                                                '&:nth-of-type(even)': {
-                                                    backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                                                },
-                                            }}
-                                        >
-                                            {userDelayColumns.map((column) => (
-                                                <TableCell
-                                                    key={column.id}
-                                                    align={column.align || 'left'}
-                                                    sx={{
-                                                        py: 2,
-                                                        px: 3,
-                                                        fontSize: '0.875rem',
-                                                        color: 'text.primary',
-                                                        fontWeight: column.id === 'username' || column.id === 'team' ? 600 : 400,
-                                                    }}
-                                                >
-                                                    {column.render ? column.render(row[column.id], row) : row[column.id]}
-                                                </TableCell>
-                                            ))}
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+            {tab === 'delays' && (
+                <>
+                    <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', mb: '16px' }}>
+                        <Box component="input" placeholder="Search users..." aria-label="Search users" value={delaySearchTerm} onChange={(e) => setDelaySearchTerm(e.target.value)} sx={searchSx} />
+                        <SelectPill label="Team" value={delayTeamFilter} onChange={setDelayTeamFilter} options={delayTeamOptions} sx={pillHeightSx} />
                     </Box>
-                )}
 
-                {activeTab === 1 && (
-                    <Box>
-                        <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-                            Coach Transaction Log
-                        </Typography>
+                    <Panel header="User delay instances" more={`${filteredUserDelayData.length} users`}>
+                        <DataTable minWidth={560}>
+                            <thead>
+                                <tr>
+                                    <th className="lft stick"><SortHeader label="Username" field="username" sortField={delaySortField} sortDirection={delaySortDirection} onSort={handleDelaySort} /></th>
+                                    <th className="lft"><SortHeader label="Discord tag" field="discordTag" sortField={delaySortField} sortDirection={delaySortDirection} onSort={handleDelaySort} /></th>
+                                    <th className="lft"><SortHeader label="Team" field="team" sortField={delaySortField} sortDirection={delaySortDirection} onSort={handleDelaySort} /></th>
+                                    <th><SortHeader label="Delay instances" field="delayInstances" sortField={delaySortField} sortDirection={delaySortDirection} onSort={handleDelaySort} /></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredUserDelayData.map((row) => (
+                                    <tr key={row.username}>
+                                        <td className="lft stick">@{row.username}</td>
+                                        <td className="lft">{row.discordTag}</td>
+                                        <td className="lft">
+                                            <Box className="teamcell">
+                                                {teamsMap[row.team] && <TeamMark team={teamsMap[row.team]} size={20} />}
+                                                {row.team}
+                                            </Box>
+                                        </td>
+                                        <td>
+                                            <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: delayColor(row.delayInstances) }}>{row.delayInstances}</Box>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </DataTable>
+                    </Panel>
+                </>
+            )}
 
-                        <Box sx={{ mb: 3 }}>
-                            <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={12} sm={6} md={3}>
-                                    <TextField
-                                        fullWidth
-                                        placeholder="Search transactions..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        InputProps={{
-                                            startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
-                                        }}
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                color: 'primary.main',
-                                                '& fieldset': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6} md={3}>
-                                    <FormControl fullWidth>
-                                        <InputLabel>Team</InputLabel>
-                                        <Select
-                                            value={teamFilter}
-                                            onChange={(e) => setTeamFilter(e.target.value)}
-                                            label="Team"
-                                            sx={{
-                                                color: 'primary.main',
-                                                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                            }}
-                                        >
-                                            <MenuItem value="ALL">All Teams</MenuItem>
-                                            {uniqueTeams.map(team => (
-                                                <MenuItem key={team} value={team}>
-                                                    {team}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} sm={6} md={3}>
-                                    <FormControl fullWidth>
-                                        <InputLabel>Position</InputLabel>
-                                        <Select
-                                            value={positionFilter}
-                                            onChange={(e) => setPositionFilter(e.target.value)}
-                                            label="Position"
-                                            sx={{
-                                                color: 'primary.main',
-                                                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                            }}
-                                        >
-                                            <MenuItem value="ALL">All Positions</MenuItem>
-                                            {uniquePositions.map(position => (
-                                                <MenuItem key={position} value={position}>
-                                                    {position.replace(/_/g, ' ')}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} sm={6} md={3}>
-                                    <FormControl fullWidth>
-                                        <InputLabel>Transaction Type</InputLabel>
-                                        <Select
-                                            value={transactionTypeFilter}
-                                            onChange={(e) => setTransactionTypeFilter(e.target.value)}
-                                            label="Transaction Type"
-                                            sx={{
-                                                color: 'primary.main',
-                                                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.23)' }
-                                            }}
-                                        >
-                                            <MenuItem value="ALL">All Transactions</MenuItem>
-                                            {uniqueTransactionTypes.map(type => (
-                                                <MenuItem key={type} value={type}>
-                                                    {type}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                            </Grid>
-                        </Box>
-                        
-                        <StyledTable
-                            columns={transactionColumns}
-                            data={transactionTableData}
-                            maxHeight={600}
-                            headerBackground="primary.main"
-                            headerTextColor="white"
-                        />
+            {tab === 'transactions' && (
+                <>
+                    <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', mb: '16px' }}>
+                        <Box component="input" placeholder="Search transactions..." aria-label="Search transactions" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
+                        <SelectPill label="Team" value={teamFilter} onChange={setTeamFilter} options={teamOptions} sx={pillHeightSx} />
+                        <SelectPill label="Position" value={positionFilter} onChange={setPositionFilter} options={positionOptions} sx={pillHeightSx} />
+                        <SelectPill label="Type" value={transactionTypeFilter} onChange={setTransactionTypeFilter} options={typeOptions} sx={pillHeightSx} />
                     </Box>
-                )}
-            </Box>
-        </DashboardLayout>
+
+                    <Panel header="Coach transaction log" more={`${filteredTransactions.length} transactions`}>
+                        <DataTable minWidth={720}>
+                            <thead>
+                                <tr>
+                                    <th className="lft stick">Team</th>
+                                    <th className="lft">Position</th>
+                                    <th className="lft">Coach(es)</th>
+                                    <th className="lft">Transaction</th>
+                                    <th className="lft">Date</th>
+                                    <th className="lft">Processed by</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredTransactions.map((transaction, index) => (
+                                    <tr key={`${transaction.team}-${transaction.transaction_date}-${index}`}>
+                                        <td className="lft stick">{transaction.team || '-'}</td>
+                                        <td className="lft">{formatPosition(transaction.position)}</td>
+                                        <td className="lft">{Array.isArray(transaction.coach) ? transaction.coach.join(', ') : (transaction.coach || '-')}</td>
+                                        <td className="lft">
+                                            <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: transactionColor(transaction.transaction) }}>{transaction.transaction?.replace(/_/g, ' ') || '-'}</Box>
+                                        </td>
+                                        <td className="lft">{formatDate(transaction.transaction_date)}</td>
+                                        <td className="lft">{transaction.processed_by || '-'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </DataTable>
+                    </Panel>
+                </>
+            )}
+        </AdminLayout>
     );
 };
+
+Reports.propTypes = { user: PropTypes.object };
 
 export default Reports;

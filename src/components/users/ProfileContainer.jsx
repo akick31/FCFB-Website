@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Box, Button, Divider, Grid, Paper, Typography } from '@mui/material';
 import { getTeamByName } from '../../api/teamApi';
 import { resendVerificationEmail } from "../../api/authApi";
+import { formatWinPct } from '../../utils/formatText';
 import PropTypes from 'prop-types';
 
 const ProfileContainer = ({ user }) => {
@@ -78,7 +79,7 @@ const ProfileContainer = ({ user }) => {
                     <Grid item xs={12}>
                         <Typography variant="body1">
                             <strong>Overall Record:</strong> {user.wins}-{user.losses}
-                            {user.winPercentage !== undefined && ` | ${user.winPercentage.toFixed(3)}`}
+                            {user.winPercentage !== undefined && ` | ${formatWinPct(user.winPercentage)}`}
                         </Typography>
                     </Grid>
                 </Grid>

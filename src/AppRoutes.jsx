@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import Header from './components/header/Header';
 import Footer from './components/layout/Footer';
 import {
@@ -16,14 +16,14 @@ import {
     Verify,
     NotFound,
     Error,
-    UserDetails
+    UserDetails,
+    Coaches
 } from './pages';
 import { getUserById } from './api/userApi';
 import { checkIfUserIsAdmin } from "./utils/utils";
-import { CssBaseline } from '@mui/material';
-import { ThemeProvider } from '@mui/material/styles';
 import { Box } from '@mui/system';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import { ColorModeProvider } from './theme/ColorModeContext';
 import {
     ResetPassword,
     Complete,
@@ -33,43 +33,22 @@ import {
     Schedule,
     TeamManagement,
     EditTeam,
+    EditCoach,
+    AdminConferences,
+    AdminConferenceDetail,
     GameManagement,
     UserManagement,
-    CoachManagement,
     CoachTransactionLog,
     EditGame,
     StatsManagement,
     Reports,
     Scheduling,
     GameWeek,
-    Records,
-    SeasonStats,
-    LeagueStats,
-    Leaderboard,
-    EloHistory,
-    Charts
+    RankingsManagement,
+    Stats,
+    RecordsBoard,
+    Graphs
 } from './pages';
-import Theme from "./styles/Theme";
-
-const ConditionalHeader = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, setIsAdmin }) => {
-    const location = useLocation();
-    const isAdminRoute = location.pathname.startsWith('/admin');
-
-    if (isAdminRoute) {
-        return null;
-    }
-
-    return (
-        <Header
-            isAuthenticated={isAuthenticated}
-            isAdmin={isAdmin}
-            user={user}
-            setIsAuthenticated={setIsAuthenticated}
-            setUser={setUser}
-            setIsAdmin={setIsAdmin}
-        />
-    );
-};
 
 const AppRoutes = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -128,17 +107,34 @@ const AppRoutes = () => {
     }, [isAuthenticated, isAdmin]);
 
     return (
-        <ThemeProvider theme={Theme}>
-            <CssBaseline />
+        <ColorModeProvider>
             <Box
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
                     minHeight: '100vh',
-                    background: 'background.default',
+                    backgroundColor: 'background.default',
                 }}
             >
-                <ConditionalHeader
+                <Box
+                    component="a"
+                    href="#main-content"
+                    sx={{
+                        position: 'absolute',
+                        left: '-9999px',
+                        top: 0,
+                        zIndex: 100,
+                        background: 'var(--brand-deep)',
+                        color: '#fff',
+                        px: 2,
+                        py: 1,
+                        borderRadius: 'var(--r-sm)',
+                        '&:focus': { left: '10px', top: '10px' },
+                    }}
+                >
+                    Skip to main content
+                </Box>
+                <Header
                     isAuthenticated={isAuthenticated}
                     isAdmin={isAdmin}
                     user={user}
@@ -148,6 +144,7 @@ const AppRoutes = () => {
                 />
                 <Box
                     component="main"
+                    id="main-content"
                     sx={{
                         flexGrow: 1,
                         display: 'flex',
@@ -175,11 +172,7 @@ const AppRoutes = () => {
                                 <UserManagement user={user} />
                             </ProtectedRoute>
                         } />
-                        <Route path="/admin/coach-management" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <CoachManagement user={user} />
-                            </ProtectedRoute>
-                        } />
+                        <Route path="/admin/coach-management" element={<Navigate to="/admin/team-management" replace />} />
                         <Route path="/admin/game-management" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <GameManagement user={user} />
@@ -215,6 +208,21 @@ const AppRoutes = () => {
                                 <EditTeam user={user} />
                             </ProtectedRoute>
                         } />
+                        <Route path="/admin/edit-coach/:username" element={
+                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                <EditCoach user={user} />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/admin/conferences" element={
+                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                <AdminConferences />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/admin/conferences/:code" element={
+                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                <AdminConferenceDetail />
+                            </ProtectedRoute>
+                        } />
                         <Route path="/admin/scheduling" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <Scheduling user={user} />
@@ -225,6 +233,11 @@ const AppRoutes = () => {
                                 <GameWeek user={user} />
                             </ProtectedRoute>
                         } />
+                        <Route path="/admin/rankings" element={
+                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                <RankingsManagement user={user} />
+                            </ProtectedRoute>
+                        } />
                         <Route path="/verify" element={<Verify />} />
                         <Route path="/game-details/:gameId" element={<GameDetails isAdmin={isAdmin} />} />
                         <Route path="/team/:teamId" element={<TeamDetails />} />
@@ -232,7 +245,7 @@ const AppRoutes = () => {
                         <Route path="/user-details/:coachName" element={<UserDetails />} />
                         <Route path="/modify-team/:teamId" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <ModifyTeam user={user} />
+                                <ModifyTeam />
                             </ProtectedRoute>
                         } />
                         <Route path="/schedules" element={<Schedule />} />
@@ -241,6 +254,7 @@ const AppRoutes = () => {
                         <Route path="/schedules/:tab/:selection/:seasonParam" element={<Schedule />} />
                         <Route path="/standings" element={<Standings />} />
                         <Route path="/standings/:conference" element={<Standings />} />
+                        <Route path="/standings/:conference/:seasonParam" element={<Standings />} />
                         <Route path="/rankings" element={<Rankings />} />
                         <Route path="/rankings/:type" element={<Rankings />} />
                         <Route path="/scoreboard" element={<Scoreboard />} />
@@ -248,19 +262,22 @@ const AppRoutes = () => {
                         <Route path="/scoreboard/:tab/:season/:week" element={<Scoreboard />} />
                         <Route path="/teams" element={<Teams />} />
                         <Route path="/teams/:conference/:availability" element={<Teams />} />
-                        <Route path="/records" element={<Records />} />
-                        <Route path="/records/:tab" element={<Records />} />
-                        <Route path="/records/:tab/:record" element={<Records />} />
-                        <Route path="/season-stats" element={<SeasonStats user={user} />} />
-                        <Route path="/season-stats/:team/:season" element={<SeasonStats user={user} />} />
-                        <Route path="/league-stats" element={<LeagueStats />} />
-                        <Route path="/league-stats/:tab/:season" element={<LeagueStats />} />
-                        <Route path="/league-stats/:tab/:season/:p1" element={<LeagueStats />} />
-                        <Route path="/league-stats/:tab/:season/:p1/:p2" element={<LeagueStats />} />
-                        <Route path="/leaderboard" element={<Leaderboard />} />
-                        <Route path="/elo-history" element={<EloHistory />} />
-                        <Route path="/charts" element={<Charts />} />
-                        <Route path="/charts/:tab" element={<Charts />} />
+                        <Route path="/coaches" element={<Coaches />} />
+                        <Route path="/stats" element={<Stats />} />
+                        <Route path="/stats/:sub" element={<Stats />} />
+                        <Route path="/stats/:sub/:statKey" element={<Stats />} />
+                        <Route path="/records" element={<RecordsBoard user={user} />} />
+                        <Route path="/records/:tab" element={<RecordsBoard user={user} />} />
+                        <Route path="/season-stats" element={<Navigate to="/stats" replace />} />
+                        <Route path="/season-stats/:team/:season" element={<Navigate to="/stats" replace />} />
+                        <Route path="/league-stats" element={<Navigate to="/stats/league" replace />} />
+                        <Route path="/league-stats/:tab/:season" element={<Navigate to="/stats/league" replace />} />
+                        <Route path="/league-stats/:tab/:season/:p1" element={<Navigate to="/stats/league" replace />} />
+                        <Route path="/league-stats/:tab/:season/:p1/:p2" element={<Navigate to="/stats/league" replace />} />
+                        <Route path="/leaderboard" element={<Navigate to="/stats/leaderboard" replace />} />
+                        <Route path="/elo-history" element={<Navigate to="/graphs/elo" replace />} />
+                        <Route path="/graphs" element={<Graphs />} />
+                        <Route path="/graphs/:tab" element={<Graphs />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
 
                         <Route path="/error" element={<Error />} />
@@ -269,7 +286,7 @@ const AppRoutes = () => {
                 </Box>
                 <Footer />
             </Box>
-        </ThemeProvider>
+        </ColorModeProvider>
     );
 };
 

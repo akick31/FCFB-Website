@@ -1,8 +1,3 @@
-import { 
-    formatScoreboardStatus, 
-    getStatusColor,
-} from '../../../../utils/gameUtils';
-
 export const formatBallLocationWithTeam = (ballLocation, possession, homeTeam, awayTeam, homeTeamData, awayTeamData) => {
     if (!ballLocation) return '--';
     
@@ -30,37 +25,6 @@ export const formatBallLocationWithTeam = (ballLocation, possession, homeTeam, a
     }
     
     return '? ' + ballLocationNum;
-};
-
-export const formatPossessionWithLogo = (possession, homeTeamData, awayTeamData) => {
-    if (!possession) return '--';
-    
-    if (possession === 'HOME') {
-        return homeTeamData?.logo ? homeTeamData.logo : 'H';
-    } else if (possession === 'AWAY') {
-        return awayTeamData?.logo ? awayTeamData.logo : 'A';
-    }
-    
-    return possession;
-};
-
-export const formatWaitingOnWithLogo = (waitingOn, homeTeam, awayTeam, homeTeamData, awayTeamData) => {
-    if (!waitingOn) return '--';
-    
-    if (waitingOn === 'HOME') {
-        return homeTeamData?.logo ? homeTeamData.logo : 'H';
-    } else if (waitingOn === 'AWAY') {
-        return awayTeamData?.logo ? awayTeamData.logo : 'A';
-    }
-    
-    return waitingOn;
-};
-
-export const getGameStatusInfo = (gameStatus) => {
-    return {
-        status: formatScoreboardStatus(gameStatus),
-        color: getStatusColor(gameStatus)
-    };
 };
 
 export const isGameOngoing = (gameStatus) => {

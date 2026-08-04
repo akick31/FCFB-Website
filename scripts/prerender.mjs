@@ -55,6 +55,7 @@ for (const route of routeList) {
     const headHtml = buildHead(route);
     const html = template
         .replace('<!--app-head-->', headHtml)
+        .replace('<div id="root">', `<div id="root" data-prerendered-path="${route.path}">`)
         .replace('<!--app-html-->', appHtml);
 
     const outPath =

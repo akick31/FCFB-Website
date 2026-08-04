@@ -48,6 +48,7 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
         localStorage.setItem('token', token);
         localStorage.setItem('userId', String(userId));
         if (role != null) localStorage.setItem('role', String(role));
+        else localStorage.removeItem('role');
 
 
         const userData = await getUserById(userId);

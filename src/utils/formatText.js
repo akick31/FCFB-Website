@@ -1,22 +1,8 @@
+import { conferenceLabel } from '../components/constants/conferences';
+
 export const formatConference = (conference) => {
     if (!conference) return '-';
-
-    if (conference === 'ACC') return 'ACC';
-    if (conference === 'AMERICAN') return 'American';
-    if (conference === 'BIG_12') return 'Big 12';
-    if (conference === 'BIG_TEN') return 'Big Ten';
-    if (conference === 'FAKE_TEAM') return 'Fake Team';
-    if (conference === 'FBS_INDEPENDENT') return 'FBS Independent';
-    if (conference === 'MAC') return 'MAC';
-    if (conference === 'MOUNTAIN_WEST') return 'Mountain West';
-    if (conference === 'PAC_12') return 'Pac-12';
-    if (conference === 'SEC') return 'SEC';
-    if (conference === 'SUN_BELT') return 'Sun Belt';
-    if (conference === 'MISSOURI_VALLEY') return 'Missouri Valley';
-    if (conference === 'COLONIAL') return 'Colonial';
-    if (conference === 'NEC') return 'NEC';
-
-    return conference
+    return conferenceLabel(conference);
 };
 
 export const formatOffensivePlaybook = (playbook) => {
@@ -75,3 +61,8 @@ export const formatGameType = (gameType) => {
 
     return gameType;
 }
+export const formatWinPct = (value) => {
+    const pct = Number(value) || 0;
+    const fixed = pct.toFixed(3);
+    return fixed.startsWith('0.') ? fixed.slice(1) : fixed;
+};

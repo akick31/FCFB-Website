@@ -12,33 +12,36 @@ import {
     Autocomplete,
     Avatar,
     Chip,
-    Paper,
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions,
-    IconButton,
     Alert,
     CircularProgress,
     Divider,
 } from '@mui/material';
-import {
-    Add as AddIcon,
-    Delete as DeleteIcon,
-    CheckCircle as FinalizeIcon,
-    ArrowForward as AdvanceIcon,
-    Edit as EditIcon,
-    CloudUpload as UploadIcon,
-} from '@mui/icons-material';
+import { CloudUpload as UploadIcon } from '@mui/icons-material';
+import PropTypes from 'prop-types';
+import Panel from '../ui/Panel';
+import TeamMark from '../ui/TeamMark';
 import { createScheduleEntry, updateScheduleEntry, deleteScheduleEntry } from '../../api/scheduleApi';
 import { uploadPostseasonLogo } from '../../api/uploadApi';
-import { conferences } from '../constants/conferences';
+import { useConferencesMap, activeConferenceList } from '../constants/conferences';
 import Postseason from '../schedule/Postseason';
 import { R2_BYE_SEEDS, QF_SEED_GROUPS, SF_SEED_GROUPS, ROUND_LABELS, playoffWeekForRound, CFP_LOGO_URL } from '../constants/playoffBracket';
 import { field } from '../../utils/fieldHelper';
 import { isRealTeam } from '../../utils/teamDataUtils';
 
-const CCG_CONFERENCES = conferences.filter(c => c.value !== 'FBS_INDEPENDENT');
+const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '14px', py: '9px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' };
+const btnLiveSx = { border: 0, background: 'var(--live)', color: '#fff', borderRadius: 'var(--r-sm)', px: '14px', py: '9px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' };
+const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '14px', py: '9px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const cardGridSx = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px', padding: '16px' };
+const cardSx = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', overflow: 'hidden' };
+const teamRowSx = (won) => ({ display: 'flex', alignItems: 'center', gap: '8px', px: '12px', py: '7px', background: won ? 'color-mix(in srgb, var(--field) 10%, transparent)' : 'transparent', borderBottom: '1px solid var(--line-soft)', '&:last-of-type': { borderBottom: 0 } });
+const removeXSx = { border: 0, background: 'transparent', color: 'var(--live)', cursor: 'pointer', fontSize: '0.95rem', ml: 'auto' };
+
+const CFP_IMAGE_BASE = import.meta.env.VITE_API_URL || 'http://localhost:1313';
+const resolveLogoUrl = (logo) => (logo ? (logo.startsWith('http') ? logo : `${CFP_IMAGE_BASE}/images/${logo}`) : null);
 
 const PostseasonAdminTab = ({
     season,
@@ -50,6 +53,8 @@ const PostseasonAdminTab = ({
     onShowSnackbar,
     onOpenAddGameDialog,
 }) => {
+    useConferencesMap();
+    const CCG_CONFERENCES = activeConferenceList().filter((c) => c.code !== 'FBS_INDEPENDENT');
     const [playoffTeams, setPlayoffTeams] = useState(Array(24).fill(null));
     const [playoffDialogOpen, setPlayoffDialogOpen] = useState(false);
 
@@ -212,11 +217,7 @@ const PostseasonAdminTab = ({
         setEditingBowlName(field(game, 'postseasonGameName', 'postseason_game_name') || '');
         const logoUrl = field(game, 'postseasonGameLogo', 'postseason_game_logo');
         setEditingBowlLogo(logoUrl || null);
-        if (logoUrl) {
-            setEditingBowlLogoPreview(logoUrl.startsWith('http') ? logoUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${logoUrl}`);
-        } else {
-            setEditingBowlLogoPreview(null);
-        }
+        setEditingBowlLogoPreview(logoUrl ? resolveLogoUrl(logoUrl) : null);
         setEditBowlDialogOpen(true);
     };
 
@@ -528,205 +529,84 @@ const PostseasonAdminTab = ({
         }
     }, [postseasonSchedule]);
 
+    const renderMatchupCard = (game, { showEdit } = {}) => {
+        const home = field(game, 'homeTeam', 'home_team');
+        const away = field(game, 'awayTeam', 'away_team');
+        const finished = field(game, 'finished', 'finished');
+        const started = field(game, 'started', 'started');
+        const homeScore = field(game, 'homeScore', 'home_score');
+        const awayScore = field(game, 'awayScore', 'away_score');
+        const logo = field(game, 'postseasonGameLogo', 'postseason_game_logo');
+        const bowlName = field(game, 'postseasonGameName', 'postseason_game_name');
+        const homeWon = finished && homeScore != null && homeScore > awayScore;
+        const awayWon = finished && awayScore != null && awayScore > homeScore;
+
+        return (
+            <Box key={game.id} sx={cardSx}>
+                {(logo || showEdit) && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', px: '12px', py: '9px', borderBottom: '1px solid var(--line-soft)', background: 'var(--surface-2)' }}>
+                        {logo && <Avatar src={resolveLogoUrl(logo)} variant="rounded" sx={{ width: 28, height: 28 }} />}
+                        {showEdit && <Box sx={{ fontWeight: 700, fontSize: '0.82rem' }}>{bowlName || 'Unnamed bowl game'}</Box>}
+                        {showEdit && <Box component="button" type="button" onClick={() => handleEditBowlName(game)} sx={{ ...removeXSx, color: 'var(--brand)', fontSize: '0.72rem', fontWeight: 700 }}>Edit</Box>}
+                    </Box>
+                )}
+                <Box sx={teamRowSx(homeWon)}>
+                    <TeamMark team={teamMap[home] || { name: home }} size={22} />
+                    <Box sx={{ fontWeight: homeWon ? 800 : 600, fontSize: '0.85rem' }}>{home}</Box>
+                    {(finished || started) && homeScore != null && <Box sx={{ ml: 'auto', fontFamily: 'var(--cond)', fontWeight: 800 }}>{homeScore}</Box>}
+                </Box>
+                <Box sx={teamRowSx(awayWon)}>
+                    <TeamMark team={teamMap[away] || { name: away }} size={22} />
+                    <Box sx={{ fontWeight: awayWon ? 800 : 600, fontSize: '0.85rem' }}>{away}</Box>
+                    {(finished || started) && awayScore != null && <Box sx={{ ml: 'auto', fontFamily: 'var(--cond)', fontWeight: 800 }}>{awayScore}</Box>}
+                    <Box component="button" type="button" onClick={() => handleDeleteGame(game.id)} sx={removeXSx}>&times;</Box>
+                </Box>
+            </Box>
+        );
+    };
+
     return (
         <Box>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, alignItems: 'center' }}>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => {
-                        setCcgConference('');
-                        setCcgHome(null);
-                        setCcgAway(null);
-                        setCcgDialogOpen(true);
-                    }}
-                >
-                    Add CCG
-                </Button>
-                <Button
-                    variant="contained"
-                    color="error"
-                    startIcon={<FinalizeIcon />}
-                    onClick={handleOpenPlayoffDialog}
-                >
-                    {postseasonPlayoffs.length > 0 ? 'Edit Playoff Bracket' : 'Set Up Playoff Bracket'}
-                </Button>
-                <Button
-                    variant="outlined"
-                    startIcon={<AddIcon />}
-                    onClick={() => onOpenAddGameDialog('BOWL', 14)}
-                >
-                    Add Bowl Game
-                </Button>
-                <Button
-                    variant="outlined"
-                    startIcon={<AddIcon />}
-                    onClick={() => onOpenAddGameDialog('PLAYOFFS', null)}
-                >
-                    Add Playoff Game
-                </Button>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', mb: '16px', alignItems: 'center' }}>
+                <Box component="button" type="button" onClick={() => { setCcgConference(''); setCcgHome(null); setCcgAway(null); setCcgDialogOpen(true); }} sx={btnPrimarySx}>+ Add CCG</Box>
+                <Box component="button" type="button" onClick={handleOpenPlayoffDialog} sx={btnLiveSx}>
+                    {postseasonPlayoffs.length > 0 ? 'Edit playoff bracket' : 'Set up playoff bracket'}
+                </Box>
+                <Box component="button" type="button" onClick={() => onOpenAddGameDialog('BOWL', 14)} sx={ctrlSx}>+ Add bowl game</Box>
+                <Box component="button" type="button" onClick={() => onOpenAddGameDialog('PLAYOFFS', null)} sx={ctrlSx}>+ Add playoff game</Box>
             </Box>
 
             {postseasonLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-                    <CircularProgress />
-                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
             ) : (
                 <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', mb: 2 }}>
-                        Conference Championships
-                    </Typography>
-                    {postseasonCCG.length > 0 ? (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
-                            {postseasonCCG.map(game => {
-                                const home = field(game, 'homeTeam', 'home_team');
-                                const away = field(game, 'awayTeam', 'away_team');
-                                const finished = field(game, 'finished', 'finished');
-                                const started = field(game, 'started', 'started');
-                                const homeScore = field(game, 'homeScore', 'home_score');
-                                const awayScore = field(game, 'awayScore', 'away_score');
-                                const homeWon = finished && homeScore != null && homeScore > awayScore;
-                                const awayWon = finished && awayScore != null && awayScore > homeScore;
-                                return (
-                                    <Paper key={game.id} sx={{ p: 2, minWidth: 280 }} elevation={2}>
-                                        {field(game, 'postseasonGameLogo', 'postseason_game_logo') && (
-                                            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-                                                <Avatar
-                                                    src={(() => { const logo = field(game, 'postseasonGameLogo', 'postseason_game_logo'); return logo.startsWith('http') ? logo : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${logo}`; })()}
-                                                    sx={{ width: 80, height: 80 }}
-                                                    variant="rounded"
-                                                />
-                                            </Box>
-                                        )}
-                                        <Box sx={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5,
-                                            backgroundColor: homeWon ? 'rgba(5,150,105,0.08)' : 'transparent',
-                                            borderRadius: 1, px: 0.5, py: 0.25,
-                                        }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Avatar src={teamMap[home]?.logo} sx={{ width: 24, height: 24 }}>{home?.charAt(0)}</Avatar>
-                                                <Typography variant="body2" sx={{ fontWeight: homeWon ? 700 : 600 }}>{home}</Typography>
-                                            </Box>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                {(finished || started) && homeScore != null && (
-                                                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{homeScore}</Typography>
-                                                )}
-                                            </Box>
-                                        </Box>
-                                        <Box sx={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                            backgroundColor: awayWon ? 'rgba(5,150,105,0.08)' : 'transparent',
-                                            borderRadius: 1, px: 0.5, py: 0.25,
-                                        }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Avatar src={teamMap[away]?.logo} sx={{ width: 24, height: 24 }}>{away?.charAt(0)}</Avatar>
-                                                <Typography variant="body2" sx={{ fontWeight: awayWon ? 700 : 600 }}>{away}</Typography>
-                                            </Box>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                {(finished || started) && awayScore != null && (
-                                                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{awayScore}</Typography>
-                                                )}
-                                                <IconButton size="small" color="error" onClick={() => handleDeleteGame(game.id)}>
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
-                                            </Box>
-                                        </Box>
-                                    </Paper>
-                                );
-                            })}
+                    <Panel header="Conference championships" sx={{ mb: '16px' }}>
+                        {postseasonCCG.length > 0 ? (
+                            <Box sx={cardGridSx}>{postseasonCCG.map((game) => renderMatchupCard(game))}</Box>
+                        ) : (
+                            <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No conference championship games scheduled.</Box>
+                        )}
+                    </Panel>
+
+                    <Panel header="Playoff bracket" sx={{ mb: '16px' }}>
+                        <Box sx={{ p: '16px' }}>
+                            <Postseason
+                                postseasonSchedule={playoffOnlySchedule}
+                                teamMap={teamMap}
+                                adminMode={true}
+                                onAdvanceTeam={(game) => { setAdvanceGame(game); setAdvanceWinner(''); setAdvanceDialogOpen(true); }}
+                                onDeleteGame={(gameId) => handleDeleteGame(gameId)}
+                            />
                         </Box>
-                    ) : (
-                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4 }}>No conference championship games scheduled.</Typography>
-                    )}
+                    </Panel>
 
-                    <Divider sx={{ my: 3 }} />
-
-                    <Postseason
-                        postseasonSchedule={playoffOnlySchedule}
-                        teamMap={teamMap}
-                        adminMode={true}
-                        onAdvanceTeam={(game) => {
-                            setAdvanceGame(game);
-                            setAdvanceWinner('');
-                            setAdvanceDialogOpen(true);
-                        }}
-                        onDeleteGame={(gameId) => handleDeleteGame(gameId)}
-                    />
-
-                    <Divider sx={{ my: 3 }} />
-
-                    <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', mb: 2 }}>
-                        Bowl Games
-                    </Typography>
-                    {postseasonBowls.length > 0 ? (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
-                            {postseasonBowls.map(game => {
-                                const home = field(game, 'homeTeam', 'home_team');
-                                const away = field(game, 'awayTeam', 'away_team');
-                                const finished = field(game, 'finished', 'finished');
-                                const started = field(game, 'started', 'started');
-                                const homeScore = field(game, 'homeScore', 'home_score');
-                                const awayScore = field(game, 'awayScore', 'away_score');
-                                const bowlName = field(game, 'postseasonGameName', 'postseason_game_name');
-                                const homeWon = finished && homeScore != null && homeScore > awayScore;
-                                const awayWon = finished && awayScore != null && awayScore > homeScore;
-                                return (
-                                    <Paper key={game.id} sx={{ p: 2, minWidth: 280 }} elevation={2}>
-                                        {field(game, 'postseasonGameLogo', 'postseason_game_logo') && (
-                                            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-                                                <Avatar
-                                                    src={(() => { const logo = field(game, 'postseasonGameLogo', 'postseason_game_logo'); return logo.startsWith('http') ? logo : `${import.meta.env.VITE_API_URL || 'http://localhost:1313'}/images/${logo}`; })()}
-                                                    sx={{ width: 80, height: 80 }}
-                                                    variant="rounded"
-                                                />
-                                            </Box>
-                                        )}
-                                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                                                {bowlName || 'Unnamed Bowl Game'}
-                                            </Typography>
-                                            <IconButton size="small" color="primary" onClick={() => handleEditBowlName(game)}>
-                                                <EditIcon fontSize="small" />
-                                            </IconButton>
-                                        </Box>
-                                        <Box sx={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5,
-                                            backgroundColor: homeWon ? 'rgba(5,150,105,0.08)' : 'transparent',
-                                            borderRadius: 1, px: 0.5, py: 0.25,
-                                        }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Avatar src={teamMap[home]?.logo} sx={{ width: 24, height: 24 }}>{home?.charAt(0)}</Avatar>
-                                                <Typography variant="body2" sx={{ fontWeight: homeWon ? 700 : 600 }}>{home}</Typography>
-                                            </Box>
-                                            {(finished || started) && homeScore != null && (
-                                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{homeScore}</Typography>
-                                            )}
-                                        </Box>
-                                        <Box sx={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                            backgroundColor: awayWon ? 'rgba(5,150,105,0.08)' : 'transparent',
-                                            borderRadius: 1, px: 0.5, py: 0.25,
-                                        }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Avatar src={teamMap[away]?.logo} sx={{ width: 24, height: 24 }}>{away?.charAt(0)}</Avatar>
-                                                <Typography variant="body2" sx={{ fontWeight: awayWon ? 700 : 600 }}>{away}</Typography>
-                                            </Box>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                {(finished || started) && awayScore != null && (
-                                                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{awayScore}</Typography>
-                                                )}
-                                                <IconButton size="small" color="error" onClick={() => handleDeleteGame(game.id)}>
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
-                                            </Box>
-                                        </Box>
-                                    </Paper>
-                                );
-                            })}
-                        </Box>
-                    ) : (
-                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4 }}>No bowl games scheduled.</Typography>
-                    )}
+                    <Panel header="Bowl games">
+                        {postseasonBowls.length > 0 ? (
+                            <Box sx={cardGridSx}>{postseasonBowls.map((game) => renderMatchupCard(game, { showEdit: true }))}</Box>
+                        ) : (
+                            <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No bowl games scheduled.</Box>
+                        )}
+                    </Panel>
                 </Box>
             )}
 
@@ -750,7 +630,7 @@ const PostseasonAdminTab = ({
                                 }}
                             >
                                 {CCG_CONFERENCES.map(c => (
-                                    <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>
+                                    <MenuItem key={c.code} value={c.code}>{c.label}</MenuItem>
                                 ))}
                             </Select>
                         </FormControl>
@@ -896,7 +776,6 @@ const PostseasonAdminTab = ({
                         variant="contained"
                         color="error"
                         onClick={handleGeneratePlayoffBracket}
-                        startIcon={<FinalizeIcon />}
                     >
                         {postseasonPlayoffs.length > 0 ? 'Regenerate Bracket' : 'Finalize Bracket'}
                     </Button>
@@ -945,7 +824,7 @@ const PostseasonAdminTab = ({
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setAdvanceDialogOpen(false)}>Cancel</Button>
-                    <Button variant="contained" color="primary" onClick={handleAdvanceTeam} startIcon={<AdvanceIcon />}>
+                    <Button variant="contained" color="primary" onClick={handleAdvanceTeam}>
                         Advance Team
                     </Button>
                 </DialogActions>
@@ -1038,6 +917,17 @@ const PostseasonAdminTab = ({
             </Dialog>
         </Box>
     );
+};
+
+PostseasonAdminTab.propTypes = {
+    season: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    postseasonSchedule: PropTypes.array,
+    postseasonLoading: PropTypes.bool,
+    allTeams: PropTypes.array,
+    teamMap: PropTypes.object,
+    onRefresh: PropTypes.func.isRequired,
+    onShowSnackbar: PropTypes.func.isRequired,
+    onOpenAddGameDialog: PropTypes.func.isRequired,
 };
 
 export default PostseasonAdminTab;
