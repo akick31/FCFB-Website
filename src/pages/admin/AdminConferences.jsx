@@ -6,6 +6,7 @@ import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
 import Toggle from '../../components/ui/Toggle';
 import SelectPill from '../../components/ui/SelectPill';
+import LogoUrlField from '../../components/admin/LogoUrlField';
 import { getConferences, createConference, setConferenceActive } from '../../api/conferenceApi';
 import { refreshConferences } from '../../components/constants/conferences';
 
@@ -147,14 +148,8 @@ const AdminConferences = () => {
                         <Box sx={labelSx}>Label</Box>
                         <Box component="input" value={form.label} onChange={(e) => setForm((prev) => ({ ...prev, label: e.target.value }))} required sx={inputSx} />
                     </Box>
-                    <Box>
-                        <Box sx={labelSx}>Logo URL</Box>
-                        <Box component="input" value={form.logoUrl} onChange={(e) => setForm((prev) => ({ ...prev, logoUrl: e.target.value }))} sx={inputSx} />
-                    </Box>
-                    <Box>
-                        <Box sx={labelSx}>Dark logo URL</Box>
-                        <Box component="input" value={form.logoUrlDark} onChange={(e) => setForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))} sx={inputSx} />
-                    </Box>
+                    <LogoUrlField label="Logo URL" value={form.logoUrl} onChange={(e) => setForm((prev) => ({ ...prev, logoUrl: e.target.value }))} previewBg="#ffffff" />
+                    <LogoUrlField label="Dark logo URL" value={form.logoUrlDark} onChange={(e) => setForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))} previewBg="#0a1620" />
                     <Box component="button" type="submit" disabled={saving} sx={btnSx}>
                         {saving ? 'Adding...' : 'Add conference'}
                     </Box>

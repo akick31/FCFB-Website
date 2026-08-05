@@ -8,6 +8,7 @@ import SelectPill from '../../components/ui/SelectPill';
 import SegTabs from '../../components/ui/SegTabs';
 import Toggle from '../../components/ui/Toggle';
 import ConferenceRulesEditor from '../../components/scheduling/ConferenceRulesEditor';
+import LogoUrlField from '../../components/admin/LogoUrlField';
 import { getConferences, updateConference, setConferenceActive } from '../../api/conferenceApi';
 import { getConferenceRules, saveConferenceRules } from '../../api/scheduleApi';
 import { getAllTeams, updateTeam } from '../../api/teamApi';
@@ -287,14 +288,8 @@ const AdminConferenceDetail = () => {
                                     <Box sx={labelSx}>Display order</Box>
                                     <Box component="input" type="number" value={settingsForm.displayOrder} onChange={(e) => setSettingsForm((prev) => ({ ...prev, displayOrder: e.target.value }))} sx={inputSx} />
                                 </Box>
-                                <Box>
-                                    <Box sx={labelSx}>Logo URL</Box>
-                                    <Box component="input" value={settingsForm.logoUrl} onChange={(e) => setSettingsForm((prev) => ({ ...prev, logoUrl: e.target.value }))} sx={inputSx} />
-                                </Box>
-                                <Box>
-                                    <Box sx={labelSx}>Dark logo URL</Box>
-                                    <Box component="input" value={settingsForm.logoUrlDark} onChange={(e) => setSettingsForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))} sx={inputSx} />
-                                </Box>
+                                <LogoUrlField label="Logo URL" value={settingsForm.logoUrl} onChange={(e) => setSettingsForm((prev) => ({ ...prev, logoUrl: e.target.value }))} previewBg="#ffffff" />
+                                <LogoUrlField label="Dark logo URL" value={settingsForm.logoUrlDark} onChange={(e) => setSettingsForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))} previewBg="#0a1620" />
                                 <Box>
                                     <Box sx={labelSx}>Active</Box>
                                     <Toggle on={!!conference.active} onClick={handleToggleActive} />
