@@ -34,7 +34,7 @@ const AdminConferences = () => {
         setLoading(true);
         try {
             const conferences = await getConferences();
-            setConferences([...conferences].sort((a, b) => (a.display_order || 0) - (b.display_order || 0)));
+            setConferences([...conferences].sort((a, b) => (a.label || '').localeCompare(b.label || '')));
         } catch (err) {
             setError('Failed to load conferences');
         } finally {
@@ -66,13 +66,11 @@ const AdminConferences = () => {
         setError(null);
         setSuccess(null);
         try {
-            const nextOrder = conferences.reduce((max, conference) => Math.max(max, conference.display_order || 0), -1) + 1;
             await createConference({
                 code: form.code.trim().toUpperCase().replace(/\s+/g, '_'),
                 label: form.label.trim(),
                 logoUrl: form.logoUrl.trim() || null,
                 logoUrlDark: form.logoUrlDark.trim() || null,
-                displayOrder: nextOrder,
             });
             refreshConferences();
             setForm(emptyForm);
