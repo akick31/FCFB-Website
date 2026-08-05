@@ -1,17 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
     Box,
-    Typography,
-    Button,
     Grid,
     TextField,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
     Autocomplete,
     Avatar,
-    Chip,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -39,6 +32,12 @@ const cardGridSx = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, mi
 const cardSx = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', overflow: 'hidden' };
 const teamRowSx = (won) => ({ display: 'flex', alignItems: 'center', gap: '8px', px: '12px', py: '7px', background: won ? 'color-mix(in srgb, var(--field) 10%, transparent)' : 'transparent', borderBottom: '1px solid var(--line-soft)', '&:last-of-type': { borderBottom: 0 } });
 const removeXSx = { border: 0, background: 'transparent', color: 'var(--live)', cursor: 'pointer', fontSize: '0.95rem', ml: 'auto' };
+const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
+const inputSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', width: '100%' };
+const selectSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', cursor: 'pointer', width: '100%', '& option': { background: 'var(--surface)', color: 'var(--text)' } };
+const dialogPaperSx = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)' };
+const dialogTitleSx = { color: 'var(--text)', fontWeight: 800, fontSize: '1.05rem' };
+const autocompleteSx = { '& .MuiOutlinedInput-root': { borderRadius: 'var(--r-sm)' } };
 
 const CFP_IMAGE_BASE = import.meta.env.VITE_API_URL || 'http://localhost:1313';
 const resolveLogoUrl = (logo) => (logo ? (logo.startsWith('http') ? logo : `${CFP_IMAGE_BASE}/images/${logo}`) : null);
@@ -610,30 +609,32 @@ const PostseasonAdminTab = ({
                 </Box>
             )}
 
-            <Dialog open={ccgDialogOpen} onClose={() => setCcgDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Add Conference Championship Game</DialogTitle>
+            <Dialog open={ccgDialogOpen} onClose={() => setCcgDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+                <DialogTitle sx={dialogTitleSx}>Add Conference Championship Game</DialogTitle>
                 <DialogContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '6px' }}>
                         <Alert severity="info">
                             Week 13 · Conference Championship
                         </Alert>
 
-                        <FormControl size="small" fullWidth>
-                            <InputLabel>Conference</InputLabel>
-                            <Select
+                        <Box>
+                            <Box component="label" sx={labelSx}>Conference</Box>
+                            <Box
+                                component="select"
                                 value={ccgConference}
-                                label="Conference"
                                 onChange={(e) => {
                                     setCcgConference(e.target.value);
                                     setCcgHome(null);
                                     setCcgAway(null);
                                 }}
+                                sx={selectSx}
                             >
+                                <option value="">Select conference...</option>
                                 {CCG_CONFERENCES.map(c => (
-                                    <MenuItem key={c.code} value={c.code}>{c.label}</MenuItem>
+                                    <option key={c.code} value={c.code}>{c.label}</option>
                                 ))}
-                            </Select>
-                        </FormControl>
+                            </Box>
+                        </Box>
 
                         <Autocomplete
                             options={ccgTeams.filter(t => t.name !== ccgAway?.name)}
@@ -641,6 +642,7 @@ const PostseasonAdminTab = ({
                             value={ccgHome}
                             onChange={(_, v) => setCcgHome(v)}
                             disabled={!ccgConference}
+                            sx={autocompleteSx}
                             renderInput={(params) => (
                                 <TextField {...params} label="Home Team" size="small" />
                             )}
@@ -649,7 +651,7 @@ const PostseasonAdminTab = ({
                                 return (
                                     <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <Avatar src={option.logo} sx={{ width: 20, height: 20 }}>{option.name?.charAt(0)}</Avatar>
-                                        <Typography variant="body2">{option.name}</Typography>
+                                        <Box component="span" sx={{ fontSize: '0.85rem' }}>{option.name}</Box>
                                     </Box>
                                 );
                             }}
@@ -662,6 +664,7 @@ const PostseasonAdminTab = ({
                             value={ccgAway}
                             onChange={(_, v) => setCcgAway(v)}
                             disabled={!ccgConference}
+                            sx={autocompleteSx}
                             renderInput={(params) => (
                                 <TextField {...params} label="Away Team" size="small" />
                             )}
@@ -670,7 +673,7 @@ const PostseasonAdminTab = ({
                                 return (
                                     <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <Avatar src={option.logo} sx={{ width: 20, height: 20 }}>{option.name?.charAt(0)}</Avatar>
-                                        <Typography variant="body2">{option.name}</Typography>
+                                        <Box component="span" sx={{ fontSize: '0.85rem' }}>{option.name}</Box>
                                     </Box>
                                 );
                             }}
@@ -678,23 +681,23 @@ const PostseasonAdminTab = ({
                         />
                     </Box>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setCcgDialogOpen(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleCreateCCG} disabled={!ccgHome || !ccgAway}>
+                <DialogActions sx={{ px: '20px', pb: '18px' }}>
+                    <Box component="button" type="button" onClick={() => setCcgDialogOpen(false)} sx={ctrlSx}>Cancel</Box>
+                    <Box component="button" type="button" onClick={handleCreateCCG} disabled={!ccgHome || !ccgAway} sx={{ ...btnPrimarySx, opacity: (!ccgHome || !ccgAway) ? 0.6 : 1, pointerEvents: (!ccgHome || !ccgAway) ? 'none' : 'auto' }}>
                         Schedule CCG
-                    </Button>
+                    </Box>
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={playoffDialogOpen} onClose={() => setPlayoffDialogOpen(false)} maxWidth="xl" fullWidth>
-                <DialogTitle>
+            <Dialog open={playoffDialogOpen} onClose={() => setPlayoffDialogOpen(false)} maxWidth="xl" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+                <DialogTitle sx={dialogTitleSx}>
                     {postseasonPlayoffs.length > 0
                         ? 'Edit 24-Team Playoff Bracket'
                         : 'Set Up 24-Team Playoff Bracket'
                     }
                 </DialogTitle>
                 <DialogContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '6px' }}>
                         <Alert severity="info">
                             24-team single elimination. Seeds 1-8 receive a first round bye.
                             First round: #9 vs #24, #10 vs #23, etc. Higher seed is home team.
@@ -709,24 +712,24 @@ const PostseasonAdminTab = ({
 
                         <Divider />
 
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        <Box sx={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text)' }}>
                             Fill in the bracket by seed (1 = best, 24 = worst)
-                        </Typography>
+                        </Box>
 
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        <Box sx={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                             Each team can only appear once. Selected teams are automatically removed from other dropdowns.
-                        </Typography>
+                        </Box>
 
                         <Grid container spacing={1}>
                             {Array.from({ length: 24 }, (_, i) => (
                                 <Grid item xs={12} sm={6} md={4} key={i}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         {i < 8 && (
-                                            <Chip label="BYE" size="small" color="info" variant="outlined" sx={{ minWidth: 42 }} />
+                                            <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 42, height: 22, border: '1px solid var(--brand)', color: 'var(--brand)', borderRadius: 'var(--r-sm)', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em' }}>BYE</Box>
                                         )}
-                                        <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 30 }}>
+                                        <Box component="span" sx={{ fontWeight: 700, minWidth: 30, fontSize: '0.85rem', color: 'var(--text)' }}>
                                             #{i + 1}
-                                        </Typography>
+                                        </Box>
                                         <Autocomplete
                                             options={getAvailablePlayoffTeams(i)}
                                             getOptionLabel={(option) => option.name || ''}
@@ -744,11 +747,11 @@ const PostseasonAdminTab = ({
                                                 return (
                                                     <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                         <Avatar src={option.logo} sx={{ width: 20, height: 20 }}>{option.name?.charAt(0)}</Avatar>
-                                                        <Typography variant="body2">{option.name}</Typography>
+                                                        <Box component="span" sx={{ fontSize: '0.85rem' }}>{option.name}</Box>
                                                     </Box>
                                                 );
                                             }}
-                                            sx={{ flex: 1 }}
+                                            sx={{ ...autocompleteSx, flex: 1 }}
                                             isOptionEqualToValue={(option, value) => option.name === value?.name}
                                         />
                                     </Box>
@@ -758,10 +761,10 @@ const PostseasonAdminTab = ({
 
                         {previewScheduleEntries.length > 0 && (
                             <>
-                                <Divider sx={{ my: 2 }} />
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                                <Divider sx={{ my: '10px' }} />
+                                <Box sx={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text)', mb: '4px' }}>
                                     Bracket Preview
-                                </Typography>
+                                </Box>
                                 <Postseason
                                     postseasonSchedule={previewScheduleEntries}
                                     teamMap={teamMap}
@@ -770,83 +773,72 @@ const PostseasonAdminTab = ({
                         )}
                     </Box>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setPlayoffDialogOpen(false)}>Cancel</Button>
-                    <Button
-                        variant="contained"
-                        color="error"
-                        onClick={handleGeneratePlayoffBracket}
-                    >
+                <DialogActions sx={{ px: '20px', pb: '18px' }}>
+                    <Box component="button" type="button" onClick={() => setPlayoffDialogOpen(false)} sx={ctrlSx}>Cancel</Box>
+                    <Box component="button" type="button" onClick={handleGeneratePlayoffBracket} sx={btnLiveSx}>
                         {postseasonPlayoffs.length > 0 ? 'Regenerate Bracket' : 'Finalize Bracket'}
-                    </Button>
+                    </Box>
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={advanceDialogOpen} onClose={() => setAdvanceDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Advance Winner to Next Round</DialogTitle>
+            <Dialog open={advanceDialogOpen} onClose={() => setAdvanceDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+                <DialogTitle sx={dialogTitleSx}>Advance Winner to Next Round</DialogTitle>
                 <DialogContent>
                     {advanceGame && (() => {
                         const currentRound = field(advanceGame, 'playoffRound', 'playoff_round') || 1;
                         const nextRound = currentRound + 1;
                         const nextWeek = playoffWeekForRound(nextRound);
                         return (
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '6px' }}>
                                 <Alert severity="info">
                                     Select the winner to advance them to {ROUND_LABELS[nextRound] || `Round ${nextRound}`} (Week {nextWeek}).
                                 </Alert>
 
-                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                <Box sx={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)' }}>
                                     Current Game: #{field(advanceGame, 'playoffHomeSeed', 'playoff_home_seed')} {field(advanceGame, 'homeTeam', 'home_team')} vs #{field(advanceGame, 'playoffAwaySeed', 'playoff_away_seed')} {field(advanceGame, 'awayTeam', 'away_team')}
-                                </Typography>
+                                </Box>
 
-                                <FormControl size="small" fullWidth>
-                                    <InputLabel>Winner</InputLabel>
-                                    <Select
-                                        value={advanceWinner}
-                                        label="Winner"
-                                        onChange={(e) => setAdvanceWinner(e.target.value)}
-                                    >
+                                <Box>
+                                    <Box component="label" sx={labelSx}>Winner</Box>
+                                    <Box component="select" value={advanceWinner} onChange={(e) => setAdvanceWinner(e.target.value)} sx={selectSx}>
+                                        <option value="">Select winner...</option>
                                         {field(advanceGame, 'homeTeam', 'home_team') && field(advanceGame, 'homeTeam', 'home_team') !== 'TBD' && field(advanceGame, 'homeTeam', 'home_team') !== 'OPEN' && (
-                                            <MenuItem value={field(advanceGame, 'homeTeam', 'home_team')}>
+                                            <option value={field(advanceGame, 'homeTeam', 'home_team')}>
                                                 #{field(advanceGame, 'playoffHomeSeed', 'playoff_home_seed')} {field(advanceGame, 'homeTeam', 'home_team')}
-                                            </MenuItem>
+                                            </option>
                                         )}
                                         {field(advanceGame, 'awayTeam', 'away_team') && field(advanceGame, 'awayTeam', 'away_team') !== 'TBD' && field(advanceGame, 'awayTeam', 'away_team') !== 'OPEN' && (
-                                            <MenuItem value={field(advanceGame, 'awayTeam', 'away_team')}>
+                                            <option value={field(advanceGame, 'awayTeam', 'away_team')}>
                                                 #{field(advanceGame, 'playoffAwaySeed', 'playoff_away_seed')} {field(advanceGame, 'awayTeam', 'away_team')}
-                                            </MenuItem>
+                                            </option>
                                         )}
-                                    </Select>
-                                </FormControl>
+                                    </Box>
+                                </Box>
                             </Box>
                         );
                     })()}
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setAdvanceDialogOpen(false)}>Cancel</Button>
-                    <Button variant="contained" color="primary" onClick={handleAdvanceTeam}>
+                <DialogActions sx={{ px: '20px', pb: '18px' }}>
+                    <Box component="button" type="button" onClick={() => setAdvanceDialogOpen(false)} sx={ctrlSx}>Cancel</Box>
+                    <Box component="button" type="button" onClick={handleAdvanceTeam} sx={btnPrimarySx}>
                         Advance Team
-                    </Button>
+                    </Box>
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={editBowlDialogOpen} onClose={() => setEditBowlDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Edit Bowl Game</DialogTitle>
+            <Dialog open={editBowlDialogOpen} onClose={() => setEditBowlDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+                <DialogTitle sx={dialogTitleSx}>Edit Bowl Game</DialogTitle>
                 <DialogContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '6px' }}>
                         {editingBowlGame && (
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            <Box sx={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                                 {field(editingBowlGame, 'homeTeam', 'home_team')} vs {field(editingBowlGame, 'awayTeam', 'away_team')}
-                            </Typography>
+                            </Box>
                         )}
-                        <TextField
-                            label="Bowl Game Name"
-                            size="small"
-                            fullWidth
-                            value={editingBowlName}
-                            onChange={(e) => setEditingBowlName(e.target.value)}
-                            placeholder="e.g., Rose Bowl, Sugar Bowl, etc."
-                        />
+                        <Box>
+                            <Box component="label" sx={labelSx}>Bowl game name</Box>
+                            <Box component="input" value={editingBowlName} onChange={(e) => setEditingBowlName(e.target.value)} placeholder="e.g., Rose Bowl, Sugar Bowl, etc." sx={inputSx} />
+                        </Box>
                         <Box>
                             <input
                                 accept="image/*"
@@ -873,20 +865,12 @@ const PostseasonAdminTab = ({
                                     }
                                 }}
                             />
-                            <label htmlFor="edit-logo-upload-button">
-                                <Button
-                                    variant="outlined"
-                                    component="span"
-                                    startIcon={uploadingLogo ? <CircularProgress size={16} /> : <UploadIcon />}
-                                    disabled={uploadingLogo}
-                                    fullWidth
-                                    size="small"
-                                >
-                                    {uploadingLogo ? 'Uploading...' : editingBowlLogo ? 'Change Logo' : 'Upload Postseason Game Logo'}
-                                </Button>
-                            </label>
+                            <Box component="label" htmlFor="edit-logo-upload-button" sx={{ ...ctrlSx, width: '100%', justifyContent: 'center', gap: '8px', opacity: uploadingLogo ? 0.6 : 1, pointerEvents: uploadingLogo ? 'none' : 'auto' }}>
+                                {uploadingLogo ? <CircularProgress size={14} /> : <UploadIcon sx={{ fontSize: 16 }} />}
+                                {uploadingLogo ? 'Uploading...' : editingBowlLogo ? 'Change Logo' : 'Upload Postseason Game Logo'}
+                            </Box>
                             {editingBowlLogoPreview && (
-                                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                                <Box sx={{ mt: '12px', display: 'flex', justifyContent: 'center' }}>
                                     <Avatar
                                         src={editingBowlLogoPreview}
                                         sx={{ width: 100, height: 100 }}
@@ -895,24 +879,24 @@ const PostseasonAdminTab = ({
                                 </Box>
                             )}
                             {editingBowlLogo && !editingBowlLogoPreview && (
-                                <Alert severity="info" sx={{ mt: 1 }}>
+                                <Alert severity="info" sx={{ mt: '8px' }}>
                                     Logo: {editingBowlLogo}
                                 </Alert>
                             )}
                         </Box>
                     </Box>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => {
+                <DialogActions sx={{ px: '20px', pb: '18px' }}>
+                    <Box component="button" type="button" onClick={() => {
                         setEditBowlDialogOpen(false);
                         setEditingBowlGame(null);
                         setEditingBowlName('');
                         setEditingBowlLogo(null);
                         setEditingBowlLogoPreview(null);
-                    }}>Cancel</Button>
-                    <Button variant="contained" color="primary" onClick={handleSaveBowlName}>
+                    }} sx={ctrlSx}>Cancel</Box>
+                    <Box component="button" type="button" onClick={handleSaveBowlName} sx={btnPrimarySx}>
                         Save
-                    </Button>
+                    </Box>
                 </DialogActions>
             </Dialog>
         </Box>
