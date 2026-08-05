@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
+import ConferenceMark from '../../components/ui/ConferenceMark';
 import DataTable from '../../components/ui/DataTable';
 import Toggle from '../../components/ui/Toggle';
 import SelectPill from '../../components/ui/SelectPill';
@@ -13,7 +14,7 @@ import { refreshConferences } from '../../components/constants/conferences';
 const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
 const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem' };
 const btnSx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
-const manageBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const manageBtnSx = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
 
 const ACTIVE_OPTIONS = [{ value: 'ALL', label: 'Active + inactive' }, { value: 'ACTIVE', label: 'Active only' }, { value: 'INACTIVE', label: 'Inactive only' }];
@@ -21,7 +22,6 @@ const ACTIVE_OPTIONS = [{ value: 'ALL', label: 'Active + inactive' }, { value: '
 const emptyForm = { code: '', label: '', logoUrl: '', logoUrlDark: '' };
 
 const AdminConferences = () => {
-    const navigate = useNavigate();
     const [conferences, setConferences] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -116,7 +116,7 @@ const AdminConferences = () => {
                             <tr key={conference.code}>
                                 <td className="lft stick">
                                     <Box className="teamcell">
-                                        {conference.logo_url && <Box component="img" src={conference.logo_url} alt="" sx={{ width: 22, height: 22, objectFit: 'contain' }} />}
+                                        {(conference.logo_url || conference.logo_url_dark) && <ConferenceMark conference={conference.code} size={22} />}
                                         <span className="nm">{conference.label}</span>
                                     </Box>
                                 </td>
@@ -126,7 +126,7 @@ const AdminConferences = () => {
                                     </Box>
                                 </td>
                                 <td className="lft">
-                                    <Box component="button" type="button" onClick={() => navigate(`/admin/conferences/${encodeURIComponent(conference.code)}`)} sx={manageBtnSx}>
+                                    <Box component={Link} to={`/admin/conferences/${encodeURIComponent(conference.code)}`} sx={manageBtnSx}>
                                         Manage
                                     </Box>
                                 </td>
@@ -137,18 +137,22 @@ const AdminConferences = () => {
             </Panel>
 
             <Panel header="Add conference">
-                <Box component="form" onSubmit={handleCreate} sx={{ p: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', alignItems: 'end' }}>
-                    <Box>
-                        <Box sx={labelSx}>Code</Box>
-                        <Box component="input" value={form.code} onChange={(e) => setForm((prev) => ({ ...prev, code: e.target.value }))} required sx={inputSx} />
+                <Box component="form" onSubmit={handleCreate} sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+                        <Box>
+                            <Box sx={labelSx}>Code</Box>
+                            <Box component="input" value={form.code} onChange={(e) => setForm((prev) => ({ ...prev, code: e.target.value }))} required sx={inputSx} />
+                        </Box>
+                        <Box>
+                            <Box sx={labelSx}>Label</Box>
+                            <Box component="input" value={form.label} onChange={(e) => setForm((prev) => ({ ...prev, label: e.target.value }))} required sx={inputSx} />
+                        </Box>
                     </Box>
-                    <Box>
-                        <Box sx={labelSx}>Label</Box>
-                        <Box component="input" value={form.label} onChange={(e) => setForm((prev) => ({ ...prev, label: e.target.value }))} required sx={inputSx} />
+                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                        <LogoUrlField label="Logo URL" value={form.logoUrl} onChange={(e) => setForm((prev) => ({ ...prev, logoUrl: e.target.value }))} previewBg="#ffffff" />
+                        <LogoUrlField label="Dark logo URL" value={form.logoUrlDark} onChange={(e) => setForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))} previewBg="#0a1620" />
                     </Box>
-                    <LogoUrlField label="Logo URL" value={form.logoUrl} onChange={(e) => setForm((prev) => ({ ...prev, logoUrl: e.target.value }))} previewBg="#ffffff" />
-                    <LogoUrlField label="Dark logo URL" value={form.logoUrlDark} onChange={(e) => setForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))} previewBg="#0a1620" />
-                    <Box component="button" type="submit" disabled={saving} sx={btnSx}>
+                    <Box component="button" type="submit" disabled={saving} sx={{ ...btnSx, justifySelf: 'start' }}>
                         {saving ? 'Adding...' : 'Add conference'}
                     </Box>
                 </Box>

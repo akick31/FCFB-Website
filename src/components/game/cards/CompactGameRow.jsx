@@ -1,13 +1,12 @@
 import React, { useEffect } from 'react';
 import { Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
 import StatusPill from '../../ui/StatusPill';
 import GameTypeLabel from './GameTypeLabel';
 import { isGameOngoing } from '../scoreboard/utils/scoreboardFormatters';
 import { ensureTeam } from '../../../hooks/useTeamsMap';
-import { clickableProps } from '../../../utils/a11y';
 
 const SideRow = ({ team, name, score, dim }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.84rem', color: dim ? 'var(--text-dim)' : 'var(--text)' }}>
@@ -20,7 +19,6 @@ const SideRow = ({ team, name, score, dim }) => (
 SideRow.propTypes = { team: PropTypes.object, name: PropTypes.string, score: PropTypes.number, dim: PropTypes.bool };
 
 const CompactGameRow = ({ game, teamsMap }) => {
-    const navigate = useNavigate();
     const home = teamsMap[game.home_team];
     const away = teamsMap[game.away_team];
     useEffect(() => {
@@ -33,7 +31,8 @@ const CompactGameRow = ({ game, teamsMap }) => {
 
     return (
         <Box
-            {...clickableProps(() => navigate(`/game-details/${game.game_id}`))}
+            component={Link}
+            to={`/game-details/${game.game_id}`}
             sx={{
                 display: 'grid',
                 gridTemplateColumns: '1fr auto auto',
@@ -44,6 +43,8 @@ const CompactGameRow = ({ game, teamsMap }) => {
                 py: 1.1,
                 borderBottom: '1px solid var(--line-soft)',
                 cursor: 'pointer',
+                textDecoration: 'none',
+                color: 'inherit',
                 '&:hover': { backgroundColor: 'var(--surface-2)' },
             }}
         >

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
     Box,
     TextField,
@@ -15,8 +16,10 @@ import {
 import { CloudUpload as UploadIcon, Lock as LockIcon, LockOpen as LockOpenIcon } from '@mui/icons-material';
 import AdminLayout from '../../components/layout/AdminLayout';
 import SegTabs from '../../components/ui/SegTabs';
+import TeamMark from '../../components/ui/TeamMark';
 import { getAllTeams } from '../../api/teamApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
+import { useTeamsMap } from '../../hooks/useTeamsMap';
 import {
     getScheduleBySeasonAndTeam,
     getScheduleBySeason,
@@ -27,6 +30,7 @@ import {
     moveGame,
     generateConferenceSchedule,
     generateAllConferenceSchedules,
+    generateOutOfConferenceSchedule,
     pollScheduleGenJobStatus,
     saveConferenceRules,
     getConferenceRules,
@@ -65,26 +69,58 @@ const Scheduling = () => {
         return () => { isMountedRef.current = false; };
     }, []);
 
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tab = searchParams.get('tab') || 'conference';
+    const setTab = (nextTab) => {
+        const next = new URLSearchParams(searchParams);
+        next.set('tab', nextTab);
+        setSearchParams(next, { replace: true });
+    };
+    const selectedConference = searchParams.get('conference') || 'ACC';
+    const setSelectedConference = (conf) => {
+        const next = new URLSearchParams(searchParams);
+        next.set('conference', conf);
+        setSearchParams(next, { replace: true });
+    };
+
     const [season, setSeason] = useState(null);
     const [allSeasons, setAllSeasons] = useState([]);
     const [scheduleLocked, setScheduleLocked] = useState(false);
     const [allTeams, setAllTeams] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [tab, setTab] = useState('conference');
 
     const [allSeasonSchedule, setAllSeasonSchedule] = useState([]);
 
-    const [selectedConference, setSelectedConference] = useState('ACC');
     const [conferenceSchedule, setConferenceSchedule] = useState([]);
     const [conferenceTeams, setConferenceTeams] = useState([]);
     const [confLoading, setConfLoading] = useState(false);
 
     const [numConferenceGames, setNumConferenceGames] = useState(DEFAULT_CONFERENCE_GAMES);
     const [protectedRivalries, setProtectedRivalries] = useState([]);
+    const [divisions, setDivisions] = useState([]);
     const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
-    const [selectedTeam, setSelectedTeam] = useState(null);
+    const [oocDialogOpen, setOocDialogOpen] = useState(false);
+    const [oocLoading, setOocLoading] = useState(false);
+    const [oocResult, setOocResult] = useState(null);
+    const [selectedTeamState, setSelectedTeamState] = useState(null);
     const [teamFullSchedule, setTeamFullSchedule] = useState([]);
     const [teamLoading, setTeamLoading] = useState(false);
+
+    const selectedTeam = selectedTeamState;
+    const setSelectedTeam = (team) => {
+        setSelectedTeamState(team);
+        const next = new URLSearchParams(searchParams);
+        if (team?.name) next.set('team', team.name); else next.delete('team');
+        setSearchParams(next, { replace: true });
+    };
+
+    useEffect(() => {
+        if (allTeams.length === 0 || selectedTeamState) return;
+        const urlTeamName = searchParams.get('team');
+        if (!urlTeamName) return;
+        const found = allTeams.find((t) => t.name === urlTeamName);
+        if (found) setSelectedTeamState(found);
+    }, [allTeams]);
 
     const [postseasonSchedule, setPostseasonSchedule] = useState([]);
     const [postseasonLoading, setPostseasonLoading] = useState(false);
@@ -113,13 +149,7 @@ const Scheduling = () => {
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-    const teamMap = useMemo(() => {
-        const map = {};
-        allTeams.forEach(team => {
-            if (team.name) map[team.name] = team;
-        });
-        return map;
-    }, [allTeams]);
+    const teamMap = useTeamsMap();
 
     useEffect(() => {
         if (addGameDialogOpen) {
@@ -228,14 +258,17 @@ const Scheduling = () => {
             if (rules) {
                 setNumConferenceGames(rules.numConferenceGames || DEFAULT_CONFERENCE_GAMES);
                 setProtectedRivalries(rules.protectedRivalries || []);
+                setDivisions(rules.divisions || []);
             } else {
                 setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
                 setProtectedRivalries([]);
+                setDivisions([]);
             }
         } catch (err) {
             console.error('Error loading conference rules:', err);
             setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
             setProtectedRivalries([]);
+            setDivisions([]);
         }
     };
 
@@ -460,6 +493,7 @@ const Scheduling = () => {
                 numConferenceGames,
                 protectedRivalries: protectedRivalries.filter(r => r.team1 && r.team2),
                 startWeek: 1,
+                divisions: divisions.filter(Boolean),
             };
             await generateConferenceSchedule(request);
             showSnackbar('Conference schedule generated successfully!');
@@ -471,6 +505,26 @@ const Scheduling = () => {
             showSnackbar('Failed to generate schedule: ' + err.message, 'error');
         } finally {
             setConfLoading(false);
+        }
+    };
+
+    const handleGenerateOocSchedule = async () => {
+        try {
+            setOocLoading(true);
+            const result = await generateOutOfConferenceSchedule(season);
+            setOocResult(result);
+            if (result.unmatchedSlots?.length > 0) {
+                showSnackbar(`Scheduled ${result.gamesScheduled} OOC games, ${result.unmatchedSlots.length} slots left open`, 'warning');
+            } else {
+                showSnackbar(`Scheduled ${result.gamesScheduled} OOC games — every team's schedule is full!`);
+            }
+            await refreshAllSeasonSchedule();
+            if (selectedTeam && tab === 'team') fetchTeamSchedule();
+        } catch (err) {
+            console.error('Error generating OOC schedule:', err);
+            showSnackbar('Failed to generate OOC schedule: ' + err.message, 'error');
+        } finally {
+            setOocLoading(false);
         }
     };
 
@@ -587,9 +641,38 @@ const Scheduling = () => {
         setProtectedRivalries(updated);
     };
 
-    const handleSaveConferenceRules = async (conference, numGames, rivalries) => {
+    const addDivision = () => {
+        setDivisions([...divisions, '']);
+    };
+
+    const removeDivision = async (index) => {
+        const division = divisions[index];
+        const updated = divisions.filter((_, i) => i !== index);
+
+        if (!division) {
+            setDivisions(updated);
+            return;
+        }
+
         try {
-            await saveConferenceRules(conference, numGames, rivalries);
+            await saveConferenceRules(selectedConference, numConferenceGames, protectedRivalries, updated);
+            setDivisions(updated);
+            showSnackbar('Division removed');
+        } catch (err) {
+            console.error('Error removing division:', err);
+            showSnackbar('Failed to remove division: ' + err.message, 'error');
+        }
+    };
+
+    const updateDivision = (index, value) => {
+        const updated = [...divisions];
+        updated[index] = value;
+        setDivisions(updated);
+    };
+
+    const handleSaveConferenceRules = async (conference, numGames, rivalries, divisionList) => {
+        try {
+            await saveConferenceRules(conference, numGames, rivalries, divisionList);
             showSnackbar(`Conference rules saved for ${formatConference(conference)}`);
         } catch (err) {
             console.error('Error saving conference rules:', err);
@@ -650,6 +733,9 @@ const Scheduling = () => {
                         {scheduleLocked ? <LockIcon sx={{ fontSize: 15 }} /> : <LockOpenIcon sx={{ fontSize: 15 }} />}
                         {scheduleLocked ? 'Locked' : 'Unlocked'}
                     </Box>
+                    <Box component="button" type="button" disabled={scheduleLocked} onClick={() => { setOocResult(null); setOocDialogOpen(true); }} sx={{ ...ctrlSx, opacity: scheduleLocked ? 0.6 : 1, cursor: scheduleLocked ? 'default' : 'pointer' }}>
+                        Auto-generate OOC schedule
+                    </Box>
                 </>
             )}
         >
@@ -705,6 +791,10 @@ const Scheduling = () => {
                     onAddRivalry={addRivalry}
                     onRemoveRivalry={removeRivalry}
                     onUpdateRivalry={updateRivalry}
+                    divisions={divisions}
+                    onAddDivision={addDivision}
+                    onRemoveDivision={removeDivision}
+                    onUpdateDivision={updateDivision}
                     hasGamesPlayed={hasGamesPlayed}
                     onSaveConferenceRules={handleSaveConferenceRules}
                 />
@@ -808,7 +898,7 @@ const Scheduling = () => {
                                 const { key, ...otherProps } = props;
                                 return (
                                     <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Avatar src={option.logo} sx={{ width: 20, height: 20 }}>{option.name?.charAt(0)}</Avatar>
+                                        <TeamMark team={teamMap[option.name] || option} size={20} />
                                         <Box component="span" sx={{ fontSize: '0.85rem' }}>{option.name}</Box>
                                     </Box>
                                 );
@@ -842,7 +932,7 @@ const Scheduling = () => {
                                 const { key, ...otherProps } = props;
                                 return (
                                     <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Avatar src={option.logo} sx={{ width: 20, height: 20 }}>{option.name?.charAt(0)}</Avatar>
+                                        <TeamMark team={teamMap[option.name] || option} size={20} />
                                         <Box component="span" sx={{ fontSize: '0.85rem' }}>{option.name}</Box>
                                     </Box>
                                 );
@@ -1094,6 +1184,55 @@ const Scheduling = () => {
                     <Box component="button" type="button" onClick={handleGenerateConferenceSchedule} disabled={confLoading} sx={btnPrimarySx}>
                         {confLoading ? 'Generating...' : 'Generate Schedule'}
                     </Box>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={oocDialogOpen} onClose={() => !oocLoading && setOocDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+                <DialogTitle sx={dialogTitleSx}>Auto-Generate Out-of-Conference Schedule</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '6px' }}>
+                        {!oocResult ? (
+                            <>
+                                <Alert severity="info">
+                                    Fills every active team&apos;s remaining open weeks (1-12) in Season {season} with random,
+                                    cross-conference opponents. Existing games are never touched or overwritten.
+                                </Alert>
+                                <Box sx={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+                                    If a team can&apos;t be matched for a given week (no valid opponent left), that slot is
+                                    reported back so you can fill it manually.
+                                </Box>
+                            </>
+                        ) : (
+                            <>
+                                <Alert severity={oocResult.unmatchedSlots?.length > 0 ? 'warning' : 'success'}>
+                                    Scheduled {oocResult.gamesScheduled} OOC games.
+                                    {oocResult.unmatchedSlots?.length > 0
+                                        ? ` ${oocResult.unmatchedSlots.length} slot(s) couldn't be matched.`
+                                        : ' Every team’s schedule is full.'}
+                                </Alert>
+                                {oocResult.unmatchedSlots?.length > 0 && (
+                                    <Box sx={{ maxHeight: 240, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 'var(--r-sm)' }}>
+                                        {oocResult.unmatchedSlots.map((slot, i) => (
+                                            <Box key={`${slot.team}-${slot.week}-${i}`} sx={{ display: 'flex', justifyContent: 'space-between', px: '12px', py: '8px', fontSize: '0.82rem', borderBottom: '1px solid var(--line-soft)', '&:last-of-type': { borderBottom: 0 } }}>
+                                                <Box>{slot.team}</Box>
+                                                <Box sx={{ color: 'var(--text-dim)' }}>Week {slot.week}</Box>
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                )}
+                            </>
+                        )}
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ px: '20px', pb: '18px' }}>
+                    <Box component="button" type="button" onClick={() => setOocDialogOpen(false)} disabled={oocLoading} sx={ctrlSx}>
+                        {oocResult ? 'Close' : 'Cancel'}
+                    </Box>
+                    {!oocResult && (
+                        <Box component="button" type="button" onClick={handleGenerateOocSchedule} disabled={oocLoading} sx={btnPrimarySx}>
+                            {oocLoading ? 'Generating...' : 'Generate OOC Schedule'}
+                        </Box>
+                    )}
                 </DialogActions>
             </Dialog>
 

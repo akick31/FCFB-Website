@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, Alert, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
+import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
@@ -28,9 +29,10 @@ const gameStatusInfo = (game) => {
 };
 
 const GameWeek = () => {
-    const [season, setSeason] = useState(null);
-    const [week, setWeek] = useState(null);
-    const [selectedWeek, setSelectedWeek] = useState(null);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [season, setSeason] = useState(() => (searchParams.get('season') ? Number(searchParams.get('season')) : null));
+    const [week, setWeek] = useState(() => (searchParams.get('week') ? Number(searchParams.get('week')) : null));
+    const [selectedWeek, setSelectedWeek] = useState(() => (searchParams.get('selectedWeek') ? Number(searchParams.get('selectedWeek')) : null));
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [weekSchedule, setWeekSchedule] = useState([]);
@@ -50,9 +52,17 @@ const GameWeek = () => {
             try {
                 setLoading(true);
                 const [currentSeason, currentWeek] = await Promise.all([getCurrentSeasonOrLatest(), getCurrentWeekOrLatest()]);
-                setSeason(currentSeason);
-                setWeek(currentWeek);
-                setSelectedWeek(currentWeek);
+                const resolvedSeason = searchParams.get('season') ? Number(searchParams.get('season')) : currentSeason;
+                const resolvedWeek = searchParams.get('week') ? Number(searchParams.get('week')) : currentWeek;
+                const resolvedSelectedWeek = searchParams.get('selectedWeek') ? Number(searchParams.get('selectedWeek')) : currentWeek;
+                setSeason(resolvedSeason);
+                setWeek(resolvedWeek);
+                setSelectedWeek(resolvedSelectedWeek);
+                setSearchParams({
+                    season: String(resolvedSeason),
+                    week: String(resolvedWeek),
+                    selectedWeek: String(resolvedSelectedWeek),
+                }, { replace: true });
             } catch (err) {
                 console.error('Error initializing game week page:', err);
                 setError(err.message || 'Failed to load current season and week');
@@ -183,10 +193,16 @@ const GameWeek = () => {
                         value={selectedWeek || ''}
                         onChange={(e) => {
                             if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
-                            setSelectedWeek(Number(e.target.value));
+                            const nextWeek = Number(e.target.value);
+                            setSelectedWeek(nextWeek);
                             setJobData(null);
                             setActiveJobId(null);
                             setIsStarting(false);
+                            const next = new URLSearchParams(searchParams);
+                            next.set('season', String(season));
+                            next.set('week', String(week));
+                            next.set('selectedWeek', String(nextWeek));
+                            setSearchParams(next, { replace: true });
                         }}
                         sx={selectSx}
                     >

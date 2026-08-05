@@ -650,7 +650,7 @@ const PostseasonAdminTab = ({
                                 const { key, ...otherProps } = props;
                                 return (
                                     <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Avatar src={option.logo} sx={{ width: 20, height: 20 }}>{option.name?.charAt(0)}</Avatar>
+                                        <TeamMark team={teamMap[option.name] || option} size={20} />
                                         <Box component="span" sx={{ fontSize: '0.85rem' }}>{option.name}</Box>
                                     </Box>
                                 );
@@ -672,7 +672,7 @@ const PostseasonAdminTab = ({
                                 const { key, ...otherProps } = props;
                                 return (
                                     <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Avatar src={option.logo} sx={{ width: 20, height: 20 }}>{option.name?.charAt(0)}</Avatar>
+                                        <TeamMark team={teamMap[option.name] || option} size={20} />
                                         <Box component="span" sx={{ fontSize: '0.85rem' }}>{option.name}</Box>
                                     </Box>
                                 );
@@ -746,7 +746,7 @@ const PostseasonAdminTab = ({
                                                 const { key, ...otherProps } = props;
                                                 return (
                                                     <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                        <Avatar src={option.logo} sx={{ width: 20, height: 20 }}>{option.name?.charAt(0)}</Avatar>
+                                                        <TeamMark team={teamMap[option.name] || option} size={20} />
                                                         <Box component="span" sx={{ fontSize: '0.85rem' }}>{option.name}</Box>
                                                     </Box>
                                                 );

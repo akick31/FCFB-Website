@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
 import { Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../ui/TeamMark';
-import { clickableProps } from '../../utils/a11y';
 
 const ROUND_LABELS = { 1: 'First Round', 2: 'Second Round', 3: 'Quarterfinal', 4: 'Semifinal', 5: 'Championship' };
 const LINE = 'var(--line)';
@@ -57,7 +56,6 @@ const bracketSx = {
 };
 
 const PlayoffBracket = ({ rounds, teamsMap }) => {
-    const navigate = useNavigate();
     const roundNumbers = Object.keys(rounds).map(Number).sort((a, b) => a - b);
 
     const orderedRounds = useMemo(() => {
@@ -87,7 +85,13 @@ const PlayoffBracket = ({ rounds, teamsMap }) => {
     const match = (game) => {
         const homeWin = game.home_score > game.away_score;
         return (
-            <Box key={game.game_id || game.id} className="bmatch" {...(game.game_id ? clickableProps(() => navigate(`/game-details/${game.game_id}`)) : {})}>
+            <Box
+                key={game.game_id || game.id}
+                className="bmatch"
+                component={game.game_id ? Link : 'div'}
+                to={game.game_id ? `/game-details/${game.game_id}` : undefined}
+                sx={{ textDecoration: 'none', color: 'inherit' }}
+            >
                 {teamRow(game.away_team, game.playoff_away_seed, game.away_score, game.away_score > game.home_score)}
                 {teamRow(game.home_team, game.playoff_home_seed, game.home_score, homeWin)}
             </Box>

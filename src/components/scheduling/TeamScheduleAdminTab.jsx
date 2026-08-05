@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import Panel from '../ui/Panel';
@@ -7,9 +7,10 @@ import TeamMark from '../ui/TeamMark';
 import { formatGameType, formatConference } from '../../utils/formatText';
 import { field } from '../../utils/fieldHelper';
 import { isRealTeam } from '../../utils/teamDataUtils';
+import { getConferenceRules } from '../../api/scheduleApi';
 
 const TOTAL_WEEKS = 12;
-const DEFAULT_OOC_GAMES = 3;
+const DEFAULT_CONFERENCE_GAMES = 9;
 
 const selectSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', cursor: 'pointer', minWidth: 240, '& option': { background: 'var(--surface)', color: 'var(--text)' } };
 const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' }, '&:disabled': { opacity: 0.6, cursor: 'default' } };
@@ -36,6 +37,17 @@ const TeamScheduleAdminTab = ({
 
     const activeTeams = useMemo(() => allTeams.filter((t) => t.active && isRealTeam(t)).sort((a, b) => a.name.localeCompare(b.name)), [allTeams]);
 
+    const [numConferenceGames, setNumConferenceGames] = useState(DEFAULT_CONFERENCE_GAMES);
+    useEffect(() => {
+        if (!selectedTeam?.conference) return undefined;
+        let active = true;
+        getConferenceRules(selectedTeam.conference)
+            .then((rules) => { if (active) setNumConferenceGames(rules?.numConferenceGames ?? DEFAULT_CONFERENCE_GAMES); })
+            .catch(() => { if (active) setNumConferenceGames(DEFAULT_CONFERENCE_GAMES); });
+        return () => { active = false; };
+    }, [selectedTeam?.conference]);
+    const expectedOocGames = TOTAL_WEEKS - numConferenceGames;
+
     return (
         <Box>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', mb: '16px', alignItems: 'center' }}>
@@ -52,7 +64,7 @@ const TeamScheduleAdminTab = ({
             </Box>
 
             {selectedTeam && (
-                <Panel header={`${selectedTeam.name}: full schedule`} more={`${formatConference(selectedTeam.conference)} · OOC games ${oocGamesOnly.length}/${DEFAULT_OOC_GAMES}`}>
+                <Panel header={`${selectedTeam.name}: full schedule`} more={`${formatConference(selectedTeam.conference)} · OOC games ${oocGamesOnly.length}/${expectedOocGames}`}>
                     {teamLoading ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
                     ) : (

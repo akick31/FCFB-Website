@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, CircularProgress } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Panel from '../../ui/Panel';
 import SegTabs from '../../ui/SegTabs';
 import { getFilteredConferenceStats } from '../../../api/conferenceStatsApi';
 import { conferenceLabel, conferenceLogo } from '../../constants/conferences';
-import { clickableProps } from '../../../utils/a11y';
 
 const confValue = (conference) => (typeof conference === 'string' ? conference : conference?.name);
 
@@ -19,7 +18,6 @@ const StatPlotsMetrics = [
 ];
 
 const ConferenceStrengthTab = ({ season, teams }) => {
-    const navigate = useNavigate();
     const [metric, setMetric] = useState('elo');
     const [confs, setConfs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -84,8 +82,9 @@ const ConferenceStrengthTab = ({ season, teams }) => {
                         rows.map((r) => (
                             <Box key={r.conf} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px 1fr 50px', sm: '170px 1fr 70px' }, alignItems: 'center', gap: 1.25, py: 0.75, fontSize: '0.8rem' }}>
                                 <Box
-                                    {...clickableProps(() => navigate('/standings'))}
-                                    sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', minWidth: 0, '&:hover': { color: 'var(--brand)' }, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' } }}
+                                    component={Link}
+                                    to="/standings"
+                                    sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', minWidth: 0, textDecoration: 'none', color: 'inherit', '&:hover': { color: 'var(--brand)' }, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' } }}
                                 >
                                     {conferenceLogo(r.conf) && <Box component="img" src={conferenceLogo(r.conf)} alt="" sx={{ width: 18, height: 18, objectFit: 'contain', flex: '0 0 auto' }} />}
                                     <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conferenceLabel(r.conf)}</Box>

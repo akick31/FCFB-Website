@@ -1,14 +1,13 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { CheckCircle, Email, ArrowBack } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import { useSeo } from '../../hooks/useSeo';
 
 const btnBaseSx = { border: 0, borderRadius: 'var(--r-sm)', py: '11px', px: '18px', font: 'inherit', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' };
 
 const Success = () => {
-    const navigate = useNavigate();
     useSeo({ title: 'Registration successful | Fake College Football', description: 'Your Fake College Football coach account has been created.' });
 
     return (
@@ -31,7 +30,7 @@ const Success = () => {
 
                     <Box sx={{ color: 'var(--text-muted)', fontSize: '0.82rem', mb: '20px' }}>Once you verify your email, you&apos;ll be able to sign in and start playing!</Box>
 
-                    <Box component="button" type="button" onClick={() => navigate('/login')} sx={{ ...btnBaseSx, background: 'var(--brand-deep)', color: '#fff', mx: 'auto' }}>
+                    <Box component={Link} to="/login" sx={{ ...btnBaseSx, background: 'var(--brand-deep)', color: '#fff', mx: 'auto', textDecoration: 'none' }}>
                         <ArrowBack sx={{ fontSize: 18 }} /> Back to sign in
                     </Box>
                 </Box>

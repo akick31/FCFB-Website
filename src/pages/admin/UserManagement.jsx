@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
 import SelectPill from '../../components/ui/SelectPill';
 import { getAllUsers } from '../../api/userApi';
-import { clickableRowProps } from '../../utils/a11y';
 
 const searchSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', font: 'inherit', fontSize: '0.82rem', minWidth: 210, boxSizing: 'border-box' };
 const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
@@ -86,15 +85,26 @@ const UserManagement = ({ user }) => {
                     </thead>
                     <tbody>
                         {filteredUsers.map((row) => (
-                            <tr key={row.id} {...clickableRowProps(() => navigate(`/user-details/${row.username}`))}>
+                            <Box component="tr" key={row.id} sx={{ position: 'relative' }}>
                                 <td className="lft stick">@{row.username}</td>
                                 <td className="lft">{row.coach_name}</td>
                                 <td className="lft">{row.discord_tag}</td>
                                 <td className="lft">{row.team || 'Free agent'}</td>
                                 <td>
-                                    <Box component="button" type="button" onClick={(e) => { e.stopPropagation(); navigate(`/admin/edit-coach/${row.username}`); }} sx={editBtnSx}>Edit</Box>
+                                    <Box
+                                        component={Link}
+                                        to={`/admin/edit-coach/${row.username}`}
+                                        sx={{ ...editBtnSx, position: 'relative', zIndex: 3, display: 'inline-block', textDecoration: 'none' }}
+                                    >
+                                        Edit
+                                    </Box>
                                 </td>
-                            </tr>
+                                <Box
+                                    component={Link}
+                                    to={`/user-details/${row.username}`}
+                                    sx={{ position: 'absolute', inset: 0, zIndex: 2 }}
+                                />
+                            </Box>
                         ))}
                     </tbody>
                 </DataTable>

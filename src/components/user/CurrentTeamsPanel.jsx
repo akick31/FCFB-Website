@@ -1,24 +1,23 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import Panel from '../ui/Panel';
 import TeamMark from '../ui/TeamMark';
 import { formatConference, formatPosition } from '../../utils/formatText';
-import { clickableProps } from '../../utils/a11y';
 
 const CurrentTeamsPanel = ({ entries, teamsMap }) => {
-    const navigate = useNavigate();
-
     return (
         <Panel header={entries.length > 1 ? `Current teams (${entries.length})` : 'Current team'}>
             {entries.map(({ team, position }) => (
                 <Box
                     key={team.id ?? team.name}
-                    {...(team.id ? clickableProps(() => navigate(`/team-details/${team.id}`)) : {})}
+                    component={team.id ? Link : 'div'}
+                    to={team.id ? `/team-details/${team.id}` : undefined}
                     sx={{
                         display: 'grid', gridTemplateColumns: '38px 1fr auto', alignItems: 'center', gap: '12px',
                         px: 2, py: 1.5, borderBottom: '1px solid var(--line-soft)', cursor: team.id ? 'pointer' : 'default',
+                        textDecoration: 'none', color: 'inherit',
                         '&:last-of-type': { borderBottom: 0 }, '&:hover': { background: 'var(--surface-2)' },
                     }}
                 >

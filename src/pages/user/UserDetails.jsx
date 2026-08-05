@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { getAllUsers } from '../../api/userApi';
 import { getAllTeams } from '../../api/teamApi';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
@@ -31,7 +31,6 @@ import SeasonStatTable from '../../components/team/SeasonStatTable';
 import MultiLineChart from '../../components/charts/MultiLineChart';
 import CoachHeader from '../../components/user/CoachHeader';
 import CurrentTeamsPanel from '../../components/user/CurrentTeamsPanel';
-import { clickableRowProps, clickableProps } from '../../utils/a11y';
 
 const POLL_TICKS = [1, 5, 10, 15, 20, 25].map((v) => ({ v, label: String(v) }));
 
@@ -49,25 +48,33 @@ const resolveDefaultSeason = async () => {
     }
 };
 
-const TrendLegend = ({ lines, onTeam }) => (
+const TrendLegend = ({ lines, teamsMap }) => (
     <Box sx={{ display: 'flex', gap: '14px', flexWrap: 'wrap', mt: '10px', px: 2, pb: 2 }}>
-        {lines.map((line) => (
-            <Box key={line.team} {...clickableProps(() => onTeam(line.team))} sx={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: 'var(--text-muted)', cursor: 'pointer', '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' } }}>
-                <Box sx={{ width: 11, height: 3, borderRadius: '2px', background: line.color }} />
-                {line.team}
-            </Box>
-        ))}
+        {lines.map((line) => {
+            const teamId = teamsMap[line.team]?.id;
+            return (
+                <Box
+                    key={line.team}
+                    component={teamId ? Link : 'div'}
+                    to={teamId ? `/team-details/${teamId}` : undefined}
+                    sx={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: 'var(--text-muted)', textDecoration: 'none', cursor: teamId ? 'pointer' : 'default', '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' } }}
+                >
+                    <Box sx={{ width: 11, height: 3, borderRadius: '2px', background: line.color }} />
+                    {line.team}
+                </Box>
+            );
+        })}
     </Box>
 );
 
 TrendLegend.propTypes = {
     lines: PropTypes.arrayOf(PropTypes.shape({ team: PropTypes.string, color: PropTypes.string })).isRequired,
-    onTeam: PropTypes.func.isRequired,
+    teamsMap: PropTypes.object.isRequired,
 };
 
 const UserDetails = () => {
     const { coachName } = useParams();
-    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
     const { mode } = useColorMode();
     const decodedName = decodeURIComponent(coachName || '');
@@ -141,7 +148,12 @@ const UserDetails = () => {
 
                 const seasonList = trendSeasons(series);
                 setSeasons(seasonList);
-                setSeasonView(defSeason != null && seasonList.includes(defSeason) ? defSeason : (seasonList[0] ?? 'alltime'));
+                const urlSeason = searchParams.get('season');
+                if (urlSeason === 'alltime' || (urlSeason && seasonList.includes(Number(urlSeason)))) {
+                    setSeasonView(urlSeason === 'alltime' ? 'alltime' : Number(urlSeason));
+                } else {
+                    setSeasonView(defSeason != null && seasonList.includes(defSeason) ? defSeason : (seasonList[0] ?? 'alltime'));
+                }
             } catch {
                 if (active) setUser(null);
             } finally {
@@ -179,6 +191,14 @@ const UserDetails = () => {
 
     const isAdmin = checkIfUserIsAdmin();
 
+    useEffect(() => {
+        if (seasonView == null) return;
+        if (searchParams.get('season') === String(seasonView)) return;
+        const next = new URLSearchParams(searchParams);
+        next.set('season', String(seasonView));
+        setSearchParams(next, { replace: true });
+    }, [seasonView]);
+
     const colorFor = (teamName) => pickTeamColor(teamsMap[teamName], mode);
     const eloLines = useMemo(() => buildTrendLines({ seriesByTeam, metric: 'elo', seasonView, colorFor }), [seriesByTeam, seasonView, teamsMap, mode]);
     const rankLines = useMemo(() => buildTrendLines({ seriesByTeam, metric: 'rank', seasonView, colorFor }), [seriesByTeam, seasonView, teamsMap, mode]);
@@ -196,11 +216,6 @@ const UserDetails = () => {
         );
     }
 
-    const goTeam = (name) => {
-        const id = teamsMap[name]?.id;
-        if (id) navigate(`/team-details/${id}`);
-    };
-
     const eloBounds = trendBounds(eloLines, 25);
     const seasonLabel = seasonView === 'alltime' ? 'All seasons' : `Season ${seasonView}`;
 
@@ -209,9 +224,9 @@ const UserDetails = () => {
             <PageHeading eyebrow="Coach profile" title={`@${user.coach_name || user.username}`}>
                 {isAdmin && (
                     <Box
-                        component="button"
-                        onClick={() => navigate(`/admin/edit-coach/${encodeURIComponent(user.username)}`)}
-                        sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '14px', py: '8px', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)' } }}
+                        component={Link}
+                        to={`/admin/edit-coach/${encodeURIComponent(user.username)}`}
+                        sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '14px', py: '8px', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'none', '&:hover': { borderColor: 'var(--brand)' } }}
                     >
                         Edit coach
                     </Box>
@@ -276,7 +291,7 @@ const UserDetails = () => {
                                 <Box sx={{ p: 2, pb: 0 }}>
                                     <MultiLineChart lines={eloLines} yMin={eloBounds.yMin} yMax={eloBounds.yMax} height={260} label={(p) => `Season ${p.season}, Week ${p.week}, ELO ${p.val}`} />
                                 </Box>
-                                <TrendLegend lines={eloLines} onTeam={goTeam} />
+                                <TrendLegend lines={eloLines} teamsMap={teamsMap} />
                             </Panel>
                         )}
                         {rankLines.length > 0 && (
@@ -284,7 +299,7 @@ const UserDetails = () => {
                                 <Box sx={{ p: 2, pb: 0 }}>
                                     <MultiLineChart lines={rankLines} yMin={1} yMax={25} invert yTicks={POLL_TICKS} height={260} label={(p) => `Season ${p.season}, Week ${p.week}, #${p.val}`} />
                                 </Box>
-                                <TrendLegend lines={rankLines} onTeam={goTeam} />
+                                <TrendLegend lines={rankLines} teamsMap={teamsMap} />
                             </Panel>
                         )}
                     </Box>
@@ -306,8 +321,14 @@ const UserDetails = () => {
                     <tbody>
                         {stints.map((stint, index) => {
                             const active = !stint.endDate;
+                            const teamId = teamsMap[stint.team]?.id;
                             return (
-                                <tr key={`${stint.team}-${index}`} {...clickableRowProps(() => goTeam(stint.team))}>
+                                <Box
+                                    component={teamId ? Link : 'tr'}
+                                    to={teamId ? `/team-details/${teamId}` : undefined}
+                                    key={`${stint.team}-${index}`}
+                                    sx={{ display: 'table-row', textDecoration: 'none', color: 'inherit', cursor: teamId ? 'pointer' : 'default' }}
+                                >
                                     <td className="lft stick">
                                         <Box className="teamcell">
                                             <TeamMark team={teamsMap[stint.team]} size={22} />
@@ -323,7 +344,7 @@ const UserDetails = () => {
                                     <td className="num">{recordByTeam[stint.team] ? `${recordByTeam[stint.team].wins}-${recordByTeam[stint.team].losses}` : '-'}</td>
                                     <td className="lft">{formatStintDate(stint.startDate)}</td>
                                     <td className="lft" style={{ color: active ? 'var(--field)' : undefined }}>{active ? 'Present' : formatStintDate(stint.endDate)}</td>
-                                </tr>
+                                </Box>
                             );
                         })}
                     </tbody>

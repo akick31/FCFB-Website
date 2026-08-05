@@ -1,15 +1,12 @@
 import React, { useMemo } from 'react';
 import { Box, CircularProgress } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../ui/TeamMark';
-import { clickableProps } from '../../utils/a11y';
 
 const REGULAR_WEEKS = Array.from({ length: 12 }, (_, index) => index + 1);
 
 const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
-    const navigate = useNavigate();
-
     const byTeamWeek = useMemo(() => {
         const map = {};
         const teamNames = new Set(conferenceTeams.map((team) => team.name));
@@ -61,7 +58,7 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
                     {conferenceTeams.map((team) => (
                         <tr key={team.id || team.name}>
                             <td className="tcol">
-                                <Box {...(team.id ? clickableProps(() => navigate(`/team-details/${team.id}`)) : {})} sx={{ display: 'flex', alignItems: 'center', gap: '7px', cursor: team.id ? 'pointer' : 'default' }}>
+                                <Box component={team.id ? Link : 'div'} to={team.id ? `/team-details/${team.id}` : undefined} sx={{ display: 'flex', alignItems: 'center', gap: '7px', cursor: team.id ? 'pointer' : 'default', textDecoration: 'none', color: 'inherit' }}>
                                     <TeamMark team={markFor(team.name)} size={20} />
                                     <Box component="b" sx={{ fontSize: '0.76rem' }}>{team.abbreviation && team.name.length > 14 ? team.abbreviation : team.name}</Box>
                                 </Box>
@@ -73,9 +70,10 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
                                 return (
                                     <td key={week}>
                                         <Box
-                                            {...(cell.gameId ? clickableProps(() => navigate(`/game-details/${cell.gameId}`)) : {})}
+                                            component={cell.gameId ? Link : 'div'}
+                                            to={cell.gameId ? `/game-details/${cell.gameId}` : undefined}
                                             title={`${cell.home ? 'vs' : 'at'} ${cell.opp}${cell.finished ? `, ${cell.us}-${cell.them}` : ''}`}
-                                            sx={{ display: 'inline-flex', alignItems: 'center', gap: '3px', justifyContent: 'center', cursor: cell.gameId ? 'pointer' : 'default' }}
+                                            sx={{ display: 'inline-flex', alignItems: 'center', gap: '3px', justifyContent: 'center', cursor: cell.gameId ? 'pointer' : 'default', textDecoration: 'none', color: 'inherit' }}
                                         >
                                             {!cell.home && <Box component="span" sx={{ color: 'var(--text-dim)', fontSize: '0.62rem' }}>@</Box>}
                                             <TeamMark team={markFor(cell.opp)} size={18} />

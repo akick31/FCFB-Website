@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getAllUsers } from '../../api/userApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { formatPosition, formatWinPct } from '../../utils/formatText';
@@ -12,7 +12,6 @@ import DataTable from '../../components/ui/DataTable';
 import TeamMark from '../../components/ui/TeamMark';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
-import { clickableRowProps } from '../../utils/a11y';
 
 const coachStatus = (user) => {
     if (user.position === 'RETIRED') return 'retired';
@@ -43,17 +42,28 @@ const StatusPill = ({ status }) => {
 StatusPill.propTypes = { status: PropTypes.oneOf(['active', 'free_agent', 'retired']).isRequired };
 
 const Coaches = () => {
-    const navigate = useNavigate();
     const teamsMap = useTeamsMap();
     useSeo(ROUTE_META['/coaches']);
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [search, setSearch] = useState('');
-    const [status, setStatus] = useState('all');
-    const [position, setPosition] = useState('all');
-    const [sort, setSort] = useState('name');
+    const [search, setSearch] = useState(searchParams.get('search') || '');
+    const [status, setStatus] = useState(searchParams.get('status') || 'all');
+    const [position, setPosition] = useState(searchParams.get('position') || 'all');
+    const [sort, setSort] = useState(searchParams.get('sort') || 'name');
+
+    const updateParam = (key, value, defaultValue) => {
+        const next = new URLSearchParams(searchParams);
+        if (!value || value === defaultValue) next.delete(key); else next.set(key, value);
+        setSearchParams(next, { replace: true });
+    };
+
+    const changeSearch = (value) => { setSearch(value); updateParam('search', value, ''); };
+    const changeStatus = (value) => { setStatus(value); updateParam('status', value, 'all'); };
+    const changePosition = (value) => { setPosition(value); updateParam('position', value, 'all'); };
+    const changeSort = (value) => { setSort(value); updateParam('sort', value, 'name'); };
 
     useEffect(() => {
         getAllUsers()
@@ -92,13 +102,13 @@ const Coaches = () => {
                     placeholder="Search name, Discord tag, or team…"
                     aria-label="Search coaches"
                     value={search}
-                    onChange={(event) => setSearch(event.target.value)}
+                    onChange={(event) => changeSearch(event.target.value)}
                     sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', padding: '6px 10px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, minWidth: 210, '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 } }}
                 />
                 <SelectPill
                     label="Status"
                     value={status}
-                    onChange={setStatus}
+                    onChange={changeStatus}
                     options={[
                         { value: 'all', label: 'All' },
                         { value: 'active', label: 'Active' },
@@ -109,7 +119,7 @@ const Coaches = () => {
                 <SelectPill
                     label="Position"
                     value={position}
-                    onChange={setPosition}
+                    onChange={changePosition}
                     options={[
                         { value: 'all', label: 'All positions' },
                         { value: 'HEAD_COACH', label: 'Head Coach' },
@@ -120,7 +130,7 @@ const Coaches = () => {
                 <SelectPill
                     label="Sort"
                     value={sort}
-                    onChange={setSort}
+                    onChange={changeSort}
                     options={[{ value: 'name', label: 'Name' }, { value: 'wins', label: 'Wins' }, { value: 'winpct', label: 'Win Pct' }]}
                 />
             </PageHeading>
@@ -140,18 +150,24 @@ const Coaches = () => {
                     {shown.map((user) => {
                         const teamId = user.team ? teamsMap[user.team]?.id : null;
                         return (
-                            <tr key={user.id ?? user.username} {...clickableRowProps(() => navigate(`/user-details/${user.username}`))}>
+                            <Box component="tr" key={user.id ?? user.username} sx={{ position: 'relative' }}>
                                 <td className="lft stick">
                                     <Box sx={{ fontWeight: 700 }}>{user.coach_name || user.username}</Box>
                                     <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem' }}>@{user.username}</Box>
                                 </td>
                                 <td className="lft">
-                                    {user.team ? (
+                                    {user.team && teamId != null ? (
                                         <Box
+                                            component={Link}
+                                            to={`/team-details/${teamId}`}
                                             className="teamcell"
-                                            onClick={(event) => { if (teamId) { event.stopPropagation(); navigate(`/team-details/${teamId}`); } }}
-                                            sx={{ cursor: teamId ? 'pointer' : 'default' }}
+                                            sx={{ position: 'relative', zIndex: 3, cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}
                                         >
+                                            <TeamMark team={teamsMap[user.team]} size={22} />
+                                            <span className="nm">{user.team}</span>
+                                        </Box>
+                                    ) : user.team ? (
+                                        <Box className="teamcell" sx={{ cursor: 'default' }}>
                                             <TeamMark team={teamsMap[user.team]} size={22} />
                                             <span className="nm">{user.team}</span>
                                         </Box>
@@ -163,7 +179,12 @@ const Coaches = () => {
                                 <td className="num">{user.wins || 0}-{user.losses || 0}</td>
                                 <td className="num">{formatWinPct(user.win_percentage)}</td>
                                 <td className="lft"><StatusPill status={coachStatus(user)} /></td>
-                            </tr>
+                                <Box
+                                    component={Link}
+                                    to={`/user-details/${user.username}`}
+                                    sx={{ position: 'absolute', inset: 0, zIndex: 2 }}
+                                />
+                            </Box>
                         );
                     })}
                 </tbody>

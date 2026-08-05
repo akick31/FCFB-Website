@@ -36,6 +36,10 @@ const ConferenceScheduleAdminTab = ({
     onAddRivalry,
     onRemoveRivalry,
     onUpdateRivalry,
+    divisions,
+    onAddDivision,
+    onRemoveDivision,
+    onUpdateDivision,
     hasGamesPlayed = false,
     onSaveConferenceRules,
 }) => {
@@ -138,10 +142,14 @@ const ConferenceScheduleAdminTab = ({
                             conferenceTeams={conferenceTeams}
                             numConferenceGames={numConferenceGames}
                             protectedRivalries={protectedRivalries}
+                            divisions={divisions}
                             onNumConferenceGamesChange={onNumConferenceGamesChange}
                             onAddRivalry={onAddRivalry}
                             onRemoveRivalry={onRemoveRivalry}
                             onUpdateRivalry={onUpdateRivalry}
+                            onAddDivision={onAddDivision}
+                            onRemoveDivision={onRemoveDivision}
+                            onUpdateDivision={onUpdateDivision}
                             onSave={onSaveConferenceRules}
                             disabled={scheduleLocked}
                         />
@@ -301,6 +309,10 @@ ConferenceScheduleAdminTab.propTypes = {
     onAddRivalry: PropTypes.func.isRequired,
     onRemoveRivalry: PropTypes.func.isRequired,
     onUpdateRivalry: PropTypes.func.isRequired,
+    divisions: PropTypes.array.isRequired,
+    onAddDivision: PropTypes.func.isRequired,
+    onRemoveDivision: PropTypes.func.isRequired,
+    onUpdateDivision: PropTypes.func.isRequired,
     hasGamesPlayed: PropTypes.bool,
     onSaveConferenceRules: PropTypes.func,
 };
