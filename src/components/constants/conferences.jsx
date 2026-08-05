@@ -55,9 +55,9 @@ export const conferenceLogoDark = (code) => getConference(code)?.logo_url_dark |
 export const activeConferenceList = () =>
     Object.values(bulk || {})
         .filter((conference) => conference.active)
-        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+        .sort((a, b) => (a.label || '').localeCompare(b.label || ''));
 
 export const allConferenceList = () =>
-    Object.values(bulk || {}).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    Object.values(bulk || {}).sort((a, b) => (a.label || '').localeCompare(b.label || ''));
 
 export const activeConferenceCodes = () => activeConferenceList().map((conference) => conference.code);

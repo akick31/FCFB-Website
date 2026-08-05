@@ -28,7 +28,7 @@ const btnSx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borde
 
 const MAX_ADD_RESULTS = 20;
 
-const emptySettings = { label: '', abbreviation: '', logoUrl: '', logoUrlDark: '', displayOrder: 0 };
+const emptySettings = { label: '', abbreviation: '', logoUrl: '', logoUrlDark: '' };
 
 const AdminConferenceDetail = () => {
     const { code } = useParams();
@@ -75,7 +75,6 @@ const AdminConferenceDetail = () => {
             abbreviation: conference.abbreviation || '',
             logoUrl: conference.logo_url || '',
             logoUrlDark: conference.logo_url_dark || '',
-            displayOrder: conference.display_order || 0,
         });
     }, [conference]);
 
@@ -178,7 +177,6 @@ const AdminConferenceDetail = () => {
                 logoUrl: settingsForm.logoUrl.trim() || null,
                 logoUrlDark: settingsForm.logoUrlDark.trim() || null,
                 abbreviation: settingsForm.abbreviation.trim() || null,
-                displayOrder: Number(settingsForm.displayOrder) || 0,
             });
             refreshConferences();
             setSettingsSuccess('Conference settings saved');
@@ -283,10 +281,6 @@ const AdminConferenceDetail = () => {
                                 <Box>
                                     <Box sx={labelSx}>Abbreviation</Box>
                                     <Box component="input" value={settingsForm.abbreviation} onChange={(e) => setSettingsForm((prev) => ({ ...prev, abbreviation: e.target.value }))} placeholder="e.g. MWC" sx={inputSx} />
-                                </Box>
-                                <Box>
-                                    <Box sx={labelSx}>Display order</Box>
-                                    <Box component="input" type="number" value={settingsForm.displayOrder} onChange={(e) => setSettingsForm((prev) => ({ ...prev, displayOrder: e.target.value }))} sx={inputSx} />
                                 </Box>
                                 <LogoUrlField label="Logo URL" value={settingsForm.logoUrl} onChange={(e) => setSettingsForm((prev) => ({ ...prev, logoUrl: e.target.value }))} previewBg="#ffffff" />
                                 <LogoUrlField label="Dark logo URL" value={settingsForm.logoUrlDark} onChange={(e) => setSettingsForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))} previewBg="#0a1620" />

@@ -22,13 +22,13 @@ const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontS
 
 const hireBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--field)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--field)' } };
 
-const actionCardSx = { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', p: '18px', textAlign: 'center', cursor: 'pointer', textDecoration: 'none', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', '&:hover': { transform: 'translateY(-2px)', borderColor: 'color-mix(in srgb, var(--brand) 50%, var(--line))' }, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' }, transition: 'transform 0.14s, border-color 0.14s' };
+const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 
 const QUICK_ACTIONS = [
-    { label: 'Create game', path: '/admin/game-management', icon: <SportsFootballIcon sx={{ fontSize: 32, color: 'var(--field)' }} /> },
-    { label: 'Manage teams', path: '/admin/team-management', icon: <EmojiEventsIcon sx={{ fontSize: 32, color: 'var(--gold)' }} /> },
-    { label: 'Manage users', path: '/admin/user-management', icon: <PeopleIcon sx={{ fontSize: 32, color: 'var(--brand)' }} /> },
-    { label: 'Manage conferences', path: '/admin/conferences', icon: <AccountTreeIcon sx={{ fontSize: 32, color: 'var(--text-muted)' }} /> },
+    { label: 'Create game', path: '/admin/game-management', icon: <SportsFootballIcon sx={{ fontSize: 15 }} /> },
+    { label: 'Manage teams', path: '/admin/team-management', icon: <EmojiEventsIcon sx={{ fontSize: 15 }} /> },
+    { label: 'Manage users', path: '/admin/user-management', icon: <PeopleIcon sx={{ fontSize: 15 }} /> },
+    { label: 'Manage conferences', path: '/admin/conferences', icon: <AccountTreeIcon sx={{ fontSize: 15 }} /> },
 ];
 
 const Admin = ({ user }) => {
@@ -108,7 +108,19 @@ const Admin = ({ user }) => {
     }
 
     return (
-        <AdminLayout title="Admin dashboard">
+        <AdminLayout
+            title="Admin dashboard"
+            controls={(
+                <>
+                    {QUICK_ACTIONS.map((action) => (
+                        <Box key={action.path} component={Link} to={action.path} sx={ctrlSx}>
+                            {action.icon}
+                            {action.label}
+                        </Box>
+                    ))}
+                </>
+            )}
+        >
             <Box sx={{ color: 'var(--text-muted)', fontSize: '0.85rem', mb: '16px' }}>
                 Welcome back, {user?.username || 'Admin'}.
             </Box>
@@ -198,17 +210,6 @@ const Admin = ({ user }) => {
                         </tbody>
                     </DataTable>
                 )}
-            </Panel>
-
-            <Panel header="Quick actions">
-                <Box sx={{ p: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
-                    {QUICK_ACTIONS.map((action) => (
-                        <Box key={action.path} component={Link} to={action.path} sx={actionCardSx}>
-                            {action.icon}
-                            <Box sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{action.label}</Box>
-                        </Box>
-                    ))}
-                </Box>
             </Panel>
 
             <Dialog open={Boolean(hireSignup)} onClose={() => setHireSignup(null)} maxWidth="sm" fullWidth>
