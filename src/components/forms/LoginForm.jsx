@@ -97,7 +97,7 @@ const LoginForm = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
                     {discordError && <Alert severity="warning" sx={{ mb: '16px' }}>{discordError}</Alert>}
 
                     <Box component="button" type="button" onClick={handleDiscordOAuth} sx={{ ...btnBaseSx, background: 'var(--disc, #5865F2)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px' }}>
-                        <FontAwesomeIcon icon={faDiscord} /> Continue with Discord
+                        <FontAwesomeIcon icon={faDiscord} /> Log in with Discord
                     </Box>
 
                     <Box sx={{

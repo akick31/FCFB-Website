@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress, Alert, Button } from '@mui/material';
-import { ArrowBack, Assessment, RestaurantMenu } from '@mui/icons-material';
+import { ArrowBack, Assessment, RestaurantMenu, Stop } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { getGameById, chewGameByGameId } from '../../api/gameApi';
+import { getGameById, chewGameByGameId, endGameByGameId } from '../../api/gameApi';
 import { getAllPlaysByGameId } from '../../api/playApi';
 import { getGameStatsByIdAndTeam, generateGameStats } from '../../api/gameStatsApi.jsx';
 import { getTeamByName } from '../../api/teamApi';
@@ -123,12 +123,22 @@ const GameDetails = ({ isAdmin }) => {
         || ((b.clock ?? 0) - (a.clock ?? 0))
         || ((a.play_id ?? 0) - (b.play_id ?? 0)));
 
+    const ADMIN_SUCCESS_MESSAGES = {
+        chew: 'Chew mode set.',
+        stats: 'Game stats regenerated.',
+        end: 'Game ended.',
+    };
+
     const runAdmin = async (key, action) => {
         setAdminBusy(key);
         setAdminMessage(null);
         try {
             await action();
-            setAdminMessage({ severity: 'success', text: key === 'chew' ? 'Chew mode set.' : 'Game stats regenerated.' });
+            setAdminMessage({ severity: 'success', text: ADMIN_SUCCESS_MESSAGES[key] });
+            if (key === 'end') {
+                const refreshed = await getGameById(gameId).catch(() => null);
+                if (refreshed) setGame(refreshed);
+            }
         } catch (actionError) {
             setAdminMessage({ severity: 'error', text: actionError.message });
         } finally {
@@ -205,6 +215,11 @@ const GameDetails = ({ isAdmin }) => {
                         {!isFinal && (
                             <Button variant="outlined" size="small" color="warning" startIcon={<RestaurantMenu />} disabled={adminBusy === 'chew'} onClick={() => runAdmin('chew', () => chewGameByGameId(game.game_id))}>
                                 Chew game
+                            </Button>
+                        )}
+                        {!isFinal && (
+                            <Button variant="outlined" size="small" color="error" startIcon={<Stop />} disabled={adminBusy === 'end'} onClick={() => runAdmin('end', () => endGameByGameId(game.game_id))}>
+                                End game
                             </Button>
                         )}
                     </Box>

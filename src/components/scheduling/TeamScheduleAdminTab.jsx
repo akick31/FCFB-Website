@@ -16,22 +16,22 @@ const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)'
 const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', px: '8px', py: '3px', borderRadius: 'var(--r-sm)', lineHeight: 1 };
 const iconBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', width: 26, height: 26, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.85rem', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' }, '&:disabled': { opacity: 0.6, cursor: 'default' } };
 
-const OOCScheduleAdminTab = ({
+const TeamScheduleAdminTab = ({
     allTeams,
-    selectedOOCTeam,
-    onOOCTeamChange,
-    oocFullSchedule,
-    oocLoading,
+    selectedTeam,
+    onTeamChange,
+    teamFullSchedule,
+    teamLoading,
     scheduleLocked,
     teamMap,
-    onAddOOCGame,
-    onAddOOCGameForWeek,
+    onAddGameForTeam,
+    onAddGameForTeamWeek,
     onMoveGame,
     onDeleteGame,
 }) => {
     const oocGamesOnly = useMemo(() =>
-        oocFullSchedule.filter(g => field(g, 'gameType', 'game_type') === 'OUT_OF_CONFERENCE'),
-        [oocFullSchedule]
+        teamFullSchedule.filter(g => field(g, 'gameType', 'game_type') === 'OUT_OF_CONFERENCE'),
+        [teamFullSchedule]
     );
 
     const activeTeams = useMemo(() => allTeams.filter((t) => t.active && isRealTeam(t)).sort((a, b) => a.name.localeCompare(b.name)), [allTeams]);
@@ -41,19 +41,19 @@ const OOCScheduleAdminTab = ({
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', mb: '16px', alignItems: 'center' }}>
                 <Box
                     component="select"
-                    value={selectedOOCTeam?.name || ''}
-                    onChange={(e) => onOOCTeamChange(activeTeams.find((t) => t.name === e.target.value) || null)}
+                    value={selectedTeam?.name || ''}
+                    onChange={(e) => onTeamChange(activeTeams.find((t) => t.name === e.target.value) || null)}
                     sx={selectSx}
                 >
                     <option value="">Select team...</option>
                     {activeTeams.map((t) => <option key={t.name} value={t.name}>{t.name}</option>)}
                 </Box>
-                <Box component="button" type="button" onClick={onAddOOCGame} disabled={!selectedOOCTeam || scheduleLocked} sx={ctrlSx}>+ Add OOC game</Box>
+                <Box component="button" type="button" onClick={onAddGameForTeam} disabled={!selectedTeam || scheduleLocked} sx={ctrlSx}>+ Add game</Box>
             </Box>
 
-            {selectedOOCTeam && (
-                <Panel header={`${selectedOOCTeam.name}: full schedule`} more={`${formatConference(selectedOOCTeam.conference)} · OOC games ${oocGamesOnly.length}/${DEFAULT_OOC_GAMES}`}>
-                    {oocLoading ? (
+            {selectedTeam && (
+                <Panel header={`${selectedTeam.name}: full schedule`} more={`${formatConference(selectedTeam.conference)} · OOC games ${oocGamesOnly.length}/${DEFAULT_OOC_GAMES}`}>
+                    {teamLoading ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
                     ) : (
                         <DataTable minWidth={560}>
@@ -69,7 +69,7 @@ const OOCScheduleAdminTab = ({
                             <tbody>
                                 {Array.from({ length: TOTAL_WEEKS }, (_, i) => {
                                     const weekNum = i + 1;
-                                    const game = oocFullSchedule.find(g => g.week === weekNum);
+                                    const game = teamFullSchedule.find(g => g.week === weekNum);
                                     if (!game) {
                                         return (
                                             <tr key={weekNum}>
@@ -78,17 +78,17 @@ const OOCScheduleAdminTab = ({
                                                     <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: 'var(--brand)' }}>Open</Box>
                                                 </td>
                                                 <td>
-                                                    <Box component="button" type="button" title="Add OOC game for this week" onClick={() => onAddOOCGameForWeek(weekNum)} disabled={scheduleLocked} sx={iconBtnSx}>+</Box>
+                                                    <Box component="button" type="button" title="Add game for this week" onClick={() => onAddGameForTeamWeek(weekNum)} disabled={scheduleLocked} sx={iconBtnSx}>+</Box>
                                                 </td>
                                             </tr>
                                         );
                                     }
                                     const home = field(game, 'homeTeam', 'home_team');
                                     const away = field(game, 'awayTeam', 'away_team');
-                                    const isHome = home === selectedOOCTeam.name;
+                                    const isHome = home === selectedTeam.name;
                                     const opponent = isHome ? away : home;
                                     const gameType = field(game, 'gameType', 'game_type');
-                                    const isOOC = gameType === 'OUT_OF_CONFERENCE';
+                                    const isConference = gameType === 'CONFERENCE_GAME';
 
                                     return (
                                         <tr key={weekNum}>
@@ -103,17 +103,13 @@ const OOCScheduleAdminTab = ({
                                                 </Box>
                                             </td>
                                             <td className="lft">
-                                                <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: isOOC ? 'var(--brand)' : 'var(--text-muted)' }}>{formatGameType(gameType)}</Box>
+                                                <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: isConference ? 'var(--brand)' : 'var(--gold)' }}>{formatGameType(gameType)}</Box>
                                             </td>
                                             <td>
-                                                {isOOC ? (
-                                                    <Box sx={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                                                        <Box component="button" type="button" title="Move game" onClick={() => onMoveGame(game)} disabled={scheduleLocked} sx={iconBtnSx}>&#8646;</Box>
-                                                        <Box component="button" type="button" title="Remove game" onClick={() => onDeleteGame(game.id)} disabled={scheduleLocked} sx={{ ...iconBtnSx, color: 'var(--live)' }}>&times;</Box>
-                                                    </Box>
-                                                ) : (
-                                                    <Box sx={{ color: 'var(--text-dim)', fontSize: '0.74rem' }}>Conference game</Box>
-                                                )}
+                                                <Box sx={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                                    <Box component="button" type="button" title="Move game" onClick={() => onMoveGame(game)} disabled={scheduleLocked} sx={iconBtnSx}>&#8646;</Box>
+                                                    <Box component="button" type="button" title="Remove game" onClick={() => onDeleteGame(game.id)} disabled={scheduleLocked} sx={{ ...iconBtnSx, color: 'var(--live)' }}>&times;</Box>
+                                                </Box>
                                             </td>
                                         </tr>
                                     );
@@ -127,18 +123,18 @@ const OOCScheduleAdminTab = ({
     );
 };
 
-OOCScheduleAdminTab.propTypes = {
+TeamScheduleAdminTab.propTypes = {
     allTeams: PropTypes.array.isRequired,
-    selectedOOCTeam: PropTypes.object,
-    onOOCTeamChange: PropTypes.func.isRequired,
-    oocFullSchedule: PropTypes.array.isRequired,
-    oocLoading: PropTypes.bool,
+    selectedTeam: PropTypes.object,
+    onTeamChange: PropTypes.func.isRequired,
+    teamFullSchedule: PropTypes.array.isRequired,
+    teamLoading: PropTypes.bool,
     scheduleLocked: PropTypes.bool,
     teamMap: PropTypes.object.isRequired,
-    onAddOOCGame: PropTypes.func.isRequired,
-    onAddOOCGameForWeek: PropTypes.func.isRequired,
+    onAddGameForTeam: PropTypes.func.isRequired,
+    onAddGameForTeamWeek: PropTypes.func.isRequired,
     onMoveGame: PropTypes.func.isRequired,
     onDeleteGame: PropTypes.func.isRequired,
 };
 
-export default OOCScheduleAdminTab;
+export default TeamScheduleAdminTab;

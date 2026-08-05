@@ -1,13 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
     Box,
-    Typography,
-    Button,
     TextField,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
     Autocomplete,
     Avatar,
     Dialog,
@@ -44,7 +38,7 @@ import { formatGameType, formatConference } from '../../utils/formatText';
 import { field } from '../../utils/fieldHelper';
 import PostseasonAdminTab from '../../components/scheduling/PostseasonAdminTab';
 import ConferenceScheduleAdminTab from '../../components/scheduling/ConferenceScheduleAdminTab';
-import OOCScheduleAdminTab from '../../components/scheduling/OOCScheduleAdminTab';
+import TeamScheduleAdminTab from '../../components/scheduling/TeamScheduleAdminTab';
 
 const TOTAL_WEEKS = 12;
 const DEFAULT_CONFERENCE_GAMES = 9;
@@ -55,6 +49,14 @@ const selectSx = { border: '1px solid var(--line)', background: 'var(--surface)'
 const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 const ctrlLockedSx = { ...ctrlSx, color: 'var(--live)', borderColor: 'color-mix(in srgb, var(--live) 40%, var(--line))' };
 const ctrlUnlockedSx = { ...ctrlSx, color: 'var(--field)', borderColor: 'color-mix(in srgb, var(--field) 40%, var(--line))' };
+const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
+const inputSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', width: '100%' };
+const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:disabled': { opacity: 0.6, cursor: 'default' } };
+const dialogPaperSx = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)' };
+const dialogTitleSx = { color: 'var(--text)', fontWeight: 800, fontSize: '1.05rem' };
+const autocompleteSx = { '& .MuiOutlinedInput-root': { borderRadius: 'var(--r-sm)' } };
+const errorTextSx = { mt: '4px', fontSize: '0.7rem', color: 'var(--live)' };
+const hintTextSx = { fontSize: '0.72rem', color: 'var(--text-dim)' };
 
 const Scheduling = () => {
     useConferencesMap();
@@ -80,23 +82,18 @@ const Scheduling = () => {
     const [numConferenceGames, setNumConferenceGames] = useState(DEFAULT_CONFERENCE_GAMES);
     const [protectedRivalries, setProtectedRivalries] = useState([]);
     const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
-    const [selectedOOCTeam, setSelectedOOCTeam] = useState(null);
-    const [oocFullSchedule, setOocFullSchedule] = useState([]);
-    const [oocLoading, setOocLoading] = useState(false);
+    const [selectedTeam, setSelectedTeam] = useState(null);
+    const [teamFullSchedule, setTeamFullSchedule] = useState([]);
+    const [teamLoading, setTeamLoading] = useState(false);
 
     const [postseasonSchedule, setPostseasonSchedule] = useState([]);
     const [postseasonLoading, setPostseasonLoading] = useState(false);
-
-    const [cellDialogOpen, setCellDialogOpen] = useState(false);
-    const [cellDialogTeam, setCellDialogTeam] = useState(null);
-    const [cellDialogWeek, setCellDialogWeek] = useState(null);
-    const [cellDialogOpponent, setCellDialogOpponent] = useState(null);
-    const [cellDialogIsHome, setCellDialogIsHome] = useState(true);
 
     const [addGameDialogOpen, setAddGameDialogOpen] = useState(false);
     const [addGameWeek, setAddGameWeek] = useState(1);
     const [addGameHome, setAddGameHome] = useState(null);
     const [addGameAway, setAddGameAway] = useState(null);
+    const [addGameAnchorTeam, setAddGameAnchorTeam] = useState(null);
     const [addGameType, setAddGameType] = useState('CONFERENCE_GAME');
     const [addGameSubdivision, setAddGameSubdivision] = useState('FCFB');
     const [addGamePlayoffRound, setAddGamePlayoffRound] = useState(null);
@@ -243,10 +240,10 @@ const Scheduling = () => {
     };
 
     useEffect(() => {
-        if (season && selectedOOCTeam && tab === 'ooc') {
-            fetchOOCSchedule();
+        if (season && selectedTeam && tab === 'team') {
+            fetchTeamSchedule();
         }
-    }, [season, selectedOOCTeam, tab]);
+    }, [season, selectedTeam, tab]);
 
     useEffect(() => {
         if (season && tab === 'postseason') {
@@ -276,16 +273,16 @@ const Scheduling = () => {
         }
     };
 
-    const fetchOOCSchedule = async () => {
+    const fetchTeamSchedule = async () => {
         try {
-            setOocLoading(true);
-            const schedule = await getScheduleBySeasonAndTeam(season, selectedOOCTeam.name);
-            setOocFullSchedule((schedule || []).sort((a, b) => (a.week || 0) - (b.week || 0)));
+            setTeamLoading(true);
+            const schedule = await getScheduleBySeasonAndTeam(season, selectedTeam.name);
+            setTeamFullSchedule((schedule || []).sort((a, b) => (a.week || 0) - (b.week || 0)));
         } catch (err) {
             console.error('Error fetching schedule:', err);
-            setOocFullSchedule([]);
+            setTeamFullSchedule([]);
         } finally {
-            setOocLoading(false);
+            setTeamLoading(false);
         }
     };
 
@@ -311,36 +308,25 @@ const Scheduling = () => {
             showSnackbar(`${teamName} already has a game scheduled in Week ${weekNum}`, 'warning');
             return;
         }
-        setCellDialogTeam(teamName);
-        setCellDialogWeek(weekNum);
-        setCellDialogOpponent(null);
-        setCellDialogIsHome(true);
-        setCellDialogOpen(true);
+        setAddGameType('CONFERENCE_GAME');
+        setAddGameWeek(weekNum);
+        setAddGameHome(teamMap[teamName] || { name: teamName });
+        setAddGameAway(null);
+        setAddGameAnchorTeam(teamName);
+        setAddGameDialogOpen(true);
     };
 
-    const handleCellDialogSave = async () => {
-        if (!cellDialogTeam || !cellDialogOpponent || !cellDialogWeek) {
-            showSnackbar('Please select an opponent', 'error');
-            return;
+    const handleAddGameHomeChange = (team) => {
+        setAddGameHome(team);
+        if (addGameAnchorTeam && team?.name !== addGameAnchorTeam && addGameAway?.name !== addGameAnchorTeam) {
+            setAddGameAway(teamMap[addGameAnchorTeam] || { name: addGameAnchorTeam });
         }
-        try {
-            const homeTeam = cellDialogIsHome ? cellDialogTeam : cellDialogOpponent.name;
-            const awayTeam = cellDialogIsHome ? cellDialogOpponent.name : cellDialogTeam;
-            await createScheduleEntry({
-                season,
-                week: cellDialogWeek,
-                subdivision: conferenceTeams[0]?.subdivision || 'FBS',
-                homeTeam,
-                awayTeam,
-                gameType: 'CONFERENCE_GAME',
-            });
-            showSnackbar(`Scheduled ${homeTeam} vs ${awayTeam} for Week ${cellDialogWeek}`);
-            setCellDialogOpen(false);
-            fetchConferenceSchedule();
-            refreshAllSeasonSchedule();
-        } catch (err) {
-            console.error('Error adding game:', err);
-            showSnackbar('Failed to add game: ' + err.message, 'error');
+    };
+
+    const handleAddGameAwayChange = (team) => {
+        setAddGameAway(team);
+        if (addGameAnchorTeam && team?.name !== addGameAnchorTeam && addGameHome?.name !== addGameAnchorTeam) {
+            setAddGameHome(teamMap[addGameAnchorTeam] || { name: addGameAnchorTeam });
         }
     };
 
@@ -402,7 +388,7 @@ const Scheduling = () => {
             setAddGameLogoPreview(null);
             refreshAllSeasonSchedule();
             if (tab === 'conference') fetchConferenceSchedule();
-            else if (tab === 'ooc' && selectedOOCTeam) fetchOOCSchedule();
+            else if (tab === 'team' && selectedTeam) fetchTeamSchedule();
             else if (tab === 'postseason') fetchPostseasonSchedule();
         } catch (err) {
             console.error('Error adding game:', err);
@@ -416,7 +402,7 @@ const Scheduling = () => {
             showSnackbar('Game removed successfully');
             refreshAllSeasonSchedule();
             if (tab === 'conference') fetchConferenceSchedule();
-            else if (tab === 'ooc' && selectedOOCTeam) fetchOOCSchedule();
+            else if (tab === 'team' && selectedTeam) fetchTeamSchedule();
             else if (tab === 'postseason') fetchPostseasonSchedule();
         } catch (err) {
             console.error('Error deleting game:', err);
@@ -439,7 +425,7 @@ const Scheduling = () => {
             showSnackbar(`Game moved to Week ${targetWeek}`);
             refreshAllSeasonSchedule();
             if (tab === 'conference') fetchConferenceSchedule();
-            else if (tab === 'ooc' && selectedOOCTeam) fetchOOCSchedule();
+            else if (tab === 'team' && selectedTeam) fetchTeamSchedule();
             else if (tab === 'postseason') fetchPostseasonSchedule();
         } catch (err) {
             console.error('Error moving game:', err);
@@ -623,27 +609,6 @@ const Scheduling = () => {
         return occupied;
     }, [allSeasonSchedule]);
 
-    const teamWeekOccupiedNonConf = useMemo(() => {
-        const confKeys = new Set();
-        conferenceSchedule.forEach(game => {
-            const home = field(game, 'homeTeam', 'home_team');
-            const away = field(game, 'awayTeam', 'away_team');
-            const week = game.week;
-            if (home && week) confKeys.add(`${home}|${week}`);
-            if (away && week) confKeys.add(`${away}|${week}`);
-        });
-
-        const occupied = new Set();
-        allSeasonSchedule.forEach(game => {
-            const home = field(game, 'homeTeam', 'home_team');
-            const away = field(game, 'awayTeam', 'away_team');
-            const week = game.week;
-            if (home && week && !confKeys.has(`${home}|${week}`)) occupied.add(`${home}|${week}`);
-            if (away && week && !confKeys.has(`${away}|${week}`)) occupied.add(`${away}|${week}`);
-        });
-        return occupied;
-    }, [allSeasonSchedule, conferenceSchedule]);
-
     const hasGamesPlayed = useMemo(() => {
         return allSeasonSchedule.some(game => {
             const started = field(game, 'started', 'started');
@@ -651,20 +616,6 @@ const Scheduling = () => {
             return started || finished;
         });
     }, [allSeasonSchedule]);
-
-    const cellDialogAvailableOpponents = useMemo(() => {
-        if (!cellDialogWeek || !cellDialogTeam) return [];
-        return conferenceTeams.filter(t => {
-            if (t.name === cellDialogTeam) return false;
-            if (teamWeekOccupiedAll.has(`${t.name}|${cellDialogWeek}`)) return false;
-            const alreadyPlaying = allSeasonSchedule.some(game => {
-                const home = field(game, 'homeTeam', 'home_team');
-                const away = field(game, 'awayTeam', 'away_team');
-                return (home === cellDialogTeam && away === t.name) || (home === t.name && away === cellDialogTeam);
-            });
-            return !alreadyPlaying;
-        });
-    }, [cellDialogWeek, cellDialogTeam, conferenceTeams, teamWeekOccupiedAll, allSeasonSchedule]);
 
     const adminConferences = useMemo(() => {
         return activeConferenceList().filter(c => !EXCLUDED_ADMIN_CONFERENCES.includes(c.code));
@@ -703,7 +654,7 @@ const Scheduling = () => {
             )}
         >
             <Box sx={{ color: 'var(--text-muted)', fontSize: '0.85rem', mb: '16px' }}>
-                Season {season}: manage conference, out-of-conference, and postseason schedules
+                Season {season}: manage conference, team, and postseason schedules
             </Box>
 
             {scheduleLocked && (
@@ -718,7 +669,7 @@ const Scheduling = () => {
                     onChange={setTab}
                     options={[
                         { value: 'conference', label: 'Conference Schedule' },
-                        { value: 'ooc', label: 'Out of Conference' },
+                        { value: 'team', label: 'Team' },
                         { value: 'postseason', label: 'Postseason' },
                     ]}
                 />
@@ -734,9 +685,10 @@ const Scheduling = () => {
                     confLoading={confLoading}
                     scheduleLocked={scheduleLocked}
                     teamMap={teamMap}
-                    teamWeekOccupied={teamWeekOccupiedNonConf}
+                    allSeasonSchedule={allSeasonSchedule}
                     onAddGameManually={() => {
                         setAddGameType('CONFERENCE_GAME');
+                        setAddGameAnchorTeam(null);
                         setAddGameDialogOpen(true);
                     }}
                     onGenerateSchedule={() => setGenerateDialogOpen(true)}
@@ -758,24 +710,28 @@ const Scheduling = () => {
                 />
             )}
 
-            {tab === 'ooc' && (
-                <OOCScheduleAdminTab
+            {tab === 'team' && (
+                <TeamScheduleAdminTab
                     allTeams={allTeams}
-                    selectedOOCTeam={selectedOOCTeam}
-                    onOOCTeamChange={setSelectedOOCTeam}
-                    oocFullSchedule={oocFullSchedule}
-                    oocLoading={oocLoading}
+                    selectedTeam={selectedTeam}
+                    onTeamChange={setSelectedTeam}
+                    teamFullSchedule={teamFullSchedule}
+                    teamLoading={teamLoading}
                     scheduleLocked={scheduleLocked}
                     teamMap={teamMap}
-                    onAddOOCGame={() => {
-                        setAddGameType('OUT_OF_CONFERENCE');
-                        setAddGameHome(selectedOOCTeam);
+                    onAddGameForTeam={() => {
+                        setAddGameType('CONFERENCE_GAME');
+                        setAddGameHome(selectedTeam);
+                        setAddGameAway(null);
+                        setAddGameAnchorTeam(selectedTeam?.name || null);
                         setAddGameDialogOpen(true);
                     }}
-                    onAddOOCGameForWeek={(weekNum) => {
-                        setAddGameType('OUT_OF_CONFERENCE');
-                        setAddGameHome(selectedOOCTeam);
+                    onAddGameForTeamWeek={(weekNum) => {
+                        setAddGameType('CONFERENCE_GAME');
+                        setAddGameHome(selectedTeam);
+                        setAddGameAway(null);
                         setAddGameWeek(weekNum);
+                        setAddGameAnchorTeam(selectedTeam?.name || null);
                         setAddGameDialogOpen(true);
                     }}
                     onMoveGame={(game) => {
@@ -784,7 +740,6 @@ const Scheduling = () => {
                         setMoveDialogOpen(true);
                     }}
                     onDeleteGame={handleDeleteGame}
-                    onRefresh={() => { fetchOOCSchedule(); refreshAllSeasonSchedule(); }}
                 />
             )}
 
@@ -799,6 +754,7 @@ const Scheduling = () => {
                     onShowSnackbar={showSnackbar}
                     onOpenAddGameDialog={(gameType, week) => {
                         setAddGameType(gameType);
+                        setAddGameAnchorTeam(null);
                         if (gameType === 'BOWL') {
                             setAddGameWeek(14);
                             setAddGameSubdivision('FCFB');
@@ -813,67 +769,19 @@ const Scheduling = () => {
                 />
             )}
 
-            <Dialog open={cellDialogOpen} onClose={() => setCellDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>
-                    Schedule Game: {cellDialogTeam}, Week {cellDialogWeek}
-                </DialogTitle>
+            <Dialog open={addGameDialogOpen} onClose={() => setAddGameDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+                <DialogTitle sx={dialogTitleSx}>Add {formatGameType(addGameType)}</DialogTitle>
                 <DialogContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                        <Autocomplete
-                            options={cellDialogAvailableOpponents}
-                            getOptionLabel={(option) => option.name || ''}
-                            value={cellDialogOpponent}
-                            onChange={(_, v) => setCellDialogOpponent(v)}
-                            renderInput={(params) => (
-                                <TextField {...params} label="Opponent" size="small" />
-                            )}
-                            renderOption={(props, option) => {
-                                const { key, ...otherProps } = props;
-                                return (
-                                    <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Avatar src={option.logo} sx={{ width: 20, height: 20 }}>{option.name?.charAt(0)}</Avatar>
-                                        <Typography variant="body2">{option.name}</Typography>
-                                    </Box>
-                                );
-                            }}
-                            isOptionEqualToValue={(option, value) => option.name === value?.name}
-                        />
-                        <FormControl size="small" fullWidth>
-                            <InputLabel>Home/Away</InputLabel>
-                            <Select
-                                value={cellDialogIsHome ? 'home' : 'away'}
-                                label="Home/Away"
-                                onChange={(e) => setCellDialogIsHome(e.target.value === 'home')}
-                            >
-                                <MenuItem value="home">{cellDialogTeam} is Home</MenuItem>
-                                <MenuItem value="away">{cellDialogTeam} is Away</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setCellDialogOpen(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleCellDialogSave}>Schedule Game</Button>
-                </DialogActions>
-            </Dialog>
-
-            <Dialog open={addGameDialogOpen} onClose={() => setAddGameDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Add {formatGameType(addGameType)}</DialogTitle>
-                <DialogContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '6px' }}>
                         {addGameType !== 'BOWL' && addGameType !== 'PLAYOFFS' && addGameType !== 'CONFERENCE_CHAMPIONSHIP' && addGameType !== 'NATIONAL_CHAMPIONSHIP' && (
-                            <FormControl size="small" fullWidth>
-                                <InputLabel>Week</InputLabel>
-                                <Select
-                                    value={addGameWeek}
-                                    label="Week"
-                                    onChange={(e) => setAddGameWeek(e.target.value)}
-                                >
+                            <Box>
+                                <Box component="label" sx={labelSx}>Week</Box>
+                                <Box component="select" value={addGameWeek} onChange={(e) => setAddGameWeek(Number(e.target.value))} sx={{ ...selectSx, width: '100%' }}>
                                     {Array.from({ length: 20 }, (_, i) => (
-                                        <MenuItem key={i + 1} value={i + 1}>Week {i + 1}</MenuItem>
+                                        <option key={i + 1} value={i + 1}>Week {i + 1}</option>
                                     ))}
-                                </Select>
-                            </FormControl>
+                                </Box>
+                            </Box>
                         )}
                         {addGameType === 'BOWL' && (
                             <Alert severity="info" sx={{ py: 0.5 }}>
@@ -891,7 +799,8 @@ const Scheduling = () => {
                             })}
                             getOptionLabel={(option) => option.name || ''}
                             value={addGameHome}
-                            onChange={(_, v) => setAddGameHome(v)}
+                            onChange={(_, v) => handleAddGameHomeChange(v)}
+                            sx={autocompleteSx}
                             renderInput={(params) => (
                                 <TextField {...params} label="Home Team" size="small" />
                             )}
@@ -900,7 +809,7 @@ const Scheduling = () => {
                                 return (
                                     <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <Avatar src={option.logo} sx={{ width: 20, height: 20 }}>{option.name?.charAt(0)}</Avatar>
-                                        <Typography variant="body2">{option.name}</Typography>
+                                        <Box component="span" sx={{ fontSize: '0.85rem' }}>{option.name}</Box>
                                     </Box>
                                 );
                             }}
@@ -911,9 +820,9 @@ const Scheduling = () => {
                             options={(() => {
                                 let opts;
                                 if (addGameType === 'OUT_OF_CONFERENCE') {
-                                    opts = allTeams.filter(t => t.active && isRealTeam(t) && t.conference !== selectedOOCTeam?.conference);
+                                    opts = allTeams.filter(t => t.active && isRealTeam(t) && t.conference !== addGameHome?.conference);
                                 } else if (addGameType === 'CONFERENCE_GAME') {
-                                    opts = conferenceTeams;
+                                    opts = allTeams.filter(t => t.active && isRealTeam(t) && t.conference === addGameHome?.conference && t.name !== addGameHome?.name);
                                 } else {
                                     opts = allTeams.filter(t => t.active && isRealTeam(t));
                                 }
@@ -924,7 +833,8 @@ const Scheduling = () => {
                             })()}
                             getOptionLabel={(option) => option.name || ''}
                             value={addGameAway}
-                            onChange={(_, v) => setAddGameAway(v)}
+                            onChange={(_, v) => handleAddGameAwayChange(v)}
+                            sx={autocompleteSx}
                             renderInput={(params) => (
                                 <TextField {...params} label="Away Team" size="small" />
                             )}
@@ -933,7 +843,7 @@ const Scheduling = () => {
                                 return (
                                     <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <Avatar src={option.logo} sx={{ width: 20, height: 20 }}>{option.name?.charAt(0)}</Avatar>
-                                        <Typography variant="body2">{option.name}</Typography>
+                                        <Box component="span" sx={{ fontSize: '0.85rem' }}>{option.name}</Box>
                                     </Box>
                                 );
                             }}
@@ -941,35 +851,35 @@ const Scheduling = () => {
                         />
 
                         {addGameType === 'BOWL' && (
-                            <TextField
-                                label="Bowl Game Name"
-                                size="small"
-                                fullWidth
-                                required
-                                value={addGameBowlName}
-                                onChange={(e) => setAddGameBowlName(e.target.value)}
-                                placeholder="e.g., Rose Bowl, Sugar Bowl, etc."
-                                error={!addGameBowlName || addGameBowlName.trim() === ''}
-                                helperText={(!addGameBowlName || addGameBowlName.trim() === '') ? 'Bowl game name is required' : ''}
-                            />
+                            <Box>
+                                <Box component="label" sx={labelSx}>Bowl game name</Box>
+                                <Box
+                                    component="input"
+                                    value={addGameBowlName}
+                                    onChange={(e) => setAddGameBowlName(e.target.value)}
+                                    placeholder="e.g., Rose Bowl, Sugar Bowl, etc."
+                                    sx={{ ...inputSx, borderColor: (!addGameBowlName || addGameBowlName.trim() === '') ? 'var(--live)' : 'var(--line)' }}
+                                />
+                                {(!addGameBowlName || addGameBowlName.trim() === '') && <Box sx={errorTextSx}>Bowl game name is required</Box>}
+                            </Box>
                         )}
 
                         {addGameType === 'BOWL' && (
                             <Box>
-                                <TextField
-                                    label="Bowl Game Logo URL"
-                                    size="small"
-                                    fullWidth
+                                <Box component="label" sx={labelSx}>Bowl game logo URL</Box>
+                                <Box
+                                    component="input"
                                     value={addGameLogo || ''}
                                     onChange={(e) => {
                                         setAddGameLogo(e.target.value);
                                         setAddGameLogoPreview(e.target.value);
                                     }}
                                     placeholder="https://example.com/bowl-logo.png"
-                                    helperText="Paste a direct link to the bowl game logo (PNG recommended)"
+                                    sx={inputSx}
                                 />
+                                <Box sx={{ ...hintTextSx, mt: '4px' }}>Paste a direct link to the bowl game logo (PNG recommended)</Box>
                                 {addGameLogoPreview && (
-                                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                                    <Box sx={{ mt: '12px', display: 'flex', justifyContent: 'center' }}>
                                         <Avatar
                                             src={addGameLogoPreview}
                                             sx={{ width: 100, height: 100 }}
@@ -1006,20 +916,12 @@ const Scheduling = () => {
                                         }
                                     }}
                                 />
-                                <label htmlFor="logo-upload-button">
-                                    <Button
-                                        variant="outlined"
-                                        component="span"
-                                        startIcon={uploadingLogo ? <CircularProgress size={16} /> : <UploadIcon />}
-                                        disabled={uploadingLogo}
-                                        fullWidth
-                                        size="small"
-                                    >
-                                        {uploadingLogo ? 'Uploading...' : addGameLogo ? 'Change Logo' : 'Upload Postseason Game Logo'}
-                                    </Button>
-                                </label>
+                                <Box component="label" htmlFor="logo-upload-button" sx={{ ...ctrlSx, width: '100%', justifyContent: 'center', gap: '8px', opacity: uploadingLogo ? 0.6 : 1, pointerEvents: uploadingLogo ? 'none' : 'auto' }}>
+                                    {uploadingLogo ? <CircularProgress size={14} /> : <UploadIcon sx={{ fontSize: 16 }} />}
+                                    {uploadingLogo ? 'Uploading...' : addGameLogo ? 'Change Logo' : 'Upload Postseason Game Logo'}
+                                </Box>
                                 {addGameLogoPreview && (
-                                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                                    <Box sx={{ mt: '12px', display: 'flex', justifyContent: 'center' }}>
                                         <Avatar
                                             src={addGameLogoPreview}
                                             sx={{ width: 100, height: 100 }}
@@ -1028,7 +930,7 @@ const Scheduling = () => {
                                     </Box>
                                 )}
                                 {addGameLogo && !addGameLogoPreview && (
-                                    <Alert severity="info" sx={{ mt: 1 }}>
+                                    <Alert severity="info" sx={{ mt: '8px' }}>
                                         Logo uploaded: {addGameLogo}
                                     </Alert>
                                 )}
@@ -1036,30 +938,26 @@ const Scheduling = () => {
                         )}
 
                         {addGameType !== 'BOWL' && (
-                            <FormControl size="small" fullWidth>
-                                <InputLabel>Game Type</InputLabel>
-                                <Select
-                                    value={addGameType}
-                                    label="Game Type"
-                                    onChange={(e) => setAddGameType(e.target.value)}
-                                >
-                                    <MenuItem value="CONFERENCE_GAME">Conference Game</MenuItem>
-                                    <MenuItem value="OUT_OF_CONFERENCE">Out of Conference</MenuItem>
-                                    <MenuItem value="CONFERENCE_CHAMPIONSHIP">Conference Championship</MenuItem>
-                                    <MenuItem value="BOWL">Bowl</MenuItem>
-                                    <MenuItem value="PLAYOFFS">Playoffs</MenuItem>
-                                    <MenuItem value="NATIONAL_CHAMPIONSHIP">National Championship</MenuItem>
-                                </Select>
-                            </FormControl>
+                            <Box>
+                                <Box component="label" sx={labelSx}>Game type</Box>
+                                <Box component="select" value={addGameType} onChange={(e) => setAddGameType(e.target.value)} sx={{ ...selectSx, width: '100%' }}>
+                                    <option value="CONFERENCE_GAME">Conference Game</option>
+                                    <option value="OUT_OF_CONFERENCE">Out of Conference</option>
+                                    <option value="CONFERENCE_CHAMPIONSHIP">Conference Championship</option>
+                                    <option value="BOWL">Bowl</option>
+                                    <option value="PLAYOFFS">Playoffs</option>
+                                    <option value="NATIONAL_CHAMPIONSHIP">National Championship</option>
+                                </Box>
+                            </Box>
                         )}
 
                         {(addGameType === 'PLAYOFFS' || addGameType === 'NATIONAL_CHAMPIONSHIP') && (
                             <>
-                                <FormControl size="small" fullWidth>
-                                    <InputLabel>Playoff Round</InputLabel>
-                                    <Select
+                                <Box>
+                                    <Box component="label" sx={labelSx}>Playoff round</Box>
+                                    <Box
+                                        component="select"
                                         value={addGamePlayoffRound || ''}
-                                        label="Playoff Round"
                                         onChange={(e) => {
                                             const round = e.target.value ? parseInt(e.target.value) : null;
                                             setAddGamePlayoffRound(round);
@@ -1068,79 +966,65 @@ const Scheduling = () => {
                                                 setAddGameWeek(calculatedWeek);
                                             }
                                         }}
+                                        sx={{ ...selectSx, width: '100%' }}
                                     >
-                                        <MenuItem value={1}>1 - First Round (Week 14)</MenuItem>
-                                        <MenuItem value={2}>2 - Second Round (Week 15)</MenuItem>
-                                        <MenuItem value={3}>3 - Quarterfinals (Week 16)</MenuItem>
-                                        <MenuItem value={4}>4 - Semifinals (Week 17)</MenuItem>
-                                        <MenuItem value={5}>5 - National Championship (Week 18)</MenuItem>
-                                    </Select>
-                                </FormControl>
+                                        <option value="">Select round...</option>
+                                        <option value={1}>1 - First Round (Week 14)</option>
+                                        <option value={2}>2 - Second Round (Week 15)</option>
+                                        <option value={3}>3 - Quarterfinals (Week 16)</option>
+                                        <option value={4}>4 - Semifinals (Week 17)</option>
+                                        <option value={5}>5 - National Championship (Week 18)</option>
+                                    </Box>
+                                </Box>
                                 {addGamePlayoffRound && (
                                     <Alert severity="info" sx={{ py: 0.5 }}>
                                         Week {13 + addGamePlayoffRound} (calculated from round {addGamePlayoffRound})
                                     </Alert>
                                 )}
-                                <Box sx={{ display: 'flex', gap: 2 }}>
-                                    <TextField
-                                        label="Home Seed"
-                                        type="number"
-                                        size="small"
-                                        value={addGameHomeSeed || ''}
-                                        onChange={(e) => setAddGameHomeSeed(parseInt(e.target.value) || null)}
-                                        fullWidth
-                                    />
-                                    <TextField
-                                        label="Away Seed"
-                                        type="number"
-                                        size="small"
-                                        value={addGameAwaySeed || ''}
-                                        onChange={(e) => setAddGameAwaySeed(parseInt(e.target.value) || null)}
-                                        fullWidth
-                                    />
+                                <Box sx={{ display: 'flex', gap: '14px' }}>
+                                    <Box sx={{ flex: 1 }}>
+                                        <Box component="label" sx={labelSx}>Home seed</Box>
+                                        <Box component="input" type="number" value={addGameHomeSeed || ''} onChange={(e) => setAddGameHomeSeed(parseInt(e.target.value) || null)} sx={inputSx} />
+                                    </Box>
+                                    <Box sx={{ flex: 1 }}>
+                                        <Box component="label" sx={labelSx}>Away seed</Box>
+                                        <Box component="input" type="number" value={addGameAwaySeed || ''} onChange={(e) => setAddGameAwaySeed(parseInt(e.target.value) || null)} sx={inputSx} />
+                                    </Box>
                                 </Box>
                             </>
                         )}
 
                         {addGameType !== 'BOWL' && addGameType !== 'PLAYOFFS' && addGameType !== 'CONFERENCE_CHAMPIONSHIP' && addGameType !== 'NATIONAL_CHAMPIONSHIP' && (
-                            <FormControl size="small" fullWidth>
-                                <InputLabel>Subdivision</InputLabel>
-                                <Select
-                                    value={addGameSubdivision}
-                                    label="Subdivision"
-                                    onChange={(e) => setAddGameSubdivision(e.target.value)}
-                                >
-                                    <MenuItem value="FBS">FBS</MenuItem>
-                                    <MenuItem value="FCS">FCS</MenuItem>
-                                </Select>
-                            </FormControl>
+                            <Box>
+                                <Box component="label" sx={labelSx}>Subdivision</Box>
+                                <Box component="select" value={addGameSubdivision} onChange={(e) => setAddGameSubdivision(e.target.value)} sx={{ ...selectSx, width: '100%' }}>
+                                    <option value="FBS">FBS</option>
+                                    <option value="FCS">FCS</option>
+                                </Box>
+                            </Box>
                         )}
                     </Box>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setAddGameDialogOpen(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleAddGame}>Add Game</Button>
+                <DialogActions sx={{ px: '20px', pb: '18px' }}>
+                    <Box component="button" type="button" onClick={() => setAddGameDialogOpen(false)} sx={ctrlSx}>Cancel</Box>
+                    <Box component="button" type="button" onClick={handleAddGame} sx={btnPrimarySx}>Add Game</Box>
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={moveDialogOpen} onClose={() => setMoveDialogOpen(false)} maxWidth="xs" fullWidth>
-                <DialogTitle>Move or Remove Game</DialogTitle>
+            <Dialog open={moveDialogOpen} onClose={() => setMoveDialogOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+                <DialogTitle sx={dialogTitleSx}>Move or Remove Game</DialogTitle>
                 <DialogContent>
                     {moveGameData && (() => {
                         const home = field(moveGameData, 'homeTeam', 'home_team') || moveGameData.opponent;
                         const away = field(moveGameData, 'awayTeam', 'away_team') || '';
                         return (
-                            <Box sx={{ mt: 1 }}>
-                                <Typography variant="body2" sx={{ mb: 2 }}>
+                            <Box sx={{ mt: '6px' }}>
+                                <Box sx={{ mb: '14px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                     {home} vs {away || moveGameData.opponent} (Week {moveGameData.week})
-                                </Typography>
-                                <FormControl size="small" fullWidth>
-                                    <InputLabel>Move to Week</InputLabel>
-                                    <Select
-                                        value={moveToWeek}
-                                        label="Move to Week"
-                                        onChange={(e) => setMoveToWeek(e.target.value)}
-                                    >
+                                </Box>
+                                <Box>
+                                    <Box component="label" sx={labelSx}>Move to week</Box>
+                                    <Box component="select" value={moveToWeek} onChange={(e) => setMoveToWeek(Number(e.target.value))} sx={{ ...selectSx, width: '100%' }}>
                                         {Array.from({ length: 12 }, (_, i) => {
                                             const weekNum = i + 1;
                                             const home = field(moveGameData, 'homeTeam', 'home_team') || moveGameData.opponent;
@@ -1153,24 +1037,19 @@ const Scheduling = () => {
                                                 return null;
                                             }
                                             return (
-                                                <MenuItem
-                                                    key={weekNum}
-                                                    value={weekNum}
-                                                >
-                                                    Week {weekNum}
-                                                </MenuItem>
+                                                <option key={weekNum} value={weekNum}>Week {weekNum}</option>
                                             );
                                         })}
-                                    </Select>
-                                </FormControl>
+                                    </Box>
+                                </Box>
                             </Box>
                         );
                     })()}
                 </DialogContent>
-                <DialogActions>
+                <DialogActions sx={{ px: '20px', pb: '18px' }}>
                     {moveGameData && (
-                        <Button
-                            color="error"
+                        <Box
+                            component="button" type="button"
                             onClick={() => {
                                 if (moveGameData?.id) {
                                     handleDeleteGame(moveGameData.id);
@@ -1178,19 +1057,20 @@ const Scheduling = () => {
                                     setMoveGameData(null);
                                 }
                             }}
+                            sx={{ ...ctrlSx, color: 'var(--live)', mr: 'auto' }}
                         >
                             Delete Game
-                        </Button>
+                        </Box>
                     )}
-                    <Button onClick={() => setMoveDialogOpen(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleMoveGame}>Move</Button>
+                    <Box component="button" type="button" onClick={() => setMoveDialogOpen(false)} sx={ctrlSx}>Cancel</Box>
+                    <Box component="button" type="button" onClick={handleMoveGame} sx={btnPrimarySx}>Move</Box>
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={generateDialogOpen} onClose={() => setGenerateDialogOpen(false)} maxWidth="md" fullWidth>
-                <DialogTitle>Auto-Generate {formatConference(selectedConference)} Conference Schedule</DialogTitle>
+            <Dialog open={generateDialogOpen} onClose={() => setGenerateDialogOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+                <DialogTitle sx={dialogTitleSx}>Auto-Generate {formatConference(selectedConference)} Conference Schedule</DialogTitle>
                 <DialogContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '6px' }}>
                         <Alert severity="warning">
                             This will replace all existing conference games for {formatConference(selectedConference)} in Season {season}.
                         </Alert>
@@ -1203,57 +1083,48 @@ const Scheduling = () => {
                             }
                         </Alert>
 
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        <Box sx={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                             Using {numConferenceGames} conference games per team with {protectedRivalries.filter(r => r.team1 && r.team2).length} protected rivalries.
                             Adjust these in the Conference Rules section above.
-                        </Typography>
+                        </Box>
                     </Box>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setGenerateDialogOpen(false)}>Cancel</Button>
-                    <Button
-                        variant="contained"
-                        onClick={handleGenerateConferenceSchedule}
-                        disabled={confLoading}
-                    >
+                <DialogActions sx={{ px: '20px', pb: '18px' }}>
+                    <Box component="button" type="button" onClick={() => setGenerateDialogOpen(false)} sx={ctrlSx}>Cancel</Box>
+                    <Box component="button" type="button" onClick={handleGenerateConferenceSchedule} disabled={confLoading} sx={btnPrimarySx}>
                         {confLoading ? 'Generating...' : 'Generate Schedule'}
-                    </Button>
+                    </Box>
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={createSeasonDialogOpen} onClose={() => !creatingSeasonLoading && setCreateSeasonDialogOpen(false)} maxWidth="xs" fullWidth>
-                <DialogTitle>Create New Season for Scheduling</DialogTitle>
+            <Dialog open={createSeasonDialogOpen} onClose={() => !creatingSeasonLoading && setCreateSeasonDialogOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+                <DialogTitle sx={dialogTitleSx}>Create New Season for Scheduling</DialogTitle>
                 <DialogContent>
-                    <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <TextField
-                            label="Season Number"
-                            type="number"
-                            size="small"
-                            value={newSeasonNumber}
-                            onChange={(e) => setNewSeasonNumber(e.target.value)}
-                            fullWidth
-                            disabled={creatingSeasonLoading}
-                        />
+                    <Box sx={{ mt: '6px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        <Box>
+                            <Box component="label" sx={labelSx}>Season number</Box>
+                            <Box component="input" type="number" value={newSeasonNumber} onChange={(e) => setNewSeasonNumber(e.target.value)} disabled={creatingSeasonLoading} sx={inputSx} />
+                        </Box>
                         <Alert severity="info" sx={{ fontSize: '0.8rem' }}>
                             This will create the season and auto-generate conference schedules for all conferences
                             (9 conference games per team, no protected rivalries). OOC weeks will be left blank.
                             You can modify everything afterwards.
                         </Alert>
                         {creatingSeasonLoading && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                <CircularProgress size={20} />
-                                <Typography variant="body2" color="text.secondary">
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <CircularProgress size={18} />
+                                <Box sx={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                                     {createSeasonProgress || 'Creating season & generating schedules…'}
-                                </Typography>
+                                </Box>
                             </Box>
                         )}
                     </Box>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setCreateSeasonDialogOpen(false)} disabled={creatingSeasonLoading}>Cancel</Button>
-                    <Button variant="contained" onClick={handleCreateSeason} disabled={creatingSeasonLoading}>
+                <DialogActions sx={{ px: '20px', pb: '18px' }}>
+                    <Box component="button" type="button" onClick={() => setCreateSeasonDialogOpen(false)} disabled={creatingSeasonLoading} sx={ctrlSx}>Cancel</Box>
+                    <Box component="button" type="button" onClick={handleCreateSeason} disabled={creatingSeasonLoading} sx={btnPrimarySx}>
                         {creatingSeasonLoading ? 'Creating…' : 'Create Season'}
-                    </Button>
+                    </Box>
                 </DialogActions>
             </Dialog>
 

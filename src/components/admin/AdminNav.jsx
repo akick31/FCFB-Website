@@ -36,8 +36,8 @@ const AdminNav = () => {
                             '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' },
                         }}
                     >
-                        <Box sx={{ display: 'flex', '& svg': { fontSize: '1.05rem' } }}>{item.icon}</Box>
-                        {item.label}
+                        <Box sx={{ display: 'flex', flexShrink: 0, '& svg': { fontSize: '1.05rem' } }}>{item.icon}</Box>
+                        <Box component="span" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</Box>
                     </Box>
                 );
             })}

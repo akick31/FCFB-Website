@@ -14,7 +14,7 @@ const AdminLayout = ({ title, controls, children }) => {
             <PageHeading eyebrow="Restricted, commissioner tools" title={title}>
                 {controls}
             </PageHeading>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '210px 1fr' }, gap: '16px' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '240px 1fr' }, gap: '16px' }}>
                 <AdminNav />
                 <Box sx={{ minWidth: 0 }}>{children}</Box>
             </Box>
