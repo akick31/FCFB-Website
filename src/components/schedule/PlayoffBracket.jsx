@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../ui/TeamMark';
+import { ensureTeam } from '../../hooks/useTeamsMap';
 
 const ROUND_LABELS = { 1: 'First Round', 2: 'Second Round', 3: 'Quarterfinal', 4: 'Semifinal', 5: 'Championship' };
 const LINE = 'var(--line)';
@@ -13,10 +14,6 @@ const chunkPairs = (games) => {
     return pairs;
 };
 
-// A round's games arrive in whatever order the schedule was generated in, which doesn't
-// necessarily match bracket-slot order. Reorder each round so consecutive/aligned games
-// actually feed the correct next-round matchup, traced by shared team identity rather than
-// assuming a fixed seed formula (works regardless of bracket size or bye structure).
 const orderRoundGames = (games, nextRoundGames) => {
     if (!nextRoundGames || nextRoundGames.length === 0) return games;
     const feedIndex = (game) => {
@@ -71,7 +68,11 @@ const PlayoffBracket = ({ rounds, teamsMap }) => {
     if (roundNumbers.length === 0) return null;
     const first = roundNumbers[0];
 
-    const markFor = (name) => teamsMap[name] || { name };
+    const markFor = (name) => {
+        if (!name) return { name };
+        if (!teamsMap[name]) ensureTeam(name);
+        return teamsMap[name] || { name };
+    };
 
     const teamRow = (name, seed, score, isWinner) => (
         <Box className={`bteam ${isWinner ? '' : 'loser'}`}>

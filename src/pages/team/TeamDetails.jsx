@@ -15,6 +15,7 @@ import PageWrap from '../../components/layout/PageWrap';
 import Panel from '../../components/ui/Panel';
 import SectionTitle from '../../components/ui/SectionTitle';
 import SelectPill from '../../components/ui/SelectPill';
+import SegTabs from '../../components/ui/SegTabs';
 import StatTile, { TileGrid } from '../../components/ui/StatTile';
 import MiniTrendChart from '../../components/charts/MiniTrendChart';
 import TeamHeader from '../../components/team/TeamHeader';
@@ -30,6 +31,11 @@ const statsRows = (result) => {
 };
 
 const firstStats = (result) => statsRows(result)[0] || null;
+
+const SCOPE_TABS = [
+    { value: 'regular', label: 'Regular season' },
+    { value: 'postseason', label: 'Postseason' },
+];
 
 const resolveDefaultSeason = async () => {
     try {
@@ -55,6 +61,7 @@ const TeamDetails = () => {
     const [team, setTeam] = useState(null);
     const [seasons, setSeasons] = useState([]);
     const [seasonView, setSeasonView] = useState(null);
+    const scope = searchParams.get('scope') === 'postseason' ? 'postseason' : 'regular';
     const [allEloRows, setAllEloRows] = useState([]);
     const [allRankPoints, setAllRankPoints] = useState([]);
     const [allTimeStats, setAllTimeStats] = useState(null);
@@ -133,7 +140,7 @@ const TeamDetails = () => {
                     setSeasonStats(null);
                 } else {
                     const [statsData, scheduleData] = await Promise.all([
-                        getFilteredSeasonStats(team.name, null, seasonView).catch(() => null),
+                        getFilteredSeasonStats(team.name, null, seasonView, null, 0, 20, scope).catch(() => null),
                         getScheduleBySeasonAndTeam(seasonView, team.name).catch(() => []),
                     ]);
                     if (!active) return;
@@ -145,7 +152,22 @@ const TeamDetails = () => {
             }
         })();
         return () => { active = false; };
-    }, [team, seasonView, seasons]);
+    }, [team, seasonView, seasons, scope]);
+
+    const changeScope = (nextScope) => {
+        const next = new URLSearchParams(searchParams);
+        if (nextScope === 'postseason') {
+            next.set('scope', nextScope);
+            if (seasonView === 'alltime') {
+                const fallback = seasons[0] ?? null;
+                setSeasonView(fallback);
+                if (fallback != null) next.set('season', String(fallback));
+            }
+        } else {
+            next.delete('scope');
+        }
+        setSearchParams(next, { replace: true });
+    };
 
     const mark = useMemo(() => {
         if (!team) return null;
@@ -200,12 +222,16 @@ const TeamDetails = () => {
                 <StatTile label="All-time ELO" value={team.overall_elo != null ? Math.round(team.overall_elo) : '-'} />
             </TileGrid>
 
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '22px' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: '22px', flexWrap: 'wrap' }}>
+                <SegTabs value={scope} onChange={changeScope} options={SCOPE_TABS} ariaLabel="Stats scope" />
                 <SelectPill
                     label="Viewing"
                     value={seasonView ?? ''}
                     onChange={(next) => setSeasonView(next === 'alltime' ? 'alltime' : Number(next))}
-                    options={[...seasons.map((option) => ({ value: option, label: `Season ${option}` })), { value: 'alltime', label: 'All-time' }]}
+                    options={[
+                        ...seasons.map((option) => ({ value: option, label: `Season ${option}` })),
+                        ...(scope === 'postseason' ? [] : [{ value: 'alltime', label: 'All-time' }]),
+                    ]}
                 />
             </Box>
 

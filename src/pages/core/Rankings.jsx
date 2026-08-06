@@ -9,11 +9,11 @@ import SelectPill from '../../components/ui/SelectPill';
 import DataTable from '../../components/ui/DataTable';
 import TeamMark from '../../components/ui/TeamMark';
 import ConferenceMark from '../../components/ui/ConferenceMark';
-import { getAllTeams } from '../../api/teamApi';
+import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import { getRankings, getRankingWeeks } from '../../api/rankingApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getAllSeasons } from '../../api/seasonApi';
-import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { eloWeekBuckets, eloByTeamForWeek, eloRankingForWeek } from '../../utils/eloRankings';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
@@ -56,7 +56,7 @@ const Rankings = () => {
             try {
                 const [seasonsData, teamsData, elo] = await Promise.all([
                     getAllSeasons(),
-                    getAllTeams(),
+                    getAllTeamsIncludingInactive(),
                     getEloHistory('all').catch(() => []),
                 ]);
                 if (!active) return;
@@ -248,6 +248,7 @@ const Rankings = () => {
                 </thead>
                 <tbody>
                     {rows.map(({ rank, team, prev, elo, wins, losses }) => {
+                        if (!teamsMap[team.name]) ensureTeam(team.name);
                         const mark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation };
                         const coach = team.coach_usernames?.[0];
                         return (

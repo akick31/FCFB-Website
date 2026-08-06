@@ -5,19 +5,19 @@ import Panel from '../../ui/Panel';
 import { getFilteredPlaybookStats } from '../../../api/playbookStatsApi';
 import { formatOffensivePlaybook } from '../../../utils/formatText';
 
-const PlaybooksGraphTab = ({ season }) => {
+const PlaybooksGraphTab = ({ season, scope }) => {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         let active = true;
         setLoading(true);
-        getFilteredPlaybookStats(null, null, season, 0, 1000)
+        getFilteredPlaybookStats(null, null, season, 0, 1000, scope)
             .then((res) => { if (active) setRows(res?.content || []); })
             .catch(() => { if (active) setRows([]); })
             .finally(() => { if (active) setLoading(false); });
         return () => { active = false; };
-    }, [season]);
+    }, [season, scope]);
 
     const playbooks = useMemo(() => {
         const byPlaybook = new Map();
@@ -61,6 +61,7 @@ const PlaybooksGraphTab = ({ season }) => {
 
 PlaybooksGraphTab.propTypes = {
     season: PropTypes.number.isRequired,
+    scope: PropTypes.string,
 };
 
 export default PlaybooksGraphTab;

@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
 import TvLogo from '../../ui/TvLogo';
 import GameTypeLabel from '../cards/GameTypeLabel';
+import { formatScoreboardStatus } from '../../../utils/gameUtils';
 
 const CoachlessName = ({ mark, name, rank, record, align, teamId }) => (
     <Box
@@ -36,7 +37,9 @@ Score.propTypes = { value: PropTypes.number, dimmed: PropTypes.bool, winner: Pro
 const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor, spreadText, threadLink, columns, awayQuarters, homeQuarters, showQuarters }) => {
     const homeWin = game.home_score > game.away_score;
     const overtime = game.quarter > 4;
-    const finalLabel = `Final${overtime ? ' / OT' : ''}`;
+    const finalLabel = game.game_status === 'FINAL'
+        ? `Final${overtime ? ' / OT' : ''}`
+        : formatScoreboardStatus(game.game_status);
     const awayRecord = `${game.away_wins || 0}-${game.away_losses || 0}`;
     const homeRecord = `${game.home_wins || 0}-${game.home_losses || 0}`;
     const quarterCols = [...columns, 'T'];

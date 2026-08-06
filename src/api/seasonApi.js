@@ -148,6 +148,60 @@ export const unlockSchedule = async (seasonNumber) => {
     }
 };
 
+export const startSeason = async () => {
+    try {
+        const response = await apiClient.post('/season');
+        return response.data;
+    } catch (error) {
+        console.error("Failed to start season:", error);
+        if (error.response) {
+            const startError = new Error(error.response.data.error || "Failed to start season");
+            startError.status = error.response.status;
+            throw startError;
+        }
+        throw new Error("An unexpected error occurred while starting season");
+    }
+};
+
+export const endSeason = async () => {
+    try {
+        const response = await apiClient.post('/season/end');
+        return response.data;
+    } catch (error) {
+        console.error("Failed to end season:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to end season");
+        }
+        throw new Error("An unexpected error occurred while ending season");
+    }
+};
+
+export const setCurrentSeason = async (seasonNumber) => {
+    try {
+        const response = await apiClient.put(`/season/${seasonNumber}/set-current`);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to set current season:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to set current season");
+        }
+        throw new Error("An unexpected error occurred while setting current season");
+    }
+};
+
+export const updateCurrentWeek = async (seasonNumber, week) => {
+    try {
+        const response = await apiClient.put(`/season/${seasonNumber}/week`, null, { params: { week } });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to update current week:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to update current week");
+        }
+        throw new Error("An unexpected error occurred while updating current week");
+    }
+};
+
 export const createSeasonForScheduling = async (seasonNumber) => {
     try {
         const response = await apiClient.post(`/season/${seasonNumber}`);

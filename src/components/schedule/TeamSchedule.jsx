@@ -4,8 +4,13 @@ import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import Panel from '../ui/Panel';
 import TeamMark from '../ui/TeamMark';
+import { ensureTeam } from '../../hooks/useTeamsMap';
 
-const markFor = (teamsMap, name) => teamsMap[name] || { name };
+const markFor = (teamsMap, name) => {
+    if (!name) return { name };
+    if (!teamsMap[name]) ensureTeam(name);
+    return teamsMap[name] || { name };
+};
 
 const REGULAR_SEASON_WEEKS = 12;
 

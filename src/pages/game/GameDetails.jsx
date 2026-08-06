@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress, Alert, Button } from '@mui/material';
 import { ArrowBack, Assessment, RestaurantMenu, Stop } from '@mui/icons-material';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { getGameById, chewGameByGameId, endGameByGameId } from '../../api/gameApi';
 import { getAllPlaysByGameId } from '../../api/playApi';
@@ -14,6 +14,7 @@ import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/fo
 import { conferenceLabel } from '../../components/constants/conferences';
 import { STAT_GROUPS, statCell } from '../../utils/teamStatFields';
 import { gameHeaderTitle, gameTypeName, buildWinProbSeries, buildScoreSeries, quarterBoundaries } from '../../utils/gameDetail';
+import { goBackOr } from '../../utils/navigation';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import Panel from '../../components/ui/Panel';
@@ -44,6 +45,7 @@ CoachLink.propTypes = { coach: PropTypes.string };
 
 const GameDetails = ({ isAdmin }) => {
     const { gameId } = useParams();
+    const navigate = useNavigate();
     const teamsMap = useTeamsMap();
     const { mode } = useColorMode();
     const [adminBusy, setAdminBusy] = useState('');
@@ -191,7 +193,7 @@ const GameDetails = ({ isAdmin }) => {
     return (
         <PageWrap>
             <PageHeading eyebrow={headerTitle} title="Game detail">
-                <Box component={Link} to="/scoreboard" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: 1.25, py: 0.6, fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'none' }}>
+                <Box component="button" type="button" onClick={() => goBackOr(navigate, '/scoreboard')} sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: 1.25, py: 0.6, fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', font: 'inherit' }}>
                     <ArrowBack sx={{ fontSize: 15 }} /> Scoreboard
                 </Box>
             </PageHeading>
@@ -234,17 +236,17 @@ const GameDetails = ({ isAdmin }) => {
             </Box>
 
             {(wpSeries.length > 1 || scoreSeries.length > 1) && (
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '16px', mt: '16px', alignItems: 'start' }}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '16px', mt: '16px', alignItems: 'stretch' }}>
                     {wpSeries.length > 1 ? (
-                        <Panel header="Win probability">
-                            <Box sx={{ p: 2 }}>
+                        <Panel header="Win probability" sx={{ display: 'flex', flexDirection: 'column' }}>
+                            <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                 <WinProbChart series={wpSeries} homeColor={homeColor} awayColor={awayColor} homeMark={homeMark} awayMark={awayMark} quarterMarks={wpMarks} />
                             </Box>
                         </Panel>
                     ) : <span />}
                     {scoreSeries.length > 1 ? (
-                        <Panel header="Score">
-                            <Box sx={{ p: 2 }}>
+                        <Panel header="Score" sx={{ display: 'flex', flexDirection: 'column' }}>
+                            <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                 <ScoreChart series={scoreSeries} homeColor={homeColor} awayColor={awayColor} homeAbbr={homeMark?.abbreviation} awayAbbr={awayMark?.abbreviation} />
                                 <Box sx={{ display: 'flex', gap: 2, mt: 1, fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}><Box sx={{ width: 11, height: 3, borderRadius: '2px', background: awayColor }} />{awayMark?.name || game.away_team}</Box>
@@ -253,12 +255,6 @@ const GameDetails = ({ isAdmin }) => {
                             </Box>
                         </Panel>
                     ) : <span />}
-                </Box>
-            )}
-
-            {plays.length > 0 && (
-                <Box sx={{ mt: '16px' }}>
-                    <PlaysPanel plays={plays} homeAbbr={homeMark?.abbreviation} awayAbbr={awayMark?.abbreviation} homeName={game.home_team} awayName={game.away_team} />
                 </Box>
             )}
 
@@ -279,6 +275,12 @@ const GameDetails = ({ isAdmin }) => {
                         ))}
                     </Box>
                 </>
+            )}
+
+            {plays.length > 0 && (
+                <Box sx={{ mt: '16px' }}>
+                    <PlaysPanel plays={plays} homeAbbr={homeMark?.abbreviation} awayAbbr={awayMark?.abbreviation} homeName={game.home_team} awayName={game.away_team} />
+                </Box>
             )}
         </PageWrap>
     );

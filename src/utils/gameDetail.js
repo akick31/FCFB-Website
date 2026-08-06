@@ -17,8 +17,10 @@ export const gameHeaderTitle = (game, conferenceLabel) => {
             return game.postseason_game_name || ROUND_LABELS[game.playoff_round] || 'Playoffs';
         case 'BOWL':
             return game.postseason_game_name || 'Bowl';
+        case 'SCRIMMAGE':
+            return 'Scrimmage';
         default:
-            return `Week ${game.week}, Season ${game.season}`;
+            return `Season ${game.season}, Week ${game.week}`;
     }
 };
 
@@ -30,6 +32,7 @@ export const gameTypeName = (gameType) => {
         case 'CONFERENCE_CHAMPIONSHIP': return 'Conference Championship Game';
         case 'CONFERENCE_GAME': return 'Conference Game';
         case 'OUT_OF_CONFERENCE': return 'Out of Conference';
+        case 'SCRIMMAGE': return 'Scrimmage';
         default: return 'Game';
     }
 };

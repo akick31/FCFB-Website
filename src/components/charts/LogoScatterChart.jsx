@@ -4,7 +4,7 @@ import { Box } from '@mui/material';
 
 const W = 760;
 const H = 440;
-const PAD = 48;
+const PAD = 56;
 const BASE_VB = [0, 0, W, H];
 
 const LogoScatterChart = ({ points, xLabel, yLabel, invertX = false, resetKey }) => {
@@ -78,6 +78,9 @@ const LogoScatterChart = ({ points, xLabel, yLabel, invertX = false, resetKey })
     }, []);
 
     const grid = [0, 0.25, 0.5, 0.75, 1];
+    const fmt = (v) => (Number.isInteger(v) ? v : Math.round(v * 10) / 10);
+    const xValueAt = (f) => (invertX ? x1 - f * (x1 - x0) : x0 + f * (x1 - x0));
+    const yValueAt = (f) => y1 - f * (y1 - y0);
 
     return (
         <Box ref={wrapRef} sx={{ position: 'relative' }}>
@@ -90,12 +93,18 @@ const LogoScatterChart = ({ points, xLabel, yLabel, invertX = false, resetKey })
             onMouseDown={onDown}
             sx={{ display: 'block', cursor: 'grab', touchAction: 'none' }}
         >
-            {grid.map((f) => (
-                <g key={f}>
-                    <line x1={PAD} x2={W - PAD} y1={PAD + f * (H - 2 * PAD)} y2={PAD + f * (H - 2 * PAD)} stroke="var(--line-soft)" />
-                    <line y1={PAD} y2={H - PAD} x1={PAD + f * (W - 2 * PAD)} x2={PAD + f * (W - 2 * PAD)} stroke="var(--line-soft)" />
-                </g>
-            ))}
+            {grid.map((f) => {
+                const yy = PAD + f * (H - 2 * PAD);
+                const xx = PAD + f * (W - 2 * PAD);
+                return (
+                    <g key={f}>
+                        <line x1={PAD} x2={W - PAD} y1={yy} y2={yy} stroke="var(--line-soft)" />
+                        <line y1={PAD} y2={H - PAD} x1={xx} x2={xx} stroke="var(--line-soft)" />
+                        <text x={PAD - 6} y={yy + 3} textAnchor="end" fill="var(--text-dim)" fontSize="9">{fmt(yValueAt(f))}</text>
+                        <text x={xx} y={H - PAD + 14} textAnchor="middle" fill="var(--text-dim)" fontSize="9">{fmt(xValueAt(f))}</text>
+                    </g>
+                );
+            })}
             <line x1={PAD} x2={W - PAD} y1={H - PAD} y2={H - PAD} stroke="var(--line)" />
             <line x1={PAD} x2={PAD} y1={PAD} y2={H - PAD} stroke="var(--line)" />
             <text x={W / 2} y={H - 14} textAnchor="middle" fill="var(--text-dim)" fontSize="11" fontWeight="700">{xLabel}</text>

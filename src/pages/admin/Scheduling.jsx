@@ -13,7 +13,7 @@ import {
     Snackbar,
     CircularProgress,
 } from '@mui/material';
-import { CloudUpload as UploadIcon, Lock as LockIcon, LockOpen as LockOpenIcon } from '@mui/icons-material';
+import { CloudUpload as UploadIcon, Lock as LockIcon, LockOpen as LockOpenIcon, FactCheck as FactCheckIcon } from '@mui/icons-material';
 import AdminLayout from '../../components/layout/AdminLayout';
 import SegTabs from '../../components/ui/SegTabs';
 import TeamMark from '../../components/ui/TeamMark';
@@ -34,6 +34,7 @@ import {
     pollScheduleGenJobStatus,
     saveConferenceRules,
     getConferenceRules,
+    validateSchedule,
 } from '../../api/scheduleApi';
 import { getCurrentSeasonOrLatest, getAllSeasons, isScheduleLocked, lockSchedule, unlockSchedule, createSeasonForScheduling } from '../../api/seasonApi';
 import { uploadPostseasonLogo } from '../../api/uploadApi';
@@ -102,6 +103,9 @@ const Scheduling = () => {
     const [oocDialogOpen, setOocDialogOpen] = useState(false);
     const [oocLoading, setOocLoading] = useState(false);
     const [oocResult, setOocResult] = useState(null);
+    const [validateDialogOpen, setValidateDialogOpen] = useState(false);
+    const [validating, setValidating] = useState(false);
+    const [validationResult, setValidationResult] = useState(null);
     const [selectedTeamState, setSelectedTeamState] = useState(null);
     const [teamFullSchedule, setTeamFullSchedule] = useState([]);
     const [teamLoading, setTeamLoading] = useState(false);
@@ -528,6 +532,22 @@ const Scheduling = () => {
         }
     };
 
+    const handleValidateSchedule = async () => {
+        setValidateDialogOpen(true);
+        setValidating(true);
+        setValidationResult(null);
+        try {
+            const result = await validateSchedule(season);
+            setValidationResult(result);
+        } catch (err) {
+            console.error('Error validating schedule:', err);
+            showSnackbar('Failed to validate schedule: ' + err.message, 'error');
+            setValidateDialogOpen(false);
+        } finally {
+            setValidating(false);
+        }
+    };
+
     const [creatingSeasonLoading, setCreatingSeasonLoading] = useState(false);
     const [createSeasonProgress, setCreateSeasonProgress] = useState('');
     const handleCreateSeason = async () => {
@@ -730,6 +750,10 @@ const Scheduling = () => {
                     </Box>
                     <Box component="button" type="button" disabled={scheduleLocked} onClick={() => { setOocResult(null); setOocDialogOpen(true); }} sx={{ ...ctrlSx, opacity: scheduleLocked ? 0.6 : 1, cursor: scheduleLocked ? 'default' : 'pointer' }}>
                         Auto-generate OOC schedule
+                    </Box>
+                    <Box component="button" type="button" onClick={handleValidateSchedule} sx={{ ...ctrlSx, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <FactCheckIcon sx={{ fontSize: 15 }} />
+                        Validate schedule
                     </Box>
                 </>
             )}
@@ -1258,6 +1282,43 @@ const Scheduling = () => {
                     <Box component="button" type="button" onClick={handleCreateSeason} disabled={creatingSeasonLoading} sx={btnPrimarySx}>
                         {creatingSeasonLoading ? 'Creating…' : 'Create Season'}
                     </Box>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={validateDialogOpen} onClose={() => setValidateDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+                <DialogTitle sx={dialogTitleSx}>Validate Season {season} Schedule</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '6px' }}>
+                        {validating ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <CircularProgress size={18} />
+                                <Box sx={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Checking every active team&apos;s schedule…</Box>
+                            </Box>
+                        ) : validationResult && (
+                            validationResult.valid ? (
+                                <Alert severity="success">
+                                    Every active team has a game scheduled in every week (1-12). This season&apos;s schedule is ready to start.
+                                </Alert>
+                            ) : (
+                                <>
+                                    <Alert severity="warning">
+                                        {validationResult.incompleteTeams.length} team{validationResult.incompleteTeams.length > 1 ? 's are' : ' is'} missing games. The schedule must be complete before starting the season.
+                                    </Alert>
+                                    <Box sx={{ maxHeight: 320, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 'var(--r-sm)' }}>
+                                        {validationResult.incompleteTeams.map((gap) => (
+                                            <Box key={gap.team} sx={{ display: 'flex', justifyContent: 'space-between', gap: '12px', px: '12px', py: '8px', fontSize: '0.82rem', borderBottom: '1px solid var(--line-soft)', '&:last-of-type': { borderBottom: 0 } }}>
+                                                <Box component="b">{gap.team}</Box>
+                                                <Box sx={{ color: 'var(--live)' }}>Missing week{gap.missingWeeks.length > 1 ? 's' : ''} {gap.missingWeeks.join(', ')}</Box>
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                </>
+                            )
+                        )}
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ px: '20px', pb: '18px' }}>
+                    <Box component="button" type="button" onClick={() => setValidateDialogOpen(false)} sx={ctrlSx}>Close</Box>
                 </DialogActions>
             </Dialog>
 

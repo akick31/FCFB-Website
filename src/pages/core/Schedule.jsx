@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, CircularProgress, Alert } from '@mui/material';
-import { getAllTeams } from '../../api/teamApi';
+import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedule, getScheduleBySeason } from '../../api/scheduleApi';
 import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { getTeamSeasonConference } from '../../api/teamSeasonConferenceApi';
@@ -101,7 +101,7 @@ const Schedule = () => {
             try {
                 setLoading(true);
                 const [teamsData, currentSeason, seasonsData] = await Promise.all([
-                    getAllTeams(),
+                    getAllTeamsIncludingInactive(),
                     getCurrentSeasonOrLatest(),
                     getAllSeasons(),
                 ]);

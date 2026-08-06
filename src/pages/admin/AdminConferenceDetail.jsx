@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
@@ -14,6 +14,7 @@ import { getConferenceRules, saveConferenceRules } from '../../api/scheduleApi';
 import { getAllTeams, updateTeam } from '../../api/teamApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { refreshConferences } from '../../components/constants/conferences';
+import { goBackOr } from '../../utils/navigation';
 
 const DEFAULT_CONFERENCE_GAMES = 9;
 
@@ -32,6 +33,7 @@ const emptySettings = { label: '', abbreviation: '', logoUrl: '', logoUrlDark: '
 
 const AdminConferenceDetail = () => {
     const { code } = useParams();
+    const navigate = useNavigate();
     const [tab, setTab] = useState('settings');
     const [conferences, setConferences] = useState([]);
     const [teams, setTeams] = useState([]);
@@ -286,7 +288,7 @@ const AdminConferenceDetail = () => {
 
     return (
         <AdminLayout title={conference ? conference.label : code}>
-            <Box component={Link} to="/admin/conferences" sx={backSx}>&larr; All conferences</Box>
+            <Box component="button" type="button" onClick={() => goBackOr(navigate, '/admin/conferences')} sx={{ ...backSx, border: 0, background: 'transparent', cursor: 'pointer', font: 'inherit', p: 0 }}>&larr; All conferences</Box>
 
             {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
 

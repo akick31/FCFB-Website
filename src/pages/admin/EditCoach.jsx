@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
@@ -9,6 +9,7 @@ import { getAllTeams } from '../../api/teamApi';
 import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS } from '../../constants/teamEnums';
 import { formatOffensivePlaybook, formatDefensivePlaybook, formatRole, formatPosition } from '../../utils/formatText';
 import { slugId } from '../../utils/a11y';
+import { goBackOr } from '../../utils/navigation';
 
 const ROLES = ['USER', 'CONFERENCE_COMMISSIONER', 'ADMIN'];
 const POSITIONS = ['HEAD_COACH', 'OFFENSIVE_COORDINATOR', 'DEFENSIVE_COORDINATOR', 'RETIRED'];
@@ -105,7 +106,7 @@ const EditCoach = () => {
 
     return (
         <AdminLayout title={`Edit Coach: ${user.coach_name || user.username}`}>
-            <Box component={Link} to="/admin/team-management" sx={backSx}>&larr; Team management</Box>
+            <Box component="button" type="button" onClick={() => goBackOr(navigate, '/admin/team-management')} sx={{ ...backSx, border: 0, background: 'transparent', cursor: 'pointer', font: 'inherit', p: 0 }}>&larr; Team management</Box>
 
             {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
             {success && <Alert severity="success" sx={{ mb: '16px' }}>Coach updated successfully. Redirecting...</Alert>}
@@ -170,7 +171,7 @@ const EditCoach = () => {
             </Panel>
 
             <Box sx={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <Box component={Link} to="/admin/team-management" sx={btnGhostSx}>Cancel</Box>
+                <Box component="button" type="button" onClick={() => goBackOr(navigate, '/admin/team-management')} sx={btnGhostSx}>Cancel</Box>
                 <Box component="button" type="button" onClick={handleSave} disabled={saving} sx={btnPrimarySx}>{saving ? 'Saving...' : 'Save changes'}</Box>
             </Box>
         </AdminLayout>

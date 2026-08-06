@@ -3,6 +3,7 @@ import { Box, CircularProgress } from '@mui/material';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../ui/TeamMark';
+import { ensureTeam } from '../../hooks/useTeamsMap';
 
 const REGULAR_WEEKS = Array.from({ length: 12 }, (_, index) => index + 1);
 
@@ -32,7 +33,11 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
         return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>;
     }
 
-    const markFor = (name) => teamsMap[name] || { name };
+    const markFor = (name) => {
+        if (!name) return { name };
+        if (!teamsMap[name]) ensureTeam(name);
+        return teamsMap[name] || { name };
+    };
 
     return (
         <Box sx={{ border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', background: 'var(--surface)' }}>

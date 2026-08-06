@@ -9,10 +9,11 @@ import SelectPill from '../../components/ui/SelectPill';
 import Panel from '../../components/ui/Panel';
 import TeamMark from '../../components/ui/TeamMark';
 import { getFilteredRecords } from '../../api/recordsApi';
-import { getAllTeams } from '../../api/teamApi';
+import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { useConferencesMap, activeConferenceList, conferenceLabel } from '../../components/constants/conferences';
 import { recordGroup, recordOrder, recordLabel, RECORD_GROUP_ORDER, SEASON_EXCLUDED_RECORDS, EXCLUDED_RECORDS } from '../../utils/recordCategories';
+import { isRealTeam } from '../../utils/teamDataUtils';
 import { useSeo } from '../../hooks/useSeo';
 
 const SCOPE_TABS = [
@@ -23,10 +24,24 @@ const SCOPE_TABS = [
 const RECORD_TABS = [
     { value: 'single_game', label: 'Single game' },
     { value: 'single_season', label: 'Single season' },
+    { value: 'postseason_game', label: 'Postseason game' },
+    { value: 'postseason', label: 'Postseason' },
 ];
 const TAB_VALUES = RECORD_TABS.map((tab) => tab.value);
-const RECORD_TYPE = { single_game: 'SINGLE_GAME', single_season: 'SINGLE_SEASON' };
-const RECORD_TYPE_LOWEST = { single_game: 'SINGLE_GAME_LOWEST', single_season: 'SINGLE_SEASON_LOWEST' };
+const RECORD_TYPE = {
+    single_game: 'SINGLE_GAME',
+    single_season: 'SINGLE_SEASON',
+    postseason_game: 'SINGLE_POSTSEASON_GAME',
+    postseason: 'SINGLE_POSTSEASON',
+};
+const RECORD_TYPE_LOWEST = {
+    single_game: 'SINGLE_GAME_LOWEST',
+    single_season: 'SINGLE_SEASON_LOWEST',
+    postseason_game: 'SINGLE_POSTSEASON_GAME_LOWEST',
+    postseason: 'SINGLE_POSTSEASON_LOWEST',
+};
+const LEAGUE_ONLY_TABS = new Set(['postseason_game', 'postseason']);
+const SEASON_VIEW_TABS = new Set(['single_season', 'postseason']);
 const GROUP_ORDER = [...RECORD_GROUP_ORDER, 'Other'];
 
 const unwrapContent = (result) => (Array.isArray(result?.content) ? result.content : Array.isArray(result) ? result : []);
@@ -92,6 +107,7 @@ const RecordsBoard = ({ user }) => {
     const teamsMap = useTeamsMap();
     const conferencesMap = useConferencesMap();
     const activeTab = TAB_VALUES.includes(tab) ? tab : 'single_game';
+    const isLeagueOnlyTab = LEAGUE_ONLY_TABS.has(activeTab);
 
     const [scope, setScope] = useState('league');
     const [teams, setTeams] = useState([]);
@@ -111,11 +127,11 @@ const RecordsBoard = ({ user }) => {
     useEffect(() => {
         let active = true;
         (async () => {
-            const allTeams = await getAllTeams().catch(() => []);
+            const allTeams = await getAllTeamsIncludingInactive().catch(() => []);
             if (!active) return;
-            const activeTeams = (allTeams || []).filter((entry) => entry.active && entry.name).sort((a, b) => a.name.localeCompare(b.name));
-            setTeams(activeTeams);
-            const preferred = activeTeams.find((entry) => entry.name === user?.team) || activeTeams[0];
+            const realTeams = (allTeams || []).filter((entry) => entry.name && isRealTeam(entry)).sort((a, b) => a.name.localeCompare(b.name));
+            setTeams(realTeams);
+            const preferred = realTeams.find((entry) => entry.name === user?.team) || realTeams[0];
             setTeam(preferred?.name || '');
         })();
         return () => { active = false; };
@@ -126,8 +142,9 @@ const RecordsBoard = ({ user }) => {
         setConference(activeConferenceList()[0]?.code || '');
     }, [conferencesMap, conference]);
 
-    const scopeValue = scope === 'conference' ? conference : scope === 'team' ? team : null;
-    const scopeReady = scope === 'league' || (scope === 'conference' && conference) || (scope === 'team' && team);
+    const effectiveScope = isLeagueOnlyTab ? 'league' : scope;
+    const scopeValue = effectiveScope === 'conference' ? conference : effectiveScope === 'team' ? team : null;
+    const scopeReady = isLeagueOnlyTab || effectiveScope === 'league' || (effectiveScope === 'conference' && conference) || (effectiveScope === 'team' && team);
 
     useEffect(() => {
         if (!scopeReady) return;
@@ -137,8 +154,8 @@ const RecordsBoard = ({ user }) => {
                 setLoading(true);
                 setError('');
                 const [highest, lowest] = await Promise.all([
-                    getFilteredRecords(null, null, RECORD_TYPE[activeTab], null, 0, 1000, scope.toUpperCase(), scopeValue).then(unwrapContent).catch(() => []),
-                    getFilteredRecords(null, null, RECORD_TYPE_LOWEST[activeTab], null, 0, 1000, scope.toUpperCase(), scopeValue).then(unwrapContent).catch(() => []),
+                    getFilteredRecords(null, null, RECORD_TYPE[activeTab], null, 0, 1000, effectiveScope.toUpperCase(), scopeValue).then(unwrapContent).catch(() => []),
+                    getFilteredRecords(null, null, RECORD_TYPE_LOWEST[activeTab], null, 0, 1000, effectiveScope.toUpperCase(), scopeValue).then(unwrapContent).catch(() => []),
                 ]);
                 if (active) setRows({ highest, lowest });
             } catch {
@@ -148,7 +165,7 @@ const RecordsBoard = ({ user }) => {
             }
         })();
         return () => { active = false; };
-    }, [activeTab, scope, scopeValue, scopeReady]);
+    }, [activeTab, effectiveScope, scopeValue, scopeReady]);
 
     const { byGroup, availableGroups } = useMemo(() => {
         const highestBest = bestPerStat(rows.highest, 'max');
@@ -156,13 +173,13 @@ const RecordsBoard = ({ user }) => {
         const lowestOnly = bestPerStat(rows.lowest, 'min').filter((record) => !highestNames.has(record.record_name));
         const merged = [...highestBest, ...lowestOnly];
 
-        const seasonView = activeTab === 'single_season';
+        const seasonView = SEASON_VIEW_TABS.has(activeTab);
         const grouped = {};
         merged.forEach((record) => {
             const key = String(record.record_name).toLowerCase();
             if (EXCLUDED_RECORDS.has(key)) return;
             if (seasonView && SEASON_EXCLUDED_RECORDS.has(key)) return;
-            if (!seasonView && key === 'largest_deficit' && scope !== 'team') return;
+            if (!seasonView && key === 'largest_deficit' && effectiveScope !== 'team') return;
             const group = recordGroup(record.record_name, { seasonView });
             (grouped[group] = grouped[group] || []).push(record);
         });
@@ -170,7 +187,7 @@ const RecordsBoard = ({ user }) => {
             groupRows.sort((a, b) => recordOrder(a.record_name, { seasonView }) - recordOrder(b.record_name, { seasonView })),
         );
         return { byGroup: grouped, availableGroups: GROUP_ORDER.filter((group) => grouped[group]?.length) };
-    }, [rows, activeTab, scope]);
+    }, [rows, activeTab, effectiveScope]);
 
     useEffect(() => {
         if (availableGroups.length && !availableGroups.includes(category)) setCategory(availableGroups[0]);
@@ -182,22 +199,22 @@ const RecordsBoard = ({ user }) => {
     return (
         <PageWrap>
             <PageHeading eyebrow="All-time" title="Records">
-                <SegTabs value={scope} onChange={setScope} options={SCOPE_TABS} ariaLabel="Record scope" />
+                {!isLeagueOnlyTab && <SegTabs value={scope} onChange={setScope} options={SCOPE_TABS} ariaLabel="Record scope" />}
             </PageHeading>
 
             <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                 <SegTabs value={activeTab} onChange={(value) => navigate(`/records/${value}`)} options={RECORD_TABS} ariaLabel="Record type" />
-                {scope === 'conference' && (
+                {!isLeagueOnlyTab && scope === 'conference' && (
                     <SelectPill label="Conference" value={conference} onChange={setConference} options={activeConferenceList().map((entry) => ({ value: entry.code, label: entry.label }))} sx={{ height: 38 }} />
                 )}
-                {scope === 'team' && teams.length > 0 && (
+                {!isLeagueOnlyTab && scope === 'team' && teams.length > 0 && (
                     <SelectPill label="Team" value={team} onChange={setTeam} options={teams.map((entry) => ({ value: entry.name, label: entry.name }))} sx={{ height: 38 }} />
                 )}
             </Box>
 
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-            {scope === 'conference' && <Box sx={{ color: 'var(--text-muted)', fontSize: '0.85rem', mb: 2, fontWeight: 700 }}>{conferenceLabel(conference)} records</Box>}
+            {!isLeagueOnlyTab && scope === 'conference' && <Box sx={{ color: 'var(--text-muted)', fontSize: '0.85rem', mb: 2, fontWeight: 700 }}>{conferenceLabel(conference)} records</Box>}
 
             {!loading && availableGroups.length > 0 && (
                 <Box role="tablist" aria-label="Record category" sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>

@@ -41,6 +41,19 @@ export const getScheduleBySeasonAndWeek = async (season, week) => {
     }
 };
 
+export const validateSchedule = async (season) => {
+    try {
+        const response = await apiClient.get(`/schedule/season/${season}/validate`);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to validate schedule:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to validate schedule");
+        }
+        throw new Error("An unexpected error occurred while validating schedule");
+    }
+};
+
 export const getConferenceSchedule = async (season, conference) => {
     try {
         const response = await apiClient.get('/schedule/conference', {

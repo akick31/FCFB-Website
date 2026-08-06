@@ -8,10 +8,12 @@ import {
     CalendarMonth,
     FormatListNumbered,
     AccountTree,
+    EventNote,
 } from '@mui/icons-material';
 
 export const adminNavigationItems = [
     { label: 'Dashboard', icon: <Dashboard />, path: '/admin' },
+    { label: 'Season Management', icon: <EventNote />, path: '/admin/season-management' },
     { label: 'User Management', icon: <People />, path: '/admin/user-management' },
     { label: 'Team Management', icon: <EmojiEvents />, path: '/admin/team-management' },
     { label: 'Conference Management', icon: <AccountTree />, path: '/admin/conferences' },

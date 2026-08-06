@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
@@ -10,6 +10,7 @@ import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS, SUBDIVISIONS } from '../../co
 import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 import { useConferencesMap, allConferenceList } from '../../components/constants/conferences';
 import { slugId } from '../../utils/a11y';
+import { goBackOr } from '../../utils/navigation';
 
 const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
 const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', py: '10px', font: 'inherit', fontSize: '0.85rem' };
@@ -96,7 +97,7 @@ const EditTeam = () => {
 
     return (
         <AdminLayout title={`Edit Team: ${team.name}`}>
-            <Box component={Link} to="/admin/team-management" sx={backSx}>&larr; Team management</Box>
+            <Box component="button" type="button" onClick={() => goBackOr(navigate, '/admin/team-management')} sx={{ ...backSx, border: 0, background: 'transparent', cursor: 'pointer', font: 'inherit', p: 0 }}>&larr; Team management</Box>
 
             {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
             {success && <Alert severity="success" sx={{ mb: '16px' }}>Team updated successfully. Redirecting...</Alert>}
@@ -207,7 +208,7 @@ const EditTeam = () => {
             </Panel>
 
             <Box sx={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <Box component={Link} to="/admin/team-management" sx={btnGhostSx}>Cancel</Box>
+                <Box component="button" type="button" onClick={() => goBackOr(navigate, '/admin/team-management')} sx={btnGhostSx}>Cancel</Box>
                 <Box component="button" type="button" onClick={handleSave} disabled={saving} sx={btnPrimarySx}>{saving ? 'Saving...' : 'Save changes'}</Box>
             </Box>
         </AdminLayout>

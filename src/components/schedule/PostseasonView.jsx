@@ -9,10 +9,15 @@ import TeamMark from '../ui/TeamMark';
 import ConferenceMark from '../ui/ConferenceMark';
 import PlayoffBracket from './PlayoffBracket';
 import { conferenceLabel } from '../constants/conferences';
+import { ensureTeam } from '../../hooks/useTeamsMap';
 
 const PostseasonRow = ({ game, label, teamsMap }) => {
     const homeWin = game.home_score > game.away_score;
-    const markFor = (name) => teamsMap[name] || { name };
+    const markFor = (name) => {
+        if (!name) return { name };
+        if (!teamsMap[name]) ensureTeam(name);
+        return teamsMap[name] || { name };
+    };
     const side = (name, score, isWinner) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.84rem', color: game.finished && !isWinner ? 'var(--text-dim)' : 'var(--text)' }}>
             <TeamMark team={markFor(name)} size={20} />
