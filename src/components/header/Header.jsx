@@ -3,7 +3,7 @@ import { Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { logout } from '../../api/authApi';
-import { getTeamByName } from '../../api/teamApi';
+import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { useConferencesMap } from '../constants/conferences';
 import CommandBar from './CommandBar';
 import LiveTicker from './LiveTicker';
@@ -12,20 +12,14 @@ import MobileNavDrawer from './MobileNavDrawer';
 const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, setIsAdmin }) => {
     const navigate = useNavigate();
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [teamLogo, setTeamLogo] = useState(null);
+    const teamsMap = useTeamsMap();
     useConferencesMap();
 
     useEffect(() => {
-        if (!user?.team) {
-            setTeamLogo(null);
-            return;
-        }
-        let active = true;
-        getTeamByName(user.team)
-            .then((team) => { if (active) setTeamLogo(team?.logo || null); })
-            .catch(() => { if (active) setTeamLogo(null); });
-        return () => { active = false; };
+        if (user?.team) ensureTeam(user.team);
     }, [user?.team]);
+
+    const team = user?.team ? teamsMap[user.team] : null;
 
     const handleLogout = () => {
         logout(setIsAuthenticated, setUser, setIsAdmin);
@@ -44,7 +38,7 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
                 isAuthenticated={isAuthenticated}
                 isAdmin={isAdmin}
                 user={user}
-                teamLogo={teamLogo}
+                team={team}
                 onMobileOpen={() => setMobileOpen(true)}
                 onLogout={handleLogout}
             />

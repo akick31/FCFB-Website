@@ -7,6 +7,7 @@ import ConferenceTabs from '../../components/team/ConferenceTabs';
 import SelectPill from '../../components/ui/SelectPill';
 import DataTable from '../../components/ui/DataTable';
 import TeamMark from '../../components/ui/TeamMark';
+import ConferenceMark from '../../components/ui/ConferenceMark';
 import { getAllTeams } from '../../api/teamApi';
 import { getLatestCompletedSeason, getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
 import { getScheduleBySeason, getConferenceRules } from '../../api/scheduleApi';
@@ -15,13 +16,12 @@ import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getFilteredGames } from '../../api/gameApi';
 import { getTeamSeasonConference } from '../../api/teamSeasonConferenceApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
-import { useConferencesMap, activeConferenceCodes, allConferenceList, conferenceLabel, conferenceLogo } from '../../components/constants/conferences';
+import { useConferencesMap, activeConferenceCodes, allConferenceList, conferenceLabel } from '../../components/constants/conferences';
 import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 import { useOffseasonStatus } from '../../components/game/scoreboard/hooks/useOffseasonStatus';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
-
-const confPct = (row) => (row.confWins + row.confLosses > 0 ? row.confWins / (row.confWins + row.confLosses) : 0);
+import { sortStandingsRows } from '../../utils/standingsTiebreakers';
 
 const buildHistoricalData = (conferenceMap, scheduleRows, eloRows, seasonStatsRows, gameRows) => {
     const recordByTeam = {};
@@ -67,7 +67,7 @@ const buildHistoricalData = (conferenceMap, scheduleRows, eloRows, seasonStatsRo
         coachByTeam[team] = coaches?.[0] || null;
     });
 
-    return { conferenceMap: conferenceMap || {}, recordByTeam, eloByTeam, statsByTeam, coachByTeam };
+    return { conferenceMap: conferenceMap || {}, recordByTeam, eloByTeam, statsByTeam, coachByTeam, scheduleRows: scheduleRows || [] };
 };
 
 const Standings = () => {
@@ -89,6 +89,7 @@ const Standings = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [divisions, setDivisions] = useState([]);
+    const [liveGames, setLiveGames] = useState([]);
 
     useEffect(() => {
         setLoading(true);
@@ -112,6 +113,15 @@ const Standings = () => {
     }, []);
 
     const isLiveSeason = season != null && season === liveSeason;
+
+    useEffect(() => {
+        if (!season || !isLiveSeason) { setLiveGames([]); return undefined; }
+        let active = true;
+        getScheduleBySeason(season)
+            .then((rows) => { if (active) setLiveGames(rows || []); })
+            .catch(() => { if (active) setLiveGames([]); });
+        return () => { active = false; };
+    }, [season, isLiveSeason]);
 
     useEffect(() => {
         if (!season || isLiveSeason) { setHistorical(null); return; }
@@ -169,7 +179,7 @@ const Standings = () => {
 
     const displayRows = useMemo(() => {
         if (isLiveSeason) {
-            return teams
+            const rows = teams
                 .filter((team) => team.conference === selectedConference)
                 .map((team) => ({
                     name: team.name,
@@ -183,14 +193,14 @@ const Standings = () => {
                     defense: team.defensive_playbook,
                     coach: team.coach_usernames?.[0] || null,
                     division: team.division || null,
-                }))
-                .sort((a, b) => confPct(b) - confPct(a) || a.name.localeCompare(b.name));
+                }));
+            return sortStandingsRows(rows, liveGames);
         }
         if (!historical) return [];
         const teamNames = Object.entries(historical.conferenceMap)
             .filter(([, conf]) => conf === selectedConference)
             .map(([name]) => name);
-        return teamNames
+        const rows = teamNames
             .map((name) => {
                 const rec = historical.recordByTeam[name] || { wins: 0, losses: 0, confWins: 0, confLosses: 0 };
                 const stats = historical.statsByTeam[name];
@@ -206,9 +216,9 @@ const Standings = () => {
                     defense: stats?.defensive_playbook,
                     coach: historical.coachByTeam[name] || null,
                 };
-            })
-            .sort((a, b) => confPct(b) - confPct(a) || a.name.localeCompare(b.name));
-    }, [teams, isLiveSeason, historical, selectedConference, teamsMap]);
+            });
+        return sortStandingsRows(rows, historical.scheduleRows);
+    }, [teams, isLiveSeason, historical, selectedConference, teamsMap, liveGames]);
 
     const sections = useMemo(() => {
         if (!isLiveSeason || divisions.filter(Boolean).length === 0) {
@@ -244,14 +254,12 @@ const Standings = () => {
         return <PageWrap><Alert severity="error">{error}</Alert></PageWrap>;
     }
 
-    const confLogo = conferenceLogo(selectedConference);
-
     return (
         <PageWrap>
             <PageHeading
                 eyebrow={conferenceLabel(selectedConference)}
                 title="Standings"
-                leading={confLogo ? <TeamMark team={{ logo: confLogo, name: selectedConference }} size={42} /> : null}
+                leading={selectedConference ? <ConferenceMark conference={selectedConference} size={42} /> : null}
             >
                 {allSeasons.length > 0 && (
                     <SelectPill

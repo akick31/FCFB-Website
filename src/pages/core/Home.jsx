@@ -171,8 +171,8 @@ const Home = () => {
         <PageWrap>
             <Box sx={{
                 position: 'relative', background: 'linear-gradient(160deg, var(--brand-deep), #01293b)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', overflow: 'hidden', p: '30px', display: 'flex', alignItems: 'center', gap: '26px', flexWrap: 'wrap',
-                '&::before': { content: '""', position: 'absolute', right: '-60px', top: '-40px', bottom: '-40px', width: '230px', background: 'var(--live)', transform: 'skewX(-11deg)', opacity: 0.9 },
-                '&::after': { content: '""', position: 'absolute', right: '120px', top: '-40px', bottom: '-40px', width: '18px', background: '#b9c2c8', transform: 'skewX(-11deg)', opacity: 0.6 },
+                '&::before': { content: '""', display: { xs: 'none', sm: 'block' }, position: 'absolute', right: '-60px', top: '-40px', bottom: '-40px', width: '230px', background: 'var(--live)', transform: 'skewX(-11deg)', opacity: 0.9 },
+                '&::after': { content: '""', display: { xs: 'none', sm: 'block' }, position: 'absolute', right: '120px', top: '-40px', bottom: '-40px', width: '18px', background: '#b9c2c8', transform: 'skewX(-11deg)', opacity: 0.6 },
             }}>
                 <Box component="img" src={logo} alt="FCFB" sx={{ height: 118, width: 'auto', zIndex: 2, filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.5))' }} />
                 <Box sx={{ zIndex: 2, flex: 1, minWidth: 260 }}>
@@ -183,10 +183,10 @@ const Home = () => {
                         College football,<br />one number at a time
                     </Box>
                     <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                        <Box component="a" href="https://discord.gg/fcfb" target="_blank" rel="noopener noreferrer" sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--disc, #5865F2)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', py: '10px', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none' }}>
+                        <Box component="a" href="https://discord.gg/fcfb" target="_blank" rel="noopener noreferrer" sx={{ display: 'inline-flex', alignItems: 'center', gap: { xs: '6px', sm: '8px' }, background: 'var(--disc, #5865F2)', color: '#fff', borderRadius: 'var(--r-sm)', px: { xs: '10px', sm: '16px' }, py: { xs: '6px', sm: '10px' }, fontSize: { xs: '0.72rem', sm: '0.85rem' }, fontWeight: 700, textDecoration: 'none' }}>
                             <FontAwesomeIcon icon={faDiscord} /> Join the Discord
                         </Box>
-                        <Box component="a" href="https://www.patreon.com/fakecfb" target="_blank" rel="noopener noreferrer" sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.35)', borderRadius: 'var(--r-sm)', px: '16px', py: '10px', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none' }}>
+                        <Box component="a" href="https://www.patreon.com/fakecfb" target="_blank" rel="noopener noreferrer" sx={{ display: 'inline-flex', alignItems: 'center', gap: { xs: '6px', sm: '8px' }, background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.35)', borderRadius: 'var(--r-sm)', px: { xs: '10px', sm: '16px' }, py: { xs: '6px', sm: '10px' }, fontSize: { xs: '0.72rem', sm: '0.85rem' }, fontWeight: 700, textDecoration: 'none' }}>
                             <FontAwesomeIcon icon={faPatreon} /> Support on Patreon
                         </Box>
                     </Box>

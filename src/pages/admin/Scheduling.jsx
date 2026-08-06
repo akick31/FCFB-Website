@@ -898,7 +898,7 @@ const Scheduling = () => {
                                 const { key, ...otherProps } = props;
                                 return (
                                     <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <TeamMark team={teamMap[option.name] || option} size={20} />
+                                        <TeamMark team={teamMap[option.name] || { name: option.name, abbreviation: option.abbreviation }} size={20} />
                                         <Box component="span" sx={{ fontSize: '0.85rem' }}>{option.name}</Box>
                                     </Box>
                                 );
@@ -932,7 +932,7 @@ const Scheduling = () => {
                                 const { key, ...otherProps } = props;
                                 return (
                                     <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <TeamMark team={teamMap[option.name] || option} size={20} />
+                                        <TeamMark team={teamMap[option.name] || { name: option.name, abbreviation: option.abbreviation }} size={20} />
                                         <Box component="span" sx={{ fontSize: '0.85rem' }}>{option.name}</Box>
                                     </Box>
                                 );

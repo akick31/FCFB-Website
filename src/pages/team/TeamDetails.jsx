@@ -8,7 +8,7 @@ import { getRankingsHistory } from '../../api/rankingsHistoryApi.jsx';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getScheduleBySeasonAndTeam } from '../../api/scheduleApi';
 import { getLatestCompletedSeason, getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
-import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../theme/ColorModeContext';
 import { pickTeamColor } from '../../utils/teamColor';
 import PageWrap from '../../components/layout/PageWrap';
@@ -22,8 +22,6 @@ import SeasonStatTable from '../../components/team/SeasonStatTable';
 import TeamSchedule from '../../components/schedule/TeamSchedule';
 import { aggregateSeasonStats } from '../../utils/aggregateStats';
 import { useSeo } from '../../hooks/useSeo';
-
-const toDark = (logo) => (logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo);
 
 const statsRows = (result) => {
     if (Array.isArray(result)) return result;
@@ -151,10 +149,7 @@ const TeamDetails = () => {
 
     const mark = useMemo(() => {
         if (!team) return null;
-        return teamsMap[team.name] || {
-            name: team.name, abbreviation: team.abbreviation, logo: team.logo || null, logoDark: toDark(team.logo),
-            primaryColor: team.primary_color, secondaryColor: team.secondary_color,
-        };
+        return teamsMap[team.name] || toEntry(team);
     }, [team, teamsMap]);
 
     useEffect(() => {

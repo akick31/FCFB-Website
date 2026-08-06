@@ -126,7 +126,7 @@ const Teams = () => {
 
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '12px' }}>
                 {shown.map((team) => {
-                    const teamMark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation, logo: team.logo };
+                    const teamMark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation };
                     return (
                         <Box
                             key={team.id}

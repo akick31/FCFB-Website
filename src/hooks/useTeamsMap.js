@@ -4,7 +4,7 @@ import { getAllTeams, getTeamByName } from '../api/teamApi';
 const toDarkLogo = (logo) =>
     logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo;
 
-const toEntry = (team) => ({
+export const toEntry = (team) => ({
     id: team.id,
     name: team.name,
     abbreviation: team.abbreviation || team.name.slice(0, 4).toUpperCase(),

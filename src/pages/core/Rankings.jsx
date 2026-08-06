@@ -248,7 +248,7 @@ const Rankings = () => {
                 </thead>
                 <tbody>
                     {rows.map(({ rank, team, prev, elo, wins, losses }) => {
-                        const mark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation, logo: team.logo };
+                        const mark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation };
                         const coach = team.coach_usernames?.[0];
                         return (
                             <Box component="tr" key={team.id ?? team.name} sx={{ position: 'relative' }}>

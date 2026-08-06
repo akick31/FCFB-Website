@@ -4,8 +4,9 @@ import { Box, CircularProgress } from '@mui/material';
 import { Link } from 'react-router-dom';
 import Panel from '../../ui/Panel';
 import SegTabs from '../../ui/SegTabs';
+import ConferenceMark from '../../ui/ConferenceMark';
 import { getFilteredConferenceStats } from '../../../api/conferenceStatsApi';
-import { conferenceLabel, conferenceLogo } from '../../constants/conferences';
+import { conferenceLabel } from '../../constants/conferences';
 
 const confValue = (conference) => (typeof conference === 'string' ? conference : conference?.name);
 
@@ -86,7 +87,7 @@ const ConferenceStrengthTab = ({ season, teams }) => {
                                     to="/standings"
                                     sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', minWidth: 0, textDecoration: 'none', color: 'inherit', '&:hover': { color: 'var(--brand)' }, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' } }}
                                 >
-                                    {conferenceLogo(r.conf) && <Box component="img" src={conferenceLogo(r.conf)} alt="" sx={{ width: 18, height: 18, objectFit: 'contain', flex: '0 0 auto' }} />}
+                                    <ConferenceMark conference={r.conf} size={18} />
                                     <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conferenceLabel(r.conf)}</Box>
                                 </Box>
                                 <Box sx={{ height: 16, background: 'var(--surface-2)', borderRadius: '3px', overflow: 'hidden' }}>

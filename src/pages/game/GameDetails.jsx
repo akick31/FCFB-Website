@@ -7,7 +7,7 @@ import { getGameById, chewGameByGameId, endGameByGameId } from '../../api/gameAp
 import { getAllPlaysByGameId } from '../../api/playApi';
 import { getGameStatsByIdAndTeam, generateGameStats } from '../../api/gameStatsApi.jsx';
 import { getTeamByName } from '../../api/teamApi';
-import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../theme/ColorModeContext';
 import { pickTeamColor } from '../../utils/teamColor';
 import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
@@ -27,17 +27,13 @@ import ScoreChart from '../../components/game/detail/ScoreChart';
 import PlaysPanel from '../../components/game/detail/PlaysPanel';
 import { useSeo } from '../../hooks/useSeo';
 
-const toDark = (logo) => (logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo);
 const unwrap = (result) => {
     const data = result?.data ?? result;
     return Array.isArray(data) ? data[0] : data;
 };
 const rankLabel = (rank) => (rank && rank <= 25 ? `#${rank}` : 'Unranked');
 
-const markFrom = (teamsMap, name, teamObject) => teamsMap[name] || (teamObject ? {
-    name: teamObject.name, abbreviation: teamObject.abbreviation, logo: teamObject.logo || null, logoDark: toDark(teamObject.logo),
-    primaryColor: teamObject.primary_color, secondaryColor: teamObject.secondary_color,
-} : { name });
+const markFrom = (teamsMap, name, teamObject) => teamsMap[name] || (teamObject ? toEntry(teamObject) : { name });
 
 const CoachLink = ({ coach }) => {
     if (!coach) return '-';

@@ -218,7 +218,7 @@ const ConferenceScheduleAdminTab = ({
                                         <tr key={team.name} style={isIncomplete ? { background: 'color-mix(in srgb, var(--live) 6%, transparent)' } : undefined}>
                                             <td className="tcol">
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                                                    <TeamMark team={teamMap[team.name] || team} size={20} />
+                                                    <TeamMark team={teamMap[team.name] || { name: team.name, abbreviation: team.abbreviation }} size={20} />
                                                     <Box component="b" sx={{ fontSize: '0.78rem' }}>{team.abbreviation || team.name}</Box>
                                                     {isIncomplete && <WarningAmber titleAccess={`${team.abbreviation || team.name} has ${totalGames}/${numConferenceGames} conference games scheduled`} sx={{ color: 'var(--live)', fontSize: '0.85rem' }} />}
                                                 </Box>

@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import mainLogo from '../../assets/graphics/main_logo.png';
 import { NAV_ITEMS } from './navConfig';
 import { clickableProps } from '../../utils/a11y';
+import TeamMark from '../ui/TeamMark';
 
 const navButtonSx = (active) => ({
     color: '#cfe3ee',
@@ -21,7 +22,7 @@ const navButtonSx = (active) => ({
     ...(active && { color: '#fff' }),
 });
 
-const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, onLogout }) => {
+const CommandBar = ({ isAuthenticated, isAdmin, user, team, onMobileOpen, onLogout }) => {
     const location = useLocation();
     const [userAnchor, setUserAnchor] = useState(null);
 
@@ -72,13 +73,17 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, on
                         aria-label={`Account menu for ${user?.username || 'user'}`}
                         sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', px: 1, py: 0.5, borderRadius: 1, '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' }, '&:focus-visible': { outline: '2px solid #fff', outlineOffset: '2px' } }}
                     >
-                        <Avatar src={teamLogo || undefined} sx={{ width: 30, height: 30, borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.15)' }}>
-                            {teamLogo ? null : <SportsFootball sx={{ fontSize: '1rem' }} />}
-                        </Avatar>
+                        {team?.logo || team?.logoDark ? (
+                            <TeamMark team={team} size={30} sx={{ borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+                        ) : (
+                            <Avatar sx={{ width: 30, height: 30, borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.15)' }}>
+                                <SportsFootball sx={{ fontSize: '1rem' }} />
+                            </Avatar>
+                        )}
                         <Box sx={{ display: { xs: 'none', sm: 'block' }, color: '#fff', fontSize: '0.8rem', fontWeight: 600 }}>{user?.username}</Box>
                     </Box>
                 ) : (
-                    <>
+                    <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
                         <Button
                             component={Link}
                             to="/login"
@@ -97,7 +102,7 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, on
                         >
                             Register
                         </Button>
-                    </>
+                    </Box>
                 )}
 
                 <IconButton onClick={onMobileOpen} aria-label="Open menu" sx={{ display: { xs: 'inline-flex', md: 'none' }, color: '#fff' }}>
@@ -123,7 +128,7 @@ CommandBar.propTypes = {
     isAuthenticated: PropTypes.bool.isRequired,
     isAdmin: PropTypes.bool.isRequired,
     user: PropTypes.object,
-    teamLogo: PropTypes.string,
+    team: PropTypes.object,
     onMobileOpen: PropTypes.func.isRequired,
     onLogout: PropTypes.func.isRequired,
 };
