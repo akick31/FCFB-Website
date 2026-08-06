@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
+import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import { uploadRankings } from '../../api/rankingApi';
@@ -43,21 +44,31 @@ const parseCsvToNames = (text) => {
 };
 
 const RankingsManagement = () => {
-    const [season, setSeason] = useState('');
-    const [week, setWeek] = useState(1);
-    const [pollType, setPollType] = useState('COACHES_POLL');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [season, setSeasonState] = useState(searchParams.get('season') || '');
+    const [week, setWeekState] = useState(searchParams.get('week') ? Number(searchParams.get('week')) : 1);
+    const [pollType, setPollTypeState] = useState(searchParams.get('pollType') || 'COACHES_POLL');
     const [namesText, setNamesText] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [result, setResult] = useState(null);
+
+    const updateParam = (key, value) => {
+        const next = new URLSearchParams(searchParams);
+        if (value === '' || value == null) next.delete(key); else next.set(key, String(value));
+        setSearchParams(next, { replace: true });
+    };
+    const setSeason = (value) => { setSeasonState(value); updateParam('season', value); };
+    const setWeek = (value) => { setWeekState(value); updateParam('week', value); };
+    const setPollType = (value) => { setPollTypeState(value); updateParam('pollType', value); };
 
     useEffect(() => {
         Promise.all([
             getCurrentSeasonOrLatest().catch(() => ''),
             getCurrentWeekOrLatest().catch(() => 1),
         ]).then(([currentSeason, currentWeek]) => {
-            setSeason(currentSeason);
-            if (currentWeek) setWeek(currentWeek > 14 ? 14 : currentWeek);
+            if (!searchParams.get('season')) setSeason(currentSeason);
+            if (!searchParams.get('week') && currentWeek) setWeek(currentWeek > 14 ? 14 : currentWeek);
         });
     }, []);
 

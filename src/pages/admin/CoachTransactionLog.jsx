@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
+import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
@@ -28,10 +29,17 @@ const CoachTransactionLog = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [teamFilter, setTeamFilter] = useState('ALL');
-    const [positionFilter, setPositionFilter] = useState('ALL');
-    const [transactionTypeFilter, setTransactionTypeFilter] = useState('ALL');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const searchTerm = searchParams.get('q') || '';
+    const teamFilter = searchParams.get('team') || 'ALL';
+    const positionFilter = searchParams.get('position') || 'ALL';
+    const transactionTypeFilter = searchParams.get('type') || 'ALL';
+
+    const updateParam = (key, value) => {
+        const next = new URLSearchParams(searchParams);
+        if (!value || value === 'ALL') next.delete(key); else next.set(key, value);
+        setSearchParams(next, { replace: true });
+    };
 
     useEffect(() => {
         getEntireCoachTransactionLog()
@@ -84,10 +92,10 @@ const CoachTransactionLog = () => {
             title="Coach Transaction Log"
             controls={(
                 <>
-                    <Box component="input" placeholder="Search transactions..." aria-label="Search transactions" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
-                    <SelectPill label="Team" value={teamFilter} onChange={setTeamFilter} options={teamOptions} sx={pillHeightSx} />
-                    <SelectPill label="Position" value={positionFilter} onChange={setPositionFilter} options={positionOptions} sx={pillHeightSx} />
-                    <SelectPill label="Type" value={transactionTypeFilter} onChange={setTransactionTypeFilter} options={typeOptions} sx={pillHeightSx} />
+                    <Box component="input" placeholder="Search transactions..." aria-label="Search transactions" value={searchTerm} onChange={(e) => updateParam('q', e.target.value)} sx={searchSx} />
+                    <SelectPill label="Team" value={teamFilter} onChange={(value) => updateParam('team', value)} options={teamOptions} sx={pillHeightSx} />
+                    <SelectPill label="Position" value={positionFilter} onChange={(value) => updateParam('position', value)} options={positionOptions} sx={pillHeightSx} />
+                    <SelectPill label="Type" value={transactionTypeFilter} onChange={(value) => updateParam('type', value)} options={typeOptions} sx={pillHeightSx} />
                 </>
             )}
         >

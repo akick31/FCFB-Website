@@ -36,6 +36,10 @@ const ConferenceScheduleAdminTab = ({
     onAddRivalry,
     onRemoveRivalry,
     onUpdateRivalry,
+    divisions,
+    onAddDivision,
+    onRemoveDivision,
+    onUpdateDivision,
     hasGamesPlayed = false,
     onSaveConferenceRules,
 }) => {
@@ -138,10 +142,14 @@ const ConferenceScheduleAdminTab = ({
                             conferenceTeams={conferenceTeams}
                             numConferenceGames={numConferenceGames}
                             protectedRivalries={protectedRivalries}
+                            divisions={divisions}
                             onNumConferenceGamesChange={onNumConferenceGamesChange}
                             onAddRivalry={onAddRivalry}
                             onRemoveRivalry={onRemoveRivalry}
                             onUpdateRivalry={onUpdateRivalry}
+                            onAddDivision={onAddDivision}
+                            onRemoveDivision={onRemoveDivision}
+                            onUpdateDivision={onUpdateDivision}
                             onSave={onSaveConferenceRules}
                             disabled={scheduleLocked}
                         />
@@ -210,7 +218,7 @@ const ConferenceScheduleAdminTab = ({
                                         <tr key={team.name} style={isIncomplete ? { background: 'color-mix(in srgb, var(--live) 6%, transparent)' } : undefined}>
                                             <td className="tcol">
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                                                    <TeamMark team={teamMap[team.name] || team} size={20} />
+                                                    <TeamMark team={teamMap[team.name] || { name: team.name, abbreviation: team.abbreviation }} size={20} />
                                                     <Box component="b" sx={{ fontSize: '0.78rem' }}>{team.abbreviation || team.name}</Box>
                                                     {isIncomplete && <WarningAmber titleAccess={`${team.abbreviation || team.name} has ${totalGames}/${numConferenceGames} conference games scheduled`} sx={{ color: 'var(--live)', fontSize: '0.85rem' }} />}
                                                 </Box>
@@ -301,6 +309,10 @@ ConferenceScheduleAdminTab.propTypes = {
     onAddRivalry: PropTypes.func.isRequired,
     onRemoveRivalry: PropTypes.func.isRequired,
     onUpdateRivalry: PropTypes.func.isRequired,
+    divisions: PropTypes.array.isRequired,
+    onAddDivision: PropTypes.func.isRequired,
+    onRemoveDivision: PropTypes.func.isRequired,
+    onUpdateDivision: PropTypes.func.isRequired,
     hasGamesPlayed: PropTypes.bool,
     onSaveConferenceRules: PropTypes.func,
 };

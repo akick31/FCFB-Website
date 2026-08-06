@@ -4,12 +4,12 @@ import { getAllTeams, getTeamByName } from '../api/teamApi';
 const toDarkLogo = (logo) =>
     logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo;
 
-const toEntry = (team) => ({
+export const toEntry = (team) => ({
     id: team.id,
     name: team.name,
     abbreviation: team.abbreviation || team.name.slice(0, 4).toUpperCase(),
     logo: team.logo || null,
-    logoDark: toDarkLogo(team.logo),
+    logoDark: team.logo_dark || toDarkLogo(team.logo),
     primaryColor: team.primary_color || '#004260',
     secondaryColor: team.secondary_color || '#888888',
     conference: team.conference || null,

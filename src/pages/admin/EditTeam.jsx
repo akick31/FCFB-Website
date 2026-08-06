@@ -16,7 +16,7 @@ const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'v
 const selectSx = { ...inputSx, cursor: 'pointer', '& option': { background: 'var(--surface-2)', color: 'var(--text)' } };
 const fieldWrapSx = { mb: '14px' };
 const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '18px', py: '10px', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
-const btnGhostSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '18px', py: '10px', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const btnGhostSx = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '18px', py: '10px', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 const backSx = { color: 'var(--brand)', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none', display: 'inline-block', mb: '14px' };
 
 const Field = ({ label, children }) => {
@@ -112,6 +112,12 @@ const EditTeam = () => {
                     <Field label="Short name">
                         <Box component="input" value={team.short_name || ''} onChange={(e) => handleChange('short_name', e.target.value)} sx={inputSx} />
                     </Field>
+                    <Field label="Logo URL">
+                        <Box component="input" value={team.logo || ''} onChange={(e) => handleChange('logo', e.target.value)} sx={inputSx} />
+                    </Field>
+                    <Field label="Dark logo URL">
+                        <Box component="input" value={team.logo_dark || ''} onChange={(e) => handleChange('logo_dark', e.target.value)} sx={inputSx} />
+                    </Field>
                     <Box sx={fieldWrapSx}>
                         <Box component="label" htmlFor="primary-color" sx={labelSx}>Primary color</Box>
                         <Box sx={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -201,7 +207,7 @@ const EditTeam = () => {
             </Panel>
 
             <Box sx={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <Box component="button" type="button" onClick={() => navigate('/admin/team-management')} sx={btnGhostSx}>Cancel</Box>
+                <Box component={Link} to="/admin/team-management" sx={btnGhostSx}>Cancel</Box>
                 <Box component="button" type="button" onClick={handleSave} disabled={saving} sx={btnPrimarySx}>{saving ? 'Saving...' : 'Save changes'}</Box>
             </Box>
         </AdminLayout>

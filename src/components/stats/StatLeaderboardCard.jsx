@@ -1,30 +1,26 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Panel from '../ui/Panel';
 import TeamMark from '../ui/TeamMark';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
-import { clickableProps } from '../../utils/a11y';
 
-const StatLeaderboardCard = ({ title, statKey, rows, count, format, onOpen }) => {
+const StatLeaderboardCard = ({ title, statKey, rows, count, format, to }) => {
     const teamsMap = useTeamsMap();
-    const navigate = useNavigate();
     const top = rows.slice(0, count);
-    const openTeam = (name) => {
-        const id = teamsMap[name]?.id;
-        if (id) navigate(`/team-details/${id}`);
-    };
 
     return (
-        <Panel header={<Box component="span" {...clickableProps(onOpen)} sx={{ cursor: 'pointer' }}>{title}</Box>}>
+        <Panel header={<Box component={Link} to={to} sx={{ cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}>{title}</Box>}>
             {top.map((entry, index) => {
                 const name = entry.team;
                 ensureTeam(name);
+                const teamId = teamsMap[name]?.id;
                 return (
                     <Box
                         key={`${name}-${index}`}
-                        {...clickableProps(() => openTeam(name))}
+                        component={teamId ? Link : 'div'}
+                        to={teamId ? `/team-details/${teamId}` : undefined}
                         sx={{
                             display: 'grid',
                             gridTemplateColumns: '18px 1fr auto',
@@ -33,7 +29,9 @@ const StatLeaderboardCard = ({ title, statKey, rows, count, format, onOpen }) =>
                             px: 1.75,
                             py: 1,
                             borderBottom: '1px solid var(--line-soft)',
-                            cursor: 'pointer',
+                            cursor: teamId ? 'pointer' : 'default',
+                            textDecoration: 'none',
+                            color: 'inherit',
                             '&:last-of-type': { borderBottom: 'none' },
                             '&:hover': { background: 'var(--surface-2)' },
                             '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' },
@@ -60,7 +58,7 @@ StatLeaderboardCard.propTypes = {
     rows: PropTypes.array.isRequired,
     count: PropTypes.number.isRequired,
     format: PropTypes.func,
-    onOpen: PropTypes.func.isRequired,
+    to: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
 };
 
 export default StatLeaderboardCard;

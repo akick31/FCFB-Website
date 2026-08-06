@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, TextField, Alert, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, Autocomplete, Typography, Button } from '@mui/material';
 import AdminLayout from '../../components/layout/AdminLayout';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
 import SelectPill from '../../components/ui/SelectPill';
@@ -30,7 +30,6 @@ const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
 const editBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', py: '5px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 
 const GameManagement = () => {
-    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [gamesLoading, setGamesLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -444,7 +443,7 @@ const GameManagement = () => {
                                             <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: game.gameStatus === 'IN_PROGRESS' ? 'var(--field)' : 'var(--text-muted)' }}>{GAME_STATUS_DESCRIPTIONS[game.gameStatus || game.game_status] || 'Unknown'}</Box>
                                         </td>
                                         <td>
-                                            <Box component="button" type="button" onClick={(e) => { e.stopPropagation(); navigate(`/admin/edit-game/${game.game_id}`); }} sx={editBtnSx}>Edit</Box>
+                                            <Box component={Link} to={`/admin/edit-game/${game.game_id}`} sx={{ ...editBtnSx, textDecoration: 'none', display: 'inline-block' }}>Edit</Box>
                                         </td>
                                     </tr>
                                 ))}

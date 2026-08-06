@@ -1,10 +1,9 @@
 import React from 'react';
 import { Box, CircularProgress } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import Panel from '../ui/Panel';
 import TeamMark from '../ui/TeamMark';
-import { clickableProps } from '../../utils/a11y';
 
 const markFor = (teamsMap, name) => teamsMap[name] || { name };
 
@@ -20,8 +19,6 @@ const withUnscheduledWeeks = (schedule) => {
 };
 
 const TeamSchedule = ({ teamName, schedule, season, teamsMap, loading, subtitle, showSeason = false }) => {
-    const navigate = useNavigate();
-
     if (loading) {
         return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>;
     }
@@ -57,8 +54,9 @@ const TeamSchedule = ({ teamName, schedule, season, teamsMap, loading, subtitle,
                     >
                         <Box sx={{ color: 'var(--text-dim)', fontWeight: 800, fontSize: '0.66rem' }}>{showSeason ? `S${game.season} · W${game.week}` : `WK ${game.week}`}</Box>
                         <Box
-                            {...(game.game_id ? clickableProps(() => navigate(`/game-details/${game.game_id}`)) : {})}
-                            sx={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, cursor: game.game_id ? 'pointer' : 'default', minWidth: 0 }}
+                            component={game.game_id ? Link : 'div'}
+                            to={game.game_id ? `/game-details/${game.game_id}` : undefined}
+                            sx={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, cursor: game.game_id ? 'pointer' : 'default', minWidth: 0, textDecoration: 'none', color: 'inherit' }}
                         >
                             <Box component="span" sx={{ color: 'var(--text-dim)' }}>{isHome ? 'vs' : 'at'}</Box>
                             <TeamMark team={markFor(teamsMap, opponent)} size={20} />

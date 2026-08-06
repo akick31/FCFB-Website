@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, CircularProgress, Alert } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
@@ -50,16 +50,19 @@ const bestPerStat = (list, direction) => {
 };
 
 const RecordRow = ({ record, teamsMap }) => {
-    const navigate = useNavigate();
     ensureTeam(record.record_team);
     const gameId = record.game_id;
     return (
         <Box
-            onClick={gameId ? () => navigate(`/game-details/${gameId}`) : undefined}
+            component={gameId ? Link : 'div'}
+            to={gameId ? `/game-details/${gameId}` : undefined}
             sx={{
+                display: 'block',
                 px: 1.75,
                 py: 1.2,
                 borderBottom: '1px solid var(--line-soft)',
+                textDecoration: 'none',
+                color: 'inherit',
                 '&:last-of-type': { borderBottom: 'none' },
                 ...(gameId ? { cursor: 'pointer', '&:hover': { background: 'var(--surface-2)' } } : {}),
             }}

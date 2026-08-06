@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControl, InputLabel, Select, MenuItem, Alert, Autocomplete, TextField, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
@@ -24,7 +24,7 @@ const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
 const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', px: '8px', py: '3px', borderRadius: 'var(--r-sm)', lineHeight: 1 };
 const coachChipSx = { display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid var(--line)', background: 'var(--surface-2)', borderRadius: 'var(--r-sm)', px: '8px', py: '4px', fontSize: '0.76rem', mr: '6px', mb: '4px' };
 const fireXSx = { border: 0, background: 'transparent', color: 'var(--live)', cursor: 'pointer', font: 'inherit', fontSize: '0.85rem', lineHeight: 1, p: 0, ml: '2px' };
-const editBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const editBtnSx = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 const hireBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--field)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--field)' } };
 const fireBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--live)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--live)' } };
 const pickerRowSx = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', px: '4px', py: '10px', borderBottom: '1px solid var(--line-soft)', '&:last-of-type': { borderBottom: 0 } };
@@ -43,7 +43,6 @@ const statusInfo = (team, active) => {
 const TeamManagement = ({ user }) => {
     useConferencesMap();
     const teamsMap = useTeamsMap();
-    const navigate = useNavigate();
     const [teams, setTeams] = useState([]);
     const [users, setUsers] = useState([]);
     const [roster, setRoster] = useState({});
@@ -309,7 +308,7 @@ const TeamManagement = ({ user }) => {
                                             {rosterFor(team).length < 2 && (
                                                 <Box component="button" type="button" onClick={() => handleHireCoach(team)} sx={hireBtnSx}>+ Hire</Box>
                                             )}
-                                            <Box component="button" type="button" onClick={() => navigate(`/admin/edit-team/${team.id}`)} sx={editBtnSx}>Edit</Box>
+                                            <Box component={Link} to={`/admin/edit-team/${team.id}`} sx={editBtnSx}>Edit</Box>
                                         </Box>
                                     </td>
                                 </tr>

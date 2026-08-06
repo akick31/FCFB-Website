@@ -23,8 +23,8 @@ import { ROUTE_META } from '../../routeMeta';
 const LS_TEAM = 'schedule_selectedTeam';
 const LS_CONFERENCE = 'schedule_conference';
 
-const TAB_SLUGS = ['team', 'conference', 'postseason'];
-const TAB_FROM_SLUG = { team: 0, conference: 1, postseason: 2 };
+const TAB_SLUGS = ['conference', 'team', 'postseason'];
+const TAB_FROM_SLUG = { conference: 0, team: 1, postseason: 2 };
 
 const teamToSlug = (name) => name?.toLowerCase().replace(/\s+/g, '_') || '';
 const confToSlug = (conf) => conf?.toLowerCase() || '';
@@ -37,6 +37,7 @@ const Schedule = () => {
     const conferencesMap = useConferencesMap();
 
     const tabIndex = TAB_FROM_SLUG[tab] ?? 0;
+    const mode = TAB_SLUGS[tabIndex];
 
     const [teams, setTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
@@ -84,7 +85,7 @@ const Schedule = () => {
     }, [activeTeams, teams, selectedConference, isLiveSeason, seasonConferenceMap]);
 
     useEffect(() => {
-        if (!tab && !loading) navigate('/schedules/team', { replace: true });
+        if (!tab && !loading) navigate('/schedules/conference', { replace: true });
     }, [tab, loading, navigate]);
 
     useEffect(() => {
@@ -137,21 +138,21 @@ const Schedule = () => {
     }, []);
 
     useEffect(() => {
-        if (!selectedTeam || !season || tabIndex !== 0) return;
+        if (!selectedTeam || !season || mode !== 'team') return;
         setScheduleLoading(true);
         getScheduleBySeasonAndTeam(season, selectedTeam.name)
             .then((data) => setSchedule((data || []).sort((a, b) => (a.week || 0) - (b.week || 0))))
             .catch(() => setSchedule([]))
             .finally(() => setScheduleLoading(false));
-    }, [selectedTeam, season, tabIndex]);
+    }, [selectedTeam, season, mode]);
 
     useEffect(() => {
-        if (!season || tabIndex !== 1) return;
+        if (!season || mode !== 'conference') return;
         setConfLoading(true);
         Promise.all([getConferenceSchedule(season, selectedConference).catch(() => []), getScheduleBySeason(season).catch(() => [])])
             .then(([, allData]) => setAllSeasonSchedule(allData || []))
             .finally(() => setConfLoading(false));
-    }, [season, selectedConference, tabIndex]);
+    }, [season, selectedConference, mode]);
 
     useEffect(() => {
         if (!season) return;
@@ -164,11 +165,10 @@ const Schedule = () => {
 
     const hasPostseason = postseasonSchedule.length > 0;
     const tabs = [
-        { value: 'team', label: 'Team' },
         { value: 'conference', label: 'Conference' },
+        { value: 'team', label: 'Team' },
         ...(hasPostseason ? [{ value: 'postseason', label: 'Postseason' }] : []),
     ];
-    const mode = TAB_SLUGS[tabIndex];
 
     const goToTab = (nextSlug) => {
         if (nextSlug === 'team') navigate(`/schedules/team${selectedTeam ? `/${teamToSlug(selectedTeam.name)}/${season || ''}` : ''}`);

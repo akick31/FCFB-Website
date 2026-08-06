@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
@@ -56,23 +56,32 @@ SortHeader.propTypes = {
 const Reports = ({ user }) => {
     const navigate = useNavigate();
     const teamsMap = useTeamsMap();
-    const [tab, setTab] = useState('delays');
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const updateParam = (key, value, defaultValue) => {
+        const next = new URLSearchParams(searchParams);
+        if (!value || value === defaultValue) next.delete(key); else next.set(key, value);
+        setSearchParams(next, { replace: true });
+    };
+
+    const tab = searchParams.get('tab') || 'delays';
+    const setTab = (value) => updateParam('tab', value, 'delays');
 
     const [transactions, setTransactions] = useState([]);
     const [transactionLoading, setTransactionLoading] = useState(true);
     const [transactionError, setTransactionError] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [teamFilter, setTeamFilter] = useState('ALL');
-    const [positionFilter, setPositionFilter] = useState('ALL');
-    const [transactionTypeFilter, setTransactionTypeFilter] = useState('ALL');
+    const searchTerm = searchParams.get('q') || '';
+    const teamFilter = searchParams.get('team') || 'ALL';
+    const positionFilter = searchParams.get('position') || 'ALL';
+    const transactionTypeFilter = searchParams.get('type') || 'ALL';
 
     const [userDelayData, setUserDelayData] = useState([]);
     const [delayLoading, setDelayLoading] = useState(true);
     const [delayError, setDelayError] = useState(null);
-    const [delaySearchTerm, setDelaySearchTerm] = useState('');
-    const [delayTeamFilter, setDelayTeamFilter] = useState('ALL');
-    const [delaySortField, setDelaySortField] = useState('delayInstances');
-    const [delaySortDirection, setDelaySortDirection] = useState('desc');
+    const delaySearchTerm = searchParams.get('dq') || '';
+    const delayTeamFilter = searchParams.get('dteam') || 'ALL';
+    const delaySortField = searchParams.get('sort') || 'delayInstances';
+    const delaySortDirection = searchParams.get('dir') || 'desc';
 
     useEffect(() => {
         if (!user || !user.role) return;
@@ -149,12 +158,15 @@ const Reports = ({ user }) => {
     }, [userDelayData, delayTeamFilter, delaySearchTerm, delaySortField, delaySortDirection]);
 
     const handleDelaySort = (field) => {
+        const next = new URLSearchParams(searchParams);
         if (delaySortField === field) {
-            setDelaySortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+            const nextDirection = delaySortDirection === 'asc' ? 'desc' : 'asc';
+            if (nextDirection === 'desc') next.delete('dir'); else next.set('dir', nextDirection);
         } else {
-            setDelaySortField(field);
-            setDelaySortDirection('asc');
+            next.set('sort', field);
+            next.delete('dir');
         }
+        setSearchParams(next, { replace: true });
     };
 
     if ((transactionLoading || delayLoading)) {
@@ -181,8 +193,8 @@ const Reports = ({ user }) => {
             {tab === 'delays' && (
                 <>
                     <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', mb: '16px' }}>
-                        <Box component="input" placeholder="Search users..." aria-label="Search users" value={delaySearchTerm} onChange={(e) => setDelaySearchTerm(e.target.value)} sx={searchSx} />
-                        <SelectPill label="Team" value={delayTeamFilter} onChange={setDelayTeamFilter} options={delayTeamOptions} sx={pillHeightSx} />
+                        <Box component="input" placeholder="Search users..." aria-label="Search users" value={delaySearchTerm} onChange={(e) => updateParam('dq', e.target.value)} sx={searchSx} />
+                        <SelectPill label="Team" value={delayTeamFilter} onChange={(value) => updateParam('dteam', value, 'ALL')} options={delayTeamOptions} sx={pillHeightSx} />
                     </Box>
 
                     <Panel header="User delay instances" more={`${filteredUserDelayData.length} users`}>
@@ -220,10 +232,10 @@ const Reports = ({ user }) => {
             {tab === 'transactions' && (
                 <>
                     <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', mb: '16px' }}>
-                        <Box component="input" placeholder="Search transactions..." aria-label="Search transactions" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
-                        <SelectPill label="Team" value={teamFilter} onChange={setTeamFilter} options={teamOptions} sx={pillHeightSx} />
-                        <SelectPill label="Position" value={positionFilter} onChange={setPositionFilter} options={positionOptions} sx={pillHeightSx} />
-                        <SelectPill label="Type" value={transactionTypeFilter} onChange={setTransactionTypeFilter} options={typeOptions} sx={pillHeightSx} />
+                        <Box component="input" placeholder="Search transactions..." aria-label="Search transactions" value={searchTerm} onChange={(e) => updateParam('q', e.target.value)} sx={searchSx} />
+                        <SelectPill label="Team" value={teamFilter} onChange={(value) => updateParam('team', value, 'ALL')} options={teamOptions} sx={pillHeightSx} />
+                        <SelectPill label="Position" value={positionFilter} onChange={(value) => updateParam('position', value, 'ALL')} options={positionOptions} sx={pillHeightSx} />
+                        <SelectPill label="Type" value={transactionTypeFilter} onChange={(value) => updateParam('type', value, 'ALL')} options={typeOptions} sx={pillHeightSx} />
                     </Box>
 
                     <Panel header="Coach transaction log" more={`${filteredTransactions.length} transactions`}>

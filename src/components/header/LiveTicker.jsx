@@ -1,14 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, IconButton } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { getFilteredGames } from '../../api/gameApi';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { isGameOngoing } from '../game/scoreboard/utils/scoreboardFormatters';
 import { formatScoreboardQuarter } from '../../utils/gameUtils';
 import TeamMark from '../ui/TeamMark';
-import { clickableProps } from '../../utils/a11y';
 
 const POLL_MS = 30000;
 
@@ -27,7 +26,7 @@ const statusLabel = (game) => {
     return game.clock ? `${quarter} ${game.clock}` : quarter;
 };
 
-const TickerItem = ({ game, teamsMap, onOpen }) => {
+const TickerItem = ({ game, teamsMap }) => {
     const home = teamsMap[game.home_team];
     const away = teamsMap[game.away_team];
 
@@ -42,7 +41,8 @@ const TickerItem = ({ game, teamsMap, onOpen }) => {
 
     return (
         <Box
-            {...clickableProps(() => onOpen(game.game_id))}
+            component={Link}
+            to={`/game-details/${game.game_id}`}
             aria-label={`${awayTeam.abbreviation || game.away_team} at ${homeTeam.abbreviation || game.home_team}, ${statusLabel(game)}`}
             sx={{
                 display: 'flex',
@@ -54,6 +54,8 @@ const TickerItem = ({ game, teamsMap, onOpen }) => {
                 whiteSpace: 'nowrap',
                 fontSize: '0.78rem',
                 cursor: 'pointer',
+                textDecoration: 'none',
+                color: 'inherit',
                 '&:hover': { backgroundColor: 'var(--surface)' },
                 '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' },
             }}
@@ -72,11 +74,9 @@ const TickerItem = ({ game, teamsMap, onOpen }) => {
 TickerItem.propTypes = {
     game: PropTypes.object.isRequired,
     teamsMap: PropTypes.object.isRequired,
-    onOpen: PropTypes.func.isRequired,
 };
 
 const LiveTicker = () => {
-    const navigate = useNavigate();
     const teamsMap = useTeamsMap();
     const [games, setGames] = useState([]);
     const trackRef = useRef(null);
@@ -107,7 +107,7 @@ const LiveTicker = () => {
             </IconButton>
             <Box ref={trackRef} sx={{ display: 'flex', overflowX: 'auto', flex: 1, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
                 {games.map((game) => (
-                    <TickerItem key={game.game_id} game={game} teamsMap={teamsMap} onOpen={(id) => navigate(`/game-details/${id}`)} />
+                    <TickerItem key={game.game_id} game={game} teamsMap={teamsMap} />
                 ))}
             </Box>
             <IconButton onClick={() => scrollBy(1)} aria-label="Scroll scores right" sx={{ borderRadius: 0, color: 'var(--text-muted)', borderLeft: '1px solid var(--line-soft)', '&:hover': { color: 'var(--text)', backgroundColor: 'var(--surface)' } }}>

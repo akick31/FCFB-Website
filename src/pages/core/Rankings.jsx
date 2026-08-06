@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
@@ -17,7 +17,6 @@ import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { eloWeekBuckets, eloByTeamForWeek, eloRankingForWeek } from '../../utils/eloRankings';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
-import { clickableRowProps } from '../../utils/a11y';
 
 const POLL_TYPE = { coaches: 'COACHES_POLL', committee: 'PLAYOFF_COMMITTEE' };
 const TAB_LABEL = { coaches: 'Coaches Poll', committee: 'Playoff Committee', elo: 'ELO' };
@@ -38,6 +37,7 @@ const Rankings = () => {
 
     const { type } = useParams();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
 
     const [season, setSeason] = useState(null);
@@ -67,14 +67,19 @@ const Rankings = () => {
                 setTeams(teamsData);
                 setEloHistory(elo);
 
-                const eloSeasons = new Set(elo.map((row) => row.season));
-                let defaultSeason = null;
-                for (const candidate of seasonNumbers) {
-                    if (eloSeasons.has(candidate)) { defaultSeason = candidate; break; }
-                    const weeks = await getRankingWeeks(candidate, 'COACHES_POLL').catch(() => []);
-                    if (weeks.length) { defaultSeason = candidate; break; }
+                const urlSeason = Number(searchParams.get('season'));
+                if (urlSeason && seasonNumbers.includes(urlSeason)) {
+                    if (active) setSeason(urlSeason);
+                } else {
+                    const eloSeasons = new Set(elo.map((row) => row.season));
+                    let defaultSeason = null;
+                    for (const candidate of seasonNumbers) {
+                        if (eloSeasons.has(candidate)) { defaultSeason = candidate; break; }
+                        const weeks = await getRankingWeeks(candidate, 'COACHES_POLL').catch(() => []);
+                        if (weeks.length) { defaultSeason = candidate; break; }
+                    }
+                    if (active) setSeason(defaultSeason ?? seasonNumbers[0] ?? null);
                 }
-                if (active) setSeason(defaultSeason ?? seasonNumbers[0] ?? null);
             } catch {
                 if (active) setError('Failed to load rankings data. Please try again.');
             } finally {
@@ -121,6 +126,10 @@ const Rankings = () => {
     useEffect(() => {
         setWeek((current) => {
             if (!weeksForMode.length) return null;
+            if (current == null) {
+                const urlWeek = Number(searchParams.get('week'));
+                if (urlWeek && weeksForMode.includes(urlWeek)) return urlWeek;
+            }
             if (current == null || !weeksForMode.includes(current)) return weeksForMode[weeksForMode.length - 1];
             return current;
         });
@@ -143,6 +152,15 @@ const Rankings = () => {
         }).catch(() => { if (active) setPollData({ current: [], prevRankByTeamId: {} }); });
         return () => { active = false; };
     }, [mode, season, week, weeksForMode]);
+
+    useEffect(() => {
+        if (season == null && week == null) return;
+        const next = new URLSearchParams(searchParams);
+        let changed = false;
+        if (season != null && next.get('season') !== String(season)) { next.set('season', String(season)); changed = true; }
+        if (week != null && next.get('week') !== String(week)) { next.set('week', String(week)); changed = true; }
+        if (changed) setSearchParams(next, { replace: true });
+    }, [season, week]);
 
     const teamById = useMemo(() => Object.fromEntries(teams.map((team) => [team.id, team])), [teams]);
     const teamByName = useMemo(() => Object.fromEntries(teams.map((team) => [team.name, team])), [teams]);
@@ -218,22 +236,22 @@ const Rankings = () => {
             <DataTable minWidth={640} tableLayout="fixed">
                 <thead>
                     <tr>
-                        <th className="lft stick" style={{ width: 50 }}>Rk</th>
-                        <th className="lft" style={{ width: 220 }}>Team</th>
-                        <th style={{ width: 100, textAlign: 'center' }}>Record</th>
-                        <th style={{ width: 100, textAlign: 'center' }}>Conference</th>
-                        <th style={{ width: 100, textAlign: 'center' }}>Previous</th>
-                        <th style={{ width: 80, textAlign: 'center' }}>Δ</th>
-                        <th style={{ width: 90 }}>ELO</th>
-                        <th style={{ width: 160 }}>Coach</th>
+                        <th className="lft stick" style={{ width: '6%' }}>Rk</th>
+                        <th className="lft" style={{ width: '24%' }}>Team</th>
+                        <th style={{ width: '11%', textAlign: 'center' }}>Record</th>
+                        <th style={{ width: '11%', textAlign: 'center' }}>Conference</th>
+                        <th style={{ width: '11%', textAlign: 'center' }}>Previous</th>
+                        <th style={{ width: '9%', textAlign: 'center' }}>Δ</th>
+                        <th style={{ width: '10%' }}>ELO</th>
+                        <th style={{ width: '18%' }}>Coach</th>
                     </tr>
                 </thead>
                 <tbody>
                     {rows.map(({ rank, team, prev, elo, wins, losses }) => {
-                        const mark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation, logo: team.logo };
+                        const mark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation };
                         const coach = team.coach_usernames?.[0];
                         return (
-                            <tr key={team.id ?? team.name} {...clickableRowProps(() => team.id && navigate(`/team-details/${team.id}`))}>
+                            <Box component="tr" key={team.id ?? team.name} sx={{ position: 'relative' }}>
                                 <td className="lft stick">
                                     <span style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1rem' }}>{rank}</span>
                                 </td>
@@ -251,15 +269,22 @@ const Rankings = () => {
                                 <td>
                                     {coach ? (
                                         <Box
-                                            component="span"
-                                            onClick={(event) => { event.stopPropagation(); navigate(`/user-details/${coach}`); }}
-                                            sx={{ color: 'var(--brand)', fontWeight: 700, cursor: 'pointer' }}
+                                            component={Link}
+                                            to={`/user-details/${coach}`}
+                                            sx={{ position: 'relative', zIndex: 3, color: 'var(--brand)', fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}
                                         >
                                             @{coach}
                                         </Box>
                                     ) : '-'}
                                 </td>
-                            </tr>
+                                {team.id != null && (
+                                    <Box
+                                        component={Link}
+                                        to={`/team-details/${team.id}`}
+                                        sx={{ position: 'absolute', inset: 0, zIndex: 2 }}
+                                    />
+                                )}
+                            </Box>
                         );
                     })}
                 </tbody>

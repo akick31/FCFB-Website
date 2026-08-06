@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, CircularProgress } from '@mui/material';
+import { useSearchParams } from 'react-router-dom';
 import Panel from '../../ui/Panel';
 import SelectPill from '../../ui/SelectPill';
 import MultiLineChart from '../../charts/MultiLineChart';
@@ -10,10 +11,18 @@ import { useConferencesMap, activeConferenceList, conferenceLabel } from '../../
 
 const RankingsGraphTab = ({ season, teams, teamsMap, mode }) => {
     const conferencesMap = useConferencesMap();
-    const [cf, setCf] = useState('TOP');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [cf, setCf] = useState(searchParams.get('cf') || 'TOP');
     const [hidden, setHidden] = useState(() => new Set());
     const [games, setGames] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const changeCf = (value) => {
+        setCf(value);
+        const next = new URLSearchParams(searchParams);
+        next.set('cf', value);
+        setSearchParams(next, { replace: true });
+    };
 
     useEffect(() => { setHidden(new Set()); }, [cf, season]);
 
@@ -77,7 +86,7 @@ const RankingsGraphTab = ({ season, teams, teamsMap, mode }) => {
     return (
         <Box>
             <Box className="controls" sx={{ display: 'flex', gap: 1, mb: 1.75, flexWrap: 'wrap' }}>
-                <SelectPill label="Show" value={cf} onChange={setCf} options={showOptions} sx={{ height: 38 }} />
+                <SelectPill label="Show" value={cf} onChange={changeCf} options={showOptions} sx={{ height: 38 }} />
             </Box>
             <Panel header="Rankings history" more={`${lines.length} teams, hover a line`}>
                 <Box sx={{ p: 2 }}>

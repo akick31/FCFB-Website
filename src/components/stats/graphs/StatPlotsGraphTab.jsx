@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, CircularProgress } from '@mui/material';
+import { useSearchParams } from 'react-router-dom';
 import Panel from '../../ui/Panel';
 import SelectPill from '../../ui/SelectPill';
 import SegTabs from '../../ui/SegTabs';
@@ -19,11 +20,33 @@ const round1 = (v) => Math.round(v * 10) / 10;
 
 const StatPlotsGraphTab = ({ season, teams, teamsMap, mode }) => {
     const conferencesMap = useConferencesMap();
-    const [cf, setCf] = useState('ALL');
-    const [plotIndex, setPlotIndex] = useState(0);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const plotParam = parseInt(searchParams.get('plot'), 10);
+    const [cf, setCf] = useState(searchParams.get('cf') || 'ALL');
+    const [plotIndex, setPlotIndex] = useState(Number.isFinite(plotParam) && plotParam >= 0 && plotParam < PLOTS.length ? plotParam : 0);
     const [resetNonce, setResetNonce] = useState(0);
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const updateParams = (updates) => {
+        const next = new URLSearchParams(searchParams);
+        Object.entries(updates).forEach(([key, value]) => {
+            if (value === null || value === undefined || value === '') next.delete(key);
+            else next.set(key, String(value));
+        });
+        setSearchParams(next, { replace: true });
+    };
+
+    const changeCf = (value) => {
+        setCf(value);
+        updateParams({ cf: value });
+    };
+
+    const changePlot = (value) => {
+        const idx = PLOTS.findIndex((p) => p.key === value);
+        setPlotIndex(idx);
+        updateParams({ plot: idx });
+    };
 
     useEffect(() => {
         let active = true;
@@ -89,8 +112,8 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode }) => {
     return (
         <Box>
             <Box className="controls" sx={{ display: 'flex', gap: 1, mb: 1.75, flexWrap: 'wrap', alignItems: 'center' }}>
-                <SegTabs value={plot.key} onChange={(value) => setPlotIndex(PLOTS.findIndex((p) => p.key === value))} options={PLOTS.map((p) => ({ value: p.key, label: p.label }))} ariaLabel="Plot metric" />
-                <SelectPill label="Show" value={cf} onChange={setCf} options={showOptions} sx={{ height: 38 }} />
+                <SegTabs value={plot.key} onChange={changePlot} options={PLOTS.map((p) => ({ value: p.key, label: p.label }))} ariaLabel="Plot metric" />
+                <SelectPill label="Show" value={cf} onChange={changeCf} options={showOptions} sx={{ height: 38 }} />
                 <Box
                     component="button"
                     type="button"

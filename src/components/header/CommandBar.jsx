@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Box, Button, IconButton, Avatar, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import { Menu as MenuIcon, Person, Logout, SportsFootball } from '@mui/icons-material';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import mainLogo from '../../assets/graphics/main_logo.png';
 import { NAV_ITEMS } from './navConfig';
 import { clickableProps } from '../../utils/a11y';
+import TeamMark from '../ui/TeamMark';
 
 const navButtonSx = (active) => ({
     color: '#cfe3ee',
@@ -21,17 +22,13 @@ const navButtonSx = (active) => ({
     ...(active && { color: '#fff' }),
 });
 
-const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, onLogout }) => {
+const CommandBar = ({ isAuthenticated, isAdmin, user, team, onMobileOpen, onLogout }) => {
     const location = useLocation();
-    const navigate = useNavigate();
     const [userAnchor, setUserAnchor] = useState(null);
 
     const isActive = (path) => (path === '/' ? location.pathname === '/' : location.pathname.startsWith(path));
 
-    const goTo = (path) => {
-        navigate(path);
-        setUserAnchor(null);
-    };
+    const closeUserMenu = () => setUserAnchor(null);
 
     return (
         <Box sx={{ backgroundColor: 'var(--brand-deep)', display: 'flex', alignItems: 'stretch', height: 54 }}>
@@ -57,12 +54,12 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, on
 
             <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'stretch', pl: '30px', flex: 1, overflowX: 'auto', '&::-webkit-scrollbar': { display: 'none' } }}>
                 {NAV_ITEMS.map((item) => (
-                    <Button key={item.path} onClick={() => goTo(item.path)} disableRipple sx={navButtonSx(isActive(item.path))}>
+                    <Button key={item.path} component={Link} to={item.path} onClick={closeUserMenu} disableRipple sx={navButtonSx(isActive(item.path))}>
                         {item.label}
                     </Button>
                 ))}
                 {isAdmin && (
-                    <Button onClick={() => goTo('/admin')} disableRipple sx={navButtonSx(isActive('/admin'))}>
+                    <Button component={Link} to="/admin" onClick={closeUserMenu} disableRipple sx={navButtonSx(isActive('/admin'))}>
                         Admin
                     </Button>
                 )}
@@ -76,28 +73,36 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, on
                         aria-label={`Account menu for ${user?.username || 'user'}`}
                         sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', px: 1, py: 0.5, borderRadius: 1, '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' }, '&:focus-visible': { outline: '2px solid #fff', outlineOffset: '2px' } }}
                     >
-                        <Avatar src={teamLogo || undefined} sx={{ width: 30, height: 30, borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.15)' }}>
-                            {teamLogo ? null : <SportsFootball sx={{ fontSize: '1rem' }} />}
-                        </Avatar>
+                        {team?.logo || team?.logoDark ? (
+                            <TeamMark team={team} size={30} sx={{ borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+                        ) : (
+                            <Avatar sx={{ width: 30, height: 30, borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.15)' }}>
+                                <SportsFootball sx={{ fontSize: '1rem' }} />
+                            </Avatar>
+                        )}
                         <Box sx={{ display: { xs: 'none', sm: 'block' }, color: '#fff', fontSize: '0.8rem', fontWeight: 600 }}>{user?.username}</Box>
                     </Box>
                 ) : (
-                    <>
+                    <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
                         <Button
-                            onClick={() => goTo('/login')}
+                            component={Link}
+                            to="/login"
+                            onClick={closeUserMenu}
                             variant="outlined"
                             sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.4)', textTransform: 'none', fontWeight: 700, '&:hover': { borderColor: '#fff', backgroundColor: 'rgba(255,255,255,0.1)' } }}
                         >
                             Log in
                         </Button>
                         <Button
-                            onClick={() => goTo('/register')}
+                            component={Link}
+                            to="/register"
+                            onClick={closeUserMenu}
                             variant="contained"
                             sx={{ backgroundColor: 'var(--brand)', color: '#fff', textTransform: 'none', fontWeight: 700, boxShadow: 'none', '&:hover': { backgroundColor: 'var(--brand)', opacity: 0.9, boxShadow: 'none' } }}
                         >
                             Register
                         </Button>
-                    </>
+                    </Box>
                 )}
 
                 <IconButton onClick={onMobileOpen} aria-label="Open menu" sx={{ display: { xs: 'inline-flex', md: 'none' }, color: '#fff' }}>
@@ -106,7 +111,7 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, teamLogo, onMobileOpen, on
             </Box>
 
             <Menu anchorEl={userAnchor} open={Boolean(userAnchor)} onClose={() => setUserAnchor(null)}>
-                <MenuItem onClick={() => goTo('/profile')}>
+                <MenuItem component={Link} to="/profile" onClick={closeUserMenu}>
                     <ListItemIcon><Person fontSize="small" /></ListItemIcon>
                     <ListItemText>Profile</ListItemText>
                 </MenuItem>
@@ -123,7 +128,7 @@ CommandBar.propTypes = {
     isAuthenticated: PropTypes.bool.isRequired,
     isAdmin: PropTypes.bool.isRequired,
     user: PropTypes.object,
-    teamLogo: PropTypes.string,
+    team: PropTypes.object,
     onMobileOpen: PropTypes.func.isRequired,
     onLogout: PropTypes.func.isRequired,
 };

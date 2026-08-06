@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControl, InputLabel, Select, MenuItem, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PeopleIcon from '@mui/icons-material/People';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -16,7 +16,6 @@ import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { getNewSignups, deleteNewSignup, hireFromSignup } from '../../api/newSignupsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { isRealTeam, getTeamCoaches } from '../../utils/teamDataUtils';
-import { clickableRowProps } from '../../utils/a11y';
 
 const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', px: '8px', py: '3px', borderRadius: 'var(--r-sm)', lineHeight: 1 };
 
@@ -32,7 +31,6 @@ const QUICK_ACTIONS = [
 ];
 
 const Admin = ({ user }) => {
-    const navigate = useNavigate();
     const teamsMap = useTeamsMap();
     const [newSignups, setNewSignups] = useState([]);
     const [teams, setTeams] = useState([]);
@@ -193,8 +191,15 @@ const Admin = ({ user }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {openTeams.map((team) => (
-                                <tr key={team.name} {...clickableRowProps(() => navigate(`/team-details/${teamsMap[team.name]?.id}`))}>
+                            {openTeams.map((team) => {
+                                const teamId = teamsMap[team.name]?.id;
+                                return (
+                                <Box
+                                    component={teamId ? Link : 'tr'}
+                                    to={teamId ? `/team-details/${teamId}` : undefined}
+                                    key={team.name}
+                                    sx={{ display: 'table-row', textDecoration: 'none', color: 'inherit', cursor: teamId ? 'pointer' : 'default' }}
+                                >
                                     <td className="lft stick">
                                         <Box className="teamcell">
                                             <TeamMark team={teamsMap[team.name]} size={22} />
@@ -205,8 +210,9 @@ const Admin = ({ user }) => {
                                     <td>
                                         <Box component="span" sx={{ ...pillSx, background: 'transparent', color: 'var(--field)', border: '1px solid color-mix(in srgb, var(--field) 55%, var(--line))' }}>Open</Box>
                                     </td>
-                                </tr>
-                            ))}
+                                </Box>
+                                );
+                            })}
                         </tbody>
                     </DataTable>
                 )}

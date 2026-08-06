@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { updateUsername, updateEmail, updatePassword, updateCoachName, getUserById } from '../../api/userApi';
 import { logout } from '../../api/authApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
@@ -138,7 +138,6 @@ const DiscordRow = ({ user }) => {
 DiscordRow.propTypes = { user: PropTypes.object.isRequired };
 
 const Profile = ({ user, setUser }) => {
-    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
     const { mode, setMode } = useColorMode();
@@ -164,7 +163,7 @@ const Profile = ({ user, setUser }) => {
         return (
             <PageWrap>
                 <PageHeading eyebrow="Your account" title="Profile & settings" />
-                <Panel><Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>You need to <Box component="a" onClick={() => navigate('/login')} sx={{ color: 'var(--brand)', cursor: 'pointer' }}>log in</Box> to manage your account.</Box></Panel>
+                <Panel><Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>You need to <Box component={Link} to="/login" sx={{ color: 'var(--brand)' }}>log in</Box> to manage your account.</Box></Panel>
             </PageWrap>
         );
     }

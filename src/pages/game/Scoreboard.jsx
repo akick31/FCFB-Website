@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getFilteredGames } from '../../api/gameApi';
 import { getPostseasonSchedule } from '../../api/scheduleApi';
 import { getCurrentSeason, getLatestCompletedSeason } from '../../api/seasonApi';
@@ -40,35 +40,61 @@ const EmptyPanel = ({ title, note }) => (
 EmptyPanel.propTypes = { title: PropTypes.string.isRequired, note: PropTypes.string };
 
 const Scoreboard = () => {
-    const { tab } = useParams();
+    const { tab, season: seasonParam, week: weekParam } = useParams();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
     useSeo(ROUTE_META['/scoreboard']);
 
     const activeTab = TABS.some((option) => option.value === tab) ? tab : 'live';
 
-    const [season, setSeason] = useState(null);
+    const parsedPage = parseInt(searchParams.get('page'), 10);
+
+    const [season, setSeason] = useState(seasonParam ? parseInt(seasonParam, 10) : null);
     const [offseason, setOffseason] = useState(false);
-    const [week, setWeek] = useState('postseason');
+    const [week, setWeek] = useState(weekParam ? (weekParam === 'postseason' ? 'postseason' : parseInt(weekParam, 10)) : 'postseason');
     const [games, setGames] = useState([]);
-    const [page, setPage] = useState(0);
+    const [page, setPage] = useState(Number.isFinite(parsedPage) && parsedPage >= 0 ? parsedPage : 0);
     const [pageCount, setPageCount] = useState(1);
     const [loading, setLoading] = useState(true);
+
+    const changePage = (nextPage) => {
+        setPage(nextPage);
+        const next = new URLSearchParams(searchParams);
+        if (nextPage > 0) next.set('page', String(nextPage)); else next.delete('page');
+        setSearchParams(next, { replace: true });
+    };
+
+    const changeTab = (nextTab) => {
+        setPage(0);
+        navigate(season != null && week != null ? `/scoreboard/${nextTab}/${season}/${week}` : `/scoreboard/${nextTab}`);
+    };
+
+    const changeWeek = (nextWeek) => {
+        setWeek(nextWeek);
+        setPage(0);
+        navigate(`/scoreboard/${activeTab}/${season}/${nextWeek}`, { replace: true });
+    };
 
     useEffect(() => {
         if (!tab) navigate('/scoreboard/live', { replace: true });
     }, [tab, navigate]);
 
     useEffect(() => {
+        if (!tab || season == null || week == null) return;
+        if (!seasonParam || !weekParam) {
+            navigate(`/scoreboard/${activeTab}/${season}/${week}`, { replace: true });
+        }
+    }, [tab, activeTab, season, week, seasonParam, weekParam, navigate]);
+
+    useEffect(() => {
         (async () => {
             const [current, latest] = await Promise.all([resolveCurrentSeason(), getLatestCompletedSeason().catch(() => null)]);
-            setSeason(current ?? latest?.season_number ?? latest?.seasonNumber ?? null);
             setOffseason(current == null);
-            setWeek(current == null ? 'postseason' : Math.min(latest?.current_week ?? latest?.currentWeek ?? 13, 13));
+            if (!seasonParam) setSeason(current ?? latest?.season_number ?? latest?.seasonNumber ?? null);
+            if (!weekParam) setWeek(current == null ? 'postseason' : Math.min(latest?.current_week ?? latest?.currentWeek ?? 13, 13));
         })();
     }, []);
-
-    useEffect(() => { setPage(0); }, [activeTab, week]);
 
     useEffect(() => {
         if (season == null) return undefined;
@@ -119,7 +145,7 @@ const Scoreboard = () => {
             <PageHeading eyebrow={season ? `Season ${season}` : 'Fake College Football'} title="Scoreboard">
                 <SegTabs
                     value={activeTab}
-                    onChange={(next) => navigate(`/scoreboard/${next}`)}
+                    onChange={changeTab}
                     options={TABS}
                     ariaLabel="Scoreboard filter"
                 />
@@ -127,7 +153,7 @@ const Scoreboard = () => {
                     <SelectPill
                         label="Week"
                         value={week}
-                        onChange={(next) => setWeek(next === 'postseason' ? 'postseason' : Number(next))}
+                        onChange={(next) => changeWeek(next === 'postseason' ? 'postseason' : Number(next))}
                         options={weekOptions}
                     />
                 )}
@@ -146,7 +172,7 @@ const Scoreboard = () => {
                     </Box>
                     {pageCount > 1 && (
                         <Box sx={{ mt: '18px' }}>
-                            <Pager page={page} pageCount={pageCount} onChange={setPage} />
+                            <Pager page={page} pageCount={pageCount} onChange={changePage} />
                         </Box>
                     )}
                 </>

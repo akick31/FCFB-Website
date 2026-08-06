@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
@@ -32,18 +32,41 @@ const Graphs = () => {
 
     const { tab } = useParams();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { mode } = useColorMode();
     const teamsMap = useTeamsMap();
     const activeTab = TAB_VALUES.includes(tab) ? tab : 'elo';
 
+    const seasonParam = searchParams.get('season');
+
     const [teams, setTeams] = useState([]);
     const [seasons, setSeasons] = useState([]);
-    const [season, setSeason] = useState(null);
+    const [season, setSeason] = useState(seasonParam ? Number(seasonParam) : null);
     const [loading, setLoading] = useState(true);
 
+    const changeSeason = (nextSeason) => {
+        setSeason(nextSeason);
+        const next = new URLSearchParams(searchParams);
+        next.set('season', String(nextSeason));
+        setSearchParams(next, { replace: true });
+    };
+
+    const changeTab = (nextTab) => {
+        const next = new URLSearchParams();
+        if (season != null) next.set('season', String(season));
+        navigate(`/graphs/${nextTab}?${next.toString()}`);
+    };
+
     useEffect(() => {
-        if (!tab) navigate('/graphs/elo', { replace: true });
+        if (!tab) navigate({ pathname: '/graphs/elo', search: searchParams.toString() }, { replace: true });
     }, [tab, navigate]);
+
+    useEffect(() => {
+        if (season == null || seasonParam) return;
+        const next = new URLSearchParams(searchParams);
+        next.set('season', String(season));
+        setSearchParams(next, { replace: true });
+    }, [season, seasonParam]);
 
     useEffect(() => {
         let active = true;
@@ -57,7 +80,7 @@ const Graphs = () => {
                     .filter((value) => value != null)
                     .sort((a, b) => b - a);
                 setSeasons(started);
-                setSeason(started[0] ?? null);
+                if (season == null) setSeason(started[0] ?? null);
             } finally {
                 if (active) setLoading(false);
             }
@@ -79,12 +102,12 @@ const Graphs = () => {
         <PageWrap>
             <PageHeading eyebrow="Visual trends" title="Graphs">
                 {season != null && (
-                    <SelectPill label="Season" value={String(season)} onChange={(value) => setSeason(Number(value))} options={seasonOptions} sx={{ height: 38 }} />
+                    <SelectPill label="Season" value={String(season)} onChange={(value) => changeSeason(Number(value))} options={seasonOptions} sx={{ height: 38 }} />
                 )}
             </PageHeading>
 
             <Box sx={{ mb: 2 }}>
-                <SegTabs value={activeTab} onChange={(value) => navigate(`/graphs/${value}`)} options={TABS} ariaLabel="Graph type" />
+                <SegTabs value={activeTab} onChange={changeTab} options={TABS} ariaLabel="Graph type" />
             </Box>
 
             {loading || season == null ? (

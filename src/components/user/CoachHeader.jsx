@@ -1,9 +1,8 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { formatConference, formatPosition, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
-import { clickableProps } from '../../utils/a11y';
 
 const luminance = (hex) => {
     if (!hex) return 0.5;
@@ -16,7 +15,6 @@ const luminance = (hex) => {
 };
 
 const CoachHeader = ({ user, team, mark, championSeason }) => {
-    const navigate = useNavigate();
     const primary = team?.primary_color || '#004260';
     const logo = luminance(primary) < 0.62 ? (mark?.logoDark || mark?.logo) : (mark?.logo || mark?.logoDark);
     const name = user.coach_name || user.username;
@@ -39,8 +37,9 @@ const CoachHeader = ({ user, team, mark, championSeason }) => {
             }}>
                 {team && (
                     <Box
-                        {...(team.id ? clickableProps(() => navigate(`/team-details/${team.id}`)) : {})}
-                        sx={{ width: 72, height: 72, flexShrink: 0, zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: team.id ? 'pointer' : 'default' }}
+                        component={team.id ? Link : 'div'}
+                        to={team.id ? `/team-details/${team.id}` : undefined}
+                        sx={{ width: 72, height: 72, flexShrink: 0, zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: team.id ? 'pointer' : 'default', textDecoration: 'none' }}
                     >
                         {logo
                             ? <img src={logo} alt={team.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -49,8 +48,9 @@ const CoachHeader = ({ user, team, mark, championSeason }) => {
                 )}
                 <Box sx={{ zIndex: 1, color: '#fff', minWidth: 0 }}>
                     <Box
-                        {...(team?.id ? clickableProps(() => navigate(`/team-details/${team.id}`)) : {})}
-                        sx={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800, color: '#9fd6ec', cursor: team?.id ? 'pointer' : 'default' }}
+                        component={team?.id ? Link : 'div'}
+                        to={team?.id ? `/team-details/${team.id}` : undefined}
+                        sx={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800, color: '#9fd6ec', cursor: team?.id ? 'pointer' : 'default', textDecoration: 'none', display: 'inline-block' }}
                     >
                         {affiliation}
                     </Box>

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
@@ -71,13 +71,43 @@ const unwrapContent = (result) => (Array.isArray(result?.content) ? result.conte
 const Stats = () => {
     const { sub, statKey } = useParams();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const activeSub = SUB_VALUES.includes(sub) ? sub : 'leaderboard';
 
+    const seasonParam = searchParams.get('season');
+    const countParam = parseInt(searchParams.get('count'), 10);
+
     const [seasons, setSeasons] = useState([]);
-    const [season, setSeason] = useState(null);
-    const [statFilter, setStatFilter] = useState('');
+    const [season, setSeason] = useState(seasonParam ? (seasonParam === 'all' ? 'all' : Number(seasonParam)) : null);
+    const [statFilter, setStatFilter] = useState(searchParams.get('statFilter') || '');
     const [cardPage, setCardPage] = useState(0);
-    const [count, setCount] = useState(5);
+    const [count, setCount] = useState(Number.isFinite(countParam) && countParam > 0 ? countParam : 5);
+
+    const updateParams = (updates) => {
+        const next = new URLSearchParams(searchParams);
+        Object.entries(updates).forEach(([key, value]) => {
+            if (value === null || value === undefined || value === '') next.delete(key);
+            else next.set(key, String(value));
+        });
+        setSearchParams(next, { replace: true });
+    };
+
+    const changeSeason = (value) => {
+        const next = value === 'all' ? 'all' : Number(value);
+        setSeason(next);
+        updateParams({ season: next });
+    };
+
+    const changeStatFilter = (value) => {
+        setStatFilter(value);
+        updateParams({ statFilter: value || null });
+    };
+
+    const changeCount = (value) => {
+        const next = Number(value);
+        setCount(next);
+        updateParams({ count: next });
+    };
 
     const [seasonStatRows, setSeasonStatRows] = useState([]);
     const [league, setLeague] = useState(null);
@@ -90,7 +120,7 @@ const Stats = () => {
     useSeo({ title: 'Stats | FCFB', description: 'League leaderboards, records, and conference and playbook statistics in Fake College Football.' });
 
     useEffect(() => {
-        if (!sub) navigate('/stats/leaderboard', { replace: true });
+        if (!sub) navigate({ pathname: '/stats/leaderboard', search: searchParams.toString() }, { replace: true });
     }, [sub, navigate]);
 
     useEffect(() => {
@@ -101,9 +131,9 @@ const Stats = () => {
                 if (!active) return;
                 const started = all.filter(seasonHasStarted).map((entry) => entry.season_number ?? entry.seasonNumber).filter((value) => value != null).sort((a, b) => b - a);
                 setSeasons(started);
-                setSeason(started[0] ?? 11);
+                if (season == null) setSeason(started[0] ?? 11);
             } catch {
-                if (active) setSeason(11);
+                if (active && season == null) setSeason(11);
             }
         })();
         return () => { active = false; };
@@ -190,14 +220,14 @@ const Stats = () => {
         ...seasons.map((number) => ({ value: number, label: `Season ${number}` })),
     ];
     const seasonControl = season != null && seasons.length > 0 && (
-        <SelectPill label="Season" value={season} onChange={(value) => setSeason(value === 'all' ? 'all' : Number(value))} options={seasonOptions} sx={controlSx} />
+        <SelectPill label="Season" value={season} onChange={changeSeason} options={seasonOptions} sx={controlSx} />
     );
 
     const detailStat = statKey ? STAT_BY_KEY[statKey] : null;
 
     const renderLeaderboard = () => {
         if (detailStat) {
-            return <StatLeaderboardDetail stat={detailStat} rows={buildLeaderboard(seasonStatRows, detailStat)} onBack={() => navigate('/stats/leaderboard')} />;
+            return <StatLeaderboardDetail stat={detailStat} rows={buildLeaderboard(seasonStatRows, detailStat)} onBack={() => navigate({ pathname: '/stats/leaderboard', search: searchParams.toString() })} />;
         }
         const pageCount = Math.max(1, Math.ceil(filteredCatalog.length / CARDS_PER_PAGE));
         const page = Math.min(cardPage, pageCount - 1);
@@ -207,13 +237,13 @@ const Stats = () => {
             <>
                 <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
                     {seasonControl}
-                    <SelectPill label="Stat" value={statFilter} onChange={setStatFilter} options={statOptions} sx={controlSx} ariaLabel="Choose a stat" />
-                    <SelectPill label="Show" value={count} onChange={(value) => setCount(Number(value))} options={[{ value: 5, label: 'Top 5' }, { value: 10, label: 'Top 10' }, { value: 25, label: 'Top 25' }]} sx={{ height: 38 }} />
+                    <SelectPill label="Stat" value={statFilter} onChange={changeStatFilter} options={statOptions} sx={controlSx} ariaLabel="Choose a stat" />
+                    <SelectPill label="Show" value={count} onChange={changeCount} options={[{ value: 5, label: 'Top 5' }, { value: 10, label: 'Top 10' }, { value: 25, label: 'Top 25' }]} sx={{ height: 38 }} />
                 </Box>
                 <Box sx={{ color: 'var(--text-muted)', fontSize: '0.8rem', mb: 2 }}>Click a stat title to open its full leaderboard.</Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
                     {visible.map((stat) => (
-                        <StatLeaderboardCard key={stat.key} title={stat.label} statKey={stat.key} rows={buildLeaderboard(seasonStatRows, stat)} count={count} format={stat.format} onOpen={() => navigate(`/stats/leaderboard/${stat.key}`)} />
+                        <StatLeaderboardCard key={stat.key} title={stat.label} statKey={stat.key} rows={buildLeaderboard(seasonStatRows, stat)} count={count} format={stat.format} to={{ pathname: `/stats/leaderboard/${stat.key}`, search: searchParams.toString() }} />
                     ))}
                 </Box>
                 <Pager page={page} pageCount={pageCount} onChange={setCardPage} />
@@ -337,7 +367,7 @@ const Stats = () => {
     return (
         <PageWrap>
             <PageHeading title="Stats">
-                <SegTabs value={activeSub} onChange={(value) => navigate(`/stats/${value}`)} options={SUB_TABS} ariaLabel="Stats view" />
+                <SegTabs value={activeSub} onChange={(value) => navigate({ pathname: `/stats/${value}`, search: searchParams.toString() })} options={SUB_TABS} ariaLabel="Stats view" />
             </PageHeading>
 
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

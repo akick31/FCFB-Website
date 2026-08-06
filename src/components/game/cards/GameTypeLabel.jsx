@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import { getConference } from '../../constants/conferences';
 import PlayoffLogo from '../../ui/PlayoffLogo';
+import ConferenceMark from '../../ui/ConferenceMark';
 
 const PLAYOFF_ROUNDS = { 1: 'First Round', 2: 'Second Round', 3: 'Quarterfinal', 4: 'Semifinal' };
 
@@ -12,27 +13,28 @@ const LogoImg = ({ src }) =>
 LogoImg.propTypes = { src: PropTypes.string };
 
 const resolve = (game, homeTeam) => {
-    const conference = getConference(homeTeam?.conference);
+    const conferenceCode = homeTeam?.conference;
+    const conferenceMark = conferenceCode ? <ConferenceMark conference={conferenceCode} size={15} /> : null;
     switch (game.game_type) {
         case 'NATIONAL_CHAMPIONSHIP':
             return { node: <PlayoffLogo size={16} />, text: 'National Championship' };
         case 'PLAYOFFS':
             return { node: <PlayoffLogo size={16} />, text: PLAYOFF_ROUNDS[game.playoff_round] || 'Playoff' };
         case 'BOWL':
-            return { logo: game.postseason_game_logo || null, text: game.postseason_game_name || 'Bowl' };
+            return { node: <LogoImg src={game.postseason_game_logo} />, text: game.postseason_game_name || 'Bowl' };
         case 'CONFERENCE_CHAMPIONSHIP':
-            return { logo: conference?.logo_url || null, text: 'Championship Game' };
+            return { node: conferenceMark, text: 'Championship Game' };
         case 'CONFERENCE_GAME':
-            return { logo: conference?.logo_url || null, text: 'Conference Game' };
+            return { node: conferenceMark, text: 'Conference Game' };
         case 'OUT_OF_CONFERENCE':
-            return { logo: null, text: 'Out of Conference' };
+            return { node: null, text: 'Out of Conference' };
         default:
-            return { logo: conference?.logo_url || null, text: conference?.label || 'Game' };
+            return { node: conferenceMark, text: getConference(conferenceCode)?.label || 'Game' };
     }
 };
 
 const GameTypeLabel = ({ game, homeTeam }) => {
-    const { logo, node, text } = resolve(game, homeTeam);
+    const { node, text } = resolve(game, homeTeam);
     return (
         <Box
             sx={{
@@ -47,7 +49,7 @@ const GameTypeLabel = ({ game, homeTeam }) => {
                 minWidth: 0,
             }}
         >
-            {node || <LogoImg src={logo} />}
+            {node}
             <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</Box>
         </Box>
     );

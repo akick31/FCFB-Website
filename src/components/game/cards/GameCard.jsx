@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
 import FitTeamName from '../../ui/FitTeamName';
@@ -14,7 +14,6 @@ import { describePlay } from '../../../utils/formatPlay';
 import { getGameStatsByIdAndTeam } from '../../../api/gameStatsApi';
 import { getPreviousPlay } from '../../../api/playApi';
 import { ensureTeam } from '../../../hooks/useTeamsMap';
-import { clickableProps } from '../../../utils/a11y';
 
 const QUARTER_KEYS = ['q1_score', 'q2_score', 'q3_score', 'q4_score'];
 const sum = (values) => values.reduce((total, value) => total + (value || 0), 0);
@@ -86,7 +85,6 @@ TeamRow.propTypes = {
 };
 
 const GameCard = ({ game, teamsMap, compact = false }) => {
-    const navigate = useNavigate();
     const { mode } = useColorMode();
     const ongoing = isGameOngoing(game.game_status);
     const stats = useQuarterScores(game);
@@ -133,14 +131,18 @@ const GameCard = ({ game, teamsMap, compact = false }) => {
 
     return (
         <Box
-            {...clickableProps(() => navigate(`/game-details/${game.game_id}`))}
+            component={Link}
+            to={`/game-details/${game.game_id}`}
             sx={{
+                display: 'block',
                 backgroundColor: 'var(--surface)',
                 border: '1px solid',
                 borderColor: ongoing ? 'color-mix(in srgb, var(--live) 42%, var(--line))' : 'var(--line)',
                 borderRadius: 'var(--r)',
                 overflow: 'hidden',
                 cursor: 'pointer',
+                textDecoration: 'none',
+                color: 'inherit',
                 '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' },
                 transition: 'transform .14s, border-color .14s, box-shadow .14s',
                 '&:hover': { transform: 'translateY(-2px)', borderColor: 'color-mix(in srgb, var(--brand) 55%, var(--line))', boxShadow: 'var(--shadow)' },

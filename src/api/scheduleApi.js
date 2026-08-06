@@ -138,6 +138,21 @@ export const generateAllConferenceSchedules = async (season) => {
     }
 };
 
+export const generateOutOfConferenceSchedule = async (season) => {
+    try {
+        const response = await apiClient.post(`/schedule/generate-ooc/${season}`, null, {
+            timeout: 120000,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to generate out-of-conference schedule:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to generate out-of-conference schedule");
+        }
+        throw new Error("An unexpected error occurred while generating out-of-conference schedule");
+    }
+};
+
 export const pollScheduleGenJobStatus = async (jobId) => {
     try {
         const response = await apiClient.get(`/schedule/generate-all-conferences/status/${jobId}`);
@@ -220,12 +235,13 @@ export const getPostseasonSchedule = async (season) => {
     }
 };
 
-export const saveConferenceRules = async (conference, numConferenceGames, protectedRivalries) => {
+export const saveConferenceRules = async (conference, numConferenceGames, protectedRivalries, divisions = []) => {
     try {
         const response = await apiClient.post('/schedule/conference-rules', {
             conference,
             numConferenceGames,
             protectedRivalries: protectedRivalries.filter(r => r.team1 && r.team2),
+            divisions: divisions.filter(d => d && d.trim()),
         });
         return response.data;
     } catch (error) {

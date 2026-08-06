@@ -16,10 +16,14 @@ const ConferenceRulesEditor = ({
     conferenceTeams,
     numConferenceGames,
     protectedRivalries,
+    divisions,
     onNumConferenceGamesChange,
     onAddRivalry,
     onRemoveRivalry,
     onUpdateRivalry,
+    onAddDivision,
+    onRemoveDivision,
+    onUpdateDivision,
     onSave,
     disabled = false,
 }) => {
@@ -39,6 +43,31 @@ const ConferenceRulesEditor = ({
                 <Box sx={{ display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' }}>Conference games per team</Box>
                 <Box component="input" type="number" min={1} max={TOTAL_WEEKS} value={numConferenceGames} onChange={(e) => onNumConferenceGamesChange(parseInt(e.target.value, 10) || DEFAULT_CONFERENCE_GAMES)} sx={{ ...inputSx, width: '100%' }} />
                 <Box sx={{ mt: '4px', fontSize: '0.72rem', color: 'var(--text-dim)' }}>OOC games: {TOTAL_WEEKS - numConferenceGames}</Box>
+            </Box>
+
+            <Box sx={{ borderTop: '1px solid var(--line-soft)', pt: '16px', pb: '16px' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: '6px' }}>
+                    <Box sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Divisions</Box>
+                    <Box component="button" type="button" onClick={onAddDivision} sx={ctrlSx}>+ Add division</Box>
+                </Box>
+                <Box sx={{ color: 'var(--text-dim)', fontSize: '0.76rem', mb: '12px' }}>
+                    Optional. When set, teams assigned to a division (from the Teams tab) play a full round robin against
+                    every other team in their division, plus any protected rivalries, before remaining conference games
+                    are filled with other divisions&apos; teams.
+                </Box>
+
+                {divisions.length === 0 && (
+                    <Box sx={{ color: 'var(--text-dim)', fontSize: '0.8rem', fontStyle: 'italic', mb: '12px' }}>
+                        No divisions set — this conference schedules as one flat group.
+                    </Box>
+                )}
+
+                {divisions.map((division, index) => (
+                    <Box key={index} sx={{ display: 'flex', gap: '8px', mb: '8px', alignItems: 'center' }}>
+                        <Box component="input" value={division} onChange={(e) => onUpdateDivision(index, e.target.value)} placeholder="Division name" sx={{ ...inputSx, flex: '1 1 220px' }} />
+                        <Box component="button" type="button" onClick={() => onRemoveDivision(index)} sx={removeBtnSx}>&times;</Box>
+                    </Box>
+                ))}
             </Box>
 
             <Box sx={{ borderTop: '1px solid var(--line-soft)', pt: '16px' }}>
@@ -85,7 +114,7 @@ const ConferenceRulesEditor = ({
                             setSavingRules(true);
                             setRulesError(null);
                             try {
-                                await onSave(conference, numConferenceGames, protectedRivalries);
+                                await onSave(conference, numConferenceGames, protectedRivalries, divisions);
                             } catch (err) {
                                 setRulesError(err.message || 'Failed to save conference rules');
                             } finally {
@@ -108,10 +137,14 @@ ConferenceRulesEditor.propTypes = {
     conferenceTeams: PropTypes.array.isRequired,
     numConferenceGames: PropTypes.number.isRequired,
     protectedRivalries: PropTypes.array.isRequired,
+    divisions: PropTypes.array.isRequired,
     onNumConferenceGamesChange: PropTypes.func.isRequired,
     onAddRivalry: PropTypes.func.isRequired,
     onRemoveRivalry: PropTypes.func.isRequired,
     onUpdateRivalry: PropTypes.func.isRequired,
+    onAddDivision: PropTypes.func.isRequired,
+    onRemoveDivision: PropTypes.func.isRequired,
+    onUpdateDivision: PropTypes.func.isRequired,
     onSave: PropTypes.func.isRequired,
     disabled: PropTypes.bool,
 };

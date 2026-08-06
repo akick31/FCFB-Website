@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box, CircularProgress } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import Panel from '../ui/Panel';
 import SectionTitle from '../ui/SectionTitle';
@@ -9,10 +9,8 @@ import TeamMark from '../ui/TeamMark';
 import ConferenceMark from '../ui/ConferenceMark';
 import PlayoffBracket from './PlayoffBracket';
 import { conferenceLabel } from '../constants/conferences';
-import { clickableProps } from '../../utils/a11y';
 
 const PostseasonRow = ({ game, label, teamsMap }) => {
-    const navigate = useNavigate();
     const homeWin = game.home_score > game.away_score;
     const markFor = (name) => teamsMap[name] || { name };
     const side = (name, score, isWinner) => (
@@ -24,8 +22,9 @@ const PostseasonRow = ({ game, label, teamsMap }) => {
     );
     return (
         <Box
-            {...(game.game_id ? clickableProps(() => navigate(`/game-details/${game.game_id}`)) : {})}
-            sx={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '14px', alignItems: 'center', px: 1.75, py: 1.1, borderBottom: '1px solid var(--line-soft)', cursor: 'pointer', '&:hover': { background: 'var(--surface-2)' }, '&:last-of-type': { borderBottom: 'none' }, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' } }}
+            component={game.game_id ? Link : 'div'}
+            to={game.game_id ? `/game-details/${game.game_id}` : undefined}
+            sx={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '14px', alignItems: 'center', px: 1.75, py: 1.1, borderBottom: '1px solid var(--line-soft)', cursor: 'pointer', textDecoration: 'none', color: 'inherit', '&:hover': { background: 'var(--surface-2)' }, '&:last-of-type': { borderBottom: 'none' }, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' } }}
         >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0 }}>
                 {side(game.away_team, game.away_score, game.away_score > game.home_score)}

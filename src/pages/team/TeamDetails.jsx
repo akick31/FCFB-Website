@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { checkIfUserIsAdmin } from '../../utils/utils';
 import { getTeamById } from '../../api/teamApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
@@ -8,7 +8,7 @@ import { getRankingsHistory } from '../../api/rankingsHistoryApi.jsx';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getScheduleBySeasonAndTeam } from '../../api/scheduleApi';
 import { getLatestCompletedSeason, getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
-import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../theme/ColorModeContext';
 import { pickTeamColor } from '../../utils/teamColor';
 import PageWrap from '../../components/layout/PageWrap';
@@ -22,8 +22,6 @@ import SeasonStatTable from '../../components/team/SeasonStatTable';
 import TeamSchedule from '../../components/schedule/TeamSchedule';
 import { aggregateSeasonStats } from '../../utils/aggregateStats';
 import { useSeo } from '../../hooks/useSeo';
-
-const toDark = (logo) => (logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo);
 
 const statsRows = (result) => {
     if (Array.isArray(result)) return result;
@@ -50,7 +48,7 @@ const buildTrend = (points, view) => {
 
 const TeamDetails = () => {
     const { teamId } = useParams();
-    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
     const { mode } = useColorMode();
 
@@ -105,8 +103,13 @@ const TeamDetails = () => {
                     seasonList = all.map((entry) => entry.season_number ?? entry.seasonNumber).filter((value) => value != null).sort((a, b) => b - a);
                 }
                 setSeasons(seasonList);
-                const initial = defSeason != null && seasonList.includes(defSeason) ? defSeason : (seasonList[0] ?? defSeason);
-                setSeasonView(initial);
+                const urlSeason = searchParams.get('season');
+                if (urlSeason === 'alltime' || (urlSeason && seasonList.includes(Number(urlSeason)))) {
+                    setSeasonView(urlSeason === 'alltime' ? 'alltime' : Number(urlSeason));
+                } else {
+                    const initial = defSeason != null && seasonList.includes(defSeason) ? defSeason : (seasonList[0] ?? defSeason);
+                    setSeasonView(initial);
+                }
             } catch {
                 if (active) setError('Failed to load team details. Please try again.');
             } finally {
@@ -146,11 +149,16 @@ const TeamDetails = () => {
 
     const mark = useMemo(() => {
         if (!team) return null;
-        return teamsMap[team.name] || {
-            name: team.name, abbreviation: team.abbreviation, logo: team.logo || null, logoDark: toDark(team.logo),
-            primaryColor: team.primary_color, secondaryColor: team.secondary_color,
-        };
+        return teamsMap[team.name] || toEntry(team);
     }, [team, teamsMap]);
+
+    useEffect(() => {
+        if (seasonView == null) return;
+        if (searchParams.get('season') === String(seasonView)) return;
+        const next = new URLSearchParams(searchParams);
+        next.set('season', String(seasonView));
+        setSearchParams(next, { replace: true });
+    }, [seasonView]);
 
     const eloTrend = useMemo(() => buildTrend(allEloRows, seasonView), [allEloRows, seasonView]);
     const rankTrend = useMemo(() => buildTrend(allRankPoints, seasonView), [allRankPoints, seasonView]);
@@ -172,9 +180,9 @@ const TeamDetails = () => {
             {checkIfUserIsAdmin() && (
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '10px' }}>
                     <Box
-                        component="button"
-                        onClick={() => navigate(`/admin/edit-team/${teamId}`)}
-                        sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '14px', py: '8px', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)' } }}
+                        component={Link}
+                        to={`/admin/edit-team/${teamId}`}
+                        sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '14px', py: '8px', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'none', '&:hover': { borderColor: 'var(--brand)' } }}
                     >
                         Edit team
                     </Box>

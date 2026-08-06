@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
@@ -32,7 +32,6 @@ const emptySettings = { label: '', abbreviation: '', logoUrl: '', logoUrlDark: '
 
 const AdminConferenceDetail = () => {
     const { code } = useParams();
-    const navigate = useNavigate();
     const [tab, setTab] = useState('settings');
     const [conferences, setConferences] = useState([]);
     const [teams, setTeams] = useState([]);
@@ -49,6 +48,7 @@ const AdminConferenceDetail = () => {
 
     const [numConferenceGames, setNumConferenceGames] = useState(DEFAULT_CONFERENCE_GAMES);
     const [protectedRivalries, setProtectedRivalries] = useState([]);
+    const [divisions, setDivisions] = useState([]);
     const [rulesLoading, setRulesLoading] = useState(false);
 
     const load = async () => {
@@ -86,14 +86,17 @@ const AdminConferenceDetail = () => {
                 if (rules) {
                     setNumConferenceGames(rules.numConferenceGames || DEFAULT_CONFERENCE_GAMES);
                     setProtectedRivalries(rules.protectedRivalries || []);
+                    setDivisions(rules.divisions || []);
                 } else {
                     setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
                     setProtectedRivalries([]);
+                    setDivisions([]);
                 }
             } catch (err) {
                 console.error('Error loading conference rules:', err);
                 setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
                 setProtectedRivalries([]);
+                setDivisions([]);
             } finally {
                 setRulesLoading(false);
             }
@@ -131,6 +134,19 @@ const AdminConferenceDetail = () => {
         setPendingTeam(team.name);
         try {
             await updateTeam({ ...team, conference: newConference });
+            await load();
+        } catch (err) {
+            setError(err.message || `Failed to update ${team.name}`);
+        } finally {
+            setPendingTeam(null);
+        }
+    };
+
+    const updateTeamDivision = async (team, newDivision) => {
+        setError(null);
+        setPendingTeam(team.name);
+        try {
+            await updateTeam({ ...team, division: newDivision || null });
             await load();
         } catch (err) {
             setError(err.message || `Failed to update ${team.name}`);
@@ -227,8 +243,35 @@ const AdminConferenceDetail = () => {
         setProtectedRivalries(updated);
     };
 
-    const handleSaveRules = async (conferenceCode, numGames, rivalries) => {
-        await saveConferenceRules(conferenceCode, numGames, rivalries);
+    const addDivision = () => {
+        setDivisions([...divisions, '']);
+    };
+
+    const removeDivision = async (index) => {
+        const division = divisions[index];
+        const updated = divisions.filter((_, i) => i !== index);
+
+        if (!division) {
+            setDivisions(updated);
+            return;
+        }
+
+        try {
+            await saveConferenceRules(code, numConferenceGames, protectedRivalries, updated);
+            setDivisions(updated);
+        } catch (err) {
+            console.error('Error removing division:', err);
+        }
+    };
+
+    const updateDivision = (index, value) => {
+        const updated = [...divisions];
+        updated[index] = value;
+        setDivisions(updated);
+    };
+
+    const handleSaveRules = async (conferenceCode, numGames, rivalries, divisionList) => {
+        await saveConferenceRules(conferenceCode, numGames, rivalries, divisionList);
     };
 
     if (loading) {
@@ -269,26 +312,30 @@ const AdminConferenceDetail = () => {
                         <Panel header="Conference settings">
                             {settingsError && <Alert severity="error" sx={{ m: '16px 16px 0' }}>{settingsError}</Alert>}
                             {settingsSuccess && <Alert severity="success" sx={{ m: '16px 16px 0' }}>{settingsSuccess}</Alert>}
-                            <Box component="form" onSubmit={handleSaveSettings} sx={{ p: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', alignItems: 'end' }}>
-                                <Box>
-                                    <Box sx={labelSx}>Code</Box>
-                                    <Box component="input" value={code} disabled sx={{ ...inputSx, opacity: 0.6 }} />
+                            <Box component="form" onSubmit={handleSaveSettings} sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                                    <Box>
+                                        <Box sx={labelSx}>Code</Box>
+                                        <Box component="input" value={code} disabled sx={{ ...inputSx, opacity: 0.6 }} />
+                                    </Box>
+                                    <Box>
+                                        <Box sx={labelSx}>Label</Box>
+                                        <Box component="input" value={settingsForm.label} onChange={(e) => setSettingsForm((prev) => ({ ...prev, label: e.target.value }))} required sx={inputSx} />
+                                    </Box>
+                                    <Box>
+                                        <Box sx={labelSx}>Abbreviation</Box>
+                                        <Box component="input" value={settingsForm.abbreviation} onChange={(e) => setSettingsForm((prev) => ({ ...prev, abbreviation: e.target.value }))} placeholder="e.g. MWC" sx={inputSx} />
+                                    </Box>
+                                    <Box>
+                                        <Box sx={labelSx}>Active</Box>
+                                        <Toggle on={!!conference.active} onClick={handleToggleActive} />
+                                    </Box>
                                 </Box>
-                                <Box>
-                                    <Box sx={labelSx}>Label</Box>
-                                    <Box component="input" value={settingsForm.label} onChange={(e) => setSettingsForm((prev) => ({ ...prev, label: e.target.value }))} required sx={inputSx} />
+                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                                    <LogoUrlField label="Logo URL" value={settingsForm.logoUrl} onChange={(e) => setSettingsForm((prev) => ({ ...prev, logoUrl: e.target.value }))} previewBg="#ffffff" />
+                                    <LogoUrlField label="Dark logo URL" value={settingsForm.logoUrlDark} onChange={(e) => setSettingsForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))} previewBg="#0a1620" />
                                 </Box>
-                                <Box>
-                                    <Box sx={labelSx}>Abbreviation</Box>
-                                    <Box component="input" value={settingsForm.abbreviation} onChange={(e) => setSettingsForm((prev) => ({ ...prev, abbreviation: e.target.value }))} placeholder="e.g. MWC" sx={inputSx} />
-                                </Box>
-                                <LogoUrlField label="Logo URL" value={settingsForm.logoUrl} onChange={(e) => setSettingsForm((prev) => ({ ...prev, logoUrl: e.target.value }))} previewBg="#ffffff" />
-                                <LogoUrlField label="Dark logo URL" value={settingsForm.logoUrlDark} onChange={(e) => setSettingsForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))} previewBg="#0a1620" />
-                                <Box>
-                                    <Box sx={labelSx}>Active</Box>
-                                    <Toggle on={!!conference.active} onClick={handleToggleActive} />
-                                </Box>
-                                <Box component="button" type="submit" disabled={savingSettings} sx={btnSx}>
+                                <Box component="button" type="submit" disabled={savingSettings} sx={{ ...btnSx, justifySelf: 'start' }}>
                                     {savingSettings ? 'Saving...' : 'Save settings'}
                                 </Box>
                             </Box>
@@ -306,10 +353,14 @@ const AdminConferenceDetail = () => {
                                         conferenceTeams={teamsInConference}
                                         numConferenceGames={numConferenceGames}
                                         protectedRivalries={protectedRivalries}
+                                        divisions={divisions}
                                         onNumConferenceGamesChange={setNumConferenceGames}
                                         onAddRivalry={addRivalry}
                                         onRemoveRivalry={removeRivalry}
                                         onUpdateRivalry={updateRivalry}
+                                        onAddDivision={addDivision}
+                                        onRemoveDivision={removeDivision}
+                                        onUpdateDivision={updateDivision}
                                         onSave={handleSaveRules}
                                     />
                                 </Box>
@@ -332,18 +383,34 @@ const AdminConferenceDetail = () => {
                                 {teamsInConference.length === 0 ? (
                                     <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No teams found.</Box>
                                 ) : (
-                                    <DataTable minWidth={560}>
+                                    <DataTable minWidth={680}>
                                         <thead>
                                             <tr>
                                                 <th className="lft stick">Team</th>
+                                                <th className="lft">Division</th>
                                                 <th></th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {teamsInConference.map((team) => (
                                                 <tr key={team.name}>
-                                                    <td className="lft stick" onClick={() => navigate(`/team-details/${team.id}`)} style={{ cursor: 'pointer' }}>
-                                                        <span className="nm">{team.name}</span>
+                                                    <td className="lft stick">
+                                                        <Box component={Link} to={`/team-details/${team.id}`} sx={{ display: 'block', color: 'inherit', textDecoration: 'none' }}>
+                                                            <span className="nm">{team.name}</span>
+                                                        </Box>
+                                                    </td>
+                                                    <td className="lft">
+                                                        {divisions.length === 0 ? (
+                                                            <Box sx={{ color: 'var(--text-dim)', fontSize: '0.78rem' }}>No divisions set</Box>
+                                                        ) : (
+                                                            <SelectPill
+                                                                value={team.division || ''}
+                                                                onChange={(value) => updateTeamDivision(team, value)}
+                                                                options={[{ value: '', label: 'No division' }, ...divisions.filter(Boolean).map((d) => ({ value: d, label: d }))]}
+                                                                ariaLabel={`Division for ${team.name}`}
+                                                                sx={{ height: '30px' }}
+                                                            />
+                                                        )}
                                                     </td>
                                                     <td>
                                                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>

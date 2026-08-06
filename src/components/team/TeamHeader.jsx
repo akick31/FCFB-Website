@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 
@@ -15,7 +15,6 @@ const luminance = (hex) => {
 };
 
 const TeamHeader = ({ team, mark, pollRank }) => {
-    const navigate = useNavigate();
     const primary = team.primary_color || '#004260';
     const logo = luminance(primary) < 0.62 ? (mark?.logoDark || mark?.logo) : (mark?.logo || mark?.logoDark);
     const coach = team.coach_usernames?.[0];
@@ -45,12 +44,19 @@ const TeamHeader = ({ team, mark, pollRank }) => {
                     <Box sx={{ opacity: 0.85, fontWeight: 600, fontSize: '0.92rem' }}>
                         Current ELO: {team.current_elo != null ? Math.round(team.current_elo) : '-'}
                     </Box>
-                    <Box
-                        onClick={() => coach && navigate(`/user-details/${coach}`)}
-                        sx={{ opacity: 0.82, fontSize: '0.82rem', mt: '5px', cursor: coach ? 'pointer' : 'default' }}
-                    >
-                        Head Coach {coach ? `@${coach}` : 'vacant'}, {formatOffensivePlaybook(team.offensive_playbook)} / {formatDefensivePlaybook(team.defensive_playbook)}
-                    </Box>
+                    {coach ? (
+                        <Box
+                            component={Link}
+                            to={`/user-details/${coach}`}
+                            sx={{ display: 'block', opacity: 0.82, fontSize: '0.82rem', mt: '5px', color: 'inherit', textDecoration: 'none' }}
+                        >
+                            Head Coach @{coach}, {formatOffensivePlaybook(team.offensive_playbook)} / {formatDefensivePlaybook(team.defensive_playbook)}
+                        </Box>
+                    ) : (
+                        <Box sx={{ opacity: 0.82, fontSize: '0.82rem', mt: '5px' }}>
+                            Head Coach vacant, {formatOffensivePlaybook(team.offensive_playbook)} / {formatDefensivePlaybook(team.defensive_playbook)}
+                        </Box>
+                    )}
                 </Box>
             </Box>
         </Box>

@@ -33,6 +33,7 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
         short_name: '',
         abbreviation: '',
         logo: '',
+        logo_dark: '',
         scorebug_logo: '',
         primary_color: '#1976d2',
         secondary_color: '#ffffff',
@@ -185,6 +186,14 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
                             label="Logo URL"
                             name="logo"
                             value={formData.logo}
+                            onChange={handleChange}
+                            fullWidth
+                        />
+
+                        <TextField
+                            label="Dark Logo URL"
+                            name="logo_dark"
+                            value={formData.logo_dark}
                             onChange={handleChange}
                             fullWidth
                         />

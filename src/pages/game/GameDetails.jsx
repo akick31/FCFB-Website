@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress, Alert, Button } from '@mui/material';
 import { ArrowBack, Assessment, RestaurantMenu, Stop } from '@mui/icons-material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { getGameById, chewGameByGameId, endGameByGameId } from '../../api/gameApi';
 import { getAllPlaysByGameId } from '../../api/playApi';
 import { getGameStatsByIdAndTeam, generateGameStats } from '../../api/gameStatsApi.jsx';
 import { getTeamByName } from '../../api/teamApi';
-import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../theme/ColorModeContext';
 import { pickTeamColor } from '../../utils/teamColor';
 import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
@@ -26,31 +26,24 @@ import WinProbChart from '../../components/game/detail/WinProbChart';
 import ScoreChart from '../../components/game/detail/ScoreChart';
 import PlaysPanel from '../../components/game/detail/PlaysPanel';
 import { useSeo } from '../../hooks/useSeo';
-import { clickableProps } from '../../utils/a11y';
 
-const toDark = (logo) => (logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo);
 const unwrap = (result) => {
     const data = result?.data ?? result;
     return Array.isArray(data) ? data[0] : data;
 };
 const rankLabel = (rank) => (rank && rank <= 25 ? `#${rank}` : 'Unranked');
 
-const markFrom = (teamsMap, name, teamObject) => teamsMap[name] || (teamObject ? {
-    name: teamObject.name, abbreviation: teamObject.abbreviation, logo: teamObject.logo || null, logoDark: toDark(teamObject.logo),
-    primaryColor: teamObject.primary_color, secondaryColor: teamObject.secondary_color,
-} : { name });
+const markFrom = (teamsMap, name, teamObject) => teamsMap[name] || (teamObject ? toEntry(teamObject) : { name });
 
 const CoachLink = ({ coach }) => {
-    const navigate = useNavigate();
     if (!coach) return '-';
-    return <Box component="span" {...clickableProps(() => navigate(`/user-details/${coach}`))} sx={{ color: 'var(--brand)', fontWeight: 700, cursor: 'pointer' }}>@{coach}</Box>;
+    return <Box component={Link} to={`/user-details/${coach}`} sx={{ color: 'var(--brand)', fontWeight: 700, textDecoration: 'none' }}>@{coach}</Box>;
 };
 
 CoachLink.propTypes = { coach: PropTypes.string };
 
 const GameDetails = ({ isAdmin }) => {
     const { gameId } = useParams();
-    const navigate = useNavigate();
     const teamsMap = useTeamsMap();
     const { mode } = useColorMode();
     const [adminBusy, setAdminBusy] = useState('');
@@ -198,7 +191,7 @@ const GameDetails = ({ isAdmin }) => {
     return (
         <PageWrap>
             <PageHeading eyebrow={headerTitle} title="Game detail">
-                <Box component="button" type="button" onClick={() => navigate('/scoreboard')} sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: 1.25, py: 0.6, fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
+                <Box component={Link} to="/scoreboard" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: 1.25, py: 0.6, fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'none' }}>
                     <ArrowBack sx={{ fontSize: 15 }} /> Scoreboard
                 </Box>
             </PageHeading>

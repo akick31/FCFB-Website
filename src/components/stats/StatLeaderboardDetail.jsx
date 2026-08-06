@@ -2,20 +2,18 @@ import React, { useMemo, useState } from 'react';
 import { Box } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Panel from '../ui/Panel';
 import DataTable from '../ui/DataTable';
 import TeamMark from '../ui/TeamMark';
 import ConferenceMark from '../ui/ConferenceMark';
 import Pager from '../ui/Pager';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
-import { clickableRowProps } from '../../utils/a11y';
 
 const PAGE_SIZE = 25;
 
 const StatLeaderboardDetail = ({ stat, rows, onBack }) => {
     const teamsMap = useTeamsMap();
-    const navigate = useNavigate();
     const [page, setPage] = useState(0);
     const [teamQuery, setTeamQuery] = useState('');
 
@@ -28,11 +26,6 @@ const StatLeaderboardDetail = ({ stat, rows, onBack }) => {
     const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     const current = Math.min(page, pageCount - 1);
     const slice = filtered.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
-
-    const openTeam = (name) => {
-        const id = teamsMap[name]?.id;
-        if (id) navigate(`/team-details/${id}`);
-    };
 
     return (
         <>
@@ -56,8 +49,14 @@ const StatLeaderboardDetail = ({ stat, rows, onBack }) => {
                     <tbody>
                         {slice.map((row) => {
                             ensureTeam(row.team);
+                            const teamId = teamsMap[row.team]?.id;
                             return (
-                                <tr key={row.team} {...clickableRowProps(() => openTeam(row.team))}>
+                                <Box
+                                    component={teamId ? Link : 'tr'}
+                                    to={teamId ? `/team-details/${teamId}` : undefined}
+                                    key={row.team}
+                                    sx={{ display: 'table-row', textDecoration: 'none', color: 'inherit', cursor: teamId ? 'pointer' : 'default' }}
+                                >
                                     <td className="lft stick num">{row.rank}</td>
                                     <td className="lft">
                                         <div className="teamcell">
@@ -67,7 +66,7 @@ const StatLeaderboardDetail = ({ stat, rows, onBack }) => {
                                     </td>
                                     <td><Box sx={{ display: 'flex', justifyContent: 'center' }}><ConferenceMark conference={row.conference} /></Box></td>
                                     <td className="num">{stat.format ? stat.format(row[stat.key]) : row[stat.key]}</td>
-                                </tr>
+                                </Box>
                             );
                         })}
                     </tbody>

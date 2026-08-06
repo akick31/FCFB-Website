@@ -1,28 +1,27 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import ConferenceTabs from '../../components/team/ConferenceTabs';
 import SelectPill from '../../components/ui/SelectPill';
 import DataTable from '../../components/ui/DataTable';
 import TeamMark from '../../components/ui/TeamMark';
+import ConferenceMark from '../../components/ui/ConferenceMark';
 import { getAllTeams } from '../../api/teamApi';
 import { getLatestCompletedSeason, getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
-import { getScheduleBySeason } from '../../api/scheduleApi';
+import { getScheduleBySeason, getConferenceRules } from '../../api/scheduleApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getFilteredGames } from '../../api/gameApi';
 import { getTeamSeasonConference } from '../../api/teamSeasonConferenceApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
-import { useConferencesMap, activeConferenceCodes, allConferenceList, conferenceLabel, conferenceLogo } from '../../components/constants/conferences';
+import { useConferencesMap, activeConferenceCodes, allConferenceList, conferenceLabel } from '../../components/constants/conferences';
 import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 import { useOffseasonStatus } from '../../components/game/scoreboard/hooks/useOffseasonStatus';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
-import { clickableRowProps } from '../../utils/a11y';
-
-const confPct = (row) => (row.confWins + row.confLosses > 0 ? row.confWins / (row.confWins + row.confLosses) : 0);
+import { sortStandingsRows } from '../../utils/standingsTiebreakers';
 
 const buildHistoricalData = (conferenceMap, scheduleRows, eloRows, seasonStatsRows, gameRows) => {
     const recordByTeam = {};
@@ -68,7 +67,7 @@ const buildHistoricalData = (conferenceMap, scheduleRows, eloRows, seasonStatsRo
         coachByTeam[team] = coaches?.[0] || null;
     });
 
-    return { conferenceMap: conferenceMap || {}, recordByTeam, eloByTeam, statsByTeam, coachByTeam };
+    return { conferenceMap: conferenceMap || {}, recordByTeam, eloByTeam, statsByTeam, coachByTeam, scheduleRows: scheduleRows || [] };
 };
 
 const Standings = () => {
@@ -89,6 +88,8 @@ const Standings = () => {
     const [historicalLoading, setHistoricalLoading] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [divisions, setDivisions] = useState([]);
+    const [liveGames, setLiveGames] = useState([]);
 
     useEffect(() => {
         setLoading(true);
@@ -112,6 +113,15 @@ const Standings = () => {
     }, []);
 
     const isLiveSeason = season != null && season === liveSeason;
+
+    useEffect(() => {
+        if (!season || !isLiveSeason) { setLiveGames([]); return undefined; }
+        let active = true;
+        getScheduleBySeason(season)
+            .then((rows) => { if (active) setLiveGames(rows || []); })
+            .catch(() => { if (active) setLiveGames([]); });
+        return () => { active = false; };
+    }, [season, isLiveSeason]);
 
     useEffect(() => {
         if (!season || isLiveSeason) { setHistorical(null); return; }
@@ -145,6 +155,15 @@ const Standings = () => {
     const selectedConference = confParam?.toUpperCase() || availableConferences[0];
 
     useEffect(() => {
+        if (!selectedConference) { setDivisions([]); return undefined; }
+        let active = true;
+        getConferenceRules(selectedConference)
+            .then((rules) => { if (active) setDivisions(rules?.divisions || []); })
+            .catch(() => { if (active) setDivisions([]); });
+        return () => { active = false; };
+    }, [selectedConference]);
+
+    useEffect(() => {
         if (loading || availableConferences.length === 0 || season == null) return;
         if (!confParam || !availableConferences.includes(confParam.toUpperCase())) {
             navigate(`/standings/${availableConferences[0].toLowerCase()}/${season}`, { replace: true });
@@ -160,7 +179,7 @@ const Standings = () => {
 
     const displayRows = useMemo(() => {
         if (isLiveSeason) {
-            return teams
+            const rows = teams
                 .filter((team) => team.conference === selectedConference)
                 .map((team) => ({
                     name: team.name,
@@ -173,14 +192,15 @@ const Standings = () => {
                     offense: team.offensive_playbook,
                     defense: team.defensive_playbook,
                     coach: team.coach_usernames?.[0] || null,
-                }))
-                .sort((a, b) => confPct(b) - confPct(a) || a.name.localeCompare(b.name));
+                    division: team.division || null,
+                }));
+            return sortStandingsRows(rows, liveGames);
         }
         if (!historical) return [];
         const teamNames = Object.entries(historical.conferenceMap)
             .filter(([, conf]) => conf === selectedConference)
             .map(([name]) => name);
-        return teamNames
+        const rows = teamNames
             .map((name) => {
                 const rec = historical.recordByTeam[name] || { wins: 0, losses: 0, confWins: 0, confLosses: 0 };
                 const stats = historical.statsByTeam[name];
@@ -196,9 +216,31 @@ const Standings = () => {
                     defense: stats?.defensive_playbook,
                     coach: historical.coachByTeam[name] || null,
                 };
-            })
-            .sort((a, b) => confPct(b) - confPct(a) || a.name.localeCompare(b.name));
-    }, [teams, isLiveSeason, historical, selectedConference, teamsMap]);
+            });
+        return sortStandingsRows(rows, historical.scheduleRows);
+    }, [teams, isLiveSeason, historical, selectedConference, teamsMap, liveGames]);
+
+    const sections = useMemo(() => {
+        if (!isLiveSeason || divisions.filter(Boolean).length === 0) {
+            return [{ label: null, rows: displayRows }];
+        }
+        const byDivision = {};
+        const unassigned = [];
+        displayRows.forEach((row) => {
+            if (row.division && divisions.includes(row.division)) {
+                if (!byDivision[row.division]) byDivision[row.division] = [];
+                byDivision[row.division].push(row);
+            } else {
+                unassigned.push(row);
+            }
+        });
+        const result = divisions
+            .filter(Boolean)
+            .map((name) => ({ label: name, rows: byDivision[name] || [] }))
+            .filter((section) => section.rows.length > 0);
+        if (unassigned.length > 0) result.push({ label: 'Unassigned', rows: unassigned });
+        return result;
+    }, [isLiveSeason, divisions, displayRows]);
 
     if (loading) {
         return (
@@ -212,14 +254,12 @@ const Standings = () => {
         return <PageWrap><Alert severity="error">{error}</Alert></PageWrap>;
     }
 
-    const confLogo = conferenceLogo(selectedConference);
-
     return (
         <PageWrap>
             <PageHeading
                 eyebrow={conferenceLabel(selectedConference)}
                 title="Standings"
-                leading={confLogo ? <TeamMark team={{ logo: confLogo, name: selectedConference }} size={42} /> : null}
+                leading={selectedConference ? <ConferenceMark conference={selectedConference} size={42} /> : null}
             >
                 {allSeasons.length > 0 && (
                     <SelectPill
@@ -250,46 +290,64 @@ const Standings = () => {
                 <DataTable minWidth={860} tableLayout="fixed">
                     <thead>
                         <tr>
-                            <th className="lft stick" style={{ width: 280 }}>Team</th>
-                            <th>Overall</th>
-                            <th>Conference</th>
-                            <th>ELO</th>
-                            <th className="lft">Offense</th>
-                            <th className="lft">Defense</th>
-                            <th className="lft">Coach</th>
+                            <th className="lft stick" style={{ width: '32%' }}>Team</th>
+                            <th style={{ width: '11%' }}>Overall</th>
+                            <th style={{ width: '11%' }}>Conference</th>
+                            <th style={{ width: '11%' }}>ELO</th>
+                            <th className="lft" style={{ width: '11%' }}>Offense</th>
+                            <th className="lft" style={{ width: '11%' }}>Defense</th>
+                            <th className="lft" style={{ width: '13%' }}>Coach</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {displayRows.map((row, index) => {
-                            const mark = teamsMap[row.name] || { name: row.name };
-                            return (
-                                <tr key={row.name} {...clickableRowProps(() => row.id != null && navigate(`/team-details/${row.id}`))}>
-                                    <td className="lft stick">
-                                        <div className="teamcell">
-                                            <span className="rk">{index + 1}</span>
-                                            <TeamMark team={mark} size={22} />
-                                            <span className="nm">{row.name}</span>
-                                        </div>
-                                    </td>
-                                    <td className="num">{row.wins}-{row.losses}</td>
-                                    <td className="num">{row.confWins}-{row.confLosses}</td>
-                                    <td className="num">{row.elo != null ? Math.round(row.elo) : '-'}</td>
-                                    <td className="lft" style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{formatOffensivePlaybook(row.offense)}</td>
-                                    <td className="lft" style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{formatDefensivePlaybook(row.defense)}</td>
-                                    <td className="lft">
-                                        {row.coach ? (
-                                            <Box
-                                                component="span"
-                                                onClick={(event) => { event.stopPropagation(); navigate(`/user-details/${row.coach}`); }}
-                                                sx={{ color: 'var(--brand)', fontWeight: 700, cursor: 'pointer' }}
-                                            >
-                                                @{row.coach}
-                                            </Box>
-                                        ) : '-'}
-                                    </td>
-                                </tr>
-                            );
-                        })}
+                        {sections.map((section) => (
+                            <React.Fragment key={section.label || 'all'}>
+                                {section.label && (
+                                    <tr>
+                                        <td colSpan={7} style={{ background: 'var(--surface-2)', color: 'var(--text-dim)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, padding: '6px 10px' }}>
+                                            {section.label}
+                                        </td>
+                                    </tr>
+                                )}
+                                {section.rows.map((row, index) => {
+                                    const mark = teamsMap[row.name] || { name: row.name };
+                                    return (
+                                        <Box component="tr" key={row.name} sx={{ position: 'relative' }}>
+                                            <td className="lft stick">
+                                                <div className="teamcell">
+                                                    <span className="rk">{index + 1}</span>
+                                                    <TeamMark team={mark} size={22} />
+                                                    <span className="nm">{row.name}</span>
+                                                </div>
+                                            </td>
+                                            <td className="num">{row.wins}-{row.losses}</td>
+                                            <td className="num">{row.confWins}-{row.confLosses}</td>
+                                            <td className="num">{row.elo != null ? Math.round(row.elo) : '-'}</td>
+                                            <td className="lft" style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{formatOffensivePlaybook(row.offense)}</td>
+                                            <td className="lft" style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{formatDefensivePlaybook(row.defense)}</td>
+                                            <td className="lft">
+                                                {row.coach ? (
+                                                    <Box
+                                                        component={Link}
+                                                        to={`/user-details/${row.coach}`}
+                                                        sx={{ position: 'relative', zIndex: 3, color: 'var(--brand)', fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}
+                                                    >
+                                                        @{row.coach}
+                                                    </Box>
+                                                ) : '-'}
+                                            </td>
+                                            {row.id != null && (
+                                                <Box
+                                                    component={Link}
+                                                    to={`/team-details/${row.id}`}
+                                                    sx={{ position: 'absolute', inset: 0, zIndex: 2 }}
+                                                />
+                                            )}
+                                        </Box>
+                                    );
+                                })}
+                            </React.Fragment>
+                        ))}
                     </tbody>
                 </DataTable>
             )}

@@ -1,14 +1,17 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
 import TvLogo from '../../ui/TvLogo';
 import GameTypeLabel from '../cards/GameTypeLabel';
-import { clickableProps } from '../../../utils/a11y';
 
-const CoachlessName = ({ mark, name, rank, record, align, onClick }) => (
-    <Box {...clickableProps(onClick)} sx={{ cursor: 'pointer', textAlign: align, minWidth: 0, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' } }}>
+const CoachlessName = ({ mark, name, rank, record, align, teamId }) => (
+    <Box
+        component={teamId ? Link : 'div'}
+        to={teamId ? `/team-details/${teamId}` : undefined}
+        sx={{ cursor: teamId ? 'pointer' : 'default', textAlign: align, minWidth: 0, textDecoration: 'none', color: 'inherit', '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' } }}
+    >
         <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.05, overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {rank > 0 && rank <= 25 && <Box component="span" sx={{ color: 'var(--gold)', fontSize: '0.72em', mr: 0.5 }}>{rank}</Box>}
             {mark?.name || name}
@@ -17,7 +20,7 @@ const CoachlessName = ({ mark, name, rank, record, align, onClick }) => (
     </Box>
 );
 
-CoachlessName.propTypes = { mark: PropTypes.object, name: PropTypes.string, rank: PropTypes.number, record: PropTypes.string, align: PropTypes.string, onClick: PropTypes.func };
+CoachlessName.propTypes = { mark: PropTypes.object, name: PropTypes.string, rank: PropTypes.number, record: PropTypes.string, align: PropTypes.string, teamId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]) };
 
 const Score = ({ value, dimmed, winner, side }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
@@ -31,11 +34,9 @@ const Score = ({ value, dimmed, winner, side }) => (
 Score.propTypes = { value: PropTypes.number, dimmed: PropTypes.bool, winner: PropTypes.bool, side: PropTypes.string };
 
 const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor, spreadText, threadLink, columns, awayQuarters, homeQuarters, showQuarters }) => {
-    const navigate = useNavigate();
     const homeWin = game.home_score > game.away_score;
     const overtime = game.quarter > 4;
     const finalLabel = `Final${overtime ? ' / OT' : ''}`;
-    const goTeam = (id) => () => id && navigate(`/team-details/${id}`);
     const awayRecord = `${game.away_wins || 0}-${game.away_losses || 0}`;
     const homeRecord = `${game.home_wins || 0}-${game.home_losses || 0}`;
     const quarterCols = [...columns, 'T'];
@@ -67,7 +68,7 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
 
                 <TeamMark team={awayMark} size={64} sx={{ zIndex: 1 }} />
                 <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: { xs: '8px', sm: '16px' }, minWidth: 0, zIndex: 1 }}>
-                    <CoachlessName mark={awayMark} name={game.away_team} rank={game.away_team_rank} record={awayRecord} align="right" onClick={goTeam(game.away_team_id)} />
+                    <CoachlessName mark={awayMark} name={game.away_team} rank={game.away_team_rank} record={awayRecord} align="right" teamId={game.away_team_id} />
                     <Score value={game.away_score} dimmed={homeWin} winner={!homeWin} side="away" />
                 </Box>
 
@@ -87,7 +88,7 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
 
                 <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: { xs: '8px', sm: '16px' }, minWidth: 0, zIndex: 1 }}>
                     <Score value={game.home_score} dimmed={!homeWin} winner={homeWin} side="home" />
-                    <CoachlessName mark={homeMark} name={game.home_team} rank={game.home_team_rank} record={homeRecord} align="left" onClick={goTeam(game.home_team_id)} />
+                    <CoachlessName mark={homeMark} name={game.home_team} rank={game.home_team_rank} record={homeRecord} align="left" teamId={game.home_team_id} />
                 </Box>
                 <TeamMark team={homeMark} size={64} sx={{ zIndex: 1 }} />
             </Box>
