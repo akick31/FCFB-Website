@@ -10,10 +10,10 @@ import TeamMark from '../../components/ui/TeamMark';
 import ConferenceMark from '../../components/ui/ConferenceMark';
 import CreateTeamForm from '../../components/forms/CreateTeamForm';
 import Toggle from '../../components/ui/Toggle';
-import { getAllTeams, updateTeam, hireCoach, hireInterimCoach, fireSingleCoach } from '../../api/teamApi';
+import { getAllTeamsIncludingInactive, updateTeam, hireCoach, hireInterimCoach, fireSingleCoach } from '../../api/teamApi';
 import { getAllUsers } from '../../api/userApi';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
-import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
 import { useConferencesMap, allConferenceList } from '../../components/constants/conferences';
 import { isRealTeam, getTeamCoaches } from '../../utils/teamDataUtils';
 import { formatPosition } from '../../utils/formatText';
@@ -74,7 +74,7 @@ const TeamManagement = ({ user }) => {
     const loadData = async () => {
         try {
             const [teamsResponse, usersResponse, transactions] = await Promise.all([
-                getAllTeams(),
+                getAllTeamsIncludingInactive(),
                 getAllUsers(),
                 getEntireCoachTransactionLog(),
             ]);
@@ -275,7 +275,7 @@ const TeamManagement = ({ user }) => {
                                 <tr key={team.name}>
                                     <td className="lft stick">
                                         <Box className="teamcell">
-                                            <TeamMark team={teamsMap[team.name]} size={22} />
+                                            <TeamMark team={teamsMap[team.name] || toEntry(team)} size={22} />
                                             <span className="nm">{team.name}</span>
                                         </Box>
                                     </td>

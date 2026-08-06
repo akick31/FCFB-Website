@@ -21,14 +21,14 @@ const ConferenceRulesEditor = ({
     onAddRivalry,
     onRemoveRivalry,
     onUpdateRivalry,
-    onAddDivision,
-    onRemoveDivision,
+    onToggleDivisions,
     onUpdateDivision,
     onSave,
     disabled = false,
 }) => {
     const [savingRules, setSavingRules] = useState(false);
     const [rulesError, setRulesError] = useState(null);
+    const divisionsEnabled = divisions.length > 0;
 
     return (
         <Box>
@@ -48,26 +48,26 @@ const ConferenceRulesEditor = ({
             <Box sx={{ borderTop: '1px solid var(--line-soft)', pt: '16px', pb: '16px' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: '6px' }}>
                     <Box sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Divisions</Box>
-                    <Box component="button" type="button" onClick={onAddDivision} sx={ctrlSx}>+ Add division</Box>
+                    <Box component="button" type="button" onClick={() => onToggleDivisions(!divisionsEnabled)} sx={ctrlSx}>
+                        {divisionsEnabled ? 'Disable divisions' : 'Enable divisions'}
+                    </Box>
                 </Box>
                 <Box sx={{ color: 'var(--text-dim)', fontSize: '0.76rem', mb: '12px' }}>
-                    Optional. When set, teams assigned to a division (from the Teams tab) play a full round robin against
-                    every other team in their division, plus any protected rivalries, before remaining conference games
-                    are filled with other divisions&apos; teams.
+                    Optional. A conference has exactly two divisions. When enabled, teams assigned to a division
+                    (from the Teams tab) play a full round robin against every other team in their division, plus any
+                    protected rivalries, before remaining conference games are filled with the other division&apos;s teams.
                 </Box>
 
-                {divisions.length === 0 && (
-                    <Box sx={{ color: 'var(--text-dim)', fontSize: '0.8rem', fontStyle: 'italic', mb: '12px' }}>
-                        No divisions set — this conference schedules as one flat group.
+                {!divisionsEnabled ? (
+                    <Box sx={{ color: 'var(--text-dim)', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                        No divisions set. This conference schedules as one flat group.
+                    </Box>
+                ) : (
+                    <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <Box component="input" value={divisions[0] || ''} onChange={(e) => onUpdateDivision(0, e.target.value)} placeholder="Division 1 name" sx={{ ...inputSx, flex: '1 1 220px' }} />
+                        <Box component="input" value={divisions[1] || ''} onChange={(e) => onUpdateDivision(1, e.target.value)} placeholder="Division 2 name" sx={{ ...inputSx, flex: '1 1 220px' }} />
                     </Box>
                 )}
-
-                {divisions.map((division, index) => (
-                    <Box key={index} sx={{ display: 'flex', gap: '8px', mb: '8px', alignItems: 'center' }}>
-                        <Box component="input" value={division} onChange={(e) => onUpdateDivision(index, e.target.value)} placeholder="Division name" sx={{ ...inputSx, flex: '1 1 220px' }} />
-                        <Box component="button" type="button" onClick={() => onRemoveDivision(index)} sx={removeBtnSx}>&times;</Box>
-                    </Box>
-                ))}
             </Box>
 
             <Box sx={{ borderTop: '1px solid var(--line-soft)', pt: '16px' }}>
@@ -142,8 +142,7 @@ ConferenceRulesEditor.propTypes = {
     onAddRivalry: PropTypes.func.isRequired,
     onRemoveRivalry: PropTypes.func.isRequired,
     onUpdateRivalry: PropTypes.func.isRequired,
-    onAddDivision: PropTypes.func.isRequired,
-    onRemoveDivision: PropTypes.func.isRequired,
+    onToggleDivisions: PropTypes.func.isRequired,
     onUpdateDivision: PropTypes.func.isRequired,
     onSave: PropTypes.func.isRequired,
     disabled: PropTypes.bool,
