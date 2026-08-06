@@ -20,7 +20,7 @@ const LogoUrlField = ({ label, value, onChange, placeholder, previewBg = '#fffff
                 {value ? (
                     <Box component="img" src={value} alt="" sx={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                 ) : (
-                    <Box sx={{ fontSize: '0.6rem', color: previewBg === '#ffffff' ? '#00000055' : '#ffffff55' }}>—</Box>
+                    <Box sx={{ fontSize: '0.6rem', color: previewBg === '#ffffff' ? '#00000055' : '#ffffff55' }}>-</Box>
                 )}
             </Box>
         </Box>

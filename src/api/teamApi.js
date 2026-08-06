@@ -52,6 +52,28 @@ export const getAllTeams = async () => {
     }
 };
 
+export const getAllTeamsIncludingInactive = async () => {
+    try {
+        const response = await apiClient.get('/team/all');
+
+        return response.data.sort((a, b) => {
+            if (a.name < b.name) {
+                return -1;
+            }
+            if (a.name > b.name) {
+                return 1;
+            }
+            return 0;
+        });
+    } catch (error) {
+        console.error("Failed to fetch all teams including inactive:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to fetch all teams including inactive");
+        }
+        throw new Error("An unexpected error occurred while fetching all teams including inactive");
+    }
+};
+
 export const getOpenTeams = async () => {
     try {
         const response = await apiClient.get('/team/open');

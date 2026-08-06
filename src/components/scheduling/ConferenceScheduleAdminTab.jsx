@@ -37,8 +37,7 @@ const ConferenceScheduleAdminTab = ({
     onRemoveRivalry,
     onUpdateRivalry,
     divisions,
-    onAddDivision,
-    onRemoveDivision,
+    onToggleDivisions,
     onUpdateDivision,
     hasGamesPlayed = false,
     onSaveConferenceRules,
@@ -147,8 +146,7 @@ const ConferenceScheduleAdminTab = ({
                             onAddRivalry={onAddRivalry}
                             onRemoveRivalry={onRemoveRivalry}
                             onUpdateRivalry={onUpdateRivalry}
-                            onAddDivision={onAddDivision}
-                            onRemoveDivision={onRemoveDivision}
+                            onToggleDivisions={onToggleDivisions}
                             onUpdateDivision={onUpdateDivision}
                             onSave={onSaveConferenceRules}
                             disabled={scheduleLocked}
@@ -310,8 +308,7 @@ ConferenceScheduleAdminTab.propTypes = {
     onRemoveRivalry: PropTypes.func.isRequired,
     onUpdateRivalry: PropTypes.func.isRequired,
     divisions: PropTypes.array.isRequired,
-    onAddDivision: PropTypes.func.isRequired,
-    onRemoveDivision: PropTypes.func.isRequired,
+    onToggleDivisions: PropTypes.func.isRequired,
     onUpdateDivision: PropTypes.func.isRequired,
     hasGamesPlayed: PropTypes.bool,
     onSaveConferenceRules: PropTypes.func,

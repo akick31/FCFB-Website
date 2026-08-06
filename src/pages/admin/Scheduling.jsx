@@ -516,7 +516,7 @@ const Scheduling = () => {
             if (result.unmatchedSlots?.length > 0) {
                 showSnackbar(`Scheduled ${result.gamesScheduled} OOC games, ${result.unmatchedSlots.length} slots left open`, 'warning');
             } else {
-                showSnackbar(`Scheduled ${result.gamesScheduled} OOC games — every team's schedule is full!`);
+                showSnackbar(`Scheduled ${result.gamesScheduled} OOC games. Every team's schedule is full!`);
             }
             await refreshAllSeasonSchedule();
             if (selectedTeam && tab === 'team') fetchTeamSchedule();
@@ -641,27 +641,22 @@ const Scheduling = () => {
         setProtectedRivalries(updated);
     };
 
-    const addDivision = () => {
-        setDivisions([...divisions, '']);
-    };
+    const toggleDivisions = async (enabled) => {
+        const updated = enabled ? ['', ''] : [];
 
-    const removeDivision = async (index) => {
-        const division = divisions[index];
-        const updated = divisions.filter((_, i) => i !== index);
-
-        if (!division) {
-            setDivisions(updated);
+        if (!enabled && divisions.some(Boolean)) {
+            try {
+                await saveConferenceRules(selectedConference, numConferenceGames, protectedRivalries, updated);
+                setDivisions(updated);
+                showSnackbar('Divisions disabled');
+            } catch (err) {
+                console.error('Error disabling divisions:', err);
+                showSnackbar('Failed to disable divisions: ' + err.message, 'error');
+            }
             return;
         }
 
-        try {
-            await saveConferenceRules(selectedConference, numConferenceGames, protectedRivalries, updated);
-            setDivisions(updated);
-            showSnackbar('Division removed');
-        } catch (err) {
-            console.error('Error removing division:', err);
-            showSnackbar('Failed to remove division: ' + err.message, 'error');
-        }
+        setDivisions(updated);
     };
 
     const updateDivision = (index, value) => {
@@ -792,8 +787,7 @@ const Scheduling = () => {
                     onRemoveRivalry={removeRivalry}
                     onUpdateRivalry={updateRivalry}
                     divisions={divisions}
-                    onAddDivision={addDivision}
-                    onRemoveDivision={removeDivision}
+                    onToggleDivisions={toggleDivisions}
                     onUpdateDivision={updateDivision}
                     hasGamesPlayed={hasGamesPlayed}
                     onSaveConferenceRules={handleSaveConferenceRules}
