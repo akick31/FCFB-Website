@@ -290,13 +290,13 @@ const Standings = () => {
                 <DataTable minWidth={860} tableLayout="fixed">
                     <thead>
                         <tr>
-                            <th className="lft stick" style={{ width: 280 }}>Team</th>
-                            <th>Overall</th>
-                            <th>Conference</th>
-                            <th>ELO</th>
-                            <th className="lft">Offense</th>
-                            <th className="lft">Defense</th>
-                            <th className="lft">Coach</th>
+                            <th className="lft stick" style={{ width: '32%' }}>Team</th>
+                            <th style={{ width: '11%' }}>Overall</th>
+                            <th style={{ width: '11%' }}>Conference</th>
+                            <th style={{ width: '11%' }}>ELO</th>
+                            <th className="lft" style={{ width: '11%' }}>Offense</th>
+                            <th className="lft" style={{ width: '11%' }}>Defense</th>
+                            <th className="lft" style={{ width: '13%' }}>Coach</th>
                         </tr>
                     </thead>
                     <tbody>

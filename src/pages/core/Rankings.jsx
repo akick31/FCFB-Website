@@ -236,14 +236,14 @@ const Rankings = () => {
             <DataTable minWidth={640} tableLayout="fixed">
                 <thead>
                     <tr>
-                        <th className="lft stick" style={{ width: 50 }}>Rk</th>
-                        <th className="lft" style={{ width: 220 }}>Team</th>
-                        <th style={{ width: 100, textAlign: 'center' }}>Record</th>
-                        <th style={{ width: 100, textAlign: 'center' }}>Conference</th>
-                        <th style={{ width: 100, textAlign: 'center' }}>Previous</th>
-                        <th style={{ width: 80, textAlign: 'center' }}>Δ</th>
-                        <th style={{ width: 90 }}>ELO</th>
-                        <th style={{ width: 160 }}>Coach</th>
+                        <th className="lft stick" style={{ width: '6%' }}>Rk</th>
+                        <th className="lft" style={{ width: '24%' }}>Team</th>
+                        <th style={{ width: '11%', textAlign: 'center' }}>Record</th>
+                        <th style={{ width: '11%', textAlign: 'center' }}>Conference</th>
+                        <th style={{ width: '11%', textAlign: 'center' }}>Previous</th>
+                        <th style={{ width: '9%', textAlign: 'center' }}>Δ</th>
+                        <th style={{ width: '10%' }}>ELO</th>
+                        <th style={{ width: '18%' }}>Coach</th>
                     </tr>
                 </thead>
                 <tbody>
