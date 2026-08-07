@@ -9,6 +9,7 @@ import Toggle from '../../components/ui/Toggle';
 import SelectPill from '../../components/ui/SelectPill';
 import LogoUrlField from '../../components/admin/LogoUrlField';
 import { getConferences, createConference, setConferenceActive } from '../../api/conferenceApi';
+import { getAllTeams } from '../../api/teamApi';
 import { refreshConferences } from '../../components/constants/conferences';
 
 const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
@@ -23,6 +24,7 @@ const emptyForm = { code: '', label: '', logoUrl: '', logoUrlDark: '' };
 
 const AdminConferences = () => {
     const [conferences, setConferences] = useState([]);
+    const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
@@ -33,8 +35,9 @@ const AdminConferences = () => {
     const load = async () => {
         setLoading(true);
         try {
-            const conferences = await getConferences();
+            const [conferences, teams] = await Promise.all([getConferences(), getAllTeams()]);
             setConferences([...conferences].sort((a, b) => (a.label || '').localeCompare(b.label || '')));
+            setTeams(teams);
         } catch (err) {
             setError('Failed to load conferences');
         } finally {
@@ -48,6 +51,15 @@ const AdminConferences = () => {
         if (activeFilter === 'ALL') return conferences;
         return conferences.filter((conference) => (activeFilter === 'ACTIVE' ? conference.active : !conference.active));
     }, [conferences, activeFilter]);
+
+    const teamCountByConference = useMemo(() => {
+        const counts = {};
+        teams.forEach((team) => {
+            if (!team.conference) return;
+            counts[team.conference] = (counts[team.conference] || 0) + 1;
+        });
+        return counts;
+    }, [teams]);
 
     const handleToggleActive = async (conference) => {
         setError(null);
@@ -107,6 +119,7 @@ const AdminConferences = () => {
                     <thead>
                         <tr>
                             <th className="lft stick">Conference</th>
+                            <th style={{ textAlign: 'center' }}>Teams</th>
                             <th style={{ textAlign: 'center' }}>Active</th>
                             <th></th>
                         </tr>
@@ -120,6 +133,7 @@ const AdminConferences = () => {
                                         <span className="nm">{conference.label}</span>
                                     </Box>
                                 </td>
+                                <td style={{ textAlign: 'center' }}>{teamCountByConference[conference.code] || 0}</td>
                                 <td style={{ textAlign: 'center' }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                         <Toggle on={!!conference.active} onClick={() => handleToggleActive(conference)} />

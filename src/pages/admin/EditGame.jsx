@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
@@ -15,6 +15,7 @@ import {
 } from '../../constants/gameEnums';
 import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS } from '../../constants/teamEnums';
 import { slugId } from '../../utils/a11y';
+import { goBackOr } from '../../utils/navigation';
 
 const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
 const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', py: '10px', font: 'inherit', fontSize: '0.85rem' };
@@ -76,6 +77,7 @@ const playColumnLabel = (id) => id.split('_').map((word) => word[0].toUpperCase(
 
 const EditGame = () => {
     const { gameId } = useParams();
+    const navigate = useNavigate();
     const [game, setGame] = useState(null);
     const [plays, setPlays] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -191,7 +193,7 @@ const EditGame = () => {
 
     return (
         <AdminLayout title={`Edit Game: ${game.awayTeam || game.away_team} @ ${game.homeTeam || game.home_team}`}>
-            <Box component={Link} to="/admin/game-management" sx={backSx}>&larr; Game management</Box>
+            <Box component="button" type="button" onClick={() => goBackOr(navigate, '/admin/game-management')} sx={{ ...backSx, border: 0, background: 'transparent', cursor: 'pointer', font: 'inherit', p: 0 }}>&larr; Game management</Box>
 
             {error && <Alert severity="error" sx={{ mb: '16px' }} onClose={() => setError(null)}>{error}</Alert>}
             {success && <Alert severity="success" sx={{ mb: '16px' }} onClose={() => setSuccess(null)}>{success}</Alert>}

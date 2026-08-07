@@ -30,6 +30,10 @@ const SUB_TABS = [
     { value: 'playbooks', label: 'Playbooks' },
 ];
 const SUB_VALUES = SUB_TABS.map((tab) => tab.value);
+const SCOPE_TABS = [
+    { value: 'regular', label: 'Regular season' },
+    { value: 'postseason', label: 'Postseason' },
+];
 const CARDS_PER_PAGE = 9;
 
 const LEAGUE_FIELD_AGGS = {
@@ -82,6 +86,7 @@ const Stats = () => {
     const [statFilter, setStatFilter] = useState(searchParams.get('statFilter') || '');
     const [cardPage, setCardPage] = useState(0);
     const [count, setCount] = useState(Number.isFinite(countParam) && countParam > 0 ? countParam : 5);
+    const scope = searchParams.get('scope') === 'postseason' ? 'postseason' : 'regular';
 
     const updateParams = (updates) => {
         const next = new URLSearchParams(searchParams);
@@ -96,6 +101,16 @@ const Stats = () => {
         const next = value === 'all' ? 'all' : Number(value);
         setSeason(next);
         updateParams({ season: next });
+    };
+
+    const changeScope = (value) => {
+        if (value === 'postseason' && season === 'all') {
+            const fallback = seasons[0] ?? null;
+            setSeason(fallback);
+            updateParams({ scope: value, season: fallback });
+        } else {
+            updateParams({ scope: value });
+        }
     };
 
     const changeStatFilter = (value) => {
@@ -147,32 +162,32 @@ const Stats = () => {
                 setLoading(true);
                 setError('');
                 if (activeSub === 'leaderboard' && season === 'all') {
-                    const perSeason = await Promise.all(seasons.map((number) => getFilteredSeasonStats(null, null, number, null, 0, 1000)));
+                    const perSeason = await Promise.all(seasons.map((number) => getFilteredSeasonStats(null, null, number, null, 0, 1000, scope)));
                     const rows = perSeason.flatMap((result) => unwrapContent(result));
                     if (active) setSeasonStatRows(aggregateAllTimeStats(rows));
                 } else if (activeSub === 'leaderboard') {
-                    const rows = unwrapContent(await getFilteredSeasonStats(null, null, season, null, 0, 1000));
+                    const rows = unwrapContent(await getFilteredSeasonStats(null, null, season, null, 0, 1000, scope));
                     if (active) setSeasonStatRows(rows);
                 } else if (activeSub === 'league' && season === 'all') {
-                    const perSeason = await Promise.all(seasons.map((number) => getFilteredLeagueStats(null, number, 0, 1000)));
+                    const perSeason = await Promise.all(seasons.map((number) => getFilteredLeagueStats(null, number, 0, 1000, scope)));
                     const rows = perSeason.flatMap((result) => unwrapContent(result));
                     if (active) setLeague(rows.length ? aggregateStatRows(rows, LEAGUE_FIELD_AGGS) : null);
                 } else if (activeSub === 'league') {
-                    const rows = unwrapContent(await getFilteredLeagueStats(null, season, 0, 1000));
+                    const rows = unwrapContent(await getFilteredLeagueStats(null, season, 0, 1000, scope));
                     if (active) setLeague(rows[0] || null);
                 } else if (activeSub === 'conference' && season === 'all') {
-                    const perSeason = await Promise.all(seasons.map((number) => getFilteredConferenceStats(null, number, null, 0, 1000)));
+                    const perSeason = await Promise.all(seasons.map((number) => getFilteredConferenceStats(null, number, null, 0, 1000, scope)));
                     const rows = perSeason.flatMap((result) => unwrapContent(result));
                     if (active) setConferences(aggregateStatRowsByKey(rows, 'conference', CONFERENCE_FIELD_AGGS));
                 } else if (activeSub === 'conference') {
-                    const rows = unwrapContent(await getFilteredConferenceStats(null, season, null, 0, 1000));
+                    const rows = unwrapContent(await getFilteredConferenceStats(null, season, null, 0, 1000, scope));
                     if (active) setConferences(rows);
                 } else if (activeSub === 'playbooks' && season === 'all') {
-                    const perSeason = await Promise.all(seasons.map((number) => getFilteredPlaybookStats(null, null, number, 0, 1000)));
+                    const perSeason = await Promise.all(seasons.map((number) => getFilteredPlaybookStats(null, null, number, 0, 1000, scope)));
                     const rows = perSeason.flatMap((result) => unwrapContent(result));
                     if (active) setPlaybooks(rows);
                 } else if (activeSub === 'playbooks') {
-                    const rows = unwrapContent(await getFilteredPlaybookStats(null, null, season, 0, 1000));
+                    const rows = unwrapContent(await getFilteredPlaybookStats(null, null, season, 0, 1000, scope));
                     if (active) setPlaybooks(rows);
                 }
             } catch {
@@ -182,7 +197,7 @@ const Stats = () => {
             }
         })();
         return () => { active = false; };
-    }, [activeSub, season, seasons]);
+    }, [activeSub, season, seasons, scope]);
 
     useEffect(() => { setCardPage(0); }, [statFilter, season]);
 
@@ -216,12 +231,13 @@ const Stats = () => {
 
     const controlSx = { flex: '1 1 200px', minWidth: 180, height: 38 };
     const seasonOptions = [
-        { value: 'all', label: 'All-time' },
+        ...(scope === 'postseason' ? [] : [{ value: 'all', label: 'All-time' }]),
         ...seasons.map((number) => ({ value: number, label: `Season ${number}` })),
     ];
     const seasonControl = season != null && seasons.length > 0 && (
         <SelectPill label="Season" value={season} onChange={changeSeason} options={seasonOptions} sx={controlSx} />
     );
+    const scopeControl = <SegTabs value={scope} onChange={changeScope} options={SCOPE_TABS} ariaLabel="Stats scope" />;
 
     const detailStat = statKey ? STAT_BY_KEY[statKey] : null;
 
@@ -236,6 +252,7 @@ const Stats = () => {
         return (
             <>
                 <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {scopeControl}
                     {seasonControl}
                     <SelectPill label="Stat" value={statFilter} onChange={changeStatFilter} options={statOptions} sx={controlSx} ariaLabel="Choose a stat" />
                     <SelectPill label="Show" value={count} onChange={changeCount} options={[{ value: 5, label: 'Top 5' }, { value: 10, label: 'Top 10' }, { value: 25, label: 'Top 25' }]} sx={{ height: 38 }} />
@@ -262,7 +279,7 @@ const Stats = () => {
         if (!league) return <Box sx={{ color: 'var(--text-muted)', py: 4, textAlign: 'center' }}>No league data available.</Box>;
         return (
             <>
-                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>{seasonControl}</Box>
+                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>{scopeControl}{seasonControl}</Box>
                 <TileGrid sx={{ mb: '16px' }}>
                     <StatTile label="Teams" value={fmt(league.total_teams)} />
                     <StatTile label="Total yards" value={fmt(league.total_yards)} />
@@ -295,7 +312,7 @@ const Stats = () => {
 
     const renderConference = () => (
         <>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>{seasonControl}</Box>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>{scopeControl}{seasonControl}</Box>
             <DataTable minWidth={1100}>
                 <thead>
                     <tr>
@@ -322,7 +339,7 @@ const Stats = () => {
 
     const renderPlaybooks = () => (
         <>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>{seasonControl}</Box>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>{scopeControl}{seasonControl}</Box>
             <DataTable minWidth={760}>
                 <thead>
                     <tr>

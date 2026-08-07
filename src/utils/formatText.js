@@ -66,3 +66,8 @@ export const formatWinPct = (value) => {
     const fixed = pct.toFixed(3);
     return fixed.startsWith('0.') ? fixed.slice(1) : fixed;
 };
+
+export const weekLabel = (week) => {
+    if (week === 13) return 'Conference Championship Week';
+    return `Week ${week}`;
+};

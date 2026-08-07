@@ -1,13 +1,14 @@
 import apiClient from './apiClient';
 
-export const getFilteredConferenceStats = async (conference = null, season = null, subdivision = null, page = 0, size = 20) => {
+export const getFilteredConferenceStats = async (conference = null, season = null, subdivision = null, page = 0, size = 20, scope = 'regular') => {
     try {
         const params = { page, size };
         if (conference) params.conference = conference;
         if (season) params.season = season;
         if (subdivision) params.subdivision = subdivision;
-        
-        const response = await apiClient.get('/conference-stats', { params });
+
+        const endpoint = scope === 'postseason' ? '/conference-stats/postseason' : '/conference-stats';
+        const response = await apiClient.get(endpoint, { params });
         return response.data;
     } catch (error) {
         console.error('Failed to fetch filtered conference stats:', error);

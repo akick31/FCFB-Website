@@ -15,7 +15,7 @@ import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getFilteredGames } from '../../api/gameApi';
 import { getTeamSeasonConference } from '../../api/teamSeasonConferenceApi';
-import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { useConferencesMap, activeConferenceCodes, allConferenceList, conferenceLabel } from '../../components/constants/conferences';
 import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 import { useOffseasonStatus } from '../../components/game/scoreboard/hooks/useOffseasonStatus';
@@ -310,6 +310,7 @@ const Standings = () => {
                                     </tr>
                                 )}
                                 {section.rows.map((row, index) => {
+                                    if (!teamsMap[row.name]) ensureTeam(row.name);
                                     const mark = teamsMap[row.name] || { name: row.name };
                                     return (
                                         <Box component="tr" key={row.name} sx={{ position: 'relative' }}>

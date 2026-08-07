@@ -1,13 +1,14 @@
 import apiClient from './apiClient';
 
-export const getFilteredPlaybookStats = async (offensivePlaybook = null, defensivePlaybook = null, season = null, page = 0, size = 20) => {
+export const getFilteredPlaybookStats = async (offensivePlaybook = null, defensivePlaybook = null, season = null, page = 0, size = 20, scope = 'regular') => {
     try {
         const params = { page, size };
         if (offensivePlaybook) params.offensivePlaybook = offensivePlaybook;
         if (defensivePlaybook) params.defensivePlaybook = defensivePlaybook;
         if (season) params.season = season;
-        
-        const response = await apiClient.get('/playbook-stats', { params });
+
+        const endpoint = scope === 'postseason' ? '/playbook-stats/postseason' : '/playbook-stats';
+        const response = await apiClient.get(endpoint, { params });
         return response.data;
     } catch (error) {
         console.error('Failed to fetch filtered playbook stats:', error);

@@ -5,6 +5,7 @@ import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import { uploadRankings } from '../../api/rankingApi';
 import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
+import { weekLabel } from '../../utils/formatText';
 
 const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
 const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', py: '10px', font: 'inherit', fontSize: '0.85rem' };
@@ -19,7 +20,7 @@ const POLL_TYPES = [
 ];
 
 const WEEK_OPTIONS = [
-    ...Array.from({ length: 13 }, (_, index) => ({ value: index + 1, label: `Week ${index + 1}` })),
+    ...Array.from({ length: 13 }, (_, index) => ({ value: index + 1, label: weekLabel(index + 1) })),
     { value: 14, label: 'Postseason' },
 ];
 

@@ -69,7 +69,7 @@ const WinProbChart = ({ series, homeColor, awayColor, homeMark, awayMark, quarte
             <Box sx={{ position: 'absolute', bottom: 22, left: 2, display: 'flex', alignItems: 'center', gap: '3px', pointerEvents: 'none' }}>
                 <TeamMark team={homeMark} size={16} /><Box component="span" sx={{ fontSize: '0.6rem', color: 'var(--text-dim)', fontWeight: 700 }}>100%</Box>
             </Box>
-            <Box component="svg" viewBox={`0 0 ${W} ${H}`} sx={{ width: '100%', display: 'block' }}>
+            <Box component="svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" sx={{ width: '100%', height: 200, display: 'block' }}>
                 {segments.map((segment, i) => {
                     const linePoints = segment.points.map((p) => `${p[0].toFixed(1)},${yOf(p[1]).toFixed(1)}`).join(' ');
                     const first = segment.points[0];

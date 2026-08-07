@@ -18,7 +18,7 @@ const StatPlotsMetrics = [
     { key: 'yds', label: 'Total Yards', dec: 0 },
 ];
 
-const ConferenceStrengthTab = ({ season, teams }) => {
+const ConferenceStrengthTab = ({ season, teams, scope }) => {
     const [metric, setMetric] = useState('elo');
     const [confs, setConfs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -26,12 +26,12 @@ const ConferenceStrengthTab = ({ season, teams }) => {
     useEffect(() => {
         let active = true;
         setLoading(true);
-        getFilteredConferenceStats(null, season, null, 0, 1000)
+        getFilteredConferenceStats(null, season, null, 0, 1000, scope)
             .then((res) => { if (active) setConfs(res?.content || []); })
             .catch(() => { if (active) setConfs([]); })
             .finally(() => { if (active) setLoading(false); });
         return () => { active = false; };
-    }, [season]);
+    }, [season, scope]);
 
     const eloByConf = useMemo(() => {
         const sums = {};
@@ -106,6 +106,7 @@ const ConferenceStrengthTab = ({ season, teams }) => {
 ConferenceStrengthTab.propTypes = {
     season: PropTypes.number.isRequired,
     teams: PropTypes.array.isRequired,
+    scope: PropTypes.string,
 };
 
 export default ConferenceStrengthTab;

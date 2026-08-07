@@ -1,14 +1,15 @@
 import apiClient from './apiClient';
 
-export const getFilteredSeasonStats = async (team = null, conference = null, season = null, stat = null, page = 0, size = 20) => {
+export const getFilteredSeasonStats = async (team = null, conference = null, season = null, stat = null, page = 0, size = 20, scope = 'regular') => {
     try {
         const params = { page, size };
         if (team) params.team = team;
         if (conference) params.conference = conference;
         if (season) params.season = season;
         if (stat) params.stat = stat;
-        
-        const response = await apiClient.get('/season-stats', { params });
+
+        const endpoint = scope === 'postseason' ? '/season-stats/postseason' : '/season-stats';
+        const response = await apiClient.get(endpoint, { params });
         return response.data;
     } catch (error) {
         console.error('Failed to fetch filtered season stats:', error);

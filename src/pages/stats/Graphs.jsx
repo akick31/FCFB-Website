@@ -6,8 +6,8 @@ import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
 import SelectPill from '../../components/ui/SelectPill';
 import { useColorMode } from '../../theme/ColorModeContext';
-import { useTeamsMap } from '../../hooks/useTeamsMap';
-import { getAllTeams } from '../../api/teamApi';
+import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
+import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import { getAllSeasons } from '../../api/seasonApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { seasonHasStarted } from '../../utils/statsCatalog';
@@ -26,6 +26,11 @@ const TABS = [
     { value: 'pb', label: 'Playbooks' },
 ];
 const TAB_VALUES = TABS.map((t) => t.value);
+const SCOPE_TABS = [
+    { value: 'regular', label: 'Regular season' },
+    { value: 'postseason', label: 'Postseason' },
+];
+const SCOPED_TABS = ['plots', 'conf', 'pb'];
 
 const Graphs = () => {
     useSeo({ title: 'Graphs | FCFB', description: 'Interactive graphs visualizing ELO history, ranking movement, and statistical trends across Fake College Football.' });
@@ -34,7 +39,7 @@ const Graphs = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { mode } = useColorMode();
-    const teamsMap = useTeamsMap();
+    const activeTeamsMap = useTeamsMap();
     const activeTab = TAB_VALUES.includes(tab) ? tab : 'elo';
 
     const seasonParam = searchParams.get('season');
@@ -43,6 +48,7 @@ const Graphs = () => {
     const [seasons, setSeasons] = useState([]);
     const [season, setSeason] = useState(seasonParam ? Number(seasonParam) : null);
     const [loading, setLoading] = useState(true);
+    const scope = searchParams.get('scope') === 'postseason' ? 'postseason' : 'regular';
 
     const changeSeason = (nextSeason) => {
         setSeason(nextSeason);
@@ -51,9 +57,16 @@ const Graphs = () => {
         setSearchParams(next, { replace: true });
     };
 
+    const changeScope = (nextScope) => {
+        const next = new URLSearchParams(searchParams);
+        next.set('scope', nextScope);
+        setSearchParams(next, { replace: true });
+    };
+
     const changeTab = (nextTab) => {
         const next = new URLSearchParams();
         if (season != null) next.set('season', String(season));
+        if (SCOPED_TABS.includes(nextTab) && scope === 'postseason') next.set('scope', scope);
         navigate(`/graphs/${nextTab}?${next.toString()}`);
     };
 
@@ -72,9 +85,9 @@ const Graphs = () => {
         let active = true;
         (async () => {
             try {
-                const [allTeams, allSeasons] = await Promise.all([getAllTeams().catch(() => []), getAllSeasons().catch(() => [])]);
+                const [allTeams, allSeasons] = await Promise.all([getAllTeamsIncludingInactive().catch(() => []), getAllSeasons().catch(() => [])]);
                 if (!active) return;
-                setTeams((allTeams || []).filter((t) => t.active && isRealTeam(t)));
+                setTeams((allTeams || []).filter(isRealTeam));
                 const started = (allSeasons || []).filter(seasonHasStarted)
                     .map((entry) => entry.season_number ?? entry.seasonNumber)
                     .filter((value) => value != null)
@@ -90,17 +103,28 @@ const Graphs = () => {
 
     const seasonOptions = useMemo(() => seasons.map((s) => ({ value: String(s), label: `Season ${s}` })), [seasons]);
 
+    const teamsMap = useMemo(() => {
+        const merged = { ...activeTeamsMap };
+        teams.forEach((team) => {
+            if (team.name && !merged[team.name]) merged[team.name] = toEntry(team);
+        });
+        return merged;
+    }, [activeTeamsMap, teams]);
+
     const renderTab = () => {
         if (activeTab === 'elo') return <EloGraphTab season={season} teams={teams} teamsMap={teamsMap} mode={mode} />;
         if (activeTab === 'rankings') return <RankingsGraphTab season={season} teams={teams} teamsMap={teamsMap} mode={mode} />;
-        if (activeTab === 'plots') return <StatPlotsGraphTab season={season} teams={teams} teamsMap={teamsMap} mode={mode} />;
-        if (activeTab === 'conf') return <ConferenceStrengthTab season={season} teams={teams} />;
-        return <PlaybooksGraphTab season={season} />;
+        if (activeTab === 'plots') return <StatPlotsGraphTab season={season} teams={teams} teamsMap={teamsMap} mode={mode} scope={scope} />;
+        if (activeTab === 'conf') return <ConferenceStrengthTab season={season} teams={teams} scope={scope} />;
+        return <PlaybooksGraphTab season={season} scope={scope} />;
     };
 
     return (
         <PageWrap>
             <PageHeading eyebrow="Visual trends" title="Graphs">
+                {SCOPED_TABS.includes(activeTab) && (
+                    <SegTabs value={scope} onChange={changeScope} options={SCOPE_TABS} ariaLabel="Stats scope" />
+                )}
                 {season != null && (
                     <SelectPill label="Season" value={String(season)} onChange={(value) => changeSeason(Number(value))} options={seasonOptions} sx={{ height: 38 }} />
                 )}

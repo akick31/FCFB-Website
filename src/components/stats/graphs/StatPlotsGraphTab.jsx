@@ -8,6 +8,7 @@ import SegTabs from '../../ui/SegTabs';
 import LogoScatterChart from '../../charts/LogoScatterChart';
 import { getFilteredSeasonStats } from '../../../api/seasonStatsApi';
 import { useConferencesMap, activeConferenceList, conferenceLabel } from '../../constants/conferences';
+import { pickTeamColor } from '../../../utils/teamColor';
 
 const PLOTS = [
     { key: 'avgdiff', label: 'Average Difference', title: 'Average Difference', xl: 'Offense (avg diff)', yl: 'Defense (avg diff)', invX: true },
@@ -18,7 +19,7 @@ const PLOTS = [
 const num = (stat, key) => stat[key] ?? 0;
 const round1 = (v) => Math.round(v * 10) / 10;
 
-const StatPlotsGraphTab = ({ season, teams, teamsMap, mode }) => {
+const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope }) => {
     const conferencesMap = useConferencesMap();
     const [searchParams, setSearchParams] = useSearchParams();
     const plotParam = parseInt(searchParams.get('plot'), 10);
@@ -51,12 +52,12 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode }) => {
     useEffect(() => {
         let active = true;
         setLoading(true);
-        getFilteredSeasonStats(null, null, season, null, 0, 1000)
+        getFilteredSeasonStats(null, null, season, null, 0, 1000, scope)
             .then((res) => { if (active) setRows(res?.content || []); })
             .catch(() => { if (active) setRows([]); })
             .finally(() => { if (active) setLoading(false); });
         return () => { active = false; };
-    }, [season]);
+    }, [season, scope]);
 
     const activeNames = useMemo(() => new Set(teams.map((t) => t.name)), [teams]);
     const confByName = useMemo(() => new Map(teams.map((t) => [t.name, t.conference])), [teams]);
@@ -102,7 +103,7 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode }) => {
                     y = dAtt > 0 ? (dSuc / dAtt) * 100 : null;
                 }
                 if (x == null || y == null) return null;
-                return { team: stat.team, x: round1(x), y: round1(y), logo: logoOf(stat.team) };
+                return { team: stat.team, x: round1(x), y: round1(y), logo: logoOf(stat.team), color: pickTeamColor(teamsMap[stat.team], mode) };
             })
             .filter(Boolean);
     }, [rows, activeNames, confByName, top25Names, cf, plot, teamsMap, mode]);
@@ -149,6 +150,7 @@ StatPlotsGraphTab.propTypes = {
     teams: PropTypes.array.isRequired,
     teamsMap: PropTypes.object.isRequired,
     mode: PropTypes.string,
+    scope: PropTypes.string,
 };
 
 export default StatPlotsGraphTab;
