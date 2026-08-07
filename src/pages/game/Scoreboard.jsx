@@ -15,6 +15,7 @@ import Pager from '../../components/ui/Pager';
 import GameCard from '../../components/game/cards/GameCard';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
+import { weekLabel } from '../../utils/formatText';
 
 const TABS = [{ value: 'live', label: 'Live' }, { value: 'final', label: 'Final' }, { value: 'scrimmages', label: 'Scrimmages' }];
 const PAGE_SIZE = 12;
@@ -131,7 +132,7 @@ const Scoreboard = () => {
 
     const weekOptions = useMemo(() => [
         { value: 'postseason', label: 'Postseason' },
-        ...REGULAR_WEEKS.map((value) => ({ value, label: `Week ${value}` })),
+        ...REGULAR_WEEKS.map((value) => ({ value, label: weekLabel(value) })),
     ], []);
 
     const emptyCopy = {

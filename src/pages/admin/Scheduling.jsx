@@ -39,7 +39,7 @@ import {
 import { getCurrentSeasonOrLatest, getAllSeasons, isScheduleLocked, lockSchedule, unlockSchedule, createSeasonForScheduling } from '../../api/seasonApi';
 import { uploadPostseasonLogo } from '../../api/uploadApi';
 import { useConferencesMap, activeConferenceList } from '../../components/constants/conferences';
-import { formatGameType, formatConference } from '../../utils/formatText';
+import { formatGameType, formatConference, weekLabel } from '../../utils/formatText';
 import { field } from '../../utils/fieldHelper';
 import PostseasonAdminTab from '../../components/scheduling/PostseasonAdminTab';
 import ConferenceScheduleAdminTab from '../../components/scheduling/ConferenceScheduleAdminTab';
@@ -885,8 +885,8 @@ const Scheduling = () => {
                             <Box>
                                 <Box component="label" sx={labelSx}>Week</Box>
                                 <Box component="select" value={addGameWeek} onChange={(e) => setAddGameWeek(Number(e.target.value))} sx={{ ...selectSx, width: '100%' }}>
-                                    {Array.from({ length: 20 }, (_, i) => (
-                                        <option key={i + 1} value={i + 1}>Week {i + 1}</option>
+                                    {Array.from({ length: 12 }, (_, i) => (
+                                        <option key={i + 1} value={i + 1}>{weekLabel(i + 1)}</option>
                                     ))}
                                 </Box>
                             </Box>

@@ -19,6 +19,7 @@ import { getAllTeams } from '../../api/teamApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { getScheduleBySeasonAndWeek, startGameWeek, getGameWeekJobStatus, retryFailedGames } from '../../api/scheduleApi';
 import { GAME_TYPES, GAME_STATUSES, GAME_TYPE_DESCRIPTIONS, GAME_STATUS_DESCRIPTIONS } from '../../constants/gameEnums';
+import { weekLabel } from '../../utils/formatText';
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -345,7 +346,7 @@ const GameManagement = () => {
                                     {Array.from({ length: currentSeason || 1 }, (_, i) => i + 1).map((s) => <option key={s} value={s}>Season {s}</option>)}
                                 </Box>
                                 <Box component="select" value={selectedStartWeek || ''} onChange={(e) => { setSelectedStartWeek(Number(e.target.value)); handleStartWeekSelectionChange(selectedStartSeason, Number(e.target.value)); }} sx={selectSx}>
-                                    {Array.from({ length: currentWeek || 18 }, (_, i) => i + 1).map((w) => <option key={w} value={w}>Week {w}</option>)}
+                                    {Array.from({ length: currentWeek || 18 }, (_, i) => i + 1).map((w) => <option key={w} value={w}>{weekLabel(w)}</option>)}
                                 </Box>
                             </Box>
                             <Box sx={{ display: 'flex', gap: '8px' }}>
@@ -406,7 +407,7 @@ const GameManagement = () => {
             >
                 <Box sx={{ p: '16px 16px 0', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                     <SelectPill label="Season" value={filters.season || ''} onChange={(v) => handleFilterChange('season', v ? Number(v) : '')} options={[{ value: '', label: 'All seasons' }, ...filterSeasons.map((s) => ({ value: s, label: `Season ${s}` }))]} sx={pillHeightSx} />
-                    <SelectPill label="Week" value={filters.week || ''} onChange={(v) => handleFilterChange('week', v ? Number(v) : '')} options={[{ value: '', label: 'All weeks' }, ...Array.from({ length: currentWeek || 18 }, (_, i) => ({ value: i + 1, label: `Week ${i + 1}` }))]} sx={pillHeightSx} />
+                    <SelectPill label="Week" value={filters.week || ''} onChange={(v) => handleFilterChange('week', v ? Number(v) : '')} options={[{ value: '', label: 'All weeks' }, ...Array.from({ length: currentWeek || 18 }, (_, i) => ({ value: i + 1, label: weekLabel(i + 1) }))]} sx={pillHeightSx} />
                     <SelectPill label="Type" value={filters.gameType || 'ALL'} onChange={(v) => handleFilterChange('gameType', v)} options={[{ value: 'ALL', label: 'All types' }, ...GAME_TYPES.map((t) => ({ value: t, label: GAME_TYPE_DESCRIPTIONS[t] }))]} sx={pillHeightSx} />
                     <SelectPill label="Status" value={filters.gameStatus || 'ALL'} onChange={(v) => handleFilterChange('gameStatus', v)} options={[{ value: 'ALL', label: 'All statuses' }, ...GAME_STATUSES.map((s) => ({ value: s, label: GAME_STATUS_DESCRIPTIONS[s] }))]} sx={pillHeightSx} />
                 </Box>

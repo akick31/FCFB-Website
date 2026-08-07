@@ -22,7 +22,7 @@ import { currentRosterByTeam } from '../../utils/coachHistory';
 const searchSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', minWidth: 200 };
 const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
 const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', px: '8px', py: '3px', borderRadius: 'var(--r-sm)', lineHeight: 1 };
-const coachChipSx = { display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid var(--line)', background: 'var(--surface-2)', borderRadius: 'var(--r-sm)', px: '8px', py: '4px', fontSize: '0.76rem', mr: '6px', mb: '4px' };
+const coachChipSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', border: '1px solid var(--line)', background: 'var(--surface-2)', borderRadius: 'var(--r-sm)', px: '7px', py: '3px', fontSize: '0.72rem', mr: '5px', mb: '4px' };
 const fireXSx = { border: 0, background: 'transparent', color: 'var(--live)', cursor: 'pointer', font: 'inherit', fontSize: '0.85rem', lineHeight: 1, p: 0, ml: '2px' };
 const editBtnSx = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 const hireBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--field)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--field)' } };
@@ -257,7 +257,7 @@ const TeamManagement = ({ user }) => {
             {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
 
             <Panel header="Teams" more={`${filteredTeams.length} teams`}>
-                <DataTable minWidth={900}>
+                <DataTable minWidth={760}>
                     <thead>
                         <tr>
                             <th className="lft stick">Team</th>
@@ -280,7 +280,7 @@ const TeamManagement = ({ user }) => {
                                         </Box>
                                     </td>
                                     <td className="lft"><ConferenceMark conference={team.conference} size={20} /></td>
-                                    <td className="lft">
+                                    <td className="lft" style={{ whiteSpace: 'normal', maxWidth: 220 }}>
                                         {rosterFor(team).length === 0 ? (
                                             <Box component="span" sx={{ color: 'var(--text-dim)' }}>Vacant</Box>
                                         ) : (
@@ -300,15 +300,15 @@ const TeamManagement = ({ user }) => {
                                             <Toggle on={effectiveActive(team)} onClick={() => handleToggleActive(team)} disabled={!isRealTeam(team)} />
                                         </Box>
                                     </td>
-                                    <td>
-                                        <Box sx={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                    <td style={{ whiteSpace: 'normal' }}>
+                                        <Box sx={{ display: 'flex', gap: '5px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                                             {rosterFor(team).length > 0 && (
-                                                <Box component="button" type="button" onClick={() => handleFireClick(team)} sx={fireBtnSx}>Fire</Box>
+                                                <Box component="button" type="button" onClick={() => handleFireClick(team)} sx={{ ...fireBtnSx, px: '8px' }}>Fire</Box>
                                             )}
                                             {rosterFor(team).length < 2 && (
-                                                <Box component="button" type="button" onClick={() => handleHireCoach(team)} sx={hireBtnSx}>+ Hire</Box>
+                                                <Box component="button" type="button" onClick={() => handleHireCoach(team)} sx={{ ...hireBtnSx, px: '8px' }}>+ Hire</Box>
                                             )}
-                                            <Box component={Link} to={`/admin/edit-team/${team.id}`} sx={editBtnSx}>Edit</Box>
+                                            <Box component={Link} to={`/admin/edit-team/${team.id}`} sx={{ ...editBtnSx, px: '8px' }}>Edit</Box>
                                         </Box>
                                     </td>
                                 </tr>

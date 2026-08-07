@@ -7,6 +7,7 @@ import DataTable from '../../components/ui/DataTable';
 import StatTile, { TileGrid } from '../../components/ui/StatTile';
 import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
 import { getScheduleBySeasonAndWeek, startGameWeek, getGameWeekJobStatus, retryFailedGames } from '../../api/scheduleApi';
+import { weekLabel } from '../../utils/formatText';
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -207,7 +208,7 @@ const GameWeek = () => {
                         sx={selectSx}
                     >
                         {Array.from({ length: 18 }, (_, i) => i + 1).map((w) => (
-                            <option key={w} value={w}>Week {w}{w === week ? ' (current)' : ''}</option>
+                            <option key={w} value={w}>{weekLabel(w)}{w === week ? ' (current)' : ''}</option>
                         ))}
                     </Box>
                 </Box>

@@ -20,7 +20,11 @@ import { ROUTE_META } from '../../routeMeta';
 
 const POLL_TYPE = { coaches: 'COACHES_POLL', committee: 'PLAYOFF_COMMITTEE' };
 const TAB_LABEL = { coaches: 'Coaches Poll', committee: 'Playoff Committee', elo: 'ELO' };
-const weekLabel = (week) => (week >= 14 ? 'Postseason' : `Week ${week}`);
+const weekLabel = (week) => {
+    if (week >= 14) return 'Postseason';
+    if (week === 13) return 'Conference Championship Week';
+    return `Week ${week}`;
+};
 
 const RankDelta = ({ prev, rank }) => {
     if (prev == null) return <span className="flat">-</span>;
