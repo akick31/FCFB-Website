@@ -17,7 +17,7 @@ import { useSeo } from '../../hooks/useSeo';
 const rowSx = { display: 'flex', alignItems: 'center', gap: '14px', px: 2, py: '14px', borderBottom: '1px solid var(--line-soft)', flexWrap: 'wrap', '&:last-of-type': { borderBottom: 0 } };
 const lblSx = { fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)' };
 const descSx = { color: 'var(--text-dim)', fontSize: '0.74rem' };
-const ctrlSx = { ml: 'auto', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '9px', py: '5px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const ctrlSx = { ml: 'auto', minWidth: '76px', textAlign: 'center', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '9px', py: '5px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', py: '10px', font: 'inherit', fontSize: '0.88rem' };
 const primarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '14px', py: '9px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' };
 
@@ -86,7 +86,7 @@ const PasswordRow = ({ onSave }) => {
     };
 
     return (
-        <Box>
+        <Box sx={{ borderBottom: '1px solid var(--line-soft)', '&:last-of-type': { borderBottom: 0 } }}>
             <Box sx={{ ...rowSx, borderBottom: 0 }}>
                 <Box>
                     <Box sx={lblSx}>Password</Box>

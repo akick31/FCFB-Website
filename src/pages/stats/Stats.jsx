@@ -18,7 +18,7 @@ import { getFilteredLeagueStats } from '../../api/leagueStatsApi';
 import { getFilteredConferenceStats } from '../../api/conferenceStatsApi';
 import { getFilteredPlaybookStats } from '../../api/playbookStatsApi';
 import { getAllSeasons } from '../../api/seasonApi';
-import { conferenceLabel } from '../../components/constants/conferences';
+import { useConferencesMap, activeConferenceList, conferenceLabel } from '../../components/constants/conferences';
 import { formatOffensivePlaybook } from '../../utils/formatText';
 import { STAT_CATALOG, STAT_BY_KEY, buildLeaderboard, seasonHasStarted, formatValue, LEAGUE_STAT_GROUPS, CONFERENCE_COLUMNS, aggregateAllTimeStats, aggregateStatRows, aggregateStatRowsByKey } from '../../utils/statsCatalog';
 import { useSeo } from '../../hooks/useSeo';
@@ -87,6 +87,8 @@ const Stats = () => {
     const [cardPage, setCardPage] = useState(0);
     const [count, setCount] = useState(Number.isFinite(countParam) && countParam > 0 ? countParam : 5);
     const scope = searchParams.get('scope') === 'postseason' ? 'postseason' : 'regular';
+    const conferenceFilter = searchParams.get('conference') || 'ALL';
+    useConferencesMap();
 
     const updateParams = (updates) => {
         const next = new URLSearchParams(searchParams);
@@ -122,6 +124,10 @@ const Stats = () => {
         const next = Number(value);
         setCount(next);
         updateParams({ count: next });
+    };
+
+    const changeConferenceFilter = (value) => {
+        updateParams({ conference: value === 'ALL' ? null : value });
     };
 
     const [seasonStatRows, setSeasonStatRows] = useState([]);
@@ -199,9 +205,14 @@ const Stats = () => {
         return () => { active = false; };
     }, [activeSub, season, seasons, scope]);
 
-    useEffect(() => { setCardPage(0); }, [statFilter, season]);
+    useEffect(() => { setCardPage(0); }, [statFilter, season, conferenceFilter]);
 
     const filteredCatalog = useMemo(() => (statFilter && STAT_BY_KEY[statFilter] ? [STAT_BY_KEY[statFilter]] : STAT_CATALOG), [statFilter]);
+
+    const leaderboardRows = useMemo(
+        () => (conferenceFilter === 'ALL' ? seasonStatRows : seasonStatRows.filter((row) => row.conference === conferenceFilter)),
+        [seasonStatRows, conferenceFilter],
+    );
 
     const aggregatedPlaybooks = useMemo(() => {
         const byPlaybook = new Map();
@@ -243,24 +254,26 @@ const Stats = () => {
 
     const renderLeaderboard = () => {
         if (detailStat) {
-            return <StatLeaderboardDetail stat={detailStat} rows={buildLeaderboard(seasonStatRows, detailStat)} onBack={() => navigate({ pathname: '/stats/leaderboard', search: searchParams.toString() })} />;
+            return <StatLeaderboardDetail stat={detailStat} rows={buildLeaderboard(leaderboardRows, detailStat)} onBack={() => navigate({ pathname: '/stats/leaderboard', search: searchParams.toString() })} />;
         }
         const pageCount = Math.max(1, Math.ceil(filteredCatalog.length / CARDS_PER_PAGE));
         const page = Math.min(cardPage, pageCount - 1);
         const visible = filteredCatalog.slice(page * CARDS_PER_PAGE, page * CARDS_PER_PAGE + CARDS_PER_PAGE);
         const statOptions = [{ value: '', label: 'All stats' }, ...STAT_CATALOG.map((stat) => ({ value: stat.key, label: stat.label }))];
+        const conferenceOptions = [{ value: 'ALL', label: 'All conferences' }, ...activeConferenceList().map((entry) => ({ value: entry.code, label: entry.label }))];
         return (
             <>
                 <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
                     {scopeControl}
                     {seasonControl}
+                    <SelectPill label="Conference" value={conferenceFilter} onChange={changeConferenceFilter} options={conferenceOptions} sx={controlSx} ariaLabel="Filter by conference" />
                     <SelectPill label="Stat" value={statFilter} onChange={changeStatFilter} options={statOptions} sx={controlSx} ariaLabel="Choose a stat" />
                     <SelectPill label="Show" value={count} onChange={changeCount} options={[{ value: 5, label: 'Top 5' }, { value: 10, label: 'Top 10' }, { value: 25, label: 'Top 25' }]} sx={{ height: 38 }} />
                 </Box>
                 <Box sx={{ color: 'var(--text-muted)', fontSize: '0.8rem', mb: 2 }}>Click a stat title to open its full leaderboard.</Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
                     {visible.map((stat) => (
-                        <StatLeaderboardCard key={stat.key} title={stat.label} statKey={stat.key} rows={buildLeaderboard(seasonStatRows, stat)} count={count} format={stat.format} to={{ pathname: `/stats/leaderboard/${stat.key}`, search: searchParams.toString() }} />
+                        <StatLeaderboardCard key={stat.key} title={stat.label} statKey={stat.key} rows={buildLeaderboard(leaderboardRows, stat)} count={count} format={stat.format} to={{ pathname: `/stats/leaderboard/${stat.key}`, search: searchParams.toString() }} />
                     ))}
                 </Box>
                 <Pager page={page} pageCount={pageCount} onChange={setCardPage} />

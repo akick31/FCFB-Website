@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Alert } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { generateApiKey, revokeApiKey } from '../../api/userApi';
 import Panel from '../ui/Panel';
 
@@ -51,6 +52,7 @@ const ApiKeyPanel = () => {
                 <Box sx={{ color: 'var(--text-muted)', fontSize: '0.82rem', mb: 2 }}>
                     Generate a personal API key to call the FCFB API yourself from tools like Postman or curl. Send it in the
                     {' '}<Box component="code" sx={{ color: 'var(--text)' }}>X-Api-Key</Box> header. The key acts as you and can be revoked at any time.
+                    {' '}See the full <Box component={Link} to="/developers" sx={{ color: 'var(--brand)' }}>API docs</Box>.
                 </Box>
 
                 {apiKey ? (

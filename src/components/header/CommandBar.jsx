@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Button, IconButton, Avatar, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
-import { Menu as MenuIcon, Person, Logout, SportsFootball } from '@mui/icons-material';
+import { Menu as MenuIcon, Person, Logout, SportsFootball, Code } from '@mui/icons-material';
 import { useLocation, Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import mainLogo from '../../assets/graphics/main_logo.png';
@@ -114,6 +114,10 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, team, onMobileOpen, onLogo
                 <MenuItem component={Link} to="/profile" onClick={closeUserMenu}>
                     <ListItemIcon><Person fontSize="small" /></ListItemIcon>
                     <ListItemText>Profile</ListItemText>
+                </MenuItem>
+                <MenuItem component={Link} to="/developers" onClick={closeUserMenu}>
+                    <ListItemIcon><Code fontSize="small" /></ListItemIcon>
+                    <ListItemText>Developers</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={() => { setUserAnchor(null); onLogout(); }}>
                     <ListItemIcon><Logout fontSize="small" /></ListItemIcon>

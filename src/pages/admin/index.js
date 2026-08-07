@@ -13,4 +13,5 @@ export { default as Reports } from './Reports';
 export { default as Scheduling } from './Scheduling';
 export { default as SeasonManagement } from './SeasonManagement';
 export { default as GameWeek } from './GameWeek';
-export { default as RankingsManagement } from './RankingsManagement'; 
+export { default as RankingsManagement } from './RankingsManagement';
+export { default as AdminApiDocs } from './AdminApiDocs'; 
