@@ -14,7 +14,7 @@ server {
     }
 
     location /api/v1/arceus/ {
-        proxy_pass https://dev.api.fakecollegefootball.com/api/v1/arceus/;
+        proxy_pass http://172.17.0.1:1313/api/v1/arceus/;
         proxy_set_header X-Service-Key ${WEBSITE_SERVICE_KEY};
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
