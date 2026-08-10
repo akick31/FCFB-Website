@@ -19,11 +19,11 @@ export const createConference = async (conference) => {
 };
 
 export const updateConference = async (code, conference) => {
-    const response = await apiClient.put(`/conference/${encodeURIComponent(code)}`, conference);
+    const response = await apiClient.put('/conference', conference, { params: { code } });
     return response.data;
 };
 
 export const setConferenceActive = async (code, active) => {
-    const response = await apiClient.put(`/conference/${encodeURIComponent(code)}/active`, null, { params: { active } });
+    const response = await apiClient.put('/conference/active', null, { params: { code, active } });
     return response.data;
 };

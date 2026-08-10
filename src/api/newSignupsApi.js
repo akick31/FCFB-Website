@@ -15,7 +15,7 @@ export const getNewSignups = async () => {
 
 export const deleteNewSignup = async (id) => {
     try {
-        const response = await apiClient.delete(`/new_signups/${id}`);
+        const response = await apiClient.delete('/new_signups', { params: { id } });
         return response.data;
     } catch (error) {
         console.error("Failed to delete new signup:", error);
@@ -28,8 +28,8 @@ export const deleteNewSignup = async (id) => {
 
 export const hireFromSignup = async ({ signupId, team, coachPosition, processedBy }) => {
     try {
-        const response = await apiClient.post(`/new_signups/${signupId}/hire`, null, {
-            params: { team, coachPosition, processedBy }
+        const response = await apiClient.post('/new_signups/hire', null, {
+            params: { id: signupId, team, coachPosition, processedBy }
         });
         return response.data;
     } catch (error) {

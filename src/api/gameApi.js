@@ -2,7 +2,7 @@ import apiClient from './apiClient';
 
 export const getGameById = async (gameId) => {
     try {
-        const response = await apiClient.get(`/game/${gameId}`);
+        const response = await apiClient.get('/game/ongoing', { params: { id: gameId } });
         return response.data;
     } catch (error) {
         console.error("Failed to fetch game by id:", error);
@@ -10,54 +10,6 @@ export const getGameById = async (gameId) => {
             throw new Error(error.response.data.error || "Failed to fetch game by id");
         }
         throw new Error("An unexpected error occurred while fetching game by id");
-    }
-};
-
-export const getAllOngoingGames = async () => {
-    try {
-        return await apiClient.get(`/game/all/ongoing`);
-    } catch (error) {
-        console.error("Failed to fetch all ongoing games:", error);
-        if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch ongoing games");
-        }
-        throw new Error("An unexpected error occurred while fetching ongoing games");
-    }
-};
-
-export const getAllPastGames = async () => {
-    try {
-        return await apiClient.get(`/game/all/past`);
-    } catch (error) {
-        console.error("Failed to fetch all past games:", error);
-        if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch past games");
-        }
-        throw new Error("An unexpected error occurred while fetching past games");
-    }
-};
-
-export const getAllPastScrimmageGames = async () => {
-    try {
-        return await apiClient.get(`/game/all/past/scrimmage`);
-    } catch (error) {
-        console.error("Failed to fetch all past scrimmage games:", error);
-        if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch past scrimmage games");
-        }
-        throw new Error("An unexpected error occurred while fetching past scrimmage games");
-    }
-};
-
-export const getAllScrimmageGames = async () => {
-    try {
-        return await apiClient.get(`/game/all/ongoing/scrimmage`);
-    } catch (error) {
-        console.error("Failed to fetch all ongoing scrimmage games:", error);
-        if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch ongoing scrimmage games");
-        }
-        throw new Error("An unexpected error occurred while fetching ongoing scrimmage games");
     }
 };
 
@@ -194,7 +146,7 @@ export const restartGame = async (gameId) => {
 
 export const endGameByGameId = async (gameId) => {
     try {
-        const response = await apiClient.post(`/game/${gameId}/end`);
+        const response = await apiClient.post('/game/end', null, { params: { gameId } });
         return response.data;
     } catch (error) {
         console.error("Failed to end game:", error);
@@ -207,7 +159,7 @@ export const endGameByGameId = async (gameId) => {
 
 export const chewGameByGameId = async (gameId) => {
     try {
-        const response = await apiClient.post(`/game/${gameId}/chew`);
+        const response = await apiClient.post('/game/chew', null, { params: { gameId } });
         return response.data;
     } catch (error) {
         console.error("Failed to chew game:", error);

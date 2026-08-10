@@ -9,6 +9,7 @@ import {
     FormatListNumbered,
     AccountTree,
     EventNote,
+    Code,
 } from '@mui/icons-material';
 
 export const adminNavigationItems = [
@@ -22,4 +23,5 @@ export const adminNavigationItems = [
     { label: 'Rankings', icon: <FormatListNumbered />, path: '/admin/rankings' },
     { label: 'Stats Management', icon: <Assessment />, path: '/admin/stats-management' },
     { label: 'Reports', icon: <TrendingUp />, path: '/admin/reports' },
+    { label: 'API Docs', icon: <Code />, path: '/admin/api-docs' },
 ];

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Box, Alert } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { generateApiKey, revokeApiKey } from '../../api/userApi';
 import Panel from '../ui/Panel';
+import { setStoredApiKey } from '../../utils/apiKeyStorage';
 
 const solidBtn = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '14px', py: '9px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' };
 const ghostBtn = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '12px', py: '7px', font: 'inherit', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
@@ -16,7 +18,9 @@ const ApiKeyPanel = () => {
         setBusy(true);
         setError('');
         try {
-            setApiKey(await generateApiKey());
+            const key = await generateApiKey();
+            setApiKey(key);
+            setStoredApiKey(key);
             setCopied(false);
         } catch (err) {
             setError(err.message);
@@ -31,6 +35,7 @@ const ApiKeyPanel = () => {
         try {
             await revokeApiKey();
             setApiKey(null);
+            setStoredApiKey('');
         } catch (err) {
             setError(err.message);
         } finally {
@@ -51,6 +56,7 @@ const ApiKeyPanel = () => {
                 <Box sx={{ color: 'var(--text-muted)', fontSize: '0.82rem', mb: 2 }}>
                     Generate a personal API key to call the FCFB API yourself from tools like Postman or curl. Send it in the
                     {' '}<Box component="code" sx={{ color: 'var(--text)' }}>X-Api-Key</Box> header. The key acts as you and can be revoked at any time.
+                    {' '}See the full <Box component={Link} to="/developers" sx={{ color: 'var(--brand)' }}>API docs</Box>.
                 </Box>
 
                 {apiKey ? (

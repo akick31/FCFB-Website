@@ -1,10 +1,13 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1313/api/v1/arceus';
+const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1/arceus';
 
 const apiClient = axios.create({
     baseURL: baseURL,
     timeout: 60000,
+    headers: {
+        'X-Client-Name': 'fcfb-website',
+    },
 });
 
 apiClient.interceptors.request.use(config => {

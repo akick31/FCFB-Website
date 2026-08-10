@@ -17,7 +17,8 @@ import {
     NotFound,
     Error,
     UserDetails,
-    Coaches
+    Coaches,
+    ApiDocs
 } from './pages';
 import { getUserById } from './api/userApi';
 import { checkIfUserIsAdmin } from "./utils/utils";
@@ -48,7 +49,8 @@ import {
     RankingsManagement,
     Stats,
     RecordsBoard,
-    Graphs
+    Graphs,
+    AdminApiDocs
 } from './pages';
 
 const AppRoutes = () => {
@@ -244,6 +246,12 @@ const AppRoutes = () => {
                                 <RankingsManagement user={user} />
                             </ProtectedRoute>
                         } />
+                        <Route path="/admin/api-docs" element={
+                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                <AdminApiDocs />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/developers" element={<ApiDocs />} />
                         <Route path="/verify" element={<Verify />} />
                         <Route path="/game-details/:gameId" element={<GameDetails isAdmin={isAdmin} />} />
                         <Route path="/team/:teamId" element={<TeamDetails />} />
