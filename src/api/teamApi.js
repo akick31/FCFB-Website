@@ -19,7 +19,7 @@ export const getTeamById = async (id) => {
     if (!id) return {};
 
     try {
-        const response = await apiClient.get(`/team/${id}`);
+        const response = await apiClient.get('/team', { params: { teamId: id } });
         return response.data;
     } catch (error) {
         console.error("Failed to fetch team by id:", error);
@@ -32,7 +32,7 @@ export const getTeamById = async (id) => {
 
 export const getAllTeams = async () => {
     try {
-        const response = await apiClient.get('/team');
+        const response = await apiClient.get('/team/active');
 
         return response.data.sort((a, b) => {
             if (a.name < b.name) {

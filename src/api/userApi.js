@@ -6,7 +6,7 @@ export const getUserById = async (userId) => {
     }
     
     try {
-        const response = await apiClient.get(`/user/${userId}`);
+        const response = await apiClient.get('/user', { params: { userId } });
         return response.data;
     } catch (error) {
         console.error("Failed to fetch user by ID:", error);
@@ -21,7 +21,7 @@ export const getUserById = async (userId) => {
 
 export const getAllUsers = async () => {
     try {
-        const response = await apiClient.get('/user');
+        const response = await apiClient.get('/user/all');
         return response.data.sort((a, b) => {
             if (a.discord_tag < b.discord_tag) {
                 return -1;

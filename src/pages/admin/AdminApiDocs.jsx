@@ -3,7 +3,7 @@ import AdminLayout from '../../components/layout/AdminLayout';
 import ApiExplorer from '../../components/apidocs/ApiExplorer';
 
 const AdminApiDocs = () => (
-    <AdminLayout title="API docs">
+    <AdminLayout title="Admin API Docs">
         <ApiExplorer specKind="admin" />
     </AdminLayout>
 );

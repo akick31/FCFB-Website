@@ -12,7 +12,7 @@ import { getFilteredRecords } from '../../api/recordsApi';
 import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { useConferencesMap, activeConferenceList, conferenceLabel } from '../../components/constants/conferences';
-import { recordGroup, recordOrder, recordLabel, RECORD_GROUP_ORDER, SEASON_EXCLUDED_RECORDS, EXCLUDED_RECORDS } from '../../utils/recordCategories';
+import { recordGroup, recordOrder, recordLabel, RECORD_GROUP_ORDER, SEASON_EXCLUDED_RECORDS, EXCLUDED_RECORDS, AMBIGUOUS_DIRECTION_RECORDS } from '../../utils/recordCategories';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { useSeo } from '../../hooks/useSeo';
 
@@ -46,12 +46,22 @@ const GROUP_ORDER = [...RECORD_GROUP_ORDER, 'Other'];
 
 const unwrapContent = (result) => (Array.isArray(result?.content) ? result.content : Array.isArray(result) ? result : []);
 
-const recordMeta = (record) => {
+const recordMeta = (record, teamsMap) => {
     const parts = [];
     if (record.coach) parts.push(`@${record.coach}`);
     if (record.week) parts.push(`S${record.season_number} WK${record.week}`);
     else if (record.season_number) parts.push(`S${record.season_number}`);
+    if (record.home_team && record.away_team) {
+        const homeAbbr = teamsMap[record.home_team]?.abbreviation || record.home_team;
+        const awayAbbr = teamsMap[record.away_team]?.abbreviation || record.away_team;
+        parts.push(`${awayAbbr} vs ${homeAbbr}`);
+    }
     return parts;
+};
+
+const directionSuffix = (record) => {
+    if (!AMBIGUOUS_DIRECTION_RECORDS.has(String(record.record_name).toLowerCase())) return '';
+    return record.record_type?.endsWith('_LOWEST') ? ' (Lowest)' : ' (Highest)';
 };
 
 const bestPerStat = (list, direction) => {
@@ -66,6 +76,8 @@ const bestPerStat = (list, direction) => {
 
 const RecordRow = ({ record, teamsMap }) => {
     ensureTeam(record.record_team);
+    ensureTeam(record.home_team);
+    ensureTeam(record.away_team);
     const gameId = record.game_id;
     return (
         <Box
@@ -83,7 +95,7 @@ const RecordRow = ({ record, teamsMap }) => {
             }}
         >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box component="span" sx={{ fontWeight: 700, fontSize: '1rem' }}>{recordLabel(record.record_name)}</Box>
+                <Box component="span" sx={{ fontWeight: 700, fontSize: '1rem' }}>{recordLabel(record.record_name)}{directionSuffix(record)}</Box>
                 <Box component="span" className="num" sx={{ ml: 'auto', fontWeight: 800, fontSize: '1.3rem', color: 'var(--brand)', fontVariantNumeric: 'tabular-nums' }}>
                     {record.record_value % 1 ? Number(record.record_value).toFixed(1) : record.record_value}
                 </Box>
@@ -91,7 +103,7 @@ const RecordRow = ({ record, teamsMap }) => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: 'var(--text-dim)', fontSize: '0.78rem', mt: 0.5 }}>
                 {record.record_team && <TeamMark team={teamsMap[record.record_team] || { name: record.record_team }} size={16} />}
                 <Box component="span" sx={{ color: 'var(--text-muted)', fontWeight: 700 }}>{record.record_team}</Box>
-                {recordMeta(record).map((part) => (
+                {recordMeta(record, teamsMap).map((part) => (
                     <React.Fragment key={part}><Box component="span">-</Box><Box component="span">{part}</Box></React.Fragment>
                 ))}
             </Box>
@@ -170,8 +182,10 @@ const RecordsBoard = ({ user }) => {
     const { byGroup, availableGroups } = useMemo(() => {
         const highestBest = bestPerStat(rows.highest, 'max');
         const highestNames = new Set(highestBest.map((record) => record.record_name));
-        const lowestOnly = bestPerStat(rows.lowest, 'min').filter((record) => !highestNames.has(record.record_name));
-        const merged = [...highestBest, ...lowestOnly];
+        const lowestBest = bestPerStat(rows.lowest, 'min');
+        const lowestOnly = lowestBest.filter((record) => !highestNames.has(record.record_name));
+        const lowestAlongsideHighest = lowestBest.filter((record) => AMBIGUOUS_DIRECTION_RECORDS.has(String(record.record_name).toLowerCase()));
+        const merged = [...highestBest, ...lowestOnly, ...lowestAlongsideHighest];
 
         const seasonView = SEASON_VIEW_TABS.has(activeTab);
         const grouped = {};
@@ -258,7 +272,7 @@ const RecordsBoard = ({ user }) => {
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, columnGap: '16px' }}>
                         {[categoryRows.slice(0, Math.ceil(categoryRows.length / 2)), categoryRows.slice(Math.ceil(categoryRows.length / 2))].map((column, index) => (
                             <Box key={index}>
-                                {column.map((record) => <RecordRow key={record.record_name} record={record} teamsMap={teamsMap} />)}
+                                {column.map((record) => <RecordRow key={`${record.record_name}-${record.record_type}`} record={record} teamsMap={teamsMap} />)}
                             </Box>
                         ))}
                     </Box>

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 const METHOD_COLORS = { GET: 'var(--brand)', POST: 'var(--field)', PUT: 'var(--gold)', PATCH: 'var(--gold)', DELETE: 'var(--live)' };
 
-const MethodBadge = ({ method }) => (
+export const MethodBadge = ({ method }) => (
     <Box
         component="span"
         sx={{
@@ -52,7 +52,7 @@ const OperationList = ({ groups, query, onQueryChange, selectedId, onSelect }) =
                             onClick={() => onSelect(op.id)}
                             sx={{
                                 display: 'flex',
-                                alignItems: 'center',
+                                alignItems: 'flex-start',
                                 gap: '8px',
                                 width: '100%',
                                 textAlign: 'left',
@@ -61,15 +61,17 @@ const OperationList = ({ groups, query, onQueryChange, selectedId, onSelect }) =
                                 background: selectedId === op.id ? 'var(--surface-2)' : 'transparent',
                                 color: 'var(--text)',
                                 font: 'inherit',
-                                fontSize: '0.78rem',
                                 px: '14px',
                                 py: '9px',
                                 cursor: 'pointer',
                                 '&:hover': { background: 'var(--surface-2)' },
                             }}
                         >
-                            <MethodBadge method={op.method} />
-                            <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{op.path}</Box>
+                            <Box sx={{ mt: '2px' }}><MethodBadge method={op.method} /></Box>
+                            <Box sx={{ minWidth: 0 }}>
+                                <Box sx={{ fontSize: '0.78rem', lineHeight: 1.3 }}>{op.summary}</Box>
+                                <Box sx={{ fontSize: '0.66rem', color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{op.path}</Box>
+                            </Box>
                         </Box>
                     ))}
                 </Box>

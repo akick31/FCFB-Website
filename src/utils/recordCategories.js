@@ -41,6 +41,8 @@ export const EXCLUDED_RECORDS = new Set(['ot_score', 'field_goal_percentage', 'n
 
 export const LOWEST_RECORD_STATS = new Set(['average_offensive_diff', 'average_offensive_special_teams_diff', 'average_response_speed']);
 
+export const AMBIGUOUS_DIRECTION_RECORDS = new Set(['average_diff', 'average_defensive_diff', 'average_defensive_special_teams_diff']);
+
 const LABEL_OVERRIDES = { blocked_opponent_punt: 'Blocked Opponent Punts', field_goal_touchdown: 'Kick Six Against' };
 
 export const recordLabel = (recordName) => {

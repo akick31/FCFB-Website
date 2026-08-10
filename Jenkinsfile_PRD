@@ -8,6 +8,7 @@ pipeline {
         CLIENT_ID = credentials('DISCORD_CLIENT_ID')
         CLIENT_SECRET = credentials('DISCORD_CLIENT_SECRET')
         GITHUB_PAT = credentials('Github PAT')
+        WEBSITE_SERVICE_KEY = credentials('WEBSITE_SERVICE_KEY')
     }
 
     stages {
@@ -64,7 +65,7 @@ pipeline {
                         VITE_CLIENT_ID=${CLIENT_ID}
                         VITE_CLIENT_SECRET=${CLIENT_SECRET}
                         VITE_BASE_URL=https://api.fakecollegefootball.com/api/v1/arceus/discord/redirect
-                        VITE_API_BASE_URL=https://api.fakecollegefootball.com/api/v1/arceus
+                        VITE_API_BASE_URL=/api/v1/arceus
                         VITE_API_URL=https://api.fakecollegefootball.com
                         EOF
                     """
@@ -95,6 +96,7 @@ pipeline {
                             -v /var/images:/app/images \
                             -p 462:462 \
                             --env-file .env \
+                            -e WEBSITE_SERVICE_KEY=${WEBSITE_SERVICE_KEY} \
                             ${IMAGE_NAME}:latest
                         docker rmi ${IMAGE_NAME}:new || true
                     """

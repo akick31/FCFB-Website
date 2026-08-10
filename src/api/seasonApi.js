@@ -98,7 +98,7 @@ export const getLatestCompletedSeason = async () => {
 
 export const getSeasonByNumber = async (seasonNumber) => {
     try {
-        const response = await apiClient.get(`/season/${seasonNumber}`);
+        const response = await apiClient.get('/season', { params: { seasonNumber } });
         return response.data;
     } catch (error) {
         console.error("Failed to fetch season:", error);
@@ -111,7 +111,7 @@ export const getSeasonByNumber = async (seasonNumber) => {
 
 export const isScheduleLocked = async (seasonNumber) => {
     try {
-        const response = await apiClient.get(`/season/${seasonNumber}/schedule-locked`);
+        const response = await apiClient.get('/season/schedule-locked', { params: { seasonNumber } });
         return response.data;
     } catch (error) {
         console.error("Failed to check schedule lock:", error);
@@ -124,7 +124,7 @@ export const isScheduleLocked = async (seasonNumber) => {
 
 export const lockSchedule = async (seasonNumber) => {
     try {
-        const response = await apiClient.put(`/season/${seasonNumber}/lock-schedule`);
+        const response = await apiClient.put('/season/lock-schedule', null, { params: { seasonNumber } });
         return response.data;
     } catch (error) {
         console.error("Failed to lock schedule:", error);
@@ -137,7 +137,7 @@ export const lockSchedule = async (seasonNumber) => {
 
 export const unlockSchedule = async (seasonNumber) => {
     try {
-        const response = await apiClient.put(`/season/${seasonNumber}/unlock-schedule`);
+        const response = await apiClient.put('/season/unlock-schedule', null, { params: { seasonNumber } });
         return response.data;
     } catch (error) {
         console.error("Failed to unlock schedule:", error);
@@ -178,7 +178,7 @@ export const endSeason = async () => {
 
 export const setCurrentSeason = async (seasonNumber) => {
     try {
-        const response = await apiClient.put(`/season/${seasonNumber}/set-current`);
+        const response = await apiClient.put('/season/set-current', null, { params: { seasonNumber } });
         return response.data;
     } catch (error) {
         console.error("Failed to set current season:", error);
@@ -191,7 +191,7 @@ export const setCurrentSeason = async (seasonNumber) => {
 
 export const updateCurrentWeek = async (seasonNumber, week) => {
     try {
-        const response = await apiClient.put(`/season/${seasonNumber}/week`, null, { params: { week } });
+        const response = await apiClient.put('/season/week', null, { params: { seasonNumber, week } });
         return response.data;
     } catch (error) {
         console.error("Failed to update current week:", error);
@@ -204,7 +204,7 @@ export const updateCurrentWeek = async (seasonNumber, week) => {
 
 export const createSeasonForScheduling = async (seasonNumber) => {
     try {
-        const response = await apiClient.post(`/season/${seasonNumber}`);
+        const response = await apiClient.post('/season', null, { params: { seasonNumber } });
         return response.data;
     } catch (error) {
         console.error("Failed to create season:", error);

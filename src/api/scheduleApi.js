@@ -17,7 +17,7 @@ export const getScheduleBySeasonAndTeam = async (season, team) => {
 
 export const getScheduleBySeason = async (season) => {
     try {
-        const response = await apiClient.get(`/schedule/season/${season}`);
+        const response = await apiClient.get('/schedule/season', { params: { season } });
         return response.data;
     } catch (error) {
         console.error("Failed to fetch season schedule:", error);
@@ -30,7 +30,7 @@ export const getScheduleBySeason = async (season) => {
 
 export const getScheduleBySeasonAndWeek = async (season, week) => {
     try {
-        const response = await apiClient.get(`/schedule/season/${season}/week/${week}`);
+        const response = await apiClient.get('/schedule/season/week', { params: { season, week } });
         return response.data;
     } catch (error) {
         console.error("Failed to fetch week schedule:", error);
@@ -43,7 +43,7 @@ export const getScheduleBySeasonAndWeek = async (season, week) => {
 
 export const validateSchedule = async (season) => {
     try {
-        const response = await apiClient.get(`/schedule/season/${season}/validate`);
+        const response = await apiClient.get('/schedule/season/validate', { params: { season } });
         return response.data;
     } catch (error) {
         console.error("Failed to validate schedule:", error);
@@ -71,7 +71,7 @@ export const getConferenceSchedule = async (season, conference) => {
 
 export const getScheduleById = async (id) => {
     try {
-        const response = await apiClient.get(`/schedule/${id}`);
+        const response = await apiClient.get('/schedule', { params: { id } });
         return response.data;
     } catch (error) {
         console.error("Failed to fetch schedule entry:", error);
@@ -140,7 +140,7 @@ export const generateConferenceSchedule = async (request) => {
 
 export const generateAllConferenceSchedules = async (season) => {
     try {
-        const response = await apiClient.post(`/schedule/generate-all-conferences/${season}`);
+        const response = await apiClient.post('/schedule/generate-all-conferences', null, { params: { season } });
         return response.data;
     } catch (error) {
         console.error("Failed to start all conference schedule generation:", error);
@@ -153,7 +153,8 @@ export const generateAllConferenceSchedules = async (season) => {
 
 export const generateOutOfConferenceSchedule = async (season) => {
     try {
-        const response = await apiClient.post(`/schedule/generate-ooc/${season}`, null, {
+        const response = await apiClient.post('/schedule/generate-ooc', null, {
+            params: { season },
             timeout: 120000,
         });
         return response.data;
@@ -168,7 +169,7 @@ export const generateOutOfConferenceSchedule = async (season) => {
 
 export const pollScheduleGenJobStatus = async (jobId) => {
     try {
-        const response = await apiClient.get(`/schedule/generate-all-conferences/status/${jobId}`);
+        const response = await apiClient.get('/schedule/generate-all-conferences/status', { params: { jobId } });
         return response.data;
     } catch (error) {
         console.error("Failed to poll schedule generation status:", error);
@@ -198,7 +199,7 @@ export const startGameWeek = async (season, week) => {
 
 export const getGameWeekJobStatus = async (jobId) => {
     try {
-        const response = await apiClient.get(`/game/week/status/${jobId}`);
+        const response = await apiClient.get('/game/week/status', { params: { jobId } });
         return response.data;
     } catch (error) {
         console.error("Failed to fetch job status:", error);
@@ -224,7 +225,7 @@ export const getAllGameWeekJobs = async () => {
 
 export const retryFailedGames = async (jobId) => {
     try {
-        const response = await apiClient.post(`/game/week/retry/${jobId}`);
+        const response = await apiClient.post('/game/week/retry', null, { params: { jobId } });
         return response.data;
     } catch (error) {
         console.error("Failed to retry failed games:", error);
@@ -237,7 +238,7 @@ export const retryFailedGames = async (jobId) => {
 
 export const getPostseasonSchedule = async (season) => {
     try {
-        const response = await apiClient.get(`/schedule/postseason/${season}`);
+        const response = await apiClient.get('/schedule/postseason', { params: { season } });
         return response.data;
     } catch (error) {
         console.error("Failed to fetch postseason schedule:", error);
@@ -286,7 +287,7 @@ export const getConferenceRules = async (conference) => {
 
 export const updateScheduleEntry = async (id, entry) => {
     try {
-        const response = await apiClient.put(`/schedule/${id}`, entry);
+        const response = await apiClient.put('/schedule', entry, { params: { id } });
         return response.data;
     } catch (error) {
         console.error("Failed to update schedule entry:", error);
@@ -312,7 +313,7 @@ export const moveGame = async (scheduleId, newWeek) => {
 
 export const deleteScheduleEntry = async (id) => {
     try {
-        await apiClient.delete(`/schedule/${id}`);
+        await apiClient.delete('/schedule', { params: { id } });
         return true;
     } catch (error) {
         console.error("Failed to delete schedule entry:", error);
@@ -325,7 +326,7 @@ export const deleteScheduleEntry = async (id) => {
 
 export const deleteScheduleBySeason = async (season) => {
     try {
-        await apiClient.delete(`/schedule/season/${season}`);
+        await apiClient.delete('/schedule/season', { params: { season } });
         return true;
     } catch (error) {
         console.error("Failed to delete season schedule:", error);
