@@ -23,6 +23,7 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
                     finished: game.finished,
                     gameId: game.game_id,
                     isConference: game.game_type === 'CONFERENCE_GAME',
+                    isNeutralSite: Boolean(game.neutral_site),
                 };
             });
         }
@@ -49,6 +50,10 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'color-mix(in srgb, var(--gold) 30%, transparent)', border: '1px solid var(--gold)' }} />
                     Out of conference
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'transparent', border: '2px solid var(--disc)' }} />
+                    Neutral site
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Box component="span" sx={{ color: 'var(--text-dim)' }}>@</Box>
@@ -101,11 +106,12 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
                                             <Box
                                                 component={cell.gameId ? Link : 'div'}
                                                 to={cell.gameId ? `/game-details/${cell.gameId}` : undefined}
-                                                title={`${cell.isConference ? 'Conference' : 'Out of conference'} - ${cell.home ? 'vs' : 'at'} ${cell.opp}${cell.finished ? `, ${cell.us}-${cell.them}` : ''}`}
+                                                title={`${cell.isConference ? 'Conference' : 'Out of conference'}${cell.isNeutralSite ? ', neutral site' : ''} - ${cell.home ? 'vs' : 'at'} ${cell.opp}${cell.finished ? `, ${cell.us}-${cell.them}` : ''}`}
                                                 sx={{
                                                     display: 'inline-flex', alignItems: 'center', gap: '3px', justifyContent: 'center',
                                                     cursor: cell.gameId ? 'pointer' : 'default', textDecoration: 'none', color: 'inherit',
                                                     px: '5px', py: '3px', borderRadius: 'var(--r-sm)',
+                                                    border: cell.isNeutralSite ? '2px solid var(--disc)' : '2px solid transparent',
                                                     background: cell.isConference ? 'color-mix(in srgb, var(--brand) 12%, transparent)' : 'color-mix(in srgb, var(--gold) 12%, transparent)',
                                                     '&:hover': cell.gameId ? { background: cell.isConference ? 'color-mix(in srgb, var(--brand) 20%, transparent)' : 'color-mix(in srgb, var(--gold) 20%, transparent)' } : undefined,
                                                 }}

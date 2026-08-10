@@ -39,21 +39,12 @@ export const getAllSeasons = async () => {
     }
 };
 
-const getLatestSeason = async () => {
-    const allSeasons = await getAllSeasons();
-    return allSeasons.reduce((latest, s) => {
-        const num = s.season_number ?? s.seasonNumber;
-        const latestNum = latest?.season_number ?? latest?.seasonNumber;
-        return latestNum === undefined || num > latestNum ? s : latest;
-    }, null);
-};
-
 export const getCurrentSeasonOrLatest = async () => {
     try {
         return await getCurrentSeason();
     } catch (error) {
-        const latestSeason = await getLatestSeason();
-        const seasonNumber = latestSeason?.season_number ?? latestSeason?.seasonNumber;
+        const latestCompleted = await getLatestCompletedSeason();
+        const seasonNumber = latestCompleted?.season_number ?? latestCompleted?.seasonNumber;
         if (seasonNumber == null) throw error;
         return seasonNumber;
     }
@@ -63,10 +54,21 @@ export const getCurrentWeekOrLatest = async () => {
     try {
         return await getCurrentWeek();
     } catch (error) {
-        const latestSeason = await getLatestSeason();
-        const week = latestSeason?.current_week ?? latestSeason?.currentWeek;
+        const latestCompleted = await getLatestCompletedSeason();
+        const week = latestCompleted?.current_week ?? latestCompleted?.currentWeek;
         if (week == null) throw error;
         return week;
+    }
+};
+
+export const getCurrentSeasonOrUpcoming = async () => {
+    try {
+        return await getCurrentSeason();
+    } catch (error) {
+        const upcoming = await getUpcomingSeason();
+        const seasonNumber = upcoming?.season_number ?? upcoming?.seasonNumber;
+        if (seasonNumber == null) throw error;
+        return seasonNumber;
     }
 };
 

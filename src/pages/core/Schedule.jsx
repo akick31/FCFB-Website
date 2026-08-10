@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, CircularProgress, Alert } from '@mui/material';
+import { Box, CircularProgress, Alert, Snackbar } from '@mui/material';
 import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import { getScheduleBySeasonAndTeam, getConferenceSchedule, getPostseasonSchedule, getScheduleBySeason } from '../../api/scheduleApi';
-import { getCurrentSeasonOrLatest, getAllSeasons } from '../../api/seasonApi';
+import { getCurrentSeasonOrUpcoming, getAllSeasons } from '../../api/seasonApi';
 import { getTeamSeasonConference } from '../../api/teamSeasonConferenceApi';
-import { getStorageItem } from '../../utils/utils';
+import { getStorageItem, checkIfUserIsAdmin } from '../../utils/utils';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { useConferencesMap, activeConferenceCodes, allConferenceList } from '../../components/constants/conferences';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
+import useConferenceScheduleEditor from '../../hooks/useConferenceScheduleEditor';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
@@ -16,9 +17,13 @@ import SelectPill from '../../components/ui/SelectPill';
 import ConferenceTabs from '../../components/team/ConferenceTabs';
 import TeamSchedule from '../../components/schedule/TeamSchedule';
 import ConferenceGrid from '../../components/schedule/ConferenceGrid';
+import ConferenceScheduleGrid from '../../components/scheduling/ConferenceScheduleGrid';
+import ConferenceGameDialogs from '../../components/scheduling/ConferenceGameDialogs';
 import PostseasonView from '../../components/schedule/PostseasonView';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
+
+const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' }, '&:disabled': { opacity: 0.6, cursor: 'default' } };
 
 const LS_TEAM = 'schedule_selectedTeam';
 const LS_CONFERENCE = 'schedule_conference';
@@ -58,6 +63,16 @@ const Schedule = () => {
     const [confLoading, setConfLoading] = useState(false);
 
     const isLiveSeason = season != null && season === liveSeason;
+    const isAdmin = checkIfUserIsAdmin();
+    const canEditSchedule = isAdmin && isLiveSeason && mode === 'conference';
+
+    const scheduleEditor = useConferenceScheduleEditor({
+        season,
+        selectedConference,
+        allTeams: teams,
+        teamsMap,
+        enabled: canEditSchedule,
+    });
 
     const activeTeams = useMemo(
         () => teams.filter((team) => team.active && isRealTeam(team)).sort((a, b) => (a.name || '').localeCompare(b.name || '')),
@@ -102,7 +117,7 @@ const Schedule = () => {
                 setLoading(true);
                 const [teamsData, currentSeason, seasonsData] = await Promise.all([
                     getAllTeamsIncludingInactive(),
-                    getCurrentSeasonOrLatest(),
+                    getCurrentSeasonOrUpcoming(),
                     getAllSeasons(),
                 ]);
                 setTeams(teamsData);
@@ -147,7 +162,7 @@ const Schedule = () => {
     }, [selectedTeam, season, mode]);
 
     useEffect(() => {
-        if (!season || mode !== 'conference') return;
+        if (!season || mode !== 'conference' || canEditSchedule) return;
         setConfLoading(true);
         Promise.all([getConferenceSchedule(season, selectedConference).catch(() => []), getScheduleBySeason(season).catch(() => [])])
             .then(([, allData]) => setAllSeasonSchedule(allData || []))
@@ -223,7 +238,7 @@ const Schedule = () => {
 
             {mode === 'conference' && (
                 <>
-                    <Box sx={{ mb: '16px' }}>
+                    <Box sx={{ mb: '16px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                         <ConferenceTabs
                             conferences={availableConferences}
                             value={selectedConference}
@@ -232,13 +247,56 @@ const Schedule = () => {
                                 navigate(`/schedules/conference/${confToSlug(conf)}/${season || ''}`, { replace: true });
                             }}
                         />
+                        {canEditSchedule && (
+                            <Box
+                                component="button" type="button"
+                                onClick={scheduleEditor.handleAddGameManually}
+                                disabled={scheduleEditor.scheduleLocked}
+                                sx={ctrlSx}
+                            >
+                                + Add game manually
+                            </Box>
+                        )}
                     </Box>
-                    <ConferenceGrid conferenceTeams={conferenceTeams} schedule={allSeasonSchedule} teamsMap={teamsMap} loading={confLoading} />
+                    {canEditSchedule ? (
+                        <ConferenceScheduleGrid
+                            selectedConference={selectedConference}
+                            conferenceSchedule={scheduleEditor.conferenceSchedule}
+                            conferenceTeams={scheduleEditor.conferenceTeams}
+                            allSeasonSchedule={scheduleEditor.allSeasonSchedule}
+                            confLoading={scheduleEditor.confLoading}
+                            scheduleLocked={scheduleEditor.scheduleLocked}
+                            teamMap={teamsMap}
+                            teamWeekOccupiedAll={scheduleEditor.teamWeekOccupiedAll}
+                            numConferenceGames={scheduleEditor.numConferenceGames}
+                            onEmptyCellClick={scheduleEditor.handleEmptyCellClick}
+                            onFilledCellClick={scheduleEditor.handleFilledCellClick}
+                            onGameDrop={scheduleEditor.handleGameDrop}
+                        />
+                    ) : (
+                        <ConferenceGrid conferenceTeams={conferenceTeams} schedule={allSeasonSchedule} teamsMap={teamsMap} loading={confLoading} />
+                    )}
                 </>
             )}
 
             {mode === 'postseason' && (
                 <PostseasonView postseasonSchedule={postseasonSchedule} teamsMap={teamsMap} loading={postseasonLoading} />
+            )}
+
+            {canEditSchedule && (
+                <>
+                    <ConferenceGameDialogs editor={scheduleEditor} allTeams={teams} teamsMap={teamsMap} />
+                    <Snackbar
+                        open={scheduleEditor.snackbar.open}
+                        autoHideDuration={4000}
+                        onClose={scheduleEditor.closeSnackbar}
+                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    >
+                        <Alert onClose={scheduleEditor.closeSnackbar} severity={scheduleEditor.snackbar.severity} variant="filled">
+                            {scheduleEditor.snackbar.message}
+                        </Alert>
+                    </Snackbar>
+                </>
             )}
         </PageWrap>
     );

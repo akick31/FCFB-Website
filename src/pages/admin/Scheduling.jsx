@@ -35,10 +35,11 @@ import {
     saveConferenceRules,
     getConferenceRules,
     validateSchedule,
+    getBowlVenue,
 } from '../../api/scheduleApi';
-import { getCurrentSeasonOrLatest, getAllSeasons, isScheduleLocked, lockSchedule, unlockSchedule, createSeasonForScheduling } from '../../api/seasonApi';
+import { getCurrentSeasonOrUpcoming, getAllSeasons, isScheduleLocked, lockSchedule, unlockSchedule, createSeasonForScheduling } from '../../api/seasonApi';
 import { uploadPostseasonLogo } from '../../api/uploadApi';
-import { useConferencesMap, activeConferenceList } from '../../components/constants/conferences';
+import { useConferencesMap, activeConferenceList, getConference } from '../../components/constants/conferences';
 import { formatGameType, formatConference, weekLabel } from '../../utils/formatText';
 import { field } from '../../utils/fieldHelper';
 import PostseasonAdminTab from '../../components/scheduling/PostseasonAdminTab';
@@ -135,7 +136,6 @@ const Scheduling = () => {
     const [addGameAway, setAddGameAway] = useState(null);
     const [addGameAnchorTeam, setAddGameAnchorTeam] = useState(null);
     const [addGameType, setAddGameType] = useState('CONFERENCE_GAME');
-    const [addGameSubdivision, setAddGameSubdivision] = useState('FCFB');
     const [addGamePlayoffRound, setAddGamePlayoffRound] = useState(null);
     const [addGameHomeSeed, setAddGameHomeSeed] = useState(null);
     const [addGameAwaySeed, setAddGameAwaySeed] = useState(null);
@@ -143,6 +143,8 @@ const Scheduling = () => {
     const [addGameLogo, setAddGameLogo] = useState(null);
     const [addGameLogoPreview, setAddGameLogoPreview] = useState(null);
     const [uploadingLogo, setUploadingLogo] = useState(false);
+    const [addGameNeutralSite, setAddGameNeutralSite] = useState(false);
+    const [addGameVenue, setAddGameVenue] = useState('');
 
     const [moveDialogOpen, setMoveDialogOpen] = useState(false);
     const [moveGameData, setMoveGameData] = useState(null);
@@ -159,16 +161,38 @@ const Scheduling = () => {
         if (addGameDialogOpen) {
             if (addGameType === 'BOWL') {
                 setAddGameWeek(14);
-                setAddGameSubdivision('FCFB');
                 setAddGameBowlName('');
             } else if (addGameType === 'PLAYOFFS' || addGameType === 'NATIONAL_CHAMPIONSHIP') {
                 if (addGamePlayoffRound) {
                     setAddGameWeek(13 + addGamePlayoffRound);
                 }
-                setAddGameSubdivision('FCFB');
             }
         }
     }, [addGameDialogOpen, addGameType, addGamePlayoffRound]);
+
+    useEffect(() => {
+        if (addGameDialogOpen) {
+            setAddGameNeutralSite(false);
+            setAddGameVenue('');
+        }
+    }, [addGameDialogOpen]);
+
+    const isImplicitNeutralSite = addGameType === 'BOWL' || addGameType === 'PLAYOFFS' || addGameType === 'CONFERENCE_CHAMPIONSHIP' || addGameType === 'NATIONAL_CHAMPIONSHIP';
+    const isNeutralSite = isImplicitNeutralSite || addGameNeutralSite;
+
+    const handleBowlNameBlur = () => {
+        const name = addGameBowlName.trim();
+        if (!name) return;
+        getBowlVenue(name).then((venue) => {
+            if (venue) setAddGameVenue(venue);
+        });
+    };
+
+    useEffect(() => {
+        if (addGameType !== 'CONFERENCE_CHAMPIONSHIP' || !addGameHome?.conference) return;
+        const venue = getConference(addGameHome.conference)?.championship_venue;
+        if (venue) setAddGameVenue(venue);
+    }, [addGameType, addGameHome]);
 
     useEffect(() => {
         const init = async () => {
@@ -176,7 +200,7 @@ const Scheduling = () => {
                 setLoading(true);
                 const [teamsData, currentSeason, seasonsData] = await Promise.all([
                     getAllTeams(),
-                    getCurrentSeasonOrLatest(),
+                    getCurrentSeasonOrUpcoming(),
                     getAllSeasons()
                 ]);
                 setAllTeams(teamsData);
@@ -345,7 +369,7 @@ const Scheduling = () => {
             showSnackbar(`${teamName} already has a game scheduled in Week ${weekNum}`, 'warning');
             return;
         }
-        setAddGameType('CONFERENCE_GAME');
+        setAddGameType(isConferenceScheduleComplete ? 'OUT_OF_CONFERENCE' : 'CONFERENCE_GAME');
         setAddGameWeek(weekNum);
         setAddGameHome(teamMap[teamName] || { name: teamName });
         setAddGameAway(null);
@@ -374,7 +398,7 @@ const Scheduling = () => {
         }
 
         let finalWeek = addGameWeek;
-        let finalSubdivision = addGameSubdivision;
+        const finalSubdivision = 'FCFB';
         let finalGameType = addGameType;
 
         if (addGameType === 'BOWL') {
@@ -383,7 +407,6 @@ const Scheduling = () => {
                 return;
             }
             finalWeek = 14;
-            finalSubdivision = 'FCFB';
             finalGameType = 'BOWL';
         } else if (addGameType === 'PLAYOFFS' || addGameType === 'NATIONAL_CHAMPIONSHIP') {
             if (!addGamePlayoffRound) {
@@ -391,11 +414,15 @@ const Scheduling = () => {
                 return;
             }
             finalWeek = 13 + addGamePlayoffRound;
-            finalSubdivision = 'FCFB';
         }
 
         if (!finalWeek) {
             showSnackbar('Please fill in all fields', 'error');
+            return;
+        }
+
+        if (isNeutralSite && !addGameVenue.trim()) {
+            showSnackbar('Venue is required for a neutral site game', 'error');
             return;
         }
 
@@ -412,6 +439,8 @@ const Scheduling = () => {
                 playoffAwaySeed: addGameAwaySeed,
                 postseasonGameName: addGameType === 'BOWL' ? addGameBowlName : null,
                 postseasonGameLogo: (addGameType === 'BOWL' || addGameType === 'PLAYOFFS' || addGameType === 'CONFERENCE_CHAMPIONSHIP' || addGameType === 'NATIONAL_CHAMPIONSHIP') ? addGameLogo : null,
+                neutralSite: isNeutralSite,
+                venue: isNeutralSite ? addGameVenue.trim() : null,
             });
             showSnackbar('Game added successfully');
             setAddGameDialogOpen(false);
@@ -707,6 +736,18 @@ const Scheduling = () => {
         return occupied;
     }, [allSeasonSchedule]);
 
+    const isConferenceScheduleComplete = useMemo(() => {
+        if (conferenceTeams.length === 0) return false;
+        const gameCounts = {};
+        conferenceSchedule.forEach(game => {
+            const home = field(game, 'homeTeam', 'home_team');
+            const away = field(game, 'awayTeam', 'away_team');
+            if (home) gameCounts[home] = (gameCounts[home] || 0) + 1;
+            if (away) gameCounts[away] = (gameCounts[away] || 0) + 1;
+        });
+        return conferenceTeams.every(t => (gameCounts[t.name] || 0) >= numConferenceGames);
+    }, [conferenceTeams, conferenceSchedule, numConferenceGames]);
+
     const hasGamesPlayed = useMemo(() => {
         return allSeasonSchedule.some(game => {
             const started = field(game, 'started', 'started');
@@ -791,8 +832,9 @@ const Scheduling = () => {
                     scheduleLocked={scheduleLocked}
                     teamMap={teamMap}
                     allSeasonSchedule={allSeasonSchedule}
+                    teamWeekOccupiedAll={teamWeekOccupiedAll}
                     onAddGameManually={() => {
-                        setAddGameType('CONFERENCE_GAME');
+                        setAddGameType(isConferenceScheduleComplete ? 'OUT_OF_CONFERENCE' : 'CONFERENCE_GAME');
                         setAddGameAnchorTeam(null);
                         setAddGameDialogOpen(true);
                     }}
@@ -865,9 +907,7 @@ const Scheduling = () => {
                         setAddGameAnchorTeam(null);
                         if (gameType === 'BOWL') {
                             setAddGameWeek(14);
-                            setAddGameSubdivision('FCFB');
                         } else if (gameType === 'PLAYOFFS' || gameType === 'NATIONAL_CHAMPIONSHIP') {
-                            setAddGameSubdivision('FCFB');
                             if (week) setAddGameWeek(week);
                         } else {
                             if (week) setAddGameWeek(week);
@@ -958,6 +998,33 @@ const Scheduling = () => {
                             isOptionEqualToValue={(option, value) => option.name === value?.name}
                         />
 
+                        {(addGameType === 'CONFERENCE_GAME' || addGameType === 'OUT_OF_CONFERENCE') && (
+                            <Box component="label" sx={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <Box component="input" type="checkbox" checked={addGameNeutralSite} onChange={(e) => setAddGameNeutralSite(e.target.checked)} />
+                                <Box component="span" sx={{ fontSize: '0.85rem' }}>Neutral site game</Box>
+                            </Box>
+                        )}
+
+                        {isImplicitNeutralSite && (
+                            <Alert severity="info" sx={{ py: 0.5 }}>
+                                {formatGameType(addGameType)} games are always played at a neutral site
+                            </Alert>
+                        )}
+
+                        {isNeutralSite && (
+                            <Box>
+                                <Box component="label" sx={labelSx}>Venue</Box>
+                                <Box
+                                    component="input"
+                                    value={addGameVenue}
+                                    onChange={(e) => setAddGameVenue(e.target.value)}
+                                    placeholder="e.g., Mercedes-Benz Stadium, Atlanta, GA"
+                                    sx={{ ...inputSx, borderColor: !addGameVenue.trim() ? 'var(--live)' : 'var(--line)' }}
+                                />
+                                {!addGameVenue.trim() && <Box sx={errorTextSx}>Venue is required for a neutral site game</Box>}
+                            </Box>
+                        )}
+
                         {addGameType === 'BOWL' && (
                             <Box>
                                 <Box component="label" sx={labelSx}>Bowl game name</Box>
@@ -965,6 +1032,7 @@ const Scheduling = () => {
                                     component="input"
                                     value={addGameBowlName}
                                     onChange={(e) => setAddGameBowlName(e.target.value)}
+                                    onBlur={handleBowlNameBlur}
                                     placeholder="e.g., Rose Bowl, Sugar Bowl, etc."
                                     sx={{ ...inputSx, borderColor: (!addGameBowlName || addGameBowlName.trim() === '') ? 'var(--live)' : 'var(--line)' }}
                                 />
@@ -1102,15 +1170,6 @@ const Scheduling = () => {
                             </>
                         )}
 
-                        {addGameType !== 'BOWL' && addGameType !== 'PLAYOFFS' && addGameType !== 'CONFERENCE_CHAMPIONSHIP' && addGameType !== 'NATIONAL_CHAMPIONSHIP' && (
-                            <Box>
-                                <Box component="label" sx={labelSx}>Subdivision</Box>
-                                <Box component="select" value={addGameSubdivision} onChange={(e) => setAddGameSubdivision(e.target.value)} sx={{ ...selectSx, width: '100%' }}>
-                                    <option value="FBS">FBS</option>
-                                    <option value="FCS">FCS</option>
-                                </Box>
-                            </Box>
-                        )}
                     </Box>
                 </DialogContent>
                 <DialogActions sx={{ px: '20px', pb: '18px' }}>

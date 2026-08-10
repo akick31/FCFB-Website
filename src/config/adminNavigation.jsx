@@ -19,9 +19,9 @@ export const adminNavigationItems = [
     { label: 'Team Management', icon: <EmojiEvents />, path: '/admin/team-management' },
     { label: 'Conference Management', icon: <AccountTree />, path: '/admin/conferences' },
     { label: 'Game Management', icon: <SportsFootball />, path: '/admin/game-management' },
-    { label: 'Scheduling', icon: <CalendarMonth />, path: '/admin/scheduling' },
+    { label: 'Schedule Management', icon: <CalendarMonth />, path: '/admin/scheduling' },
     { label: 'Rankings', icon: <FormatListNumbered />, path: '/admin/rankings' },
     { label: 'Stats Management', icon: <Assessment />, path: '/admin/stats-management' },
     { label: 'Reports', icon: <TrendingUp />, path: '/admin/reports' },
-    { label: 'API Docs', icon: <Code />, path: '/admin/api-docs' },
+    { label: 'Admin API Docs', icon: <Code />, path: '/admin/api-docs' },
 ];

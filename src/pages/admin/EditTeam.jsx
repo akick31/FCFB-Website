@@ -113,6 +113,9 @@ const EditTeam = () => {
                     <Field label="Short name">
                         <Box component="input" value={team.short_name || ''} onChange={(e) => handleChange('short_name', e.target.value)} sx={inputSx} />
                     </Field>
+                    <Field label="Stadium">
+                        <Box component="input" value={team.stadium || ''} onChange={(e) => handleChange('stadium', e.target.value)} sx={inputSx} />
+                    </Field>
                     <Field label="Logo URL">
                         <Box component="input" value={team.logo || ''} onChange={(e) => handleChange('logo', e.target.value)} sx={inputSx} />
                     </Field>
