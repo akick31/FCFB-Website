@@ -44,6 +44,9 @@ const TeamHeader = ({ team, mark, pollRank }) => {
                     <Box sx={{ opacity: 0.85, fontWeight: 600, fontSize: '0.92rem' }}>
                         Current ELO: {team.current_elo != null ? Math.round(team.current_elo) : '-'}
                     </Box>
+                    {team.stadium && (
+                        <Box sx={{ opacity: 0.82, fontSize: '0.82rem', mt: '3px' }}>{team.stadium}</Box>
+                    )}
                     {coach ? (
                         <Box
                             component={Link}

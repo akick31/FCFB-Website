@@ -24,6 +24,7 @@ import Postseason from '../schedule/Postseason';
 import { R2_BYE_SEEDS, QF_SEED_GROUPS, SF_SEED_GROUPS, ROUND_LABELS, playoffWeekForRound, CFP_LOGO_URL } from '../constants/playoffBracket';
 import { field } from '../../utils/fieldHelper';
 import { isRealTeam } from '../../utils/teamDataUtils';
+import { resolveLogoUrl } from '../../utils/logoUrl';
 
 const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '14px', py: '9px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' };
 const btnLiveSx = { border: 0, background: 'var(--live)', color: '#fff', borderRadius: 'var(--r-sm)', px: '14px', py: '9px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' };
@@ -39,15 +40,13 @@ const dialogPaperSx = { background: 'var(--surface)', border: '1px solid var(--l
 const dialogTitleSx = { color: 'var(--text)', fontWeight: 800, fontSize: '1.05rem' };
 const autocompleteSx = { '& .MuiOutlinedInput-root': { borderRadius: 'var(--r-sm)' } };
 
-const CFP_IMAGE_BASE = import.meta.env.VITE_API_URL || 'http://localhost:1313';
-const resolveLogoUrl = (logo) => (logo ? (logo.startsWith('http') ? logo : `${CFP_IMAGE_BASE}/images/${logo}`) : null);
-
 const PostseasonAdminTab = ({
     season,
     postseasonSchedule = [],
     postseasonLoading = false,
     allTeams = [],
     teamMap = {},
+    venueNames = [],
     onRefresh,
     onShowSnackbar,
     onOpenAddGameDialog,
@@ -64,6 +63,7 @@ const PostseasonAdminTab = ({
     const [editBowlDialogOpen, setEditBowlDialogOpen] = useState(false);
     const [editingBowlGame, setEditingBowlGame] = useState(null);
     const [editingBowlName, setEditingBowlName] = useState('');
+    const [editingBowlVenue, setEditingBowlVenue] = useState('');
     const [editingBowlLogo, setEditingBowlLogo] = useState(null);
     const [editingBowlLogoPreview, setEditingBowlLogoPreview] = useState(null);
     const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -214,6 +214,7 @@ const PostseasonAdminTab = ({
     const handleEditBowlName = (game) => {
         setEditingBowlGame(game);
         setEditingBowlName(field(game, 'postseasonGameName', 'postseason_game_name') || '');
+        setEditingBowlVenue(field(game, 'venue', 'venue') || '');
         const logoUrl = field(game, 'postseasonGameLogo', 'postseason_game_logo');
         setEditingBowlLogo(logoUrl || null);
         setEditingBowlLogoPreview(logoUrl ? resolveLogoUrl(logoUrl) : null);
@@ -232,11 +233,14 @@ const PostseasonAdminTab = ({
                 gameType: field(editingBowlGame, 'gameType', 'game_type'),
                 postseasonGameName: editingBowlName || null,
                 postseasonGameLogo: editingBowlLogo || null,
+                neutralSite: true,
+                venue: editingBowlVenue.trim() || null,
             });
             onShowSnackbar('Bowl game updated successfully');
             setEditBowlDialogOpen(false);
             setEditingBowlGame(null);
             setEditingBowlName('');
+            setEditingBowlVenue('');
             setEditingBowlLogo(null);
             setEditingBowlLogoPreview(null);
             onRefresh();
@@ -840,6 +844,19 @@ const PostseasonAdminTab = ({
                             <Box component="input" value={editingBowlName} onChange={(e) => setEditingBowlName(e.target.value)} placeholder="e.g., Rose Bowl, Sugar Bowl, etc." sx={inputSx} />
                         </Box>
                         <Box>
+                            <Box component="label" sx={labelSx}>Venue</Box>
+                            <Autocomplete
+                                freeSolo
+                                options={venueNames}
+                                inputValue={editingBowlVenue}
+                                onInputChange={(_, v) => setEditingBowlVenue(v || '')}
+                                sx={autocompleteSx}
+                                renderInput={(params) => (
+                                    <TextField {...params} size="small" placeholder="e.g., Mercedes-Benz Stadium, Atlanta, GA" />
+                                )}
+                            />
+                        </Box>
+                        <Box>
                             <input
                                 accept="image/*"
                                 style={{ display: 'none' }}
@@ -891,6 +908,7 @@ const PostseasonAdminTab = ({
                         setEditBowlDialogOpen(false);
                         setEditingBowlGame(null);
                         setEditingBowlName('');
+                        setEditingBowlVenue('');
                         setEditingBowlLogo(null);
                         setEditingBowlLogoPreview(null);
                     }} sx={ctrlSx}>Cancel</Box>
@@ -909,6 +927,7 @@ PostseasonAdminTab.propTypes = {
     postseasonLoading: PropTypes.bool,
     allTeams: PropTypes.array,
     teamMap: PropTypes.object,
+    venueNames: PropTypes.arrayOf(PropTypes.string),
     onRefresh: PropTypes.func.isRequired,
     onShowSnackbar: PropTypes.func.isRequired,
     onOpenAddGameDialog: PropTypes.func.isRequired,

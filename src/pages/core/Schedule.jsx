@@ -274,7 +274,7 @@ const Schedule = () => {
                             onGameDrop={scheduleEditor.handleGameDrop}
                         />
                     ) : (
-                        <ConferenceGrid conferenceTeams={conferenceTeams} schedule={allSeasonSchedule} teamsMap={teamsMap} loading={confLoading} />
+                        <ConferenceGrid conferenceTeams={conferenceTeams} schedule={allSeasonSchedule} teamsMap={teamsMap} loading={confLoading} selectedConference={selectedConference} />
                     )}
                 </>
             )}

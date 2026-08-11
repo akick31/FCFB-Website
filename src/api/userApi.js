@@ -40,24 +40,6 @@ export const getAllUsers = async () => {
     }
 };
 
-export const updateUserDetails = async (userId, updates) => {
-    if (!userId) throw new Error("User ID is required");
-
-    try {
-        const response = await apiClient.put('/user/update', {
-            id: userId,
-            ...updates,
-        });
-        return response.data;
-    } catch (error) {
-        console.error("Failed to update user details:", error);
-        if (error.response) {
-            throw new Error(error.response.data.error || "Failed to update user details");
-        }
-        throw new Error("An unexpected error occurred while updating user details");
-    }
-};
-
 export const updateUser = async (user) => {
     const body = {
         id: user.id,
@@ -204,15 +186,3 @@ export const updatePassword = async (userId, currentPassword, newPassword) => {
         throw new Error("An unexpected error occurred while updating password");
     }
 };
-
-export const updateRole = (userId, role) =>
-    updateUserDetails(userId, { newRole: role });
-
-export const updateCoachName = (userId, coachName) =>
-    updateUserDetails(userId, { newCoachName: coachName });
-
-export const updateDiscordTag = (userId, discordTag) =>
-    updateUserDetails(userId, { newDiscordTag: discordTag });
-
-export const updateTeam = (userId, team) =>
-    updateUserDetails(userId, { newTeam: team });

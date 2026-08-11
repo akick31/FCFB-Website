@@ -4,6 +4,7 @@ import {
     getConferenceSchedule,
     getConferenceRules,
     createScheduleEntry,
+    updateScheduleEntry,
     deleteScheduleEntry,
     moveGame,
 } from '../api/scheduleApi';
@@ -31,6 +32,9 @@ const useConferenceScheduleEditor = ({ season, selectedConference, allTeams, tea
     const [moveDialogOpen, setMoveDialogOpen] = useState(false);
     const [moveGameData, setMoveGameData] = useState(null);
     const [moveToWeek, setMoveToWeek] = useState(1);
+    const [editNeutralSite, setEditNeutralSite] = useState(false);
+    const [editVenue, setEditVenue] = useState('');
+    const [savingEdits, setSavingEdits] = useState(false);
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const showSnackbar = useCallback((message, severity = 'success') => {
@@ -245,7 +249,42 @@ const useConferenceScheduleEditor = ({ season, selectedConference, allTeams, tea
     const handleFilledCellClick = (cell, weekNum) => {
         setMoveGameData(cell);
         setMoveToWeek(weekNum);
+        setEditNeutralSite(Boolean(field(cell, 'neutralSite', 'neutral_site')));
+        setEditVenue(cell.venue || '');
         setMoveDialogOpen(true);
+    };
+
+    const handleSaveEdits = async () => {
+        if (!moveGameData?.id) return;
+        if (editNeutralSite && !editVenue.trim()) {
+            showSnackbar('Venue is required for a neutral site game', 'error');
+            return;
+        }
+        setSavingEdits(true);
+        try {
+            await updateScheduleEntry(moveGameData.id, {
+                season: moveGameData.season,
+                week: moveGameData.week,
+                subdivision: field(moveGameData, 'subdivision', 'subdivision') || 'FCFB',
+                homeTeam: field(moveGameData, 'homeTeam', 'home_team') || moveGameData.opponent,
+                awayTeam: field(moveGameData, 'awayTeam', 'away_team'),
+                gameType: field(moveGameData, 'gameType', 'game_type'),
+                playoffRound: null,
+                playoffHomeSeed: null,
+                playoffAwaySeed: null,
+                postseasonGameName: null,
+                postseasonGameLogo: null,
+                neutralSite: editNeutralSite,
+                venue: editNeutralSite ? editVenue.trim() : null,
+            });
+            showSnackbar('Game updated successfully');
+            refreshAfterChange();
+        } catch (err) {
+            console.error('Error updating game:', err);
+            showSnackbar('Failed to update game: ' + err.message, 'error');
+        } finally {
+            setSavingEdits(false);
+        }
     };
 
     return {
@@ -282,6 +321,12 @@ const useConferenceScheduleEditor = ({ season, selectedConference, allTeams, tea
         moveToWeek,
         setMoveToWeek,
         handleMoveGame,
+        editNeutralSite,
+        setEditNeutralSite,
+        editVenue,
+        setEditVenue,
+        savingEdits,
+        handleSaveEdits,
 
         handleEmptyCellClick,
         handleFilledCellClick,

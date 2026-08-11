@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, TextField, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, TextField, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
 import TeamMark from '../ui/TeamMark';
 import { isRealTeam } from '../../utils/teamDataUtils';
@@ -9,7 +9,7 @@ import { weekLabel } from '../../utils/formatText';
 const TOTAL_WEEKS = 12;
 
 const selectSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', cursor: 'pointer', '& option': { background: 'var(--surface)', color: 'var(--text)' } };
-const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' }, '&:disabled': { opacity: 0.6, cursor: 'default' } };
 const inputSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', width: '100%' };
 const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center' };
 const dialogPaperSx = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)' };
@@ -32,6 +32,10 @@ const ConferenceGameDialogs = ({ editor, allTeams, teamsMap }) => {
         moveGameData, setMoveGameData,
         moveToWeek, setMoveToWeek,
         handleMoveGame, handleDeleteGame,
+        editNeutralSite, setEditNeutralSite,
+        editVenue, setEditVenue,
+        savingEdits, handleSaveEdits,
+        scheduleLocked,
     } = editor;
 
     return (
@@ -141,8 +145,8 @@ const ConferenceGameDialogs = ({ editor, allTeams, teamsMap }) => {
                         const home = field(moveGameData, 'homeTeam', 'home_team') || moveGameData.opponent;
                         const away = field(moveGameData, 'awayTeam', 'away_team') || '';
                         return (
-                            <Box sx={{ mt: '6px' }}>
-                                <Box sx={{ mb: '14px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                            <Box sx={{ mt: '6px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                <Box sx={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                     {home} vs {away || moveGameData.opponent} (Week {moveGameData.week})
                                 </Box>
                                 <Box>
@@ -158,6 +162,36 @@ const ConferenceGameDialogs = ({ editor, allTeams, teamsMap }) => {
                                             return <option key={weekNum} value={weekNum}>Week {weekNum}</option>;
                                         })}
                                     </Box>
+                                </Box>
+
+                                {scheduleLocked && (
+                                    <Alert severity="warning" sx={{ py: 0.5 }}>
+                                        The schedule is locked. Unlock it to change neutral site status or venue.
+                                    </Alert>
+                                )}
+
+                                <Box component="label" sx={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: scheduleLocked ? 'default' : 'pointer', opacity: scheduleLocked ? 0.6 : 1 }}>
+                                    <Box component="input" type="checkbox" checked={editNeutralSite} disabled={scheduleLocked} onChange={(e) => setEditNeutralSite(e.target.checked)} />
+                                    <Box component="span" sx={{ fontSize: '0.85rem' }}>Neutral site game</Box>
+                                </Box>
+
+                                {editNeutralSite && (
+                                    <Box>
+                                        <Box component="label" sx={labelSx}>Venue</Box>
+                                        <Box
+                                            component="input"
+                                            value={editVenue}
+                                            disabled={scheduleLocked}
+                                            onChange={(e) => setEditVenue(e.target.value)}
+                                            placeholder="e.g., Mercedes-Benz Stadium, Atlanta, GA"
+                                            sx={{ ...inputSx, borderColor: !editVenue.trim() ? 'var(--live)' : 'var(--line)' }}
+                                        />
+                                        {!editVenue.trim() && <Box sx={errorTextSx}>Venue is required for a neutral site game</Box>}
+                                    </Box>
+                                )}
+
+                                <Box component="button" type="button" onClick={handleSaveEdits} disabled={scheduleLocked || savingEdits} sx={{ ...ctrlSx, justifyContent: 'center' }}>
+                                    {savingEdits ? 'Saving...' : 'Save neutral site / venue'}
                                 </Box>
                             </Box>
                         );

@@ -1,11 +1,11 @@
 import apiClient from './apiClient';
 
-export const getBowlVenue = async (name) => {
+export const getBowl = async (name) => {
     try {
-        const response = await apiClient.get('/schedule/bowl-venue', { params: { name } });
+        const response = await apiClient.get('/schedule/bowl', { params: { name } });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch bowl venue:", error);
+        console.error("Failed to fetch bowl:", error);
         return null;
     }
 };

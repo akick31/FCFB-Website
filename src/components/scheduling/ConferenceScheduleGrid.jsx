@@ -26,6 +26,7 @@ const ConferenceScheduleGrid = ({
     onGameDrop,
 }) => {
     const [dragSource, setDragSource] = useState(null);
+    const isIndependent = selectedConference === 'FBS_INDEPENDENT';
 
     const grid = useMemo(() => {
         const g = {};
@@ -96,12 +97,14 @@ const ConferenceScheduleGrid = ({
                     <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'color-mix(in srgb, var(--brand) 30%, transparent)', border: '1px solid var(--brand)' }} />
                     Conference game
                 </Box>
+                {!isIndependent && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'color-mix(in srgb, var(--gold) 30%, transparent)', border: '1px solid var(--gold)' }} />
+                        Out of conference
+                    </Box>
+                )}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'color-mix(in srgb, var(--gold) 30%, transparent)', border: '1px solid var(--gold)' }} />
-                    Out of conference
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'transparent', border: '2px solid var(--disc)' }} />
+                    <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'color-mix(in srgb, var(--disc) 45%, transparent)', border: '1px solid var(--disc)' }} />
                     Neutral site
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -172,13 +175,18 @@ const ConferenceScheduleGrid = ({
                                                         onClick={() => onFilledCellClick(cell, weekNum)}
                                                         title={`${isConference ? 'Conference' : 'Out of conference'}${isNeutralSite ? ', neutral site' : ''} - ${cell.isHome ? 'vs' : '@'} ${cell.opponent} (click to move/delete, or drag to another week)`}
                                                         sx={{
+                                                            position: 'relative',
                                                             display: 'inline-flex', alignItems: 'center', gap: '4px', justifyContent: 'center',
                                                             cursor: scheduleLocked ? 'pointer' : 'grab', px: '6px', py: '4px', borderRadius: 'var(--r-sm)',
-                                                            border: isNeutralSite ? '2px solid var(--disc)' : '2px solid transparent',
-                                                            background: isConference ? 'color-mix(in srgb, var(--brand) 12%, transparent)' : 'color-mix(in srgb, var(--gold) 12%, transparent)',
-                                                            '&:hover': { background: isConference ? 'color-mix(in srgb, var(--brand) 20%, transparent)' : 'color-mix(in srgb, var(--gold) 20%, transparent)' },
+                                                            background: isNeutralSite
+                                                                ? 'color-mix(in srgb, var(--disc) 18%, transparent)'
+                                                                : isConference ? 'color-mix(in srgb, var(--brand) 12%, transparent)' : isIndependent ? 'transparent' : 'color-mix(in srgb, var(--gold) 12%, transparent)',
+                                                            '&:hover': { background: isNeutralSite ? 'color-mix(in srgb, var(--disc) 28%, transparent)' : isConference ? 'color-mix(in srgb, var(--brand) 20%, transparent)' : isIndependent ? 'var(--surface-2)' : 'color-mix(in srgb, var(--gold) 20%, transparent)' },
                                                         }}
                                                     >
+                                                        {isNeutralSite && !isIndependent && (
+                                                            <Box sx={{ position: 'absolute', top: '2px', right: '2px', width: 6, height: 6, borderRadius: '50%', background: isConference ? 'var(--brand)' : 'var(--gold)' }} />
+                                                        )}
                                                         <Box component="span" sx={{ fontSize: '0.62rem', color: 'var(--text-dim)' }}>{cell.isHome ? 'vs' : '@'}</Box>
                                                         <TeamMark team={teamMap[cell.opponent] || { name: cell.opponent }} size={16} />
                                                         <Box component="span" sx={{ fontSize: '0.62rem', maxWidth: 50, overflow: 'hidden', textOverflow: 'ellipsis' }}>{teamMap[cell.opponent]?.abbreviation || cell.opponent?.substring(0, 4)}</Box>

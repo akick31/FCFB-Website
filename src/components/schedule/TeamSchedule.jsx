@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import Panel from '../ui/Panel';
 import TeamMark from '../ui/TeamMark';
 import { ensureTeam } from '../../hooks/useTeamsMap';
+import { field } from '../../utils/fieldHelper';
 
 const markFor = (teamsMap, name) => {
     if (!name) return { name };
@@ -52,6 +53,8 @@ const TeamSchedule = ({ teamName, schedule, season, teamsMap, loading, subtitle,
                 const us = isHome ? game.home_score : game.away_score;
                 const them = isHome ? game.away_score : game.home_score;
                 const win = us > them;
+                const isNeutralSite = Boolean(field(game, 'neutralSite', 'neutral_site'));
+                const venue = game.venue;
                 return (
                     <Box
                         key={game.game_id || game.id}
@@ -65,7 +68,14 @@ const TeamSchedule = ({ teamName, schedule, season, teamsMap, loading, subtitle,
                         >
                             <Box component="span" sx={{ color: 'var(--text-dim)' }}>{isHome ? 'vs' : 'at'}</Box>
                             <TeamMark team={markFor(teamsMap, opponent)} size={20} />
-                            <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opponent}</Box>
+                            <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {opponent}
+                                {isNeutralSite && (
+                                    <Box component="span" sx={{ color: 'var(--text-dim)', fontWeight: 400, fontStyle: 'italic' }}>
+                                        {venue ? ` (Neutral site at ${venue})` : ' (Neutral site)'}
+                                    </Box>
+                                )}
+                            </Box>
                         </Box>
                         <Box sx={{ fontWeight: 800, fontFamily: 'var(--cond)', color: game.finished ? (win ? 'var(--field)' : 'var(--live)') : 'var(--text-dim)' }}>
                             {game.finished ? `${win ? 'W' : 'L'} ${us}-${them}` : '-'}
