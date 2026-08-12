@@ -10,6 +10,7 @@ export const routeList = [
     { path: '/schedules', title: 'Schedules | FCFB', description: 'Full season and postseason schedules for every Fake College Football team and conference.' },
     { path: '/records', title: 'Records | FCFB', description: 'All-time and single-season records across the Fake College Football league, from top offenses to record-breaking performances.' },
     { path: '/graphs', title: 'Graphs | FCFB', description: 'Interactive graphs visualizing ELO history, ranking movement, and statistical trends across Fake College Football.' },
+    { path: '/rice-sheet', title: 'Rice Sheet | FCFB', description: 'Compare up to 10 Fake College Football teams side by side across ratings, records, and strength of schedule.' },
 ];
 
 export const ROUTE_META = Object.fromEntries(routeList.map(route => [route.path, route]));

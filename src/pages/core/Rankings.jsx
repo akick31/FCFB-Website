@@ -21,6 +21,7 @@ import { getAllSeasons, getCurrentSeasonOrLatest } from '../../api/seasonApi';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { eloWeekBuckets, eloByTeamForWeek, eloRankingForWeek } from '../../utils/eloRankings';
 import { RANKING_METRIC_TYPES, rankingMetricLabel, rankingMetricShortLabel, rankingMetricHigherIsBetter, rankingMetricDescription } from '../../constants/rankingMetrics';
+import { rankMetricEntries } from '../../utils/rankMetricEntries';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
 
@@ -44,12 +45,6 @@ const pythagoreanRecord = (value, wins, losses) => {
     return `${pythagWins}-${gamesPlayed - pythagWins}`;
 };
 
-const rankMetricEntries = (entries, higherIsBetter) => {
-    const sorted = [...entries].sort((a, b) => (higherIsBetter ? b.value - a.value : a.value - b.value));
-    const rankByTeamId = {};
-    sorted.forEach((entry, index) => { rankByTeamId[entry.teamId] = index + 1; });
-    return { sorted, rankByTeamId };
-};
 const weekLabel = (week) => {
     if (week >= 14) return 'Postseason';
     if (week === 13) return 'Conference Championship Week';

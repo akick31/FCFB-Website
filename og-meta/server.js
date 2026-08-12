@@ -6,7 +6,7 @@ const WEBSITE_SERVICE_KEY = process.env.WEBSITE_SERVICE_KEY || '';
 const SITE_URL = process.env.SITE_URL || 'https://fakecollegefootball.com';
 const DEFAULT_IMAGE = `${SITE_URL}/logo512.png`;
 
-// Keep in sync with src/routeMeta.js — this service is a standalone container
+// Keep in sync with src/routeMeta.js: this service is a standalone container
 // and can't import from src/ at runtime, so the static route list is duplicated here.
 const STATIC_ROUTES = [
     { path: '/', title: 'Home | FCFB', description: 'Fake College Football (FCFB) is a play-by-play college football simulation league. Follow live games, conference standings, national rankings, and team stats.' },
@@ -18,6 +18,7 @@ const STATIC_ROUTES = [
     { path: '/schedules', title: 'Schedules | FCFB', description: 'Full season and postseason schedules for every Fake College Football team and conference.' },
     { path: '/records', title: 'Records | FCFB', description: 'All-time and single-season records across the Fake College Football league, from top offenses to record-breaking performances.' },
     { path: '/graphs', title: 'Graphs | FCFB', description: 'Interactive graphs visualizing ELO history, ranking movement, and statistical trends across Fake College Football.' },
+    { path: '/rice-sheet', title: 'Rice Sheet | FCFB', description: 'Compare up to 10 Fake College Football teams side by side across ratings, records, and strength of schedule.' },
 ];
 
 const HOME_ROUTE = STATIC_ROUTES[0];
