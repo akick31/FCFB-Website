@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Autocomplete, TextField } from '@mui/material';
 
-const MAX_TEAMS = 10;
+const MAX_TEAMS = 25;
 
 const TeamPicker = ({ teams, selectedTeams, onChange }) => (
     <Autocomplete
@@ -12,7 +12,7 @@ const TeamPicker = ({ teams, selectedTeams, onChange }) => (
         getOptionLabel={(option) => option.name}
         isOptionEqualToValue={(option, value) => option.id === value.id}
         onChange={(event, newValue) => {
-            if (newValue.length > MAX_TEAMS) return;
+            if (newValue.length > selectedTeams.length && newValue.length > MAX_TEAMS) return;
             onChange(newValue);
         }}
         filterOptions={(options, { inputValue }) => {
