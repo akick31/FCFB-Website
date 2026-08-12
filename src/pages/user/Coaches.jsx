@@ -9,6 +9,7 @@ import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SelectPill from '../../components/ui/SelectPill';
 import DataTable from '../../components/ui/DataTable';
+import LinkCell from '../../components/ui/LinkCell';
 import TeamMark from '../../components/ui/TeamMark';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
@@ -149,13 +150,14 @@ const Coaches = () => {
                 <tbody>
                     {shown.map((user) => {
                         const teamId = user.team ? teamsMap[user.team]?.id : null;
+                        const userHref = `/user-details/${user.username}`;
                         return (
-                            <Box component="tr" key={user.id ?? user.username} sx={{ position: 'relative' }}>
-                                <td className="lft stick">
+                            <tr key={user.id ?? user.username}>
+                                <LinkCell to={userHref} className="lft stick">
                                     <Box sx={{ fontWeight: 700 }}>{user.coach_name || user.username}</Box>
                                     <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem' }}>@{user.username}</Box>
-                                </td>
-                                <td className="lft">
+                                </LinkCell>
+                                <LinkCell to={userHref} className="lft">
                                     {user.team && teamId != null ? (
                                         <Box
                                             component={Link}
@@ -174,17 +176,12 @@ const Coaches = () => {
                                     ) : (
                                         <Box sx={{ color: 'var(--text-dim)' }}>-</Box>
                                     )}
-                                </td>
-                                <td className="lft">{formatPosition(user.position)}</td>
-                                <td className="num">{user.wins || 0}-{user.losses || 0}</td>
-                                <td className="num">{formatWinPct(user.win_percentage)}</td>
-                                <td className="lft"><StatusPill status={coachStatus(user)} /></td>
-                                <Box
-                                    component={Link}
-                                    to={`/user-details/${user.username}`}
-                                    sx={{ position: 'absolute', inset: 0, zIndex: 2 }}
-                                />
-                            </Box>
+                                </LinkCell>
+                                <LinkCell to={userHref} className="lft">{formatPosition(user.position)}</LinkCell>
+                                <LinkCell to={userHref} className="num">{user.wins || 0}-{user.losses || 0}</LinkCell>
+                                <LinkCell to={userHref} className="num">{formatWinPct(user.win_percentage)}</LinkCell>
+                                <LinkCell to={userHref} className="lft"><StatusPill status={coachStatus(user)} /></LinkCell>
+                            </tr>
                         );
                     })}
                 </tbody>

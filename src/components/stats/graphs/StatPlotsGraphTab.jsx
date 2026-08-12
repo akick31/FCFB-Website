@@ -19,12 +19,20 @@ const PLOTS = [
 const num = (stat, key) => stat[key] ?? 0;
 const round1 = (v) => Math.round(v * 10) / 10;
 
-const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope }) => {
+const plotIndexFromLegacyParam = (searchParams) => {
+    const idx = parseInt(searchParams.get('plot'), 10);
+    return Number.isFinite(idx) && idx >= 0 && idx < PLOTS.length ? idx : null;
+};
+
+const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope, sub, onSubChange }) => {
     const conferencesMap = useConferencesMap();
     const [searchParams, setSearchParams] = useSearchParams();
-    const plotParam = parseInt(searchParams.get('plot'), 10);
     const [cf, setCf] = useState(() => (searchParams.get('cf') || 'all').toUpperCase());
-    const [plotIndex, setPlotIndex] = useState(Number.isFinite(plotParam) && plotParam >= 0 && plotParam < PLOTS.length ? plotParam : 0);
+    const [plotIndex, setPlotIndex] = useState(() => {
+        const fromSub = PLOTS.findIndex((p) => p.key === sub);
+        if (fromSub >= 0) return fromSub;
+        return plotIndexFromLegacyParam(searchParams) ?? 0;
+    });
     const [resetNonce, setResetNonce] = useState(0);
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -46,8 +54,17 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope }) => {
     const changePlot = (value) => {
         const idx = PLOTS.findIndex((p) => p.key === value);
         setPlotIndex(idx);
-        updateParams({ plot: idx });
+        onSubChange(value, { clear: ['plot'] });
     };
+
+    useEffect(() => {
+        if (sub !== PLOTS[plotIndex].key || searchParams.has('plot')) onSubChange(PLOTS[plotIndex].key, { clear: ['plot'] });
+    }, []);
+
+    useEffect(() => {
+        const idx = PLOTS.findIndex((p) => p.key === sub);
+        if (idx >= 0 && idx !== plotIndex) setPlotIndex(idx);
+    }, [sub]);
 
     useEffect(() => {
         let active = true;
@@ -152,6 +169,8 @@ StatPlotsGraphTab.propTypes = {
     teamsMap: PropTypes.object.isRequired,
     mode: PropTypes.string,
     scope: PropTypes.string,
+    sub: PropTypes.string,
+    onSubChange: PropTypes.func.isRequired,
 };
 
 export default StatPlotsGraphTab;

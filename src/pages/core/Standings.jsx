@@ -6,6 +6,7 @@ import PageHeading from '../../components/ui/PageHeading';
 import ConferenceTabs from '../../components/team/ConferenceTabs';
 import SelectPill from '../../components/ui/SelectPill';
 import DataTable from '../../components/ui/DataTable';
+import LinkCell from '../../components/ui/LinkCell';
 import TeamMark from '../../components/ui/TeamMark';
 import ConferenceMark from '../../components/ui/ConferenceMark';
 import { getAllTeams } from '../../api/teamApi';
@@ -317,21 +318,22 @@ const Standings = () => {
                                 {section.rows.map((row, index) => {
                                     if (!teamsMap[row.name]) ensureTeam(row.name);
                                     const mark = teamsMap[row.name] || { name: row.name };
+                                    const teamHref = row.id != null ? `/team-details/${row.id}` : null;
                                     return (
-                                        <Box component="tr" key={row.name} sx={{ position: 'relative' }}>
-                                            <td className="lft stick">
+                                        <tr key={row.name}>
+                                            <LinkCell to={teamHref} className="lft stick">
                                                 <div className="teamcell">
                                                     <span className="rk">{index + 1}</span>
                                                     <TeamMark team={mark} size={22} />
                                                     <span className="nm">{row.name}</span>
                                                 </div>
-                                            </td>
-                                            <td className="num">{row.wins}-{row.losses}</td>
-                                            <td className="num">{row.confWins}-{row.confLosses}</td>
-                                            <td className="num">{row.elo != null ? Math.round(row.elo) : '-'}</td>
-                                            <td className="lft" style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{formatOffensivePlaybook(row.offense)}</td>
-                                            <td className="lft" style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{formatDefensivePlaybook(row.defense)}</td>
-                                            <td className="lft">
+                                            </LinkCell>
+                                            <LinkCell to={teamHref} className="num">{row.wins}-{row.losses}</LinkCell>
+                                            <LinkCell to={teamHref} className="num">{row.confWins}-{row.confLosses}</LinkCell>
+                                            <LinkCell to={teamHref} className="num">{row.elo != null ? Math.round(row.elo) : '-'}</LinkCell>
+                                            <LinkCell to={teamHref} className="lft" sx={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{formatOffensivePlaybook(row.offense)}</LinkCell>
+                                            <LinkCell to={teamHref} className="lft" sx={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{formatDefensivePlaybook(row.defense)}</LinkCell>
+                                            <LinkCell to={teamHref} className="lft">
                                                 {row.coach ? (
                                                     <Box
                                                         component={Link}
@@ -341,15 +343,8 @@ const Standings = () => {
                                                         @{row.coach}
                                                     </Box>
                                                 ) : '-'}
-                                            </td>
-                                            {row.id != null && (
-                                                <Box
-                                                    component={Link}
-                                                    to={`/team-details/${row.id}`}
-                                                    sx={{ position: 'absolute', inset: 0, zIndex: 2 }}
-                                                />
-                                            )}
-                                        </Box>
+                                            </LinkCell>
+                                        </tr>
                                     );
                                 })}
                             </React.Fragment>

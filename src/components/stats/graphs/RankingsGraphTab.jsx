@@ -11,11 +11,17 @@ import { getRankingMetricWeeks, getRankingMetrics } from '../../../api/rankingMe
 import { pickTeamColor } from '../../../utils/teamColor';
 import { RANKING_METRIC_TYPES, rankingMetricHigherIsBetter, rankingMetricDescription, rankingMetricLabel } from '../../../constants/rankingMetrics';
 import { useConferencesMap, useSeasonConferenceCodes, seasonConferenceList, conferenceLabel } from '../../constants/conferences';
+import { toSlug, fromSlug } from '../../../utils/slug';
 
 const ELO_VALUE = 'ELO';
 const POLL_VALUE = 'POLL';
 const DEFAULT_RANKING = 'POWER_RATING';
 const POSTSEASON_START_WEEK = 14;
+const RANKING_VALUES = new Set([ELO_VALUE, POLL_VALUE, ...RANKING_METRIC_TYPES.map((entry) => entry.value)]);
+const rankingFromParam = (param) => {
+    const normalized = fromSlug(param);
+    return normalized && RANKING_VALUES.has(normalized) ? normalized : null;
+};
 
 const collapsePostseason = (points) => {
     const regular = points.filter((p) => p.x < POSTSEASON_START_WEEK);
@@ -24,10 +30,12 @@ const collapsePostseason = (points) => {
     return [...regular, { ...postseason[postseason.length - 1], x: POSTSEASON_START_WEEK }];
 };
 
-const RankingsGraphTab = ({ season, teams, teamsMap, mode }) => {
+const RankingsGraphTab = ({ season, teams, teamsMap, mode, sub, onSubChange }) => {
     const conferencesMap = useConferencesMap();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [ranking, setRanking] = useState(searchParams.get('ranking') || DEFAULT_RANKING);
+    const [ranking, setRanking] = useState(
+        () => rankingFromParam(sub) || rankingFromParam(searchParams.get('ranking')) || DEFAULT_RANKING,
+    );
     const [cf, setCf] = useState(() => (searchParams.get('cf') || 'top').toUpperCase());
     const [search, setSearch] = useState(() => searchParams.get('q') || '');
     const [combinePostseason, setCombinePostseason] = useState(() => searchParams.get('combine') === '1');
@@ -41,10 +49,17 @@ const RankingsGraphTab = ({ season, teams, teamsMap, mode }) => {
 
     const changeRanking = (value) => {
         setRanking(value);
-        const next = new URLSearchParams(searchParams);
-        next.set('ranking', value);
-        setSearchParams(next, { replace: true });
+        onSubChange(toSlug(value), { clear: ['ranking'] });
     };
+
+    useEffect(() => {
+        if (toSlug(ranking) !== sub || searchParams.has('ranking')) onSubChange(toSlug(ranking), { clear: ['ranking'] });
+    }, []);
+
+    useEffect(() => {
+        const parsed = rankingFromParam(sub);
+        if (parsed && parsed !== ranking) setRanking(parsed);
+    }, [sub]);
 
     const changeCf = (value) => {
         setCf(value);
@@ -302,6 +317,8 @@ RankingsGraphTab.propTypes = {
     teams: PropTypes.array.isRequired,
     teamsMap: PropTypes.object.isRequired,
     mode: PropTypes.string,
+    sub: PropTypes.string,
+    onSubChange: PropTypes.func.isRequired,
 };
 
 export default RankingsGraphTab;
