@@ -33,12 +33,18 @@ const SCOPED_TABS = ['plots', 'conf', 'pb'];
 const Graphs = () => {
     useSeo({ title: 'Graphs | FCFB', description: 'Interactive graphs visualizing ELO history, ranking movement, and statistical trends across Fake College Football.' });
 
-    const { tab } = useParams();
+    const { tab, sub } = useParams();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { mode } = useColorMode();
     const activeTeamsMap = useTeamsMap();
     const activeTab = TAB_VALUES.includes(tab) ? tab : 'rankings';
+
+    const goToSub = (slug, { clear = [] } = {}) => {
+        const next = new URLSearchParams(searchParams);
+        clear.forEach((key) => next.delete(key));
+        navigate({ pathname: `/graphs/${activeTab}/${slug}`, search: next.toString() }, { replace: true });
+    };
 
     const seasonParam = searchParams.get('season');
 
@@ -110,9 +116,9 @@ const Graphs = () => {
     }, [activeTeamsMap, teams]);
 
     const renderTab = () => {
-        if (activeTab === 'rankings') return <RankingsGraphTab season={season} teams={teams} teamsMap={teamsMap} mode={mode} />;
-        if (activeTab === 'plots') return <StatPlotsGraphTab season={season} teams={teams} teamsMap={teamsMap} mode={mode} scope={scope} />;
-        if (activeTab === 'conf') return <ConferenceStrengthTab season={season} teams={teams} scope={scope} />;
+        if (activeTab === 'rankings') return <RankingsGraphTab season={season} teams={teams} teamsMap={teamsMap} mode={mode} sub={sub} onSubChange={goToSub} />;
+        if (activeTab === 'plots') return <StatPlotsGraphTab season={season} teams={teams} teamsMap={teamsMap} mode={mode} scope={scope} sub={sub} onSubChange={goToSub} />;
+        if (activeTab === 'conf') return <ConferenceStrengthTab season={season} teams={teams} scope={scope} sub={sub} onSubChange={goToSub} />;
         return <PlaybooksGraphTab season={season} scope={scope} />;
     };
 
