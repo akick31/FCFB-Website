@@ -289,7 +289,7 @@ const AppRoutes = () => {
                         <Route path="/league-stats/:tab/:season/:p1" element={<Navigate to="/stats/league" replace />} />
                         <Route path="/league-stats/:tab/:season/:p1/:p2" element={<Navigate to="/stats/league" replace />} />
                         <Route path="/leaderboard" element={<Navigate to="/stats/leaderboard" replace />} />
-                        <Route path="/elo-history" element={<Navigate to="/graphs/elo" replace />} />
+                        <Route path="/elo-history" element={<Navigate to="/graphs/rankings?ranking=ELO" replace />} />
                         <Route path="/graphs" element={<Graphs />} />
                         <Route path="/graphs/:tab" element={<Graphs />} />
                         <Route path="/reset-password" element={<ResetPassword />} />

@@ -5,6 +5,8 @@ import { checkIfUserIsAdmin } from '../../utils/utils';
 import { getTeamById } from '../../api/teamApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getRankingsHistory } from '../../api/rankingsHistoryApi.jsx';
+import { getRankingMetricWeeks, getRankingMetrics } from '../../api/rankingMetricApi';
+import { RANKING_METRIC_TYPES, rankingMetricLabel, rankingMetricShortLabel, rankingMetricHigherIsBetter } from '../../constants/rankingMetrics';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getScheduleBySeasonAndTeam } from '../../api/scheduleApi';
 import { getLatestCompletedSeason, getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
@@ -70,6 +72,19 @@ const TeamDetails = () => {
     const [loading, setLoading] = useState(true);
     const [seasonLoading, setSeasonLoading] = useState(false);
     const [error, setError] = useState('');
+    const [currentSeason, setCurrentSeason] = useState(null);
+    const [metricStats, setMetricStats] = useState({ values: {}, ranks: {}, totals: {} });
+    const [metricStatus, setMetricStatus] = useState({ season: null, fallback: false });
+    const [metricsLoading, setMetricsLoading] = useState(true);
+    const [metricTrends, setMetricTrends] = useState({});
+    const [metricTrendsLoading, setMetricTrendsLoading] = useState(false);
+    const [collapsedSections, setCollapsedSections] = useState(() => new Set());
+
+    const toggleSection = (key) => setCollapsedSections((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key); else next.add(key);
+        return next;
+    });
 
     useSeo({
         title: team ? `${team.name} | FCFB` : 'Team Details | FCFB',
@@ -92,6 +107,7 @@ const TeamDetails = () => {
                     getFilteredSeasonStats(teamData.name, null, null, null, 0, 50).catch(() => null),
                 ]);
                 if (!active) return;
+                setCurrentSeason(defSeason);
 
                 const eloRows = (elo || [])
                     .filter((row) => row.elo != null && row.season >= 1)
@@ -154,6 +170,81 @@ const TeamDetails = () => {
         return () => { active = false; };
     }, [team, seasonView, seasons, scope]);
 
+    useEffect(() => {
+        if (!team || currentSeason == null) return undefined;
+        let active = true;
+        setMetricsLoading(true);
+        const fetchMetric = async (season, entry) => {
+            const weeks = await getRankingMetricWeeks(season, entry.value).catch(() => []);
+            if (!weeks || !weeks.length) return { value: null, rank: null, total: 0 };
+            const week = weeks[weeks.length - 1];
+            const rows = await getRankingMetrics(season, week, entry.value).catch(() => []);
+            const higherIsBetter = rankingMetricHigherIsBetter(entry.value);
+            const sorted = [...rows].sort((a, b) => (higherIsBetter ? b.value - a.value : a.value - b.value));
+            const index = sorted.findIndex((row) => row.teamId === team.id);
+            return { value: index >= 0 ? sorted[index].value : null, rank: index >= 0 ? index + 1 : null, total: sorted.length };
+        };
+        const fetchSeason = async (season) => {
+            const results = await Promise.all(RANKING_METRIC_TYPES.map((entry) => fetchMetric(season, entry)));
+            const values = {};
+            const ranks = {};
+            const totals = {};
+            let any = false;
+            RANKING_METRIC_TYPES.forEach((entry, index) => {
+                values[entry.value] = results[index].value;
+                ranks[entry.value] = results[index].rank;
+                totals[entry.value] = results[index].total;
+                if (results[index].value != null) any = true;
+            });
+            return { values, ranks, totals, any };
+        };
+        (async () => {
+            const current = await fetchSeason(currentSeason);
+            if (!active) return;
+            if (current.any) {
+                setMetricStats(current);
+                setMetricStatus({ season: currentSeason, fallback: false });
+                return;
+            }
+            const previous = await fetchSeason(currentSeason - 1);
+            if (!active) return;
+            setMetricStats(previous);
+            setMetricStatus({ season: currentSeason - 1, fallback: previous.any });
+        })().finally(() => { if (active) setMetricsLoading(false); });
+        return () => { active = false; };
+    }, [team, currentSeason]);
+
+    useEffect(() => {
+        if (!team || seasonView == null || seasonView === 'alltime') { setMetricTrends({}); return undefined; }
+        let active = true;
+        setMetricTrendsLoading(true);
+        Promise.all(
+            RANKING_METRIC_TYPES.map(async (entry) => {
+                const weeks = await getRankingMetricWeeks(seasonView, entry.value).catch(() => []);
+                const higherIsBetter = rankingMetricHigherIsBetter(entry.value);
+                const byWeek = await Promise.all(
+                    (weeks || []).map((week) => getRankingMetrics(seasonView, week, entry.value).catch(() => [])),
+                );
+                const points = [];
+                let maxTeams = 25;
+                (weeks || []).forEach((week, index) => {
+                    const rows = byWeek[index] || [];
+                    if (rows.length > maxTeams) maxTeams = rows.length;
+                    const sorted = [...rows].sort((a, b) => (higherIsBetter ? b.value - a.value : a.value - b.value));
+                    const rankIndex = sorted.findIndex((row) => row.teamId === team.id);
+                    if (rankIndex >= 0) points.push({ week, value: rankIndex + 1 });
+                });
+                return { points, maxTeams };
+            }),
+        ).then((results) => {
+            if (!active) return;
+            const next = {};
+            RANKING_METRIC_TYPES.forEach((entry, index) => { next[entry.value] = results[index]; });
+            setMetricTrends(next);
+        }).finally(() => { if (active) setMetricTrendsLoading(false); });
+        return () => { active = false; };
+    }, [team, seasonView]);
+
     const changeScope = (nextScope) => {
         const next = new URLSearchParams(searchParams);
         if (nextScope === 'postseason') {
@@ -212,15 +303,42 @@ const TeamDetails = () => {
             )}
             <TeamHeader team={team} mark={mark} pollRank={team.coaches_poll_ranking} />
 
-            <SectionTitle title="Program history" />
-            <TileGrid>
-                <StatTile label="All-time record" value={`${team.overall_wins || 0}-${team.overall_losses || 0}`} caption={`${team.overall_conference_wins || 0}-${team.overall_conference_losses || 0} conference`} />
-                <StatTile label="National titles" value={team.national_championship_wins || 0} />
-                <StatTile label="Playoff record" value={`${team.playoff_wins || 0}-${team.playoff_losses || 0}`} />
-                <StatTile label="Bowl record" value={`${team.bowl_wins || 0}-${team.bowl_losses || 0}`} />
-                <StatTile label="Conference titles" value={team.conference_championship_wins || 0} />
-                <StatTile label="All-time ELO" value={team.overall_elo != null ? Math.round(team.overall_elo) : '-'} />
-            </TileGrid>
+            <SectionTitle title="Program history" collapsible collapsed={collapsedSections.has('history')} onToggle={() => toggleSection('history')} />
+            {!collapsedSections.has('history') && (
+                <TileGrid>
+                    <StatTile label="All-time record" value={`${team.overall_wins || 0}-${team.overall_losses || 0}`} caption={`${team.overall_conference_wins || 0}-${team.overall_conference_losses || 0} conference`} />
+                    <StatTile label="National titles" value={team.national_championship_wins || 0} />
+                    <StatTile label="Playoff record" value={`${team.playoff_wins || 0}-${team.playoff_losses || 0}`} />
+                    <StatTile label="Bowl record" value={`${team.bowl_wins || 0}-${team.bowl_losses || 0}`} />
+                    <StatTile label="Conference titles" value={team.conference_championship_wins || 0} />
+                    <StatTile label="All-time ELO" value={team.overall_elo != null ? Math.round(team.overall_elo) : '-'} />
+                </TileGrid>
+            )}
+
+            {!metricsLoading && metricStatus.season != null && Object.values(metricStats.values).some((value) => value != null) && (
+                <>
+                    <SectionTitle
+                        title="Computer Rankings"
+                        note={`Season ${metricStatus.season}${metricStatus.fallback ? ' (final)' : ''}`}
+                        collapsible
+                        collapsed={collapsedSections.has('metrics')}
+                        onToggle={() => toggleSection('metrics')}
+                    />
+                    {!collapsedSections.has('metrics') && (
+                        <TileGrid minTile={100} sx={{ gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 130px))', justifyContent: 'center' }}>
+                            {RANKING_METRIC_TYPES.map((entry) => (
+                                <StatTile
+                                    key={entry.value}
+                                    compact
+                                    label={rankingMetricLabel(entry.value)}
+                                    value={metricStats.values[entry.value] != null ? metricStats.values[entry.value].toFixed(2) : '-'}
+                                    caption={metricStats.ranks[entry.value] != null ? `#${metricStats.ranks[entry.value]} of ${metricStats.totals[entry.value]}` : undefined}
+                                />
+                            ))}
+                        </TileGrid>
+                    )}
+                </>
+            )}
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: '22px', flexWrap: 'wrap' }}>
                 <SegTabs value={scope} onChange={changeScope} options={SCOPE_TABS} ariaLabel="Stats scope" />
@@ -235,27 +353,59 @@ const TeamDetails = () => {
                 />
             </Box>
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.3fr 1fr' }, gap: '16px', mt: '12px' }}>
-                <TeamSchedule teamName={team.name} schedule={schedule} season={seasonView} teamsMap={teamsMap} loading={seasonLoading} showSeason={isAllTime} subtitle={isAllTime ? 'Last 12 games' : undefined} />
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {eloTrend.length > 1 && (
-                        <Panel header="ELO trend" more={rangeLabel}>
-                            <Box sx={{ p: 2 }}>
-                                <MiniTrendChart data={eloTrend} color={lineColor} formatLabel={(p) => `Season ${p.season}, Week ${p.realWeek}, ELO ${p.value}`} />
-                            </Box>
-                        </Panel>
-                    )}
-                    {rankTrend.length > 1 && (
-                        <Panel header="Coaches Poll trend" more={rangeLabel}>
-                            <Box sx={{ p: 2 }}>
-                                <MiniTrendChart data={rankTrend} color={lineColor} reversed formatLabel={(p) => `Season ${p.season}, Week ${p.realWeek}, #${p.value}`} />
-                            </Box>
-                        </Panel>
-                    )}
+            <SectionTitle title="Schedule" note={rangeLabel} collapsible collapsed={collapsedSections.has('schedule')} onToggle={() => toggleSection('schedule')} />
+            {!collapsedSections.has('schedule') && (
+                <Box>
+                    <TeamSchedule teamName={team.name} schedule={schedule} season={seasonView} teamsMap={teamsMap} loading={seasonLoading} showSeason={isAllTime} subtitle={isAllTime ? 'Last 12 games' : undefined} />
                 </Box>
-            </Box>
+            )}
 
-            <SectionTitle title="Statistics" note={rangeLabel} />
+            {(eloTrend.length > 1 || rankTrend.length > 1 || (!isAllTime && (metricTrendsLoading || RANKING_METRIC_TYPES.some((entry) => (metricTrends[entry.value]?.points || []).length > 1)))) && (
+                <>
+                    <SectionTitle title="Trends" note={rangeLabel} collapsible collapsed={collapsedSections.has('trends')} onToggle={() => toggleSection('trends')} />
+                    {!collapsedSections.has('trends') && (
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '16px' }}>
+                        {eloTrend.length > 1 && (
+                            <Panel header="ELO trend" more={rangeLabel}>
+                                <Box sx={{ p: 2 }}>
+                                    <MiniTrendChart data={eloTrend} color={lineColor} formatLabel={(p) => `Season ${p.season}, Week ${p.realWeek}, ELO ${p.value}`} />
+                                </Box>
+                            </Panel>
+                        )}
+                        {rankTrend.length > 1 && (
+                            <Panel header="Coaches Poll trend" more={rangeLabel}>
+                                <Box sx={{ p: 2 }}>
+                                    <MiniTrendChart data={rankTrend} color={lineColor} reversed formatLabel={(p) => `Season ${p.season}, Week ${p.realWeek}, #${p.value}`} />
+                                </Box>
+                            </Panel>
+                        )}
+                        {!isAllTime && metricTrendsLoading && (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress size={26} /></Box>
+                        )}
+                        {!isAllTime && !metricTrendsLoading && RANKING_METRIC_TYPES.map((entry) => {
+                            const { points = [], maxTeams = 25 } = metricTrends[entry.value] || {};
+                            if (points.length < 2) return null;
+                            return (
+                                <Panel key={entry.value} header={rankingMetricShortLabel(entry.value)} more={`${points.length} weeks`}>
+                                    <Box sx={{ p: 2 }}>
+                                        <MiniTrendChart
+                                            data={points}
+                                            color={lineColor}
+                                            reversed
+                                            yDomain={[1, maxTeams]}
+                                            formatLabel={(p) => `Week ${p.week}: #${p.value}`}
+                                        />
+                                    </Box>
+                                </Panel>
+                            );
+                        })}
+                    </Box>
+                    )}
+                </>
+            )}
+
+            <SectionTitle title="Statistics" note={rangeLabel} collapsible collapsed={collapsedSections.has('stats')} onToggle={() => toggleSection('stats')} />
+            {!collapsedSections.has('stats') && (
             <Panel>
                 {seasonLoading && !isAllTime ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress size={26} /></Box>
@@ -265,6 +415,7 @@ const TeamDetails = () => {
                     <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No statistics.</Box>
                 )}
             </Panel>
+            )}
         </PageWrap>
     );
 };

@@ -3,6 +3,8 @@ import { Box, Alert, CircularProgress } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
+import SegTabs from '../../components/ui/SegTabs';
+import RankingMetricsPanel from './RankingMetricsPanel';
 import { uploadRankings } from '../../api/rankingApi';
 import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
 import { weekLabel } from '../../utils/formatText';
@@ -46,6 +48,7 @@ const parseCsvToNames = (text) => {
 
 const RankingsManagement = () => {
     const [searchParams, setSearchParams] = useSearchParams();
+    const [tab, setTabState] = useState(searchParams.get('tab') || 'polls');
     const [season, setSeasonState] = useState(searchParams.get('season') || '');
     const [week, setWeekState] = useState(searchParams.get('week') ? Number(searchParams.get('week')) : 1);
     const [pollType, setPollTypeState] = useState(searchParams.get('pollType') || 'COACHES_POLL');
@@ -62,6 +65,7 @@ const RankingsManagement = () => {
     const setSeason = (value) => { setSeasonState(value); updateParam('season', value); };
     const setWeek = (value) => { setWeekState(value); updateParam('week', value); };
     const setPollType = (value) => { setPollTypeState(value); updateParam('pollType', value); };
+    const setTab = (value) => { setTabState(value); updateParam('tab', value); };
 
     useEffect(() => {
         Promise.all([
@@ -117,57 +121,73 @@ const RankingsManagement = () => {
 
     return (
         <AdminLayout title="Rankings">
-            <Panel header="Upload rankings">
-                <Box sx={{ p: '18px', maxWidth: 640 }}>
-                    <Box sx={{ color: 'var(--text-muted)', fontSize: '0.82rem', mb: '18px' }}>
-                        Paste the teams in ranked order (one per line, rank = line number), or upload a CSV. Uploading replaces
-                        that week&apos;s poll and updates each team&apos;s current ranking.
-                    </Box>
+            <Box sx={{ mb: '16px' }}>
+                <SegTabs
+                    ariaLabel="Rankings admin section"
+                    value={tab}
+                    onChange={setTab}
+                    options={[
+                        { value: 'polls', label: 'Polls' },
+                        { value: 'metrics', label: 'Ranking Metrics' },
+                    ]}
+                />
+            </Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px', mb: '14px' }}>
-                        <Box>
-                            <Box sx={labelSx}>Season</Box>
-                            <Box component="input" type="number" value={season} onChange={(e) => setSeason(e.target.value)} sx={inputSx} />
+            {tab === 'metrics' ? (
+                <RankingMetricsPanel />
+            ) : (
+                <Panel header="Upload rankings">
+                    <Box sx={{ p: '18px', maxWidth: 640 }}>
+                        <Box sx={{ color: 'var(--text-muted)', fontSize: '0.82rem', mb: '18px' }}>
+                            Paste the teams in ranked order (one per line, rank = line number), or upload a CSV. Uploading replaces
+                            that week&apos;s poll and updates each team&apos;s current ranking.
                         </Box>
-                        <Box>
-                            <Box sx={labelSx}>Week</Box>
-                            <Box component="select" value={week} onChange={(e) => setWeek(e.target.value)} sx={selectSx}>
-                                {WEEK_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px', mb: '14px' }}>
+                            <Box>
+                                <Box sx={labelSx}>Season</Box>
+                                <Box component="input" type="number" value={season} onChange={(e) => setSeason(e.target.value)} sx={inputSx} />
+                            </Box>
+                            <Box>
+                                <Box sx={labelSx}>Week</Box>
+                                <Box component="select" value={week} onChange={(e) => setWeek(e.target.value)} sx={selectSx}>
+                                    {WEEK_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                </Box>
+                            </Box>
+                            <Box>
+                                <Box sx={labelSx}>Poll</Box>
+                                <Box component="select" value={pollType} onChange={(e) => setPollType(e.target.value)} sx={selectSx}>
+                                    {POLL_TYPES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                </Box>
                             </Box>
                         </Box>
-                        <Box>
-                            <Box sx={labelSx}>Poll</Box>
-                            <Box component="select" value={pollType} onChange={(e) => setPollType(e.target.value)} sx={selectSx}>
-                                {POLL_TYPES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+
+                        <Box sx={{ mb: '14px' }}>
+                            <Box sx={labelSx}>Teams (ranked order, one per line)</Box>
+                            <Box component="textarea" rows={10} value={namesText} onChange={(e) => setNamesText(e.target.value)} placeholder={'Georgia\nOhio State\nMichigan\n...'} sx={textareaSx} />
+                        </Box>
+
+                        <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', mb: '14px' }}>
+                            <Box component="button" type="button" onClick={downloadTemplate} sx={btnGhostSx}>&darr; CSV template</Box>
+                            <Box component="label" sx={{ ...btnGhostSx, display: 'inline-flex', alignItems: 'center' }}>
+                                &uarr; Upload CSV
+                                <Box component="input" type="file" accept=".csv,text/csv" onChange={handleCsvUpload} sx={{ display: 'none' }} />
+                            </Box>
+                            <Box component="button" type="button" onClick={handleSubmit} disabled={submitting} sx={{ ...btnPrimarySx, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                {submitting && <CircularProgress size={16} sx={{ color: '#fff' }} />}
+                                Upload {pollLabel}, {weekLabel}
                             </Box>
                         </Box>
-                    </Box>
 
-                    <Box sx={{ mb: '14px' }}>
-                        <Box sx={labelSx}>Teams (ranked order, one per line)</Box>
-                        <Box component="textarea" rows={10} value={namesText} onChange={(e) => setNamesText(e.target.value)} placeholder={'Georgia\nOhio State\nMichigan\n...'} sx={textareaSx} />
+                        {error && <Alert severity="error">{error}</Alert>}
+                        {result && (
+                            <Alert severity="success">
+                                Uploaded {result.length} teams for {pollLabel}, {weekLabel}, Season {season}.
+                            </Alert>
+                        )}
                     </Box>
-
-                    <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', mb: '14px' }}>
-                        <Box component="button" type="button" onClick={downloadTemplate} sx={btnGhostSx}>&darr; CSV template</Box>
-                        <Box component="label" sx={{ ...btnGhostSx, display: 'inline-flex', alignItems: 'center' }}>
-                            &uarr; Upload CSV
-                            <Box component="input" type="file" accept=".csv,text/csv" onChange={handleCsvUpload} sx={{ display: 'none' }} />
-                        </Box>
-                        <Box component="button" type="button" onClick={handleSubmit} disabled={submitting} sx={{ ...btnPrimarySx, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                            {submitting && <CircularProgress size={16} sx={{ color: '#fff' }} />}
-                            Upload {pollLabel}, {weekLabel}
-                        </Box>
-                    </Box>
-
-                    {error && <Alert severity="error">{error}</Alert>}
-                    {result && (
-                        <Alert severity="success">
-                            Uploaded {result.length} teams for {pollLabel}, {weekLabel}, Season {season}.
-                        </Alert>
-                    )}
-                </Box>
-            </Panel>
+                </Panel>
+            )}
         </AdminLayout>
     );
 };

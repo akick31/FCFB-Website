@@ -34,7 +34,7 @@ const Score = ({ value, dimmed, winner, side }) => (
 
 Score.propTypes = { value: PropTypes.number, dimmed: PropTypes.bool, winner: PropTypes.bool, side: PropTypes.string };
 
-const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor, spreadText, threadLink, columns, awayQuarters, homeQuarters, showQuarters }) => {
+const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor, spreadText, venueText, threadLink, columns, awayQuarters, homeQuarters, showQuarters }) => {
     const homeWin = game.home_score > game.away_score;
     const overtime = game.quarter > 4;
     const finalLabel = game.game_status === 'FINAL'
@@ -71,7 +71,7 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
 
                 <TeamMark team={awayMark} size={64} sx={{ zIndex: 1 }} />
                 <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: { xs: '8px', sm: '16px' }, minWidth: 0, zIndex: 1 }}>
-                    <CoachlessName mark={awayMark} name={game.away_team} rank={game.away_team_rank} record={awayRecord} align="right" teamId={game.away_team_id} />
+                    <CoachlessName mark={awayMark} name={game.away_team} rank={game.away_team_rank} record={awayRecord} align="right" teamId={awayMark?.id} />
                     <Score value={game.away_score} dimmed={homeWin} winner={!homeWin} side="away" />
                 </Box>
 
@@ -91,10 +91,16 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
 
                 <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: { xs: '8px', sm: '16px' }, minWidth: 0, zIndex: 1 }}>
                     <Score value={game.home_score} dimmed={!homeWin} winner={homeWin} side="home" />
-                    <CoachlessName mark={homeMark} name={game.home_team} rank={game.home_team_rank} record={homeRecord} align="left" teamId={game.home_team_id} />
+                    <CoachlessName mark={homeMark} name={game.home_team} rank={game.home_team_rank} record={homeRecord} align="left" teamId={homeMark?.id} />
                 </Box>
                 <TeamMark team={homeMark} size={64} sx={{ zIndex: 1 }} />
             </Box>
+
+            {venueText && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', pb: threadLink ? 0.75 : 1.25, fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }}>
+                    {venueText}
+                </Box>
+            )}
 
             {threadLink && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', pb: 1.25, borderTop: '1px solid var(--line-soft)', pt: 1 }}>
@@ -113,6 +119,7 @@ GameScorebug.propTypes = {
     awayColor: PropTypes.string,
     homeColor: PropTypes.string,
     spreadText: PropTypes.string,
+    venueText: PropTypes.string,
     threadLink: PropTypes.string,
     columns: PropTypes.array.isRequired,
     awayQuarters: PropTypes.array.isRequired,

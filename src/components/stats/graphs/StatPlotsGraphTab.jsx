@@ -7,7 +7,7 @@ import SelectPill from '../../ui/SelectPill';
 import SegTabs from '../../ui/SegTabs';
 import LogoScatterChart from '../../charts/LogoScatterChart';
 import { getFilteredSeasonStats } from '../../../api/seasonStatsApi';
-import { useConferencesMap, activeConferenceList, conferenceLabel } from '../../constants/conferences';
+import { useConferencesMap, useSeasonConferenceCodes, seasonConferenceList, conferenceLabel } from '../../constants/conferences';
 import { pickTeamColor } from '../../../utils/teamColor';
 
 const PLOTS = [
@@ -65,9 +65,10 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope }) => {
         () => new Set([...teams].sort((a, b) => (b.current_elo || 0) - (a.current_elo || 0)).slice(0, 25).map((t) => t.name)),
         [teams],
     );
+    const seasonConferenceCodes = useSeasonConferenceCodes(season);
     const confOptions = useMemo(
-        () => activeConferenceList().filter((c) => teams.some((t) => t.conference === c.code)).map((c) => ({ value: c.code, label: conferenceLabel(c.code) })),
-        [teams, conferencesMap],
+        () => seasonConferenceList(seasonConferenceCodes).map((c) => ({ value: c.code, label: conferenceLabel(c.code) })),
+        [seasonConferenceCodes, conferencesMap],
     );
 
     const plot = PLOTS[plotIndex];

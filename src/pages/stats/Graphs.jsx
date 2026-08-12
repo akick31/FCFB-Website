@@ -12,14 +12,12 @@ import { getAllSeasons } from '../../api/seasonApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { seasonHasStarted } from '../../utils/statsCatalog';
 import { useSeo } from '../../hooks/useSeo';
-import EloGraphTab from '../../components/stats/graphs/EloGraphTab';
 import RankingsGraphTab from '../../components/stats/graphs/RankingsGraphTab';
 import StatPlotsGraphTab from '../../components/stats/graphs/StatPlotsGraphTab';
 import ConferenceStrengthTab from '../../components/stats/graphs/ConferenceStrengthTab';
 import PlaybooksGraphTab from '../../components/stats/graphs/PlaybooksGraphTab';
 
 const TABS = [
-    { value: 'elo', label: 'ELO' },
     { value: 'rankings', label: 'Rankings' },
     { value: 'plots', label: 'Stat Plots' },
     { value: 'conf', label: 'Conference Strength' },
@@ -40,7 +38,7 @@ const Graphs = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const { mode } = useColorMode();
     const activeTeamsMap = useTeamsMap();
-    const activeTab = TAB_VALUES.includes(tab) ? tab : 'elo';
+    const activeTab = TAB_VALUES.includes(tab) ? tab : 'rankings';
 
     const seasonParam = searchParams.get('season');
 
@@ -71,7 +69,7 @@ const Graphs = () => {
     };
 
     useEffect(() => {
-        if (!tab) navigate({ pathname: '/graphs/elo', search: searchParams.toString() }, { replace: true });
+        if (!tab) navigate({ pathname: '/graphs/rankings', search: searchParams.toString() }, { replace: true });
     }, [tab, navigate]);
 
     useEffect(() => {
@@ -112,7 +110,6 @@ const Graphs = () => {
     }, [activeTeamsMap, teams]);
 
     const renderTab = () => {
-        if (activeTab === 'elo') return <EloGraphTab season={season} teams={teams} teamsMap={teamsMap} mode={mode} />;
         if (activeTab === 'rankings') return <RankingsGraphTab season={season} teams={teams} teamsMap={teamsMap} mode={mode} />;
         if (activeTab === 'plots') return <StatPlotsGraphTab season={season} teams={teams} teamsMap={teamsMap} mode={mode} scope={scope} />;
         if (activeTab === 'conf') return <ConferenceStrengthTab season={season} teams={teams} scope={scope} />;
