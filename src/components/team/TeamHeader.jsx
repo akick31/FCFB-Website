@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { formatConference, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
+import { useVenuesMap } from '../../hooks/useVenuesMap';
 
 const luminance = (hex) => {
     if (!hex) return 0.5;
@@ -15,9 +16,14 @@ const luminance = (hex) => {
 };
 
 const TeamHeader = ({ team, mark, pollRank }) => {
+    const venuesMap = useVenuesMap();
     const primary = team.primary_color || '#004260';
     const logo = luminance(primary) < 0.62 ? (mark?.logoDark || mark?.logo) : (mark?.logo || mark?.logoDark);
     const coach = team.coach_usernames?.[0];
+    const venueLocation = team.stadium ? venuesMap[team.stadium] : null;
+    const venueText = team.stadium
+        ? (venueLocation?.city && venueLocation?.state ? `${team.stadium} - ${venueLocation.city}, ${venueLocation.state}` : team.stadium)
+        : null;
 
     return (
         <Box sx={{ borderRadius: 'var(--r-lg)', overflow: 'hidden', border: '1px solid var(--line)', position: 'relative' }}>
@@ -44,9 +50,6 @@ const TeamHeader = ({ team, mark, pollRank }) => {
                     <Box sx={{ opacity: 0.85, fontWeight: 600, fontSize: '0.92rem' }}>
                         Current ELO: {team.current_elo != null ? Math.round(team.current_elo) : '-'}
                     </Box>
-                    {team.stadium && (
-                        <Box sx={{ opacity: 0.82, fontSize: '0.82rem', mt: '3px' }}>{team.stadium}</Box>
-                    )}
                     {coach ? (
                         <Box
                             component={Link}
@@ -59,6 +62,9 @@ const TeamHeader = ({ team, mark, pollRank }) => {
                         <Box sx={{ opacity: 0.82, fontSize: '0.82rem', mt: '5px' }}>
                             Head Coach vacant, {formatOffensivePlaybook(team.offensive_playbook)} / {formatDefensivePlaybook(team.defensive_playbook)}
                         </Box>
+                    )}
+                    {venueText && (
+                        <Box sx={{ opacity: 0.82, fontSize: '0.82rem', mt: '3px' }}>{venueText}</Box>
                     )}
                 </Box>
             </Box>

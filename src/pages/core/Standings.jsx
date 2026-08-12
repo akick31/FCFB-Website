@@ -53,18 +53,23 @@ const buildHistoricalData = (conferenceMap, scheduleRows, eloRows, seasonStatsRo
         if (row.team) statsByTeam[row.team] = row;
     });
 
-    const lastGameByTeam = {};
+    const coachCountsByTeam = {};
     (gameRows || []).forEach((game) => {
-        [game.home_team, game.away_team].forEach((team) => {
-            if (!team) return;
-            const current = lastGameByTeam[team];
-            if (!current || (game.week || 0) > (current.week || 0)) lastGameByTeam[team] = game;
+        [[game.home_team, game.home_coaches?.[0]], [game.away_team, game.away_coaches?.[0]]].forEach(([team, coach]) => {
+            if (!team || !coach) return;
+            const counts = coachCountsByTeam[team] || {};
+            counts[coach] = (counts[coach] || 0) + 1;
+            coachCountsByTeam[team] = counts;
         });
     });
     const coachByTeam = {};
-    Object.entries(lastGameByTeam).forEach(([team, game]) => {
-        const coaches = game.home_team === team ? game.home_coaches : game.away_coaches;
-        coachByTeam[team] = coaches?.[0] || null;
+    Object.entries(coachCountsByTeam).forEach(([team, counts]) => {
+        let best = null;
+        let bestCount = 0;
+        Object.entries(counts).forEach(([coach, count]) => {
+            if (count > bestCount) { best = coach; bestCount = count; }
+        });
+        coachByTeam[team] = best;
     });
 
     return { conferenceMap: conferenceMap || {}, recordByTeam, eloByTeam, statsByTeam, coachByTeam, scheduleRows: scheduleRows || [] };

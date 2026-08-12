@@ -1,19 +1,17 @@
-const bucket = (week) => (week > 13 ? 14 : week);
-
 export const eloWeekBuckets = (eloHistory, season) => {
     const weeks = new Set();
     for (const row of eloHistory) {
         if (row.season !== season || row.week == null) continue;
-        weeks.add(bucket(row.week));
+        weeks.add(row.week);
     }
     return [...weeks].sort((a, b) => a - b);
 };
 
-export const eloByTeamForWeek = (eloHistory, season, weekBucket) => {
+export const eloByTeamForWeek = (eloHistory, season, week) => {
     const latest = new Map();
     for (const row of eloHistory) {
         if (row.season !== season || row.week == null || row.elo == null) continue;
-        if (bucket(row.week) > weekBucket) continue;
+        if (row.week > week) continue;
         const prior = latest.get(row.team);
         if (!prior || row.week >= prior.week) latest.set(row.team, { week: row.week, elo: row.elo });
     }
@@ -22,15 +20,14 @@ export const eloByTeamForWeek = (eloHistory, season, weekBucket) => {
     return eloByTeam;
 };
 
-export const eloRankingForWeek = (eloHistory, season, weekBucket) => {
+export const eloRankingForWeek = (eloHistory, season, week) => {
     const stats = new Map();
     for (const row of eloHistory) {
         if (row.season !== season || row.week == null) continue;
-        const rowBucket = bucket(row.week);
-        if (rowBucket > weekBucket) continue;
+        if (row.week > week) continue;
         let entry = stats.get(row.team);
         if (!entry) { entry = { week: -1, elo: null, wins: 0, losses: 0 }; stats.set(row.team, entry); }
-        if (rowBucket < weekBucket) {
+        if (row.week < week) {
             if (row.result === 'W') entry.wins += 1;
             else if (row.result === 'L') entry.losses += 1;
         }

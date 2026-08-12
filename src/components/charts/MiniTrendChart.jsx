@@ -16,34 +16,40 @@ const TrendTooltip = ({ active, payload, formatLabel }) => {
 
 TrendTooltip.propTypes = { active: PropTypes.bool, payload: PropTypes.array, formatLabel: PropTypes.func.isRequired };
 
-const MiniTrendChart = ({ data, color, reversed = false, formatLabel, height = 150 }) => (
-    <Box sx={{ width: '100%', height }}>
-        <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 10, right: 12, bottom: 4, left: 0 }}>
-                <CartesianGrid stroke="var(--line-soft)" vertical={false} />
-                <XAxis dataKey="week" tick={{ fontSize: 10, fill: 'var(--text-dim)' }} tickLine={false} axisLine={{ stroke: 'var(--line-soft)' }} />
-                <YAxis
-                    reversed={reversed}
-                    domain={reversed ? [1, 25] : ['auto', 'auto']}
-                    ticks={reversed ? POLL_TICKS : undefined}
-                    interval={0}
-                    padding={reversed ? { top: 8, bottom: 2 } : { top: 0, bottom: 0 }}
-                    tick={{ fontSize: 10, fill: 'var(--text-dim)' }}
-                    tickLine={false}
-                    axisLine={false}
-                    width={reversed ? 34 : 48}
-                />
-                <Tooltip content={<TrendTooltip formatLabel={formatLabel} />} cursor={{ stroke: 'var(--brand)', strokeWidth: 1 }} />
-                <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2.4} dot={false} activeDot={{ r: 4, stroke: 'var(--surface)', strokeWidth: 2 }} isAnimationActive={false} />
-            </LineChart>
-        </ResponsiveContainer>
-    </Box>
-);
+const MiniTrendChart = ({ data, color, reversed = false, yDomain, yTicks, formatLabel, height = 150 }) => {
+    const domain = yDomain || (reversed ? [1, 25] : ['auto', 'auto']);
+    const ticks = yTicks || (reversed ? POLL_TICKS : undefined);
+    return (
+        <Box sx={{ width: '100%', height }}>
+            <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data} margin={{ top: 10, right: 12, bottom: 4, left: 0 }}>
+                    <CartesianGrid stroke="var(--line-soft)" vertical={false} />
+                    <XAxis dataKey="week" tick={{ fontSize: 10, fill: 'var(--text-dim)' }} tickLine={false} axisLine={{ stroke: 'var(--line-soft)' }} />
+                    <YAxis
+                        reversed={reversed}
+                        domain={domain}
+                        ticks={ticks}
+                        interval={ticks ? 0 : undefined}
+                        padding={reversed ? { top: 8, bottom: 2 } : { top: 0, bottom: 0 }}
+                        tick={{ fontSize: 10, fill: 'var(--text-dim)' }}
+                        tickLine={false}
+                        axisLine={false}
+                        width={reversed ? 34 : 48}
+                    />
+                    <Tooltip content={<TrendTooltip formatLabel={formatLabel} />} cursor={{ stroke: 'var(--brand)', strokeWidth: 1 }} />
+                    <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2.4} dot={false} activeDot={{ r: 4, stroke: 'var(--surface)', strokeWidth: 2 }} isAnimationActive={false} />
+                </LineChart>
+            </ResponsiveContainer>
+        </Box>
+    );
+};
 
 MiniTrendChart.propTypes = {
     data: PropTypes.array.isRequired,
     color: PropTypes.string.isRequired,
     reversed: PropTypes.bool,
+    yDomain: PropTypes.array,
+    yTicks: PropTypes.array,
     formatLabel: PropTypes.func.isRequired,
     height: PropTypes.number,
 };

@@ -4,20 +4,35 @@ import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { getFilteredGames } from '../../api/gameApi';
+import { getPostseasonSchedule } from '../../api/scheduleApi';
+import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { isGameOngoing } from '../game/scoreboard/utils/scoreboardFormatters';
 import { formatScoreboardQuarter } from '../../utils/gameUtils';
 import TeamMark from '../ui/TeamMark';
 
 const POLL_MS = 30000;
+const REGULAR_SEASON_MAX_WEEK = 13;
 
 const loadGames = async () => {
-    const live = await getFilteredGames({ category: 'ONGOING', sort: 'CLOSEST_TO_END', page: 0, size: 25 });
-    const liveGames = live?.content || [];
-    if (liveGames.length > 0) return liveGames;
+    const [season, week] = await Promise.all([
+        getCurrentSeasonOrLatest().catch(() => null),
+        getCurrentWeekOrLatest().catch(() => null),
+    ]);
+    if (season == null) return [];
 
-    const past = await getFilteredGames({ category: 'PAST', sort: 'MOST_TIME_REMAINING', page: 0, size: 15 });
-    return past?.content || [];
+    if (week != null && week <= REGULAR_SEASON_MAX_WEEK) {
+        const [ongoing, past] = await Promise.all([
+            getFilteredGames({ category: 'ONGOING', season, week, sort: 'CLOSEST_TO_END', page: 0, size: 50 }).catch(() => null),
+            getFilteredGames({ category: 'PAST', season, week, sort: 'NEWEST', page: 0, size: 50 }).catch(() => null),
+        ]);
+        return [...(ongoing?.content || []), ...(past?.content || [])].filter((game) => game.game_type !== 'SCRIMMAGE');
+    }
+
+    const postseason = await getPostseasonSchedule(season).catch(() => []);
+    return (postseason || [])
+        .filter((game) => game.game_type !== 'SCRIMMAGE')
+        .filter((game) => isGameOngoing(game.game_status) || game.game_status === 'FINAL' || game.home_score != null);
 };
 
 const statusLabel = (game) => {

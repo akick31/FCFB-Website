@@ -1,5 +1,5 @@
 export const RECORD_GROUPS = [
-    ['Scoring', ['q1_score', 'q2_score', 'q3_score', 'q4_score', 'score', 'touchdowns', 'largest_lead', 'largest_deficit']],
+    ['Scoring', ['q1_score', 'q2_score', 'q3_score', 'q4_score', 'score', 'touchdowns', 'largest_lead', 'largest_deficit', 'largest_spread', 'largest_upset']],
     ['Passing', ['pass_yards', 'pass_touchdowns', 'longest_pass', 'pass_attempts', 'pass_completions', 'pass_completion_percentage', 'pass_successes', 'pass_success_percentage']],
     ['Rushing', ['rush_yards', 'rush_touchdowns', 'longest_run', 'rush_attempts', 'rush_successes', 'rush_success_percentage']],
     ['Offense', ['total_yards', 'average_yards_per_play', 'first_downs', 'third_down_conversion_success', 'third_down_conversion_attempts', 'third_down_conversion_percentage', 'fourth_down_conversion_success', 'fourth_down_conversion_attempts', 'fourth_down_conversion_percentage', 'red_zone_successes', 'red_zone_attempts', 'red_zone_success_percentage', 'red_zone_percentage', 'time_of_possession', 'number_of_drives', 'sacks_allowed']],
@@ -35,7 +35,7 @@ export const recordOrder = (recordName, { seasonView = false } = {}) => {
     return ORDER_BY_KEY[key] ?? 999;
 };
 
-export const SEASON_EXCLUDED_RECORDS = new Set(['largest_lead', 'largest_deficit']);
+export const SEASON_EXCLUDED_RECORDS = new Set(['largest_lead', 'largest_deficit', 'largest_spread', 'largest_upset']);
 
 export const EXCLUDED_RECORDS = new Set(['ot_score', 'field_goal_percentage', 'normal_kickoff_attempts', 'number_of_kickoffs', 'onside_attempts']);
 

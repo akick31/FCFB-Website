@@ -8,6 +8,8 @@ import { getAllPlaysByGameId } from '../../api/playApi';
 import { getGameStatsByIdAndTeam, generateGameStats } from '../../api/gameStatsApi.jsx';
 import { getTeamByName } from '../../api/teamApi';
 import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
+import { useVenuesMap } from '../../hooks/useVenuesMap';
+import { field } from '../../utils/fieldHelper';
 import { useColorMode } from '../../theme/ColorModeContext';
 import { pickTeamColor } from '../../utils/teamColor';
 import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
@@ -47,6 +49,7 @@ const GameDetails = ({ isAdmin }) => {
     const { gameId } = useParams();
     const navigate = useNavigate();
     const teamsMap = useTeamsMap();
+    const venuesMap = useVenuesMap();
     const { mode } = useColorMode();
     const [adminBusy, setAdminBusy] = useState('');
     const [adminMessage, setAdminMessage] = useState(null);
@@ -112,6 +115,11 @@ const GameDetails = ({ isAdmin }) => {
     const isFinal = game.game_status === 'FINAL';
     const homeWin = game.home_score > game.away_score;
     const spreadText = game.home_vegas_spread != null ? `${homeMark?.abbreviation} ${game.home_vegas_spread > 0 ? '+' : ''}${game.home_vegas_spread}` : null;
+    const venueName = field(game, 'venue', 'venue') || homeTeam?.stadium || null;
+    const venueLocation = venueName ? venuesMap[venueName] : null;
+    const venueText = venueName
+        ? (venueLocation?.city && venueLocation?.state ? `${venueName} - ${venueLocation.city}, ${venueLocation.state}` : venueName)
+        : null;
     const orderedPlays = [...plays].sort((a, b) =>
         ((a.play_number ?? 0) - (b.play_number ?? 0))
         || ((a.quarter ?? 0) - (b.quarter ?? 0))
@@ -198,7 +206,7 @@ const GameDetails = ({ isAdmin }) => {
                 </Box>
             </PageHeading>
 
-            <GameScorebug game={game} awayMark={awayMark} homeMark={homeMark} homeTeam={homeTeam} awayColor={awayColor} homeColor={homeColor} spreadText={spreadText} threadLink={threadLink} columns={columns} awayQuarters={awayQuarters} homeQuarters={homeQuarters} showQuarters={showQuarters} />
+            <GameScorebug game={game} awayMark={awayMark} homeMark={homeMark} homeTeam={homeTeam} awayColor={awayColor} homeColor={homeColor} spreadText={spreadText} venueText={venueText} threadLink={threadLink} columns={columns} awayQuarters={awayQuarters} homeQuarters={homeQuarters} showQuarters={showQuarters} />
 
             {isAdmin && (
                 <Box sx={{ mt: '16px' }}>

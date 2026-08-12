@@ -18,7 +18,7 @@ import { getFilteredLeagueStats } from '../../api/leagueStatsApi';
 import { getFilteredConferenceStats } from '../../api/conferenceStatsApi';
 import { getFilteredPlaybookStats } from '../../api/playbookStatsApi';
 import { getAllSeasons } from '../../api/seasonApi';
-import { useConferencesMap, activeConferenceList, conferenceLabel } from '../../components/constants/conferences';
+import { useConferencesMap, useSeasonConferenceCodes, seasonConferenceList, activeConferenceList, conferenceLabel } from '../../components/constants/conferences';
 import { formatOffensivePlaybook } from '../../utils/formatText';
 import { STAT_CATALOG, STAT_BY_KEY, buildLeaderboard, seasonHasStarted, formatValue, LEAGUE_STAT_GROUPS, CONFERENCE_COLUMNS, aggregateAllTimeStats, aggregateStatRows, aggregateStatRowsByKey } from '../../utils/statsCatalog';
 import { useSeo } from '../../hooks/useSeo';
@@ -89,6 +89,7 @@ const Stats = () => {
     const scope = searchParams.get('scope') === 'postseason' ? 'postseason' : 'regular';
     const conferenceFilter = searchParams.get('conference') || 'ALL';
     useConferencesMap();
+    const seasonConferenceCodes = useSeasonConferenceCodes(season === 'all' ? null : season);
 
     const updateParams = (updates) => {
         const next = new URLSearchParams(searchParams);
@@ -260,7 +261,8 @@ const Stats = () => {
         const page = Math.min(cardPage, pageCount - 1);
         const visible = filteredCatalog.slice(page * CARDS_PER_PAGE, page * CARDS_PER_PAGE + CARDS_PER_PAGE);
         const statOptions = [{ value: '', label: 'All stats' }, ...STAT_CATALOG.map((stat) => ({ value: stat.key, label: stat.label }))];
-        const conferenceOptions = [{ value: 'ALL', label: 'All conferences' }, ...activeConferenceList().map((entry) => ({ value: entry.code, label: entry.label }))];
+        const seasonScopedConferences = season === 'all' ? activeConferenceList() : seasonConferenceList(seasonConferenceCodes);
+        const conferenceOptions = [{ value: 'ALL', label: 'All conferences' }, ...seasonScopedConferences.map((entry) => ({ value: entry.code, label: entry.label }))];
         return (
             <>
                 <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
