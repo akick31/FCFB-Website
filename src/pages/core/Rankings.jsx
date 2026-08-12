@@ -7,6 +7,7 @@ import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
 import SelectPill from '../../components/ui/SelectPill';
 import DataTable from '../../components/ui/DataTable';
+import LinkCell from '../../components/ui/LinkCell';
 import TeamMark from '../../components/ui/TeamMark';
 import ConferenceMark from '../../components/ui/ConferenceMark';
 import { useConferencesMap, seasonConferenceList, conferenceLabel } from '../../components/constants/conferences';
@@ -468,26 +469,27 @@ const Rankings = () => {
                         if (!teamsMap[team.name]) ensureTeam(team.name);
                         const mark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation };
                         const coach = coachByTeam[team.name] ?? team.coach_usernames?.[0];
+                        const teamHref = team.id != null ? `/team-details/${team.id}` : null;
                         return (
-                            <Box component="tr" key={team.id ?? team.name} sx={{ position: 'relative' }}>
-                                <td className="lft stick">
+                            <tr key={team.id ?? team.name}>
+                                <LinkCell to={teamHref} className="lft stick">
                                     <span style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1rem' }}>{rank}</span>
-                                </td>
-                                <td className="lft">
+                                </LinkCell>
+                                <LinkCell to={teamHref} className="lft">
                                     <div className="teamcell">
                                         <TeamMark team={mark} size={22} />
                                         <span className="nm">{team.name}</span>
                                     </div>
-                                </td>
-                                <td className="num" style={{ textAlign: 'center' }}>{wins != null ? `${wins}-${losses ?? 0}` : '-'}</td>
-                                <td style={{ textAlign: 'center' }}><ConferenceMark conference={seasonConferenceByTeam[team.name] ?? team.conference} /></td>
-                                <td className="num" style={{ textAlign: 'center' }}>{prev != null ? prev : '-'}</td>
-                                <td className="num" style={{ textAlign: 'center' }}><RankDelta prev={prev} rank={rank} /></td>
-                                <td className="num">{elo != null ? (isMetricMode(mode) ? elo.toFixed(3) : elo) : '-'}</td>
+                                </LinkCell>
+                                <LinkCell to={teamHref} className="num" sx={{ textAlign: 'center' }}>{wins != null ? `${wins}-${losses ?? 0}` : '-'}</LinkCell>
+                                <LinkCell to={teamHref} sx={{ textAlign: 'center' }}><ConferenceMark conference={seasonConferenceByTeam[team.name] ?? team.conference} /></LinkCell>
+                                <LinkCell to={teamHref} className="num" sx={{ textAlign: 'center' }}>{prev != null ? prev : '-'}</LinkCell>
+                                <LinkCell to={teamHref} className="num" sx={{ textAlign: 'center' }}><RankDelta prev={prev} rank={rank} /></LinkCell>
+                                <LinkCell to={teamHref} className="num">{elo != null ? (isMetricMode(mode) ? elo.toFixed(3) : elo) : '-'}</LinkCell>
                                 {mode === 'EQUIVALENT_WINS' && (
-                                    <td className="num" style={{ textAlign: 'center' }}>{pythagoreanRecord(elo, wins, losses) ?? '-'}</td>
+                                    <LinkCell to={teamHref} className="num" sx={{ textAlign: 'center' }}>{pythagoreanRecord(elo, wins, losses) ?? '-'}</LinkCell>
                                 )}
-                                <td>
+                                <LinkCell to={teamHref}>
                                     {coach ? (
                                         <Box
                                             component={Link}
@@ -497,15 +499,8 @@ const Rankings = () => {
                                             @{coach}
                                         </Box>
                                     ) : '-'}
-                                </td>
-                                {team.id != null && (
-                                    <Box
-                                        component={Link}
-                                        to={`/team-details/${team.id}`}
-                                        sx={{ position: 'absolute', inset: 0, zIndex: 2 }}
-                                    />
-                                )}
-                            </Box>
+                                </LinkCell>
+                            </tr>
                         );
                     })}
                 </tbody>

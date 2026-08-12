@@ -18,18 +18,27 @@ const StatPlotsMetrics = [
     { key: 'yds', label: 'Total Yards', dec: 0 },
 ];
 
-const ConferenceStrengthTab = ({ season, teams, scope }) => {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const [metric, setMetric] = useState(() => (StatPlotsMetrics.some((m) => m.key === searchParams.get('metric')) ? searchParams.get('metric') : 'elo'));
+const metricFromParam = (value) => (StatPlotsMetrics.some((m) => m.key === value) ? value : null);
+
+const ConferenceStrengthTab = ({ season, teams, scope, sub, onSubChange }) => {
+    const [searchParams] = useSearchParams();
+    const [metric, setMetric] = useState(() => metricFromParam(sub) || metricFromParam(searchParams.get('metric')) || 'elo');
     const [confs, setConfs] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const changeMetric = (value) => {
         setMetric(value);
-        const next = new URLSearchParams(searchParams);
-        next.set('metric', value);
-        setSearchParams(next, { replace: true });
+        onSubChange(value, { clear: ['metric'] });
     };
+
+    useEffect(() => {
+        if (sub !== metric || searchParams.has('metric')) onSubChange(metric, { clear: ['metric'] });
+    }, []);
+
+    useEffect(() => {
+        const parsed = metricFromParam(sub);
+        if (parsed && parsed !== metric) setMetric(parsed);
+    }, [sub]);
 
     useEffect(() => {
         let active = true;
@@ -115,6 +124,8 @@ ConferenceStrengthTab.propTypes = {
     season: PropTypes.number.isRequired,
     teams: PropTypes.array.isRequired,
     scope: PropTypes.string,
+    sub: PropTypes.string,
+    onSubChange: PropTypes.func.isRequired,
 };
 
 export default ConferenceStrengthTab;

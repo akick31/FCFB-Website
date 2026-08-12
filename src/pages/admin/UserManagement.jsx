@@ -5,6 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
+import LinkCell from '../../components/ui/LinkCell';
 import SelectPill from '../../components/ui/SelectPill';
 import { getAllUsers } from '../../api/userApi';
 
@@ -84,28 +85,26 @@ const UserManagement = ({ user }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredUsers.map((row) => (
-                            <Box component="tr" key={row.id} sx={{ position: 'relative' }}>
-                                <td className="lft stick">@{row.username}</td>
-                                <td className="lft">{row.coach_name}</td>
-                                <td className="lft">{row.discord_tag}</td>
-                                <td className="lft">{row.team || 'Free agent'}</td>
-                                <td>
-                                    <Box
-                                        component={Link}
-                                        to={`/admin/edit-coach/${row.username}`}
-                                        sx={{ ...editBtnSx, position: 'relative', zIndex: 3, display: 'inline-block', textDecoration: 'none' }}
-                                    >
-                                        Edit
-                                    </Box>
-                                </td>
-                                <Box
-                                    component={Link}
-                                    to={`/user-details/${row.username}`}
-                                    sx={{ position: 'absolute', inset: 0, zIndex: 2 }}
-                                />
-                            </Box>
-                        ))}
+                        {filteredUsers.map((row) => {
+                            const userHref = `/user-details/${row.username}`;
+                            return (
+                                <tr key={row.id}>
+                                    <LinkCell to={userHref} className="lft stick">@{row.username}</LinkCell>
+                                    <LinkCell to={userHref} className="lft">{row.coach_name}</LinkCell>
+                                    <LinkCell to={userHref} className="lft">{row.discord_tag}</LinkCell>
+                                    <LinkCell to={userHref} className="lft">{row.team || 'Free agent'}</LinkCell>
+                                    <LinkCell to={userHref}>
+                                        <Box
+                                            component={Link}
+                                            to={`/admin/edit-coach/${row.username}`}
+                                            sx={{ ...editBtnSx, position: 'relative', zIndex: 3, display: 'inline-block', textDecoration: 'none' }}
+                                        >
+                                            Edit
+                                        </Box>
+                                    </LinkCell>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </DataTable>
             </Panel>
