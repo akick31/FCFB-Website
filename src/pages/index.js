@@ -7,7 +7,7 @@ export { Teams, TeamDetails, ModifyTeam } from './team';
 export { Admin, UserManagement, GameManagement, TeamManagement, EditTeam, EditCoach, CoachTransactionLog,
     EditGame, StatsManagement, Reports, Scheduling, SeasonManagement, GameWeek, RankingsManagement, AdminConferences, AdminConferenceDetail, AdminApiDocs } from './admin';
 
-export { Home, Profile, ApiDocs, Standings, Rankings, Schedule, Error, NotFound } from './core';
+export { Home, Profile, ApiDocs, Standings, Rankings, RiceSheet, Schedule, Error, NotFound } from './core';
 
 export { UserDetails, Coaches } from './user';
 

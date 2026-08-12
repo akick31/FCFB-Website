@@ -9,5 +9,6 @@ export const NAV_ITEMS = [
     { label: 'Stats', path: '/stats' },
     { label: 'Records', path: '/records' },
     { label: 'Graphs', path: '/graphs' },
+    { label: 'Rice Sheet', path: '/rice-sheet' },
 ];
 

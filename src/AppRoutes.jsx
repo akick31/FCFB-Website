@@ -31,6 +31,7 @@ import {
     RegistrationSuccess,
     Standings,
     Rankings,
+    RiceSheet,
     Schedule,
     TeamManagement,
     EditTeam,
@@ -271,6 +272,7 @@ const AppRoutes = () => {
                         <Route path="/standings/:conference/:seasonParam" element={<Standings />} />
                         <Route path="/rankings" element={<Rankings />} />
                         <Route path="/rankings/:type" element={<Rankings />} />
+                        <Route path="/rice-sheet" element={<RiceSheet />} />
                         <Route path="/scoreboard" element={<Scoreboard />} />
                         <Route path="/scoreboard/:tab" element={<Scoreboard />} />
                         <Route path="/scoreboard/:tab/:season/:week" element={<Scoreboard />} />

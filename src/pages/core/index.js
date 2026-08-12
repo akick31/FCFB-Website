@@ -3,6 +3,7 @@ export { default as Profile } from './Profile';
 export { default as ApiDocs } from './ApiDocs';
 export { default as Standings } from './Standings';
 export { default as Rankings } from './Rankings';
+export { default as RiceSheet } from './RiceSheet';
 export { default as Schedule } from './Schedule';
 export { default as Error } from './Error';
 export { default as NotFound } from './NotFound'; 
