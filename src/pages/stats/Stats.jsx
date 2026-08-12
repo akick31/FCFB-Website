@@ -79,15 +79,16 @@ const Stats = () => {
     const activeSub = SUB_VALUES.includes(sub) ? sub : 'leaderboard';
 
     const seasonParam = searchParams.get('season');
-    const countParam = parseInt(searchParams.get('count'), 10);
+    const countParam = searchParams.get('count');
+    const parsedCountParam = parseInt(countParam, 10);
 
     const [seasons, setSeasons] = useState([]);
     const [season, setSeason] = useState(seasonParam ? (seasonParam === 'all' ? 'all' : Number(seasonParam)) : null);
     const [statFilter, setStatFilter] = useState(searchParams.get('statFilter') || '');
     const [cardPage, setCardPage] = useState(0);
-    const [count, setCount] = useState(Number.isFinite(countParam) && countParam > 0 ? countParam : 5);
+    const [count, setCount] = useState(countParam === 'all' ? 'all' : (Number.isFinite(parsedCountParam) && parsedCountParam > 0 ? parsedCountParam : 5));
     const scope = searchParams.get('scope') === 'postseason' ? 'postseason' : 'regular';
-    const conferenceFilter = searchParams.get('conference') || 'ALL';
+    const conferenceFilter = searchParams.get('conference')?.toUpperCase() || 'ALL';
     useConferencesMap();
     const seasonConferenceCodes = useSeasonConferenceCodes(season === 'all' ? null : season);
 
@@ -122,13 +123,13 @@ const Stats = () => {
     };
 
     const changeCount = (value) => {
-        const next = Number(value);
+        const next = value === 'all' ? 'all' : Number(value);
         setCount(next);
         updateParams({ count: next });
     };
 
     const changeConferenceFilter = (value) => {
-        updateParams({ conference: value === 'ALL' ? null : value });
+        updateParams({ conference: value === 'ALL' ? null : value.toLowerCase() });
     };
 
     const [seasonStatRows, setSeasonStatRows] = useState([]);
@@ -270,7 +271,7 @@ const Stats = () => {
                     {seasonControl}
                     <SelectPill label="Conference" value={conferenceFilter} onChange={changeConferenceFilter} options={conferenceOptions} sx={controlSx} ariaLabel="Filter by conference" />
                     <SelectPill label="Stat" value={statFilter} onChange={changeStatFilter} options={statOptions} sx={controlSx} ariaLabel="Choose a stat" />
-                    <SelectPill label="Show" value={count} onChange={changeCount} options={[{ value: 5, label: 'Top 5' }, { value: 10, label: 'Top 10' }, { value: 25, label: 'Top 25' }]} sx={{ height: 38 }} />
+                    <SelectPill label="Show" value={count} onChange={changeCount} options={[{ value: 5, label: 'Top 5' }, { value: 10, label: 'Top 10' }, { value: 25, label: 'Top 25' }, { value: 'all', label: 'All teams' }]} sx={{ height: 38 }} />
                 </Box>
                 <Box sx={{ color: 'var(--text-muted)', fontSize: '0.8rem', mb: 2 }}>Click a stat title to open its full leaderboard.</Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>

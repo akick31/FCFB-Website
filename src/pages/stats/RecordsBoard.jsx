@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, CircularProgress, Alert } from '@mui/material';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
@@ -116,24 +116,25 @@ RecordRow.propTypes = { record: PropTypes.object.isRequired, teamsMap: PropTypes
 const RecordsBoard = ({ user }) => {
     const { tab } = useParams();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
     const conferencesMap = useConferencesMap();
     const activeTab = TAB_VALUES.includes(tab) ? tab : 'single_game';
     const isLeagueOnlyTab = LEAGUE_ONLY_TABS.has(activeTab);
 
-    const [scope, setScope] = useState('league');
+    const [scope, setScope] = useState(() => (SCOPE_TABS.some((t) => t.value === searchParams.get('scope')) ? searchParams.get('scope') : 'league'));
     const [teams, setTeams] = useState([]);
-    const [conference, setConference] = useState('');
-    const [team, setTeam] = useState('');
+    const [conference, setConference] = useState(() => searchParams.get('conference')?.toUpperCase() || '');
+    const [team, setTeam] = useState(() => searchParams.get('team') || '');
     const [rows, setRows] = useState({ highest: [], lowest: [] });
-    const [category, setCategory] = useState('');
+    const [category, setCategory] = useState(() => searchParams.get('category') || '');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     useSeo({ title: 'Records | FCFB', description: 'All-time league, conference, and team records across Fake College Football.' });
 
     useEffect(() => {
-        if (!tab) navigate('/records/single_game', { replace: true });
+        if (!tab) navigate({ pathname: '/records/single_game', search: searchParams.toString() }, { replace: true });
     }, [tab, navigate]);
 
     useEffect(() => {
@@ -144,7 +145,7 @@ const RecordsBoard = ({ user }) => {
             const realTeams = (allTeams || []).filter((entry) => entry.name && isRealTeam(entry)).sort((a, b) => a.name.localeCompare(b.name));
             setTeams(realTeams);
             const preferred = realTeams.find((entry) => entry.name === user?.team) || realTeams[0];
-            setTeam(preferred?.name || '');
+            setTeam((current) => current || preferred?.name || '');
         })();
         return () => { active = false; };
     }, [user?.team]);
@@ -153,6 +154,24 @@ const RecordsBoard = ({ user }) => {
         if (conference || Object.keys(conferencesMap).length === 0) return;
         setConference(activeConferenceList()[0]?.code || '');
     }, [conferencesMap, conference]);
+
+    useEffect(() => {
+        const next = new URLSearchParams(searchParams);
+        let changed = false;
+        const apply = (key, value) => {
+            if (value == null || value === '') {
+                if (next.has(key)) { next.delete(key); changed = true; }
+            } else if (next.get(key) !== value) {
+                next.set(key, value);
+                changed = true;
+            }
+        };
+        apply('scope', scope !== 'league' ? scope : null);
+        apply('conference', conference ? conference.toLowerCase() : null);
+        apply('team', team || null);
+        apply('category', category || null);
+        if (changed) setSearchParams(next, { replace: true });
+    }, [scope, conference, team, category]);
 
     const effectiveScope = isLeagueOnlyTab ? 'league' : scope;
     const scopeValue = effectiveScope === 'conference' ? conference : effectiveScope === 'team' ? team : null;
@@ -217,7 +236,7 @@ const RecordsBoard = ({ user }) => {
             </PageHeading>
 
             <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                <SegTabs value={activeTab} onChange={(value) => navigate(`/records/${value}`)} options={RECORD_TABS} ariaLabel="Record type" />
+                <SegTabs value={activeTab} onChange={(value) => navigate({ pathname: `/records/${value}`, search: searchParams.toString() })} options={RECORD_TABS} ariaLabel="Record type" />
                 {!isLeagueOnlyTab && scope === 'conference' && (
                     <SelectPill label="Conference" value={conference} onChange={setConference} options={activeConferenceList().map((entry) => ({ value: entry.code, label: entry.label }))} sx={{ height: 38 }} />
                 )}

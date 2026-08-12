@@ -23,7 +23,7 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope }) => {
     const conferencesMap = useConferencesMap();
     const [searchParams, setSearchParams] = useSearchParams();
     const plotParam = parseInt(searchParams.get('plot'), 10);
-    const [cf, setCf] = useState(searchParams.get('cf') || 'ALL');
+    const [cf, setCf] = useState(() => (searchParams.get('cf') || 'all').toUpperCase());
     const [plotIndex, setPlotIndex] = useState(Number.isFinite(plotParam) && plotParam >= 0 && plotParam < PLOTS.length ? plotParam : 0);
     const [resetNonce, setResetNonce] = useState(0);
     const [rows, setRows] = useState([]);
@@ -40,7 +40,7 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope }) => {
 
     const changeCf = (value) => {
         setCf(value);
-        updateParams({ cf: value });
+        updateParams({ cf: value.toLowerCase() });
     };
 
     const changePlot = (value) => {
