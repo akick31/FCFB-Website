@@ -9,12 +9,14 @@ import SelectPill from '../../components/ui/SelectPill';
 import DataTable from '../../components/ui/DataTable';
 import TeamMark from '../../components/ui/TeamMark';
 import ConferenceMark from '../../components/ui/ConferenceMark';
+import { useConferencesMap, seasonConferenceList, conferenceLabel } from '../../components/constants/conferences';
 import { getAllTeamsIncludingInactive } from '../../api/teamApi';
+import { getTeamSeasonConference } from '../../api/teamSeasonConferenceApi';
 import { getFilteredGames } from '../../api/gameApi';
 import { getRankings, getRankingWeeks } from '../../api/rankingApi';
 import { getRankingMetrics, getRankingMetricWeeks } from '../../api/rankingMetricApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
-import { getAllSeasons } from '../../api/seasonApi';
+import { getAllSeasons, getCurrentSeasonOrLatest } from '../../api/seasonApi';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { eloWeekBuckets, eloByTeamForWeek, eloRankingForWeek } from '../../utils/eloRankings';
 import { RANKING_METRIC_TYPES, rankingMetricLabel, rankingMetricShortLabel, rankingMetricHigherIsBetter, rankingMetricDescription } from '../../constants/rankingMetrics';
@@ -25,7 +27,14 @@ const POLL_TYPE = { coaches: 'COACHES_POLL', committee: 'PLAYOFF_COMMITTEE' };
 const FIXED_TAB_LABEL = { coaches: 'Coaches Poll', committee: 'Playoff Committee', elo: 'ELO' };
 const METRIC_VALUES = new Set(RANKING_METRIC_TYPES.map((entry) => entry.value));
 const isMetricMode = (mode) => METRIC_VALUES.has(mode);
+const hasShowFilter = (mode) => isMetricMode(mode) || mode === 'elo';
 const tabLabel = (tab) => FIXED_TAB_LABEL[tab] || rankingMetricLabel(tab);
+const slugForMode = (mode) => (isMetricMode(mode) ? mode.toLowerCase().replace(/_/g, '-') : mode);
+const modeForSlug = (slug) => {
+    if (!slug) return slug;
+    const upper = slug.toUpperCase().replace(/-/g, '_');
+    return METRIC_VALUES.has(upper) ? upper : slug;
+};
 
 const pythagoreanRecord = (value, wins, losses) => {
     if (value == null || wins == null || losses == null) return null;
@@ -64,6 +73,7 @@ const Rankings = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
+    const conferencesMap = useConferencesMap();
 
     const [season, setSeason] = useState(null);
     const [seasons, setSeasons] = useState([]);
@@ -75,8 +85,9 @@ const Rankings = () => {
     const [pollData, setPollData] = useState({ current: [], prevRankByTeamId: {} });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [metricViewAll, setMetricViewAll] = useState(false);
-    const [metricSearch, setMetricSearch] = useState('');
+    const [showAll, setShowAll] = useState(() => searchParams.get('all') !== '0');
+    const [teamSearch, setTeamSearch] = useState(() => searchParams.get('q') || '');
+    const [conference, setConference] = useState(() => searchParams.get('conference')?.toUpperCase() || 'ALL');
 
     useEffect(() => {
         let active = true;
@@ -99,14 +110,9 @@ const Rankings = () => {
                 if (urlSeason && seasonNumbers.includes(urlSeason)) {
                     if (active) setSeason(urlSeason);
                 } else {
-                    const eloSeasons = new Set(elo.map((row) => row.season));
-                    let defaultSeason = null;
-                    for (const candidate of seasonNumbers) {
-                        if (eloSeasons.has(candidate)) { defaultSeason = candidate; break; }
-                        const weeks = await getRankingWeeks(candidate, 'COACHES_POLL').catch(() => []);
-                        if (weeks.length) { defaultSeason = candidate; break; }
-                    }
-                    if (active) setSeason(defaultSeason ?? seasonNumbers[0] ?? null);
+                    const currentSeason = await getCurrentSeasonOrLatest().catch(() => null);
+                    const defaultSeason = seasonNumbers.includes(currentSeason) ? currentSeason : (seasonNumbers[0] ?? null);
+                    if (active) setSeason(defaultSeason);
                 }
             } catch {
                 if (active) setError('Failed to load rankings data. Please try again.');
@@ -137,6 +143,8 @@ const Rankings = () => {
         return () => { active = false; };
     }, [season]);
 
+    const changeSeason = (next) => { setSeason(next); setConference('ALL'); };
+
     const eloWeeks = useMemo(() => eloWeekBuckets(eloHistory, season), [eloHistory, season]);
 
     const tabs = useMemo(() => {
@@ -150,12 +158,26 @@ const Rankings = () => {
         return list.length ? list : ['coaches'];
     }, [weeksByPoll, eloWeeks, weeksByMetric]);
 
-    const mode = tabs.includes(type) ? type : tabs[0];
+    const weeksForTab = (candidate) => {
+        if (candidate === 'elo') return eloWeeks;
+        if (isMetricMode(candidate)) return weeksByMetric[candidate] || [];
+        return weeksByPoll[POLL_TYPE[candidate]] || [];
+    };
+
+    const defaultMode = useMemo(() => {
+        const overallMaxWeek = Math.max(0, ...tabs.map(weeksForTab).flat());
+        return tabs.find((t) => weeksForTab(t).includes(overallMaxWeek)) || tabs[0];
+    }, [tabs, weeksByPoll, eloWeeks, weeksByMetric]);
+
+    const requestedMode = modeForSlug(type);
+    const mode = tabs.includes(requestedMode) ? requestedMode : defaultMode;
 
     useEffect(() => {
         if (loading || tabs.length === 0) return;
-        if (!tabs.includes(type)) navigate(`/rankings/${tabs[0]}`, { replace: true });
-    }, [type, tabs, loading, navigate]);
+        if (!tabs.includes(requestedMode)) {
+            navigate({ pathname: `/rankings/${slugForMode(defaultMode)}`, search: searchParams.toString() }, { replace: true });
+        }
+    }, [requestedMode, tabs, defaultMode, loading, navigate]);
 
     const weeksForMode = useMemo(() => {
         if (mode === 'elo') return eloWeeks;
@@ -216,32 +238,67 @@ const Rankings = () => {
         return () => { active = false; };
     }, [mode, season, week, weeksForMode]);
 
-    const [coachByTeam, setCoachByTeam] = useState({});
+    const [seasonConferenceByTeam, setSeasonConferenceByTeam] = useState({});
 
     useEffect(() => {
-        if (season == null || week == null) { setCoachByTeam({}); return undefined; }
+        if (season == null) { setSeasonConferenceByTeam({}); return undefined; }
         let active = true;
-        getFilteredGames({ season, week, page: 0, size: 500 }).then((res) => {
+        getTeamSeasonConference(season).then((map) => {
+            if (active) setSeasonConferenceByTeam(map || {});
+        }).catch(() => { if (active) setSeasonConferenceByTeam({}); });
+        return () => { active = false; };
+    }, [season]);
+
+    const [coachHistoryByTeam, setCoachHistoryByTeam] = useState({});
+
+    useEffect(() => {
+        if (season == null) { setCoachHistoryByTeam({}); return undefined; }
+        let active = true;
+        getFilteredGames({ season, page: 0, size: 1000 }).then((res) => {
             if (!active) return;
             const rows = res?.content || (Array.isArray(res) ? res : []);
-            const map = {};
+            const history = {};
             rows.forEach((game) => {
-                if (game.home_team) map[game.home_team] = game.home_coaches?.[0] || null;
-                if (game.away_team) map[game.away_team] = game.away_coaches?.[0] || null;
+                if (game.week == null) return;
+                [[game.home_team, game.home_coaches?.[0]], [game.away_team, game.away_coaches?.[0]]].forEach(([team, coach]) => {
+                    if (!team || !coach) return;
+                    (history[team] = history[team] || []).push({ week: game.week, coach });
+                });
             });
-            setCoachByTeam(map);
-        }).catch(() => { if (active) setCoachByTeam({}); });
+            Object.values(history).forEach((entries) => entries.sort((a, b) => a.week - b.week));
+            setCoachHistoryByTeam(history);
+        }).catch(() => { if (active) setCoachHistoryByTeam({}); });
         return () => { active = false; };
-    }, [season, week]);
+    }, [season]);
+
+    const coachByTeam = useMemo(() => {
+        if (week == null) return {};
+        const map = {};
+        Object.entries(coachHistoryByTeam).forEach(([team, entries]) => {
+            const asOfWeek = [...entries].reverse().find((entry) => entry.week <= week);
+            if (asOfWeek) map[team] = asOfWeek.coach;
+        });
+        return map;
+    }, [coachHistoryByTeam, week]);
 
     useEffect(() => {
-        if (season == null && week == null) return;
         const next = new URLSearchParams(searchParams);
         let changed = false;
-        if (season != null && next.get('season') !== String(season)) { next.set('season', String(season)); changed = true; }
-        if (week != null && next.get('week') !== String(week)) { next.set('week', String(week)); changed = true; }
+        const apply = (key, value) => {
+            if (value == null) {
+                if (next.has(key)) { next.delete(key); changed = true; }
+            } else if (next.get(key) !== value) {
+                next.set(key, value);
+                changed = true;
+            }
+        };
+        apply('season', season != null ? String(season) : null);
+        apply('week', week != null ? String(week) : null);
+        apply('conference', conference !== 'ALL' ? conference.toLowerCase() : null);
+        apply('all', showAll ? null : '0');
+        apply('q', teamSearch || null);
         if (changed) setSearchParams(next, { replace: true });
-    }, [season, week]);
+    }, [season, week, conference, showAll, teamSearch]);
 
     const teamById = useMemo(() => Object.fromEntries(teams.map((team) => [team.id, team])), [teams]);
     const teamByName = useMemo(() => Object.fromEntries(teams.map((team) => [team.name, team])), [teams]);
@@ -292,12 +349,23 @@ const Rankings = () => {
         });
     }, [mode, pollData, metricData, teamById, teamByName, eloByTeam, eloHistory, season, week, eloWeeks]);
 
+    const availableConferences = useMemo(() => {
+        const present = new Set(rows.map((row) => seasonConferenceByTeam[row.team.name] ?? row.team.conference));
+        return seasonConferenceList(Object.values(seasonConferenceByTeam)).filter((c) => present.has(c.code)).map((c) => c.code);
+    }, [rows, seasonConferenceByTeam, conferencesMap]);
+
+    const conferenceRows = useMemo(
+        () => (conference === 'ALL' ? rows : rows.filter((row) => (seasonConferenceByTeam[row.team.name] ?? row.team.conference) === conference)),
+        [rows, conference, seasonConferenceByTeam],
+    );
+
     const displayRows = useMemo(() => {
-        if (!isMetricMode(mode)) return rows;
-        const query = metricSearch.trim().toLowerCase();
-        if (query) return rows.filter((row) => row.team.name?.toLowerCase().includes(query));
-        return metricViewAll ? rows : rows.slice(0, 25);
-    }, [mode, rows, metricSearch, metricViewAll]);
+        if (!hasShowFilter(mode)) return conferenceRows;
+        const query = teamSearch.trim().toLowerCase();
+        if (query) return conferenceRows.filter((row) => row.team.name?.toLowerCase().includes(query));
+        if (conference !== 'ALL') return conferenceRows;
+        return showAll ? conferenceRows : conferenceRows.slice(0, 25);
+    }, [mode, conferenceRows, teamSearch, showAll, conference]);
 
     if (loading) {
         return <PageWrap><Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box></PageWrap>;
@@ -313,7 +381,7 @@ const Rankings = () => {
                 <SegTabs
                     ariaLabel="Ranking type"
                     value={mode}
-                    onChange={(next) => navigate(`/rankings/${next}`)}
+                    onChange={(next) => navigate({ pathname: `/rankings/${slugForMode(next)}`, search: searchParams.toString() })}
                     options={tabs.map((tab) => ({ value: tab, label: tabLabel(tab) }))}
                     buttonSx={{ height: '38px' }}
                 />
@@ -321,27 +389,44 @@ const Rankings = () => {
                     <SelectPill
                         label="Season"
                         value={season}
-                        onChange={(next) => setSeason(Number(next))}
+                        onChange={(next) => changeSeason(Number(next))}
                         options={seasons.map((option) => ({ value: option, label: `Season ${option}` }))}
                         sx={{ height: '38px', boxSizing: 'border-box' }}
                     />
                 )}
-                {isMetricMode(mode) && (
+                {season != null && !hasShowFilter(mode) && (
                     <SelectPill
-                        label="Show"
-                        value={metricViewAll ? 'all' : 'top25'}
-                        onChange={(next) => setMetricViewAll(next === 'all')}
-                        options={[{ value: 'top25', label: 'Top 25' }, { value: 'all', label: 'All teams' }]}
+                        label="Conference"
+                        value={conference}
+                        onChange={setConference}
+                        options={[{ value: 'ALL', label: 'All conferences' }, ...availableConferences.map((conf) => ({ value: conf, label: conferenceLabel(conf) }))]}
                         sx={{ height: '38px', boxSizing: 'border-box' }}
                     />
                 )}
-                {isMetricMode(mode) && (
+                {hasShowFilter(mode) && (
+                    <SelectPill
+                        label="Show"
+                        value={conference !== 'ALL' ? conference : (showAll ? 'all' : 'top25')}
+                        onChange={(next) => {
+                            if (next === 'top25') { setShowAll(false); setConference('ALL'); }
+                            else if (next === 'all') { setShowAll(true); setConference('ALL'); }
+                            else { setConference(next); setShowAll(true); }
+                        }}
+                        options={[
+                            { value: 'top25', label: 'Top 25' },
+                            { value: 'all', label: 'All teams' },
+                            ...availableConferences.map((conf) => ({ value: conf, label: conferenceLabel(conf) })),
+                        ]}
+                        sx={{ height: '38px', boxSizing: 'border-box' }}
+                    />
+                )}
+                {hasShowFilter(mode) && (
                     <Box
                         component="input"
                         placeholder="Search teams…"
                         aria-label="Search teams"
-                        value={metricSearch}
-                        onChange={(event) => setMetricSearch(event.target.value)}
+                        value={teamSearch}
+                        onChange={(event) => setTeamSearch(event.target.value)}
                         sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', padding: '6px 10px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, minWidth: 190, height: '38px', boxSizing: 'border-box', '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 } }}
                     />
                 )}
@@ -377,10 +462,10 @@ const Rankings = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {displayRows.length === 0 && isMetricMode(mode) && metricSearch.trim() && (
+                    {displayRows.length === 0 && hasShowFilter(mode) && teamSearch.trim() && (
                         <tr>
                             <Box component="td" colSpan={mode === 'EQUIVALENT_WINS' ? 9 : 8} sx={{ textAlign: 'center', color: 'var(--text-muted)', py: 3 }}>
-                                No teams match &quot;{metricSearch.trim()}&quot;.
+                                No teams match &quot;{teamSearch.trim()}&quot;.
                             </Box>
                         </tr>
                     )}
@@ -400,7 +485,7 @@ const Rankings = () => {
                                     </div>
                                 </td>
                                 <td className="num" style={{ textAlign: 'center' }}>{wins != null ? `${wins}-${losses ?? 0}` : '-'}</td>
-                                <td style={{ textAlign: 'center' }}><ConferenceMark conference={team.conference} /></td>
+                                <td style={{ textAlign: 'center' }}><ConferenceMark conference={seasonConferenceByTeam[team.name] ?? team.conference} /></td>
                                 <td className="num" style={{ textAlign: 'center' }}>{prev != null ? prev : '-'}</td>
                                 <td className="num" style={{ textAlign: 'center' }}><RankDelta prev={prev} rank={rank} /></td>
                                 <td className="num">{elo != null ? (isMetricMode(mode) ? elo.toFixed(3) : elo) : '-'}</td>

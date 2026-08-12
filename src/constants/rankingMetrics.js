@@ -2,12 +2,14 @@ export const RANKING_METRIC_TYPES = [
     {
         value: 'EQUIVALENT_WINS',
         label: 'Pythagorean EQW',
+        shortLabel: 'EQW',
         higherIsBetter: true,
         description: 'Estimates how many games a team "should" have won based on their season-to-date scoring margins, using the Pythagorean win-expectation formula. Smooths out the noise from close, lucky, or fluky wins and losses.',
     },
     {
         value: 'MARGIN_OF_VICTORY',
         label: 'Margin of Victory',
+        shortLabel: 'MOV',
         higherIsBetter: true,
         description: 'Average point differential per game (points scored minus points allowed).',
     },

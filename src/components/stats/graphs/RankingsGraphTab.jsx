@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, CircularProgress, FormControlLabel, Checkbox } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
@@ -28,10 +28,10 @@ const RankingsGraphTab = ({ season, teams, teamsMap, mode }) => {
     const conferencesMap = useConferencesMap();
     const [searchParams, setSearchParams] = useSearchParams();
     const [ranking, setRanking] = useState(searchParams.get('ranking') || DEFAULT_RANKING);
-    const [cf, setCf] = useState(searchParams.get('cf') || 'TOP');
-    const [search, setSearch] = useState('');
-    const [combinePostseason, setCombinePostseason] = useState(false);
-    const [hidden, setHidden] = useState(() => new Set());
+    const [cf, setCf] = useState(() => (searchParams.get('cf') || 'top').toUpperCase());
+    const [search, setSearch] = useState(() => searchParams.get('q') || '');
+    const [combinePostseason, setCombinePostseason] = useState(() => searchParams.get('combine') === '1');
+    const [hidden, setHidden] = useState(() => new Set((searchParams.get('hidden') || '').split(',').filter(Boolean).map(decodeURIComponent)));
     const [rawByTeam, setRawByTeam] = useState({});
     const [loading, setLoading] = useState(true);
 
@@ -49,17 +49,38 @@ const RankingsGraphTab = ({ season, teams, teamsMap, mode }) => {
     const changeCf = (value) => {
         setCf(value);
         const next = new URLSearchParams(searchParams);
-        next.set('cf', value);
+        next.set('cf', value.toLowerCase());
         setSearchParams(next, { replace: true });
     };
 
-    useEffect(() => { setHidden(new Set()); }, [cf, season, ranking]);
+    const skipHiddenReset = useRef(true);
+    useEffect(() => {
+        if (skipHiddenReset.current) { skipHiddenReset.current = false; return; }
+        setHidden(new Set());
+    }, [cf, season, ranking]);
 
     const toggle = (team) => setHidden((prev) => {
         const next = new Set(prev);
         if (next.has(team)) next.delete(team); else next.add(team);
         return next;
     });
+
+    useEffect(() => {
+        const next = new URLSearchParams(searchParams);
+        let changed = false;
+        const apply = (key, value) => {
+            if (value == null) {
+                if (next.has(key)) { next.delete(key); changed = true; }
+            } else if (next.get(key) !== value) {
+                next.set(key, value);
+                changed = true;
+            }
+        };
+        apply('q', search || null);
+        apply('combine', combinePostseason ? '1' : null);
+        apply('hidden', hidden.size ? [...hidden].map(encodeURIComponent).join(',') : null);
+        if (changed) setSearchParams(next, { replace: true });
+    }, [search, combinePostseason, hidden]);
 
     useEffect(() => {
         let active = true;

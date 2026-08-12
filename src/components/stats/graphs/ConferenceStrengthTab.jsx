@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, CircularProgress } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Panel from '../../ui/Panel';
 import SegTabs from '../../ui/SegTabs';
 import ConferenceMark from '../../ui/ConferenceMark';
@@ -19,9 +19,17 @@ const StatPlotsMetrics = [
 ];
 
 const ConferenceStrengthTab = ({ season, teams, scope }) => {
-    const [metric, setMetric] = useState('elo');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [metric, setMetric] = useState(() => (StatPlotsMetrics.some((m) => m.key === searchParams.get('metric')) ? searchParams.get('metric') : 'elo'));
     const [confs, setConfs] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const changeMetric = (value) => {
+        setMetric(value);
+        const next = new URLSearchParams(searchParams);
+        next.set('metric', value);
+        setSearchParams(next, { replace: true });
+    };
 
     useEffect(() => {
         let active = true;
@@ -71,7 +79,7 @@ const ConferenceStrengthTab = ({ season, teams, scope }) => {
     return (
         <Box>
             <Box className="controls" sx={{ display: 'flex', gap: 1, mb: 1.75, flexWrap: 'wrap' }}>
-                <SegTabs value={metric} onChange={setMetric} options={StatPlotsMetrics.map((m) => ({ value: m.key, label: m.label }))} ariaLabel="Conference metric" />
+                <SegTabs value={metric} onChange={changeMetric} options={StatPlotsMetrics.map((m) => ({ value: m.key, label: m.label }))} ariaLabel="Conference metric" />
             </Box>
             <Panel header={`${StatPlotsMetrics.find((m) => m.key === metric)?.label} by conference`}>
                 <Box sx={{ p: 2 }}>

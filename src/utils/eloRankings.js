@@ -37,7 +37,6 @@ export const eloRankingForWeek = (eloHistory, season, week) => {
         .filter(([, entry]) => entry.elo != null)
         .map(([team, entry]) => ({ team, elo: entry.elo, wins: entry.wins, losses: entry.losses }))
         .sort((a, b) => b.elo - a.elo)
-        .slice(0, 25)
         .map((entry, index) => ({ ...entry, rank: index + 1 }));
     const rankByTeam = {};
     ordered.forEach((entry) => { rankByTeam[entry.team] = entry.rank; });
