@@ -46,7 +46,7 @@ const useLivePlay = (game, ongoing) => {
 };
 
 const TeamRow = ({ team, name, rank, score, quarters, columns, isWinner, hasPossession, grid, size }) => (
-    <Box sx={{ display: 'grid', alignItems: 'center', columnGap: '9px', px: 1.5, py: 1.1, position: 'relative', gridTemplateColumns: grid, borderTop: '1px solid var(--line-soft)', '&:first-of-type': { borderTop: 'none' } }}>
+    <Box sx={{ display: 'grid', alignItems: 'center', columnGap: { xs: '5px', sm: '9px' }, px: { xs: 1, sm: 1.5 }, py: 1.1, position: 'relative', gridTemplateColumns: grid, borderTop: '1px solid var(--line-soft)', '&:first-of-type': { borderTop: 'none' } }}>
         <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '3px', backgroundColor: team?.__stripe }} />
         {hasPossession !== undefined && (
             <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: hasPossession ? 'var(--field)' : 'transparent', flexShrink: 0 }} />
@@ -61,7 +61,7 @@ const TeamRow = ({ team, name, rank, score, quarters, columns, isWinner, hasPoss
             />
         </Box>
         {columns.map((_, index) => (
-            <Box key={index} sx={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: size >= 26 ? '1.28rem' : '1.02rem', color: 'var(--text-muted)' }}>
+            <Box key={index} sx={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: { xs: '0.86rem', sm: size >= 26 ? '1.28rem' : '1.02rem' }, color: 'var(--text-muted)' }}>
                 {quarters[index] != null ? quarters[index] : '-'}
             </Box>
         ))}
@@ -80,7 +80,7 @@ TeamRow.propTypes = {
     columns: PropTypes.array.isRequired,
     isWinner: PropTypes.bool,
     hasPossession: PropTypes.bool,
-    grid: PropTypes.string.isRequired,
+    grid: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
     size: PropTypes.number.isRequired,
 };
 
@@ -108,13 +108,16 @@ const GameCard = ({ game, teamsMap, compact = false }) => {
     const showQuarters = Boolean(stats.home && stats.away) && sum(homeQuarters) === game.home_score && sum(awayQuarters) === game.away_score;
     const columns = showQuarters ? labels : [];
 
-    const qWidth = compact ? 50 : 64;
-    const scWidth = compact ? 56 : 64;
+    const qWidthMobile = compact ? 34 : 38;
+    const qWidthDesktop = compact ? 50 : 64;
+    const scWidthMobile = compact ? 40 : 44;
+    const scWidthDesktop = compact ? 56 : 64;
     const logoSize = compact ? 24 : 27;
     const possCol = ongoing ? 'auto ' : '';
-    const grid = showQuarters
+    const buildGrid = (qWidth, scWidth) => (showQuarters
         ? `${possCol}minmax(0,1fr) repeat(${columns.length}, ${qWidth}px) ${scWidth}px`
-        : `${possCol}minmax(0,1fr) ${scWidth}px`;
+        : `${possCol}minmax(0,1fr) ${scWidth}px`);
+    const grid = { xs: buildGrid(qWidthMobile, scWidthMobile), sm: buildGrid(qWidthDesktop, scWidthDesktop) };
 
     const homeWon = game.home_score > game.away_score;
     const awayWon = game.away_score > game.home_score;
@@ -163,11 +166,11 @@ const GameCard = ({ game, teamsMap, compact = false }) => {
             </Box>
 
             {showQuarters && (
-                <Box sx={{ display: 'grid', columnGap: '9px', px: 1.5, pt: 0.6, pb: 0.3, gridTemplateColumns: grid, backgroundColor: 'var(--surface)', borderBottom: '1px solid var(--line-soft)' }}>
+                <Box sx={{ display: 'grid', columnGap: { xs: '5px', sm: '9px' }, px: { xs: 1, sm: 1.5 }, pt: 0.6, pb: 0.3, gridTemplateColumns: grid, backgroundColor: 'var(--surface)', borderBottom: '1px solid var(--line-soft)' }}>
                     {ongoing && <span />}
                     <span />
                     {columns.map((label) => (
-                        <Box key={label} sx={{ textAlign: 'center', fontSize: '0.66rem', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</Box>
+                        <Box key={label} sx={{ textAlign: 'center', fontSize: { xs: '0.58rem', sm: '0.66rem' }, fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</Box>
                     ))}
                     <span />
                 </Box>

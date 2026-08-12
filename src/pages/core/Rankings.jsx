@@ -218,6 +218,7 @@ const Rankings = () => {
                     value={mode}
                     onChange={(next) => navigate(`/rankings/${next}`)}
                     options={tabs.map((tab) => ({ value: tab, label: TAB_LABEL[tab] }))}
+                    buttonSx={{ height: '38px' }}
                 />
                 {season != null && seasons.length > 0 && (
                     <SelectPill
@@ -225,6 +226,7 @@ const Rankings = () => {
                         value={season}
                         onChange={(next) => setSeason(Number(next))}
                         options={seasons.map((option) => ({ value: option, label: `Season ${option}` }))}
+                        sx={{ height: '38px', boxSizing: 'border-box' }}
                     />
                 )}
                 {week != null && weeksForMode.length > 0 && (
@@ -233,6 +235,7 @@ const Rankings = () => {
                         value={week}
                         onChange={(next) => setWeek(Number(next))}
                         options={weeksForMode.map((option) => ({ value: option, label: weekLabel(option) }))}
+                        sx={{ height: '38px', boxSizing: 'border-box' }}
                     />
                 )}
             </PageHeading>

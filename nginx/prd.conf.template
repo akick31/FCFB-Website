@@ -1,3 +1,15 @@
+map $http_user_agent $is_link_preview_bot {
+    default 0;
+    "~*Discordbot" 1;
+    "~*Twitterbot" 1;
+    "~*Slackbot" 1;
+    "~*facebookexternalhit" 1;
+    "~*LinkedInBot" 1;
+    "~*WhatsApp" 1;
+    "~*TelegramBot" 1;
+    "~*SkypeUriPreview" 1;
+}
+
 server {
     listen 462;
     server_name _;
@@ -23,6 +35,10 @@ server {
     }
 
     location / {
+        if ($is_link_preview_bot) {
+            proxy_pass http://127.0.0.1:8686;
+            break;
+        }
         try_files $uri $uri/ /index.html;
     }
 }

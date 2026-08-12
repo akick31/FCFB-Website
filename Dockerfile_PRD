@@ -15,7 +15,14 @@ RUN npm run build
 # Stage 2: Serve with nginx
 FROM nginx:1.27-alpine
 
+RUN apk add --no-cache nodejs
+
+ENV BACKEND_BASE_URL=http://172.17.0.1:1212/api/v1/arceus
+
 COPY --from=build /app/build /usr/share/nginx/html
 COPY nginx/prd.conf.template /etc/nginx/templates/default.conf.template
+COPY og-meta/server.js /app/og-meta/server.js
+COPY nginx/50-start-og-meta.sh /docker-entrypoint.d/50-start-og-meta.sh
+RUN chmod +x /docker-entrypoint.d/50-start-og-meta.sh
 
 EXPOSE 462

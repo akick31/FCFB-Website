@@ -101,6 +101,8 @@ const TeamScheduleAdminTab = ({
                                     const opponent = isHome ? away : home;
                                     const gameType = field(game, 'gameType', 'game_type');
                                     const isConference = gameType === 'CONFERENCE_GAME';
+                                    const isNeutralSite = Boolean(field(game, 'neutralSite', 'neutral_site'));
+                                    const venue = game.venue;
 
                                     return (
                                         <tr key={weekNum}>
@@ -112,6 +114,11 @@ const TeamScheduleAdminTab = ({
                                                 <Box className="teamcell">
                                                     <TeamMark team={teamMap[opponent] || { name: opponent }} size={20} />
                                                     {opponent}
+                                                    {isNeutralSite && (
+                                                        <Box component="span" sx={{ color: 'var(--text-dim)', fontWeight: 400, fontStyle: 'italic', ml: '4px' }}>
+                                                            {venue ? `(Neutral site at ${venue})` : '(Neutral site)'}
+                                                        </Box>
+                                                    )}
                                                 </Box>
                                             </td>
                                             <td className="lft">

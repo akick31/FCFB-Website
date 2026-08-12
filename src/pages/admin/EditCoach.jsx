@@ -104,6 +104,10 @@ const EditCoach = () => {
         );
     }
 
+    const isFullAdmin = typeof window !== 'undefined' && localStorage.getItem('role') === 'ADMIN';
+    const roleFieldDisabled = !isFullAdmin && user.role === 'ADMIN';
+    const visibleRoles = isFullAdmin || roleFieldDisabled ? ROLES : ROLES.filter((role) => role !== 'ADMIN');
+
     return (
         <AdminLayout title={`Edit Coach: ${user.coach_name || user.username}`}>
             <Box component="button" type="button" onClick={() => goBackOr(navigate, '/admin/team-management')} sx={{ ...backSx, border: 0, background: 'transparent', cursor: 'pointer', font: 'inherit', p: 0 }}>&larr; Team management</Box>
@@ -120,8 +124,8 @@ const EditCoach = () => {
                         <Box component="input" value={user.discord_tag || ''} onChange={(e) => handleChange('discord_tag', e.target.value)} sx={inputSx} />
                     </Field>
                     <Field label="Role">
-                        <Box component="select" value={user.role || ''} onChange={(e) => handleChange('role', e.target.value)} sx={selectSx}>
-                            {ROLES.map((role) => <option key={role} value={role}>{formatRole(role)}</option>)}
+                        <Box component="select" value={user.role || ''} onChange={(e) => handleChange('role', e.target.value)} sx={selectSx} disabled={roleFieldDisabled} title={roleFieldDisabled ? 'Only an admin can change another admin’s role' : undefined}>
+                            {visibleRoles.map((role) => <option key={role} value={role}>{formatRole(role)}</option>)}
                         </Box>
                     </Field>
                     <Field label="Position">

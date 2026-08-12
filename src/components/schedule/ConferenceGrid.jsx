@@ -4,10 +4,13 @@ import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../ui/TeamMark';
 import { ensureTeam } from '../../hooks/useTeamsMap';
+import { field } from '../../utils/fieldHelper';
 
 const REGULAR_WEEKS = Array.from({ length: 12 }, (_, index) => index + 1);
 
-const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
+const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading, selectedConference }) => {
+    const isIndependent = selectedConference === 'FBS_INDEPENDENT';
+
     const byTeamWeek = useMemo(() => {
         const map = {};
         const teamNames = new Set(conferenceTeams.map((team) => team.name));
@@ -23,6 +26,7 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
                     finished: game.finished,
                     gameId: game.game_id,
                     isConference: game.game_type === 'CONFERENCE_GAME',
+                    isNeutralSite: Boolean(field(game, 'neutralSite', 'neutral_site')),
                 };
             });
         }
@@ -46,9 +50,15 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
                     <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'color-mix(in srgb, var(--brand) 30%, transparent)', border: '1px solid var(--brand)' }} />
                     Conference game
                 </Box>
+                {!isIndependent && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'color-mix(in srgb, var(--gold) 30%, transparent)', border: '1px solid var(--gold)' }} />
+                        Out of conference
+                    </Box>
+                )}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'color-mix(in srgb, var(--gold) 30%, transparent)', border: '1px solid var(--gold)' }} />
-                    Out of conference
+                    <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'color-mix(in srgb, var(--disc) 45%, transparent)', border: '1px solid var(--disc)' }} />
+                    Neutral site
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Box component="span" sx={{ color: 'var(--text-dim)' }}>@</Box>
@@ -101,15 +111,21 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading }) => {
                                             <Box
                                                 component={cell.gameId ? Link : 'div'}
                                                 to={cell.gameId ? `/game-details/${cell.gameId}` : undefined}
-                                                title={`${cell.isConference ? 'Conference' : 'Out of conference'} - ${cell.home ? 'vs' : 'at'} ${cell.opp}${cell.finished ? `, ${cell.us}-${cell.them}` : ''}`}
+                                                title={`${cell.isConference ? 'Conference' : 'Out of conference'}${cell.isNeutralSite ? ', neutral site' : ''} - ${cell.home ? 'vs' : 'at'} ${cell.opp}${cell.finished ? `, ${cell.us}-${cell.them}` : ''}`}
                                                 sx={{
+                                                    position: 'relative',
                                                     display: 'inline-flex', alignItems: 'center', gap: '3px', justifyContent: 'center',
                                                     cursor: cell.gameId ? 'pointer' : 'default', textDecoration: 'none', color: 'inherit',
                                                     px: '5px', py: '3px', borderRadius: 'var(--r-sm)',
-                                                    background: cell.isConference ? 'color-mix(in srgb, var(--brand) 12%, transparent)' : 'color-mix(in srgb, var(--gold) 12%, transparent)',
-                                                    '&:hover': cell.gameId ? { background: cell.isConference ? 'color-mix(in srgb, var(--brand) 20%, transparent)' : 'color-mix(in srgb, var(--gold) 20%, transparent)' } : undefined,
+                                                    background: cell.isNeutralSite
+                                                        ? 'color-mix(in srgb, var(--disc) 18%, transparent)'
+                                                        : cell.isConference ? 'color-mix(in srgb, var(--brand) 12%, transparent)' : isIndependent ? 'transparent' : 'color-mix(in srgb, var(--gold) 12%, transparent)',
+                                                    '&:hover': cell.gameId ? { background: cell.isNeutralSite ? 'color-mix(in srgb, var(--disc) 28%, transparent)' : cell.isConference ? 'color-mix(in srgb, var(--brand) 20%, transparent)' : isIndependent ? 'var(--surface-2)' : 'color-mix(in srgb, var(--gold) 20%, transparent)' } : undefined,
                                                 }}
                                             >
+                                                {cell.isNeutralSite && !isIndependent && (
+                                                    <Box sx={{ position: 'absolute', top: '2px', right: '2px', width: 6, height: 6, borderRadius: '50%', background: cell.isConference ? 'var(--brand)' : 'var(--gold)' }} />
+                                                )}
                                                 {!cell.home && <Box component="span" sx={{ color: 'var(--text-dim)', fontSize: '0.62rem' }}>@</Box>}
                                                 <TeamMark team={markFor(cell.opp)} size={18} />
                                                 {cell.finished && (
@@ -133,6 +149,7 @@ ConferenceGrid.propTypes = {
     schedule: PropTypes.array.isRequired,
     teamsMap: PropTypes.object.isRequired,
     loading: PropTypes.bool,
+    selectedConference: PropTypes.string,
 };
 
 export default ConferenceGrid;

@@ -3,6 +3,8 @@ import App from './App';
 import { reportFrontendError } from './api/frontendErrorsApi';
 
 window.onerror = (message, source, lineno, colno, error) => {
+    if (!error && message === 'Script error.' && !source && !lineno && !colno) return;
+
     reportFrontendError({
         message: error?.message ?? String(message),
         stack: error?.stack ?? `${source}:${lineno}:${colno}`,

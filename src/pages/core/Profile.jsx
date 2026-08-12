@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
 import { Link, useSearchParams } from 'react-router-dom';
-import { updateUsername, updateEmail, updatePassword, updateCoachName, getUserById } from '../../api/userApi';
+import { updateUsername, updateEmail, updatePassword, updateUser, getUserById } from '../../api/userApi';
 import { logout } from '../../api/authApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../theme/ColorModeContext';
@@ -141,7 +141,7 @@ const Profile = ({ user, setUser }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
     const { mode, setMode } = useColorMode();
-    useSeo({ title: 'Profile & settings | Fake College Football', description: 'Manage your Fake College Football account, settings, and API access.' });
+    useSeo({ title: 'Profile | FCFB', description: 'Manage your Fake College Football account, settings, and API access.' });
 
     useEffect(() => {
         if (!user?.id) return;
@@ -162,7 +162,7 @@ const Profile = ({ user, setUser }) => {
     if (!user) {
         return (
             <PageWrap>
-                <PageHeading eyebrow="Your account" title="Profile & settings" />
+                <PageHeading eyebrow="Your account" title="Profile" />
                 <Panel><Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>You need to <Box component={Link} to="/login" sx={{ color: 'var(--brand)' }}>log in</Box> to manage your account.</Box></Panel>
             </PageWrap>
         );
@@ -189,7 +189,7 @@ const Profile = ({ user, setUser }) => {
                                 <Box sx={descSx}>{formatPosition(user.position)}{user.team ? `, ${user.team}` : ', Free agent'}</Box>
                             </Box>
                         </Box>
-                        <FieldRow label="Coach name" desc={user.coach_name || 'Set your coach name'} onSave={async (value) => { await updateCoachName(user.id, value); patch({ coach_name: value }); }} />
+                        <FieldRow label="Coach name" desc={user.coach_name || 'Set your coach name'} onSave={async (value) => { await updateUser({ ...user, coach_name: value }); patch({ coach_name: value }); }} />
                         <FieldRow label="Username" desc={user.username} onSave={async (value) => { await updateUsername(user.id, value); patch({ username: value }); }} />
                         <FieldRow label="Email" type="email" desc="Change your account email" onSave={async (value) => { await updateEmail(user.id, value); }} />
                         <PasswordRow onSave={(current, next) => updatePassword(user.id, current, next)} />

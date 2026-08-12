@@ -2,7 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const SegTabs = ({ value, onChange, options, ariaLabel }) => (
+const SegTabs = ({ value, onChange, options, ariaLabel, buttonSx }) => (
     <Box
         role="tablist"
         aria-label={ariaLabel}
@@ -22,6 +22,8 @@ const SegTabs = ({ value, onChange, options, ariaLabel }) => (
                 cursor: 'pointer',
                 borderRight: '1px solid var(--line-soft)',
                 whiteSpace: 'nowrap',
+                boxSizing: 'border-box',
+                ...buttonSx,
             },
             '& button:last-of-type': { borderRight: 0 },
             '& button.on': { background: 'var(--brand-deep)', color: '#fff' },
@@ -51,6 +53,7 @@ SegTabs.propTypes = {
         label: PropTypes.node.isRequired,
     })).isRequired,
     ariaLabel: PropTypes.string,
+    buttonSx: PropTypes.object,
 };
 
 export default SegTabs;
