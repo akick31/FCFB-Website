@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, Checkbox, FormControlLabel } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
@@ -16,6 +16,7 @@ import { rankMetricEntries } from '../../utils/rankMetricEntries';
 import { rankingMetricHigherIsBetter } from '../../constants/rankingMetrics';
 import { ADJUSTED_PPG_METRIC_TYPES, adjustedMetricHigherIsBetter } from '../../constants/riceSheetAdjustedMetrics';
 import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
+import { useConferencesMap, seasonConferenceList } from '../../components/constants/conferences';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
 
@@ -25,7 +26,9 @@ const METRIC_TYPES = [
     'ADJUSTED_POINTS_FOR', 'ADJUSTED_POINTS_AGAINST', 'ADJUSTED_NET_POINTS',
     'COMPOSITE',
 ];
-const MAX_TEAMS = 10;
+const MAX_TEAMS = 25;
+const BOWL_START_WEEK = 14;
+const TOP_N_QUICK_VIEWS = [10, 25];
 
 const parseTeamIds = (param) => (param || '').split(',').map((id) => Number(id)).filter((id) => Number.isFinite(id)).slice(0, MAX_TEAMS);
 
@@ -36,12 +39,18 @@ const RiceSheet = () => {
 
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTeamsMap = useTeamsMap();
+    const conferencesMap = useConferencesMap();
 
     const [teams, setTeams] = useState([]);
     const [seasons, setSeasons] = useState([]);
     const [season, setSeason] = useState(() => (searchParams.get('season') ? Number(searchParams.get('season')) : null));
-    const [week, setWeek] = useState(null);
+    const [validWeeks, setValidWeeks] = useState([]);
     const [selectedTeamIds, setSelectedTeamIds] = useState(() => parseTeamIds(searchParams.get('teams')));
+    const [excludeBowls, setExcludeBowls] = useState(false);
+    const [quickView, setQuickView] = useState(() => searchParams.get('quickView') || '');
+    const [compact, setCompact] = useState(false);
+    const [compactOverrides, setCompactOverrides] = useState({});
+    const [dragTeamId, setDragTeamId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [metricsByType, setMetricsByType] = useState({});
     const [resumeByTeamId, setResumeByTeamId] = useState({});
@@ -78,12 +87,19 @@ const RiceSheet = () => {
         if (season == null) return undefined;
         let active = true;
         getValidRankingMetricWeeks(season).then((weeks) => {
-            if (!active) return;
-            const weekList = weeks || [];
-            setWeek(weekList.length ? weekList[weekList.length - 1] : null);
-        }).catch(() => { if (active) setWeek(null); });
+            if (active) setValidWeeks(weeks || []);
+        }).catch(() => { if (active) setValidWeeks([]); });
         return () => { active = false; };
     }, [season]);
+
+    const week = useMemo(() => {
+        if (!validWeeks.length) return null;
+        if (excludeBowls) {
+            const regularSeasonWeeks = validWeeks.filter((w) => w < BOWL_START_WEEK);
+            if (regularSeasonWeeks.length) return regularSeasonWeeks[regularSeasonWeeks.length - 1];
+        }
+        return validWeeks[validWeeks.length - 1];
+    }, [validWeeks, excludeBowls]);
 
     useEffect(() => {
         if (season == null) { setSeasonConferenceByTeam({}); return undefined; }
@@ -131,8 +147,9 @@ const RiceSheet = () => {
         };
         apply('season', season != null ? String(season) : null);
         apply('teams', selectedTeamIds.length ? selectedTeamIds.join(',') : null);
+        apply('quickView', quickView || null);
         if (changed) setSearchParams(next, { replace: true });
-    }, [season, selectedTeamIds]);
+    }, [season, selectedTeamIds, quickView]);
 
     const teamById = useMemo(() => Object.fromEntries(teams.map((team) => [team.id, team])), [teams]);
     const seasonTeams = useMemo(
@@ -155,6 +172,33 @@ const RiceSheet = () => {
     const compositeRankByTeamId = metricsByType.COMPOSITE?.rankByTeamId || {};
     const teamIdByName = useMemo(() => Object.fromEntries(teams.map((team) => [team.name, team.id])), [teams]);
 
+    const seasonConferences = useMemo(
+        () => seasonConferenceList([...new Set(Object.values(seasonConferenceByTeam))]),
+        [seasonConferenceByTeam, conferencesMap],
+    );
+    const quickViewOptions = useMemo(() => [
+        { value: '', label: 'Quick view...' },
+        ...TOP_N_QUICK_VIEWS.map((n) => ({ value: `top${n}`, label: `Top ${n}` })),
+        ...seasonConferences.map((conference) => ({ value: conference.code, label: conference.label })),
+    ], [seasonConferences]);
+
+    const applyQuickView = (value) => {
+        setQuickView(value);
+        if (!value) return;
+        const topN = TOP_N_QUICK_VIEWS.find((n) => value === `top${n}`);
+        const ids = topN != null
+            ? Object.entries(compositeRankByTeamId).filter(([, rank]) => rank <= topN).map(([teamId]) => Number(teamId))
+            : seasonTeams.filter((team) => seasonConferenceByTeam[team.name] === value).map((team) => team.id);
+        ids.sort((a, b) => (compositeRankByTeamId[a] ?? Infinity) - (compositeRankByTeamId[b] ?? Infinity));
+        setSelectedTeamIds(ids);
+    };
+
+    useEffect(() => {
+        if (!quickView || selectedTeamIds.length) return;
+        if (!seasonTeams.length || !Object.keys(compositeRankByTeamId).length) return;
+        applyQuickView(quickView);
+    }, [seasonTeams, compositeRankByTeamId]);
+
     const sosRankByTeamId = useMemo(() => {
         const ranked = Object.values(resumeByTeamId)
             .filter((row) => row.compositeSos != null)
@@ -176,11 +220,13 @@ const RiceSheet = () => {
                         const played = Boolean(entry.finished);
                         const ownScore = isHome ? entry.home_score : entry.away_score;
                         const oppScore = isHome ? entry.away_score : entry.home_score;
+                        const hasScore = played && ownScore != null && oppScore != null;
                         return {
                             week: entry.week,
                             name: opponentName,
                             played,
-                            score: played && ownScore != null && oppScore != null ? `${ownScore}-${oppScore}` : null,
+                            won: hasScore ? ownScore > oppScore : null,
+                            score: hasScore ? `${ownScore}-${oppScore}` : null,
                         };
                     })
                     .sort((a, b) => (a.week || 0) - (b.week || 0));
@@ -193,10 +239,12 @@ const RiceSheet = () => {
         });
     }, [selectedTeams, season]);
 
-    const rankedOpponents = (teamId) => (opponentsByTeamId[teamId] || []).map((opponent) => ({
-        ...opponent,
-        rank: compositeRankByTeamId[teamIdByName[opponent.name]] ?? null,
-    }));
+    const rankedOpponents = (teamId) => (opponentsByTeamId[teamId] || [])
+        .filter((opponent) => !excludeBowls || opponent.week < BOWL_START_WEEK)
+        .map((opponent) => ({
+            ...opponent,
+            rank: compositeRankByTeamId[teamIdByName[opponent.name]] ?? null,
+        }));
 
     const teamsMap = useMemo(() => {
         const merged = { ...activeTeamsMap };
@@ -206,11 +254,41 @@ const RiceSheet = () => {
         return merged;
     }, [activeTeamsMap, teams]);
 
-    const removeTeam = (teamId) => setSelectedTeamIds((prev) => prev.filter((id) => id !== teamId));
+    const removeTeam = (teamId) => {
+        setSelectedTeamIds((prev) => prev.filter((id) => id !== teamId));
+        setCompactOverrides((prev) => {
+            if (!(teamId in prev)) return prev;
+            const next = { ...prev };
+            delete next[teamId];
+            return next;
+        });
+    };
+
+    const reorderTeams = (sourceId, targetId) => {
+        if (sourceId === targetId) return;
+        setSelectedTeamIds((prev) => {
+            const from = prev.indexOf(sourceId);
+            const to = prev.indexOf(targetId);
+            if (from === -1 || to === -1) return prev;
+            const next = [...prev];
+            next.splice(from, 1);
+            next.splice(to, 0, sourceId);
+            return next;
+        });
+    };
+
+    const isCardCompact = (teamId) => compactOverrides[teamId] ?? compact;
+    const toggleCardCompact = (teamId) => {
+        setCompactOverrides((prev) => ({ ...prev, [teamId]: !isCardCompact(teamId) }));
+    };
+    const setAllCompact = (value) => {
+        setCompact(value);
+        setCompactOverrides({});
+    };
 
     return (
-        <PageWrap>
-            <PageHeading eyebrow="Compare up to 10 teams" title="Rice Sheet">
+        <PageWrap maxWidth={1300}>
+            <PageHeading eyebrow={`Compare up to ${MAX_TEAMS} teams`} title="Rice Sheet">
                 {season != null && seasons.length > 0 && (
                     <SelectPill
                         label="Season"
@@ -222,8 +300,25 @@ const RiceSheet = () => {
                 )}
             </PageHeading>
 
-            <Box sx={{ display: 'flex', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 2 }}>
                 <TeamPicker teams={seasonTeams} selectedTeams={selectedTeams} onChange={(next) => setSelectedTeamIds(next.map((team) => team.id))} />
+                <SelectPill
+                    label="Quick view"
+                    value={quickView}
+                    onChange={applyQuickView}
+                    options={quickViewOptions}
+                    sx={{ height: '38px', boxSizing: 'border-box' }}
+                />
+                <FormControlLabel
+                    control={<Checkbox checked={excludeBowls} onChange={(event) => setExcludeBowls(event.target.checked)} size="small" />}
+                    label="Exclude bowls"
+                    sx={{ m: 0, whiteSpace: 'nowrap', color: 'var(--text-muted)', '& .MuiFormControlLabel-label': { fontSize: '0.8rem' } }}
+                />
+                <FormControlLabel
+                    control={<Checkbox checked={compact} onChange={(event) => setAllCompact(event.target.checked)} size="small" />}
+                    label="Compact view"
+                    sx={{ m: 0, whiteSpace: 'nowrap', color: 'var(--text-muted)', '& .MuiFormControlLabel-label': { fontSize: '0.8rem' } }}
+                />
             </Box>
 
             <Box sx={{ color: 'var(--text-muted)', fontSize: '0.78rem', mb: 2, lineHeight: 1.6 }}>
@@ -242,21 +337,40 @@ const RiceSheet = () => {
             ) : !selectedTeams.length ? (
                 <Box sx={{ color: 'var(--text-muted)', textAlign: 'center', py: 8 }}>Pick a team above to get started.</Box>
             ) : (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2 }}>
                     {selectedTeams.map((team) => (
-                        <RiceSheetCard
+                        <Box
                             key={team.id}
-                            team={team}
-                            mark={teamsMap[team.name]}
-                            conference={seasonConferenceByTeam[team.name] ?? team.conference}
-                            compositeRank={metricsByType.COMPOSITE?.rankByTeamId[team.id]}
-                            metricsByType={metricsByType}
-                            resume={resumeByTeamId[team.id]}
-                            sosRank={sosRankByTeamId[team.id]}
-                            opponents={rankedOpponents(team.id)}
-                            opponentsLoading={Boolean(opponentsLoadingByTeamId[team.id])}
-                            onRemove={() => removeTeam(team.id)}
-                        />
+                            onDragOver={(event) => event.preventDefault()}
+                            onDrop={(event) => {
+                                event.preventDefault();
+                                if (dragTeamId != null) reorderTeams(dragTeamId, team.id);
+                                setDragTeamId(null);
+                            }}
+                            sx={{
+                                opacity: dragTeamId === team.id ? 0.4 : 1,
+                                ...(isCardCompact(team.id)
+                                    ? { flex: '0 0 auto', width: 190 }
+                                    : { flex: '0 0 auto', width: 300 }),
+                            }}
+                        >
+                            <RiceSheetCard
+                                team={team}
+                                mark={teamsMap[team.name]}
+                                conference={seasonConferenceByTeam[team.name] ?? team.conference}
+                                compositeRank={metricsByType.COMPOSITE?.rankByTeamId[team.id]}
+                                metricsByType={metricsByType}
+                                resume={resumeByTeamId[team.id]}
+                                sosRank={sosRankByTeamId[team.id]}
+                                opponents={rankedOpponents(team.id)}
+                                opponentsLoading={Boolean(opponentsLoadingByTeamId[team.id])}
+                                onRemove={() => removeTeam(team.id)}
+                                compact={isCardCompact(team.id)}
+                                onToggleCompact={() => toggleCardCompact(team.id)}
+                                onDragHandleStart={() => setDragTeamId(team.id)}
+                                onDragHandleEnd={() => setDragTeamId(null)}
+                            />
+                        </Box>
                     ))}
                 </Box>
             )}

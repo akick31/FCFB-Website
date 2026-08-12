@@ -6,13 +6,21 @@ const COLUMNS = '28px 1fr 40px 56px';
 
 const OpponentList = ({ loading, opponents }) => {
     if (loading) {
-        return <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}><CircularProgress size={20} /></Box>;
+        return (
+            <Box sx={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CircularProgress size={20} />
+            </Box>
+        );
     }
     if (!opponents.length) {
-        return <Box sx={{ color: 'var(--text-muted)', fontSize: '0.78rem', textAlign: 'center', py: 1 }}>No games scheduled yet.</Box>;
+        return (
+            <Box sx={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                No games scheduled yet.
+            </Box>
+        );
     }
     return (
-        <Box sx={{ maxHeight: 240, overflowY: 'auto' }}>
+        <Box sx={{ height: 240, overflowY: 'auto' }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: COLUMNS, gap: 0.75, fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 700, textTransform: 'uppercase', pb: 0.5, borderBottom: '1px solid var(--line-soft)' }}>
                 <span>Wk</span>
                 <span>Opponent</span>
@@ -37,7 +45,14 @@ const OpponentList = ({ loading, opponents }) => {
                     <Box sx={{ color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>
                         {opponent.rank != null ? `#${opponent.rank}` : '-'}
                     </Box>
-                    <Box sx={{ fontWeight: opponent.played ? 700 : 400, fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>
+                    <Box
+                        sx={{
+                            fontWeight: opponent.played ? 700 : 400,
+                            fontVariantNumeric: 'tabular-nums',
+                            textAlign: 'right',
+                            color: opponent.won === true ? 'var(--field)' : opponent.won === false ? 'var(--live)' : 'inherit',
+                        }}
+                    >
                         {opponent.played ? opponent.score : '-'}
                     </Box>
                 </Box>
@@ -53,6 +68,7 @@ OpponentList.propTypes = {
         name: PropTypes.string.isRequired,
         rank: PropTypes.number,
         played: PropTypes.bool.isRequired,
+        won: PropTypes.bool,
         score: PropTypes.string,
     })).isRequired,
 };
