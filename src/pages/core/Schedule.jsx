@@ -94,10 +94,15 @@ const Schedule = () => {
         return codes.filter((conf) => present.has(conf));
     }, [teams, conferencesMap, isLiveSeason, seasonConferenceMap]);
 
-    const conferenceTeams = useMemo(() => {
-        const pool = isLiveSeason ? activeTeams : teams.filter((team) => isRealTeam(team)).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-        return pool.filter((team) => conferenceOfTeam(team) === selectedConference);
-    }, [activeTeams, teams, selectedConference, isLiveSeason, seasonConferenceMap]);
+    const leagueTeams = useMemo(
+        () => (isLiveSeason ? activeTeams : teams.filter((team) => isRealTeam(team)).sort((a, b) => (a.name || '').localeCompare(b.name || ''))),
+        [activeTeams, teams, isLiveSeason],
+    );
+
+    const conferenceTeams = useMemo(
+        () => leagueTeams.filter((team) => conferenceOfTeam(team) === selectedConference),
+        [leagueTeams, selectedConference, seasonConferenceMap],
+    );
 
     useEffect(() => {
         if (!tab && !loading) navigate('/schedules/conference', { replace: true });
@@ -274,7 +279,7 @@ const Schedule = () => {
                             onGameDrop={scheduleEditor.handleGameDrop}
                         />
                     ) : (
-                        <ConferenceGrid conferenceTeams={conferenceTeams} schedule={allSeasonSchedule} teamsMap={teamsMap} loading={confLoading} selectedConference={selectedConference} />
+                        <ConferenceGrid conferenceTeams={conferenceTeams} allTeams={leagueTeams} schedule={allSeasonSchedule} teamsMap={teamsMap} loading={confLoading} selectedConference={selectedConference} />
                     )}
                 </>
             )}

@@ -1,15 +1,34 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../ui/TeamMark';
+import OpenTeamsDialog from './OpenTeamsDialog';
 import { ensureTeam } from '../../hooks/useTeamsMap';
 import { field } from '../../utils/fieldHelper';
 
 const REGULAR_WEEKS = Array.from({ length: 12 }, (_, index) => index + 1);
 
-const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading, selectedConference }) => {
+const ConferenceGrid = ({ conferenceTeams, allTeams, schedule, teamsMap, loading, selectedConference }) => {
     const isIndependent = selectedConference === 'FBS_INDEPENDENT';
+    const [openDialog, setOpenDialog] = useState(null);
+
+    const scheduledNamesByWeek = useMemo(() => {
+        const map = {};
+        for (const game of schedule) {
+            if (!game.week) continue;
+            if (!map[game.week]) map[game.week] = new Set();
+            map[game.week].add(game.home_team);
+            map[game.week].add(game.away_team);
+        }
+        return map;
+    }, [schedule]);
+
+    const openTeamsForDialog = useMemo(() => {
+        if (!openDialog) return [];
+        const scheduledNames = scheduledNamesByWeek[openDialog.week] || new Set();
+        return allTeams.filter((team) => team.name !== openDialog.teamName && !scheduledNames.has(team.name));
+    }, [openDialog, scheduledNamesByWeek, allTeams]);
 
     const byTeamWeek = useMemo(() => {
         const map = {};
@@ -104,7 +123,25 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading, selected
                                 </td>
                                 {REGULAR_WEEKS.map((week) => {
                                     const cell = byTeamWeek[team.name]?.[week];
-                                    if (!cell) return <td key={week} style={{ color: 'var(--text-dim)' }}>-</td>;
+                                    if (!cell) {
+                                        return (
+                                            <td key={week}>
+                                                <Box
+                                                    component="button"
+                                                    type="button"
+                                                    onClick={() => setOpenDialog({ week, teamName: team.name })}
+                                                    title={`View teams open in Week ${week}`}
+                                                    sx={{
+                                                        font: 'inherit', color: 'var(--text-dim)', background: 'transparent', border: 0, cursor: 'pointer',
+                                                        width: '100%', py: '3px', borderRadius: 'var(--r-sm)',
+                                                        '&:hover': { background: 'var(--surface-2)', color: 'var(--text-muted)' },
+                                                    }}
+                                                >
+                                                    -
+                                                </Box>
+                                            </td>
+                                        );
+                                    }
                                     const win = cell.us > cell.them;
                                     return (
                                         <td key={week}>
@@ -140,12 +177,20 @@ const ConferenceGrid = ({ conferenceTeams, schedule, teamsMap, loading, selected
                     </tbody>
                 </Box>
             </Box>
+            <OpenTeamsDialog
+                open={Boolean(openDialog)}
+                week={openDialog?.week}
+                teams={openTeamsForDialog}
+                teamsMap={teamsMap}
+                onClose={() => setOpenDialog(null)}
+            />
         </Box>
     );
 };
 
 ConferenceGrid.propTypes = {
     conferenceTeams: PropTypes.array.isRequired,
+    allTeams: PropTypes.array.isRequired,
     schedule: PropTypes.array.isRequired,
     teamsMap: PropTypes.object.isRequired,
     loading: PropTypes.bool,
