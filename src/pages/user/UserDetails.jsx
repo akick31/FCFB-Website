@@ -35,7 +35,7 @@ import CurrentTeamsPanel from '../../components/user/CurrentTeamsPanel';
 const POLL_TICKS = [1, 5, 10, 15, 20, 25].map((v) => ({ v, label: String(v) }));
 
 const num = (value) => (value == null ? '-' : Number(value).toLocaleString());
-const dec = (value, digits = 1) => (value == null ? '-' : Number(value).toFixed(digits));
+const dec = (value, digits = 2) => (value == null ? '-' : Number(value).toFixed(digits));
 const pct = (value) => (value == null ? '-' : `${Number(value).toFixed(1)}%`);
 const signed = (value) => (value == null ? '-' : (value > 0 ? `+${value}` : `${value}`));
 
@@ -206,7 +206,7 @@ const UserDetails = () => {
     );
 
     const displayedRecord = useMemo(() => {
-        if (statsSeasonView === 'career') return { wins: user.wins || 0, losses: user.losses || 0 };
+        if (statsSeasonView === 'career') return { wins: user?.wins || 0, losses: user?.losses || 0 };
         return statsSeasonRows.reduce((acc, row) => ({ wins: acc.wins + (row.wins || 0), losses: acc.losses + (row.losses || 0) }), { wins: 0, losses: 0 });
     }, [statsSeasonView, statsSeasonRows, user]);
 

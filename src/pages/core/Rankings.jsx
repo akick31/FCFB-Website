@@ -448,10 +448,10 @@ const Rankings = () => {
                     <tr>
                         <th className="lft stick" style={{ width: '6%' }}>Rk</th>
                         <th className="lft" style={{ width: '24%' }}>Team</th>
-                        <th style={{ width: '11%', textAlign: 'center' }}>Record</th>
-                        <th style={{ width: '11%', textAlign: 'center' }}>Conference</th>
-                        <th style={{ width: '11%', textAlign: 'center' }}>Previous</th>
-                        <th style={{ width: '9%', textAlign: 'center' }}>Δ</th>
+                        <th style={{ width: '11%', textAlign: 'center !important' }}>Record</th>
+                        <th style={{ width: '11%', textAlign: 'center !important' }}>Conference</th>
+                        <th style={{ width: '11%', textAlign: 'center !important' }}>Previous</th>
+                        <th style={{ width: '9%', textAlign: 'center !important' }}>Δ</th>
                         <th style={{ width: '10%' }}>{isMetricMode(mode) ? rankingMetricShortLabel(mode) : 'ELO'}</th>
                         {mode === 'EQUIVALENT_WINS' && <th style={{ width: '11%', textAlign: 'center' }}>Pythag Record</th>}
                         <th style={{ width: mode === 'EQUIVALENT_WINS' ? '13%' : '18%' }}>Coach</th>

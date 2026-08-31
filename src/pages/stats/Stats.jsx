@@ -375,7 +375,7 @@ const Stats = () => {
                             <td className="num">{dec(row.yards_per_play)}</td>
                             <td className="num">{fmt(row.pass_touchdowns)}</td>
                             <td className="num">{fmt(row.rush_touchdowns)}</td>
-                            <td className="num">{dec(row.average_offensive_diff, 0)}</td>
+                            <td className="num">{dec(row.average_offensive_diff)}</td>
                         </tr>
                     ))}
                 </tbody>

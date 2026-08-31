@@ -14,6 +14,10 @@ server {
     listen 462;
     server_name _;
 
+    if ($host ~ ":462$") {
+        return 301 https://fakecollegefootball.com$request_uri;
+    }
+
     root /usr/share/nginx/html;
     index index.html;
 
