@@ -52,7 +52,7 @@ export const buildCoachStints = (transactions, currentTeam) => {
         });
 };
 
-export const buildTeamCoachHistory = (transactions, teamName) => {
+export const buildTeamCoachHistory = (transactions, teamName, discordIdToUsername) => {
     const teamEntries = (transactions || []).filter((entry) => entry.team === teamName);
     const sorted = [...teamEntries].sort((a, b) => timeOf(a.transaction_date) - timeOf(b.transaction_date));
     const stints = [];
@@ -63,11 +63,14 @@ export const buildTeamCoachHistory = (transactions, teamName) => {
         const position = entry.position || 'HEAD_COACH';
         const date = entry.transaction_date || '';
         const coaches = Array.isArray(entry.coach) ? entry.coach : [entry.coach];
-        const coach = coaches.filter(Boolean)[0] || null;
+        const coachDiscordIds = Array.isArray(entry.coach_discord_ids) ? entry.coach_discord_ids : [entry.coach_discord_ids];
+        const coachDiscordId = coachDiscordIds.filter(Boolean)[0] || null;
+        const loggedCoach = coaches.filter(Boolean)[0] || null;
+        const coach = (coachDiscordId && discordIdToUsername?.[coachDiscordId]) || loggedCoach;
         if (!coach) return;
 
         if (type === 'HIRED' || type === 'HIRED_INTERIM') {
-            open[position] = { coach, position, startDate: date };
+            open[position] = { coach, coachDiscordId, position, startDate: date };
         } else if (type === 'FIRED' && open[position]) {
             stints.push({ ...open[position], endDate: date });
             delete open[position];

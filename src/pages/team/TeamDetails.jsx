@@ -11,6 +11,7 @@ import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getScheduleBySeasonAndTeam } from '../../api/scheduleApi';
 import { getLatestCompletedSeason, getCurrentSeason, getAllSeasons } from '../../api/seasonApi';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
+import { getAllUsers } from '../../api/userApi';
 import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../theme/ColorModeContext';
 import { pickTeamColor } from '../../utils/teamColor';
@@ -81,6 +82,7 @@ const TeamDetails = () => {
     const [metricTrends, setMetricTrends] = useState({});
     const [metricTrendsLoading, setMetricTrendsLoading] = useState(false);
     const [coachTransactions, setCoachTransactions] = useState([]);
+    const [discordIdToUsername, setDiscordIdToUsername] = useState({});
     const [collapsedSections, setCollapsedSections] = useState(() => new Set());
 
     const toggleSection = (key) => setCollapsedSections((prev) => {
@@ -103,15 +105,22 @@ const TeamDetails = () => {
                 if (!active) return;
                 setTeam(teamData);
 
-                const [defSeason, elo, rankGames, allStatsData, allTransactions] = await Promise.all([
+                const [defSeason, elo, rankGames, allStatsData, allTransactions, allUsers] = await Promise.all([
                     resolveDefaultSeason(),
                     getEloHistory(teamData.name, null).catch(() => []),
                     getRankingsHistory(teamData.name, null).catch(() => []),
                     getFilteredSeasonStats(teamData.name, null, null, null, 0, 50).catch(() => null),
                     getEntireCoachTransactionLog().catch(() => []),
+                    getAllUsers().catch(() => []),
                 ]);
                 if (!active) return;
                 setCoachTransactions(allTransactions || []);
+                setDiscordIdToUsername(
+                    (allUsers || []).reduce((acc, entry) => {
+                        if (entry.discord_id) acc[entry.discord_id] = entry.username;
+                        return acc;
+                    }, {}),
+                );
 
                 const eloRows = (elo || [])
                     .filter((row) => row.elo != null && row.season >= 1)
@@ -278,7 +287,7 @@ const TeamDetails = () => {
 
     const eloTrend = useMemo(() => buildTrend(allEloRows, seasonView), [allEloRows, seasonView]);
     const rankTrend = useMemo(() => buildTrend(allRankPoints, seasonView), [allRankPoints, seasonView]);
-    const teamCoachHistory = useMemo(() => (team ? buildTeamCoachHistory(coachTransactions, team.name) : []), [coachTransactions, team]);
+    const teamCoachHistory = useMemo(() => (team ? buildTeamCoachHistory(coachTransactions, team.name, discordIdToUsername) : []), [coachTransactions, team, discordIdToUsername]);
 
     if (loading) {
         return <PageWrap><Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box></PageWrap>;
