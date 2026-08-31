@@ -5,6 +5,17 @@ import PropTypes from 'prop-types';
 
 const POLL_TICKS = [1, 5, 10, 15, 20, 25];
 
+const buildRankTicks = (domain) => {
+    const [lo, hi] = domain;
+    if (typeof lo !== 'number' || typeof hi !== 'number') return undefined;
+    if (hi <= 25) return POLL_TICKS.filter((tick) => tick <= hi);
+    const steps = 5;
+    const ticks = [lo];
+    for (let i = 1; i < steps; i += 1) ticks.push(Math.round(lo + (i * (hi - lo)) / steps));
+    ticks.push(hi);
+    return [...new Set(ticks)];
+};
+
 const TrendTooltip = ({ active, payload, formatLabel }) => {
     if (!active || !payload || payload.length === 0) return null;
     return (
@@ -18,7 +29,7 @@ TrendTooltip.propTypes = { active: PropTypes.bool, payload: PropTypes.array, for
 
 const MiniTrendChart = ({ data, color, reversed = false, yDomain, yTicks, formatLabel, height = 150 }) => {
     const domain = yDomain || (reversed ? [1, 25] : ['auto', 'auto']);
-    const ticks = yTicks || (reversed ? POLL_TICKS : undefined);
+    const ticks = yTicks || (reversed ? buildRankTicks(domain) : undefined);
     return (
         <Box sx={{ width: '100%', height }}>
             <ResponsiveContainer width="100%" height="100%">

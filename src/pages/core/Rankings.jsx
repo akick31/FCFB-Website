@@ -379,7 +379,7 @@ const Rankings = () => {
                     value={mode}
                     onChange={(next) => navigate({ pathname: `/rankings/${slugForMode(next)}`, search: searchParams.toString() })}
                     options={tabs.map((tab) => ({ value: tab, label: tabLabel(tab) }))}
-                    buttonSx={{ height: '38px' }}
+                    buttonSx={{ height: '36px' }}
                 />
                 {season != null && seasons.length > 0 && (
                     <SelectPill
@@ -416,6 +416,15 @@ const Rankings = () => {
                         sx={{ height: '38px', boxSizing: 'border-box' }}
                     />
                 )}
+                {week != null && weeksForMode.length > 0 && (
+                    <SelectPill
+                        label="Week"
+                        value={week}
+                        onChange={(next) => setWeek(Number(next))}
+                        options={weeksForMode.map((option) => ({ value: option, label: (isMetricMode(mode) || mode === 'elo' ? granularWeekLabel : weekLabel)(option) }))}
+                        sx={{ height: '38px', boxSizing: 'border-box' }}
+                    />
+                )}
                 {hasShowFilter(mode) && (
                     <Box
                         component="input"
@@ -424,15 +433,6 @@ const Rankings = () => {
                         value={teamSearch}
                         onChange={(event) => setTeamSearch(event.target.value)}
                         sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', padding: '6px 10px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, minWidth: 190, height: '38px', boxSizing: 'border-box', '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 } }}
-                    />
-                )}
-                {week != null && weeksForMode.length > 0 && (
-                    <SelectPill
-                        label="Week"
-                        value={week}
-                        onChange={(next) => setWeek(Number(next))}
-                        options={weeksForMode.map((option) => ({ value: option, label: (isMetricMode(mode) || mode === 'elo' ? granularWeekLabel : weekLabel)(option) }))}
-                        sx={{ height: '38px', boxSizing: 'border-box' }}
                     />
                 )}
             </PageHeading>

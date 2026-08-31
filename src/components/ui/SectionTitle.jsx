@@ -3,7 +3,7 @@ import { Box } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-const SectionTitle = ({ title, note, collapsible = false, collapsed = false, onToggle }) => (
+const SectionTitle = ({ title, note, collapsible = false, collapsed = false, onToggle, sx }) => (
     <Box
         component={collapsible ? 'button' : 'div'}
         type={collapsible ? 'button' : undefined}
@@ -12,6 +12,7 @@ const SectionTitle = ({ title, note, collapsible = false, collapsed = false, onT
         sx={{
             display: 'flex', alignItems: 'baseline', gap: '12px', mt: '22px', mb: '12px', width: '100%',
             ...(collapsible ? { border: 0, background: 'transparent', padding: 0, cursor: 'pointer', font: 'inherit', textAlign: 'left' } : {}),
+            ...sx,
         }}
     >
         {collapsible && (
@@ -30,6 +31,7 @@ SectionTitle.propTypes = {
     collapsible: PropTypes.bool,
     collapsed: PropTypes.bool,
     onToggle: PropTypes.func,
+    sx: PropTypes.object,
 };
 
 export default SectionTitle;
