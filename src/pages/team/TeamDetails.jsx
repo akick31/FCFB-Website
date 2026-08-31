@@ -74,8 +74,10 @@ const TeamDetails = () => {
     const [error, setError] = useState('');
     const [currentSeason, setCurrentSeason] = useState(null);
     const [metricStats, setMetricStats] = useState({ values: {}, ranks: {}, totals: {} });
-    const [metricStatus, setMetricStatus] = useState({ season: null, fallback: false });
     const [metricsLoading, setMetricsLoading] = useState(true);
+    const [metricsSeasonView, setMetricsSeasonView] = useState(null);
+    const [metricsWeeks, setMetricsWeeks] = useState([]);
+    const [metricsWeekView, setMetricsWeekView] = useState(null);
     const [metricTrends, setMetricTrends] = useState({});
     const [metricTrendsLoading, setMetricTrendsLoading] = useState(false);
     const [collapsedSections, setCollapsedSections] = useState(() => new Set());
@@ -120,6 +122,7 @@ const TeamDetails = () => {
                 setAllTimeStats(aggregateSeasonStats(statsRows(allStatsData)));
 
                 const seasonSet = new Set([...eloRows, ...rankPoints].map((row) => row.season).filter((value) => value != null));
+                if (defSeason != null) seasonSet.add(defSeason);
                 let seasonList = [...seasonSet].sort((a, b) => b - a);
                 if (seasonList.length === 0) {
                     const all = await getAllSeasons().catch(() => []);
@@ -171,48 +174,51 @@ const TeamDetails = () => {
     }, [team, seasonView, seasons, scope]);
 
     useEffect(() => {
-        if (!team || currentSeason == null) return undefined;
+        if (currentSeason == null || metricsSeasonView != null) return;
+        setMetricsSeasonView(currentSeason);
+    }, [currentSeason]);
+
+    useEffect(() => {
+        if (!team || metricsSeasonView == null) { setMetricsWeeks([]); return undefined; }
+        let active = true;
+        getRankingMetricWeeks(metricsSeasonView, RANKING_METRIC_TYPES[0].value).catch(() => []).then((weeks) => {
+            if (!active) return;
+            const sorted = [...(weeks || [])].sort((a, b) => a - b);
+            setMetricsWeeks(sorted);
+            setMetricsWeekView((prev) => (prev != null && sorted.includes(prev) ? prev : (sorted[sorted.length - 1] ?? null)));
+        });
+        return () => { active = false; };
+    }, [team, metricsSeasonView]);
+
+    useEffect(() => {
+        if (!team || metricsSeasonView == null || metricsWeekView == null) {
+            setMetricStats({ values: {}, ranks: {}, totals: {} });
+            return undefined;
+        }
         let active = true;
         setMetricsLoading(true);
-        const fetchMetric = async (season, entry) => {
-            const weeks = await getRankingMetricWeeks(season, entry.value).catch(() => []);
-            if (!weeks || !weeks.length) return { value: null, rank: null, total: 0 };
-            const week = weeks[weeks.length - 1];
-            const rows = await getRankingMetrics(season, week, entry.value).catch(() => []);
+        const fetchMetric = async (entry) => {
+            const rows = await getRankingMetrics(metricsSeasonView, metricsWeekView, entry.value).catch(() => []);
             const higherIsBetter = rankingMetricHigherIsBetter(entry.value);
             const sorted = [...rows].sort((a, b) => (higherIsBetter ? b.value - a.value : a.value - b.value));
             const index = sorted.findIndex((row) => row.teamId === team.id);
             return { value: index >= 0 ? sorted[index].value : null, rank: index >= 0 ? index + 1 : null, total: sorted.length };
         };
-        const fetchSeason = async (season) => {
-            const results = await Promise.all(RANKING_METRIC_TYPES.map((entry) => fetchMetric(season, entry)));
+        (async () => {
+            const results = await Promise.all(RANKING_METRIC_TYPES.map(fetchMetric));
+            if (!active) return;
             const values = {};
             const ranks = {};
             const totals = {};
-            let any = false;
             RANKING_METRIC_TYPES.forEach((entry, index) => {
                 values[entry.value] = results[index].value;
                 ranks[entry.value] = results[index].rank;
                 totals[entry.value] = results[index].total;
-                if (results[index].value != null) any = true;
             });
-            return { values, ranks, totals, any };
-        };
-        (async () => {
-            const current = await fetchSeason(currentSeason);
-            if (!active) return;
-            if (current.any) {
-                setMetricStats(current);
-                setMetricStatus({ season: currentSeason, fallback: false });
-                return;
-            }
-            const previous = await fetchSeason(currentSeason - 1);
-            if (!active) return;
-            setMetricStats(previous);
-            setMetricStatus({ season: currentSeason - 1, fallback: previous.any });
+            setMetricStats({ values, ranks, totals });
         })().finally(() => { if (active) setMetricsLoading(false); });
         return () => { active = false; };
-    }, [team, currentSeason]);
+    }, [team, metricsSeasonView, metricsWeekView]);
 
     useEffect(() => {
         if (!team || seasonView == null || seasonView === 'alltime') { setMetricTrends({}); return undefined; }
@@ -315,27 +321,47 @@ const TeamDetails = () => {
                 </TileGrid>
             )}
 
-            {!metricsLoading && metricStatus.season != null && Object.values(metricStats.values).some((value) => value != null) && (
+            {metricsSeasonView != null && (
                 <>
-                    <SectionTitle
-                        title="Computer Rankings"
-                        note={`Season ${metricStatus.season}${metricStatus.fallback ? ' (final)' : ''}`}
-                        collapsible
-                        collapsed={collapsedSections.has('metrics')}
-                        onToggle={() => toggleSection('metrics')}
-                    />
-                    {!collapsedSections.has('metrics') && (
-                        <TileGrid minTile={100} sx={{ gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 130px))', justifyContent: 'center' }}>
-                            {RANKING_METRIC_TYPES.map((entry) => (
-                                <StatTile
-                                    key={entry.value}
-                                    compact
-                                    label={rankingMetricLabel(entry.value)}
-                                    value={metricStats.values[entry.value] != null ? metricStats.values[entry.value].toFixed(2) : '-'}
-                                    caption={metricStats.ranks[entry.value] != null ? `#${metricStats.ranks[entry.value]} of ${metricStats.totals[entry.value]}` : undefined}
+                    <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
+                        <SectionTitle title="Computer Rankings" collapsible collapsed={collapsedSections.has('metrics')} onToggle={() => toggleSection('metrics')} sx={{ width: 'auto' }} />
+                        {!collapsedSections.has('metrics') && (
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                <SelectPill
+                                    label="Season"
+                                    value={metricsSeasonView}
+                                    onChange={(next) => setMetricsSeasonView(Number(next))}
+                                    options={seasons.map((option) => ({ value: option, label: `Season ${option}` }))}
                                 />
-                            ))}
-                        </TileGrid>
+                                {metricsWeeks.length > 0 && (
+                                    <SelectPill
+                                        label="Week"
+                                        value={metricsWeekView ?? ''}
+                                        onChange={(next) => setMetricsWeekView(Number(next))}
+                                        options={metricsWeeks.map((week) => ({ value: week, label: `Week ${week}` }))}
+                                    />
+                                )}
+                            </Box>
+                        )}
+                    </Box>
+                    {!collapsedSections.has('metrics') && (
+                        metricsLoading ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}><CircularProgress size={22} /></Box>
+                        ) : Object.values(metricStats.values).some((value) => value != null) ? (
+                            <TileGrid minTile={100} sx={{ gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 130px))', justifyContent: 'center' }}>
+                                {RANKING_METRIC_TYPES.map((entry) => (
+                                    <StatTile
+                                        key={entry.value}
+                                        compact
+                                        label={rankingMetricLabel(entry.value)}
+                                        value={metricStats.values[entry.value] != null ? metricStats.values[entry.value].toFixed(2) : '-'}
+                                        caption={metricStats.ranks[entry.value] != null ? `#${metricStats.ranks[entry.value]} of ${metricStats.totals[entry.value]}` : undefined}
+                                    />
+                                ))}
+                            </TileGrid>
+                        ) : (
+                            <Panel><Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No computer rankings for this week.</Box></Panel>
+                        )
                     )}
                 </>
             )}

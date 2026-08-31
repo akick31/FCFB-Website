@@ -88,6 +88,14 @@ const UserDetails = () => {
     const [seasonView, setSeasonView] = useState(null);
     const [championSeason, setChampionSeason] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [collapsedSections, setCollapsedSections] = useState(() => new Set());
+    const [statsSeasonView, setStatsSeasonView] = useState('career');
+
+    const toggleSection = (key) => setCollapsedSections((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key); else next.add(key);
+        return next;
+    });
 
     useSeo({
         title: `${decodedName || 'Coach'} | Fake College Football`,
@@ -182,6 +190,26 @@ const UserDetails = () => {
 
     const careerStats = useMemo(() => aggregateSeasonStats(coachStats), [coachStats]);
 
+    const statSeasons = useMemo(
+        () => [...new Set(coachStats.map((row) => row.season_number))].filter((value) => value != null).sort((a, b) => b - a),
+        [coachStats],
+    );
+
+    const statsSeasonRows = useMemo(
+        () => (statsSeasonView === 'career' ? coachStats : coachStats.filter((row) => row.season_number === statsSeasonView)),
+        [coachStats, statsSeasonView],
+    );
+
+    const displayedStats = useMemo(
+        () => (statsSeasonView === 'career' ? careerStats : aggregateSeasonStats(statsSeasonRows)),
+        [statsSeasonView, careerStats, statsSeasonRows],
+    );
+
+    const displayedRecord = useMemo(() => {
+        if (statsSeasonView === 'career') return { wins: user.wins || 0, losses: user.losses || 0 };
+        return statsSeasonRows.reduce((acc, row) => ({ wins: acc.wins + (row.wins || 0), losses: acc.losses + (row.losses || 0) }), { wins: 0, losses: 0 });
+    }, [statsSeasonView, statsSeasonRows, user]);
+
     const recordByTeam = useMemo(() => {
         const record = {};
         coachStats.forEach((row) => {
@@ -239,79 +267,102 @@ const UserDetails = () => {
 
             <CoachHeader user={user} team={primaryTeam} mark={primaryTeam ? teamsMap[primaryTeam.name] : null} championSeason={championSeason} />
 
-            <SectionTitle title="Coaching record" />
-            <TileGrid>
-                <StatTile label="All-time record" value={`${user.wins || 0}-${user.losses || 0}`} caption={`${user.conference_wins || 0}-${user.conference_losses || 0} conference`} />
-                <StatTile label="Win percentage" value={formatWinPct(user.win_percentage)} />
-                <StatTile label="National titles" value={user.national_championship_wins || 0} />
-                <StatTile label="Conference titles" value={user.conference_championship_wins || 0} />
-                <StatTile label="Playoff record" value={`${user.playoff_wins || 0}-${user.playoff_losses || 0}`} />
-                <StatTile label="Bowl record" value={`${user.bowl_wins || 0}-${user.bowl_losses || 0}`} />
-            </TileGrid>
+            <SectionTitle title="Coaching record" collapsible collapsed={collapsedSections.has('record')} onToggle={() => toggleSection('record')} />
+            {!collapsedSections.has('record') && (
+                <TileGrid>
+                    <StatTile label="All-time record" value={`${user.wins || 0}-${user.losses || 0}`} caption={`${user.conference_wins || 0}-${user.conference_losses || 0} conference`} />
+                    <StatTile label="Win percentage" value={formatWinPct(user.win_percentage)} />
+                    <StatTile label="National titles" value={user.national_championship_wins || 0} />
+                    <StatTile label="Conference titles" value={user.conference_championship_wins || 0} />
+                    <StatTile label="Playoff record" value={`${user.playoff_wins || 0}-${user.playoff_losses || 0}`} />
+                    <StatTile label="Bowl record" value={`${user.bowl_wins || 0}-${user.bowl_losses || 0}`} />
+                </TileGrid>
+            )}
 
-            <SectionTitle title="Coach stats" note="career" />
-            <TileGrid>
-                <StatTile label="Total games" value={(user.wins || 0) + (user.losses || 0)} />
-                <StatTile label="Average response" value={user.average_response_time ? formatResponseTime(user.average_response_time) : 'N/A'} />
-                <StatTile label="Delay of game" value={user.delay_of_game_instances || 0} />
-                {careerStats && <StatTile label="Total yards" value={num(careerStats.total_yards)} />}
-                {careerStats && <StatTile label="Yards per play" value={dec(careerStats.average_yards_per_play, 2)} />}
-                {careerStats && <StatTile label="Touchdowns" value={num(careerStats.touchdowns)} />}
-                {careerStats && <StatTile label="Avg offensive diff" value={dec(careerStats.average_offensive_diff)} />}
-                {careerStats && <StatTile label="Avg defensive diff" value={dec(careerStats.average_defensive_diff)} />}
-                {careerStats && <StatTile label="Turnover diff" value={signed(careerStats.turnover_differential)} />}
-                {careerStats && <StatTile label="3rd down %" value={pct(careerStats.third_down_conversion_percentage)} />}
-                {careerStats && <StatTile label="Red zone %" value={pct(careerStats.red_zone_success_percentage)} />}
-            </TileGrid>
-            {careerStats && (
-                <Panel sx={{ mt: '16px' }}>
-                    <SeasonStatTable stats={careerStats} />
-                </Panel>
+            <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
+                <SectionTitle title="Coach stats" collapsible collapsed={collapsedSections.has('stats')} onToggle={() => toggleSection('stats')} sx={{ width: 'auto' }} />
+                {!collapsedSections.has('stats') && statSeasons.length > 0 && (
+                    <SelectPill
+                        label="Viewing"
+                        value={statsSeasonView}
+                        onChange={(next) => setStatsSeasonView(next === 'career' ? 'career' : Number(next))}
+                        options={[{ value: 'career', label: 'Career' }, ...statSeasons.map((option) => ({ value: option, label: `Season ${option}` }))]}
+                    />
+                )}
+            </Box>
+            {!collapsedSections.has('stats') && (
+                <>
+                    <TileGrid>
+                        <StatTile label="Total games" value={displayedRecord.wins + displayedRecord.losses} caption={`${displayedRecord.wins}-${displayedRecord.losses}`} />
+                        {statsSeasonView === 'career' && <StatTile label="Average response" value={user.average_response_time ? formatResponseTime(user.average_response_time) : 'N/A'} />}
+                        {statsSeasonView === 'career' && <StatTile label="Delay of game" value={user.delay_of_game_instances || 0} />}
+                        {displayedStats && <StatTile label="Total yards" value={num(displayedStats.total_yards)} />}
+                        {displayedStats && <StatTile label="Yards per play" value={dec(displayedStats.average_yards_per_play, 2)} />}
+                        {displayedStats && <StatTile label="Touchdowns" value={num(displayedStats.touchdowns)} />}
+                        {displayedStats && <StatTile label="Avg offensive diff" value={dec(displayedStats.average_offensive_diff)} />}
+                        {displayedStats && <StatTile label="Avg defensive diff" value={dec(displayedStats.average_defensive_diff)} />}
+                        {displayedStats && <StatTile label="Turnover diff" value={signed(displayedStats.turnover_differential)} />}
+                        {displayedStats && <StatTile label="3rd down %" value={pct(displayedStats.third_down_conversion_percentage)} />}
+                        {displayedStats && <StatTile label="Red zone %" value={pct(displayedStats.red_zone_success_percentage)} />}
+                    </TileGrid>
+                    {displayedStats && (
+                        <Panel sx={{ mt: '16px' }}>
+                            <SeasonStatTable stats={displayedStats} />
+                        </Panel>
+                    )}
+                </>
             )}
 
             {teamEntries.length > 0 && (
                 <>
-                    <SectionTitle title={teamEntries.length > 1 ? 'Current programs' : 'Current program'} />
-                    <CurrentTeamsPanel entries={teamEntries} teamsMap={teamsMap} />
+                    <SectionTitle
+                        title={teamEntries.length > 1 ? 'Current programs' : 'Current program'}
+                        collapsible
+                        collapsed={collapsedSections.has('programs')}
+                        onToggle={() => toggleSection('programs')}
+                    />
+                    {!collapsedSections.has('programs') && <CurrentTeamsPanel entries={teamEntries} teamsMap={teamsMap} />}
                 </>
             )}
 
             {(eloLines.length > 0 || rankLines.length > 0) && (
                 <>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap', mt: '22px', mb: '12px' }}>
-                        <Box component="h2" sx={{ m: 0, fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.01em', fontSize: '1.2rem', color: 'var(--text)' }}>
-                            Trends
+                    <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
+                        <SectionTitle title="Trends" collapsible collapsed={collapsedSections.has('trends')} onToggle={() => toggleSection('trends')} sx={{ width: 'auto' }} />
+                        {!collapsedSections.has('trends') && (
+                            <SelectPill
+                                label="Viewing"
+                                value={seasonView ?? ''}
+                                onChange={(next) => setSeasonView(next === 'alltime' ? 'alltime' : Number(next))}
+                                options={[...seasons.map((option) => ({ value: option, label: `Season ${option}` })), { value: 'alltime', label: 'All-time' }]}
+                            />
+                        )}
+                    </Box>
+                    {!collapsedSections.has('trends') && (
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: eloLines.length > 0 && rankLines.length > 0 ? '1fr 1fr' : '1fr' }, gap: '16px' }}>
+                            {eloLines.length > 0 && (
+                                <Panel header="ELO trend" more={seasonLabel} sx={{ overflow: 'visible' }}>
+                                    <Box sx={{ p: 2, pb: 0 }}>
+                                        <MultiLineChart lines={eloLines} yMin={eloBounds.yMin} yMax={eloBounds.yMax} height={260} label={(p) => `Season ${p.season}, Week ${p.week}, ELO ${p.val}`} />
+                                    </Box>
+                                    <TrendLegend lines={eloLines} teamsMap={teamsMap} />
+                                </Panel>
+                            )}
+                            {rankLines.length > 0 && (
+                                <Panel header="Coaches poll" more={seasonLabel} sx={{ overflow: 'visible' }}>
+                                    <Box sx={{ p: 2, pb: 0 }}>
+                                        <MultiLineChart lines={rankLines} yMin={1} yMax={25} invert yTicks={POLL_TICKS} height={260} label={(p) => `Season ${p.season}, Week ${p.week}, #${p.val}`} />
+                                    </Box>
+                                    <TrendLegend lines={rankLines} teamsMap={teamsMap} />
+                                </Panel>
+                            )}
                         </Box>
-                        <SelectPill
-                            label="Viewing"
-                            value={seasonView ?? ''}
-                            onChange={(next) => setSeasonView(next === 'alltime' ? 'alltime' : Number(next))}
-                            options={[...seasons.map((option) => ({ value: option, label: `Season ${option}` })), { value: 'alltime', label: 'All-time' }]}
-                        />
-                    </Box>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: eloLines.length > 0 && rankLines.length > 0 ? '1fr 1fr' : '1fr' }, gap: '16px' }}>
-                        {eloLines.length > 0 && (
-                            <Panel header="ELO trend" more={seasonLabel}>
-                                <Box sx={{ p: 2, pb: 0 }}>
-                                    <MultiLineChart lines={eloLines} yMin={eloBounds.yMin} yMax={eloBounds.yMax} height={260} label={(p) => `Season ${p.season}, Week ${p.week}, ELO ${p.val}`} />
-                                </Box>
-                                <TrendLegend lines={eloLines} teamsMap={teamsMap} />
-                            </Panel>
-                        )}
-                        {rankLines.length > 0 && (
-                            <Panel header="Coaches poll" more={seasonLabel}>
-                                <Box sx={{ p: 2, pb: 0 }}>
-                                    <MultiLineChart lines={rankLines} yMin={1} yMax={25} invert yTicks={POLL_TICKS} height={260} label={(p) => `Season ${p.season}, Week ${p.week}, #${p.val}`} />
-                                </Box>
-                                <TrendLegend lines={rankLines} teamsMap={teamsMap} />
-                            </Panel>
-                        )}
-                    </Box>
+                    )}
                 </>
             )}
 
-            <SectionTitle title="Coaching history" />
-            {stints.length > 0 ? (
+            <SectionTitle title="Coaching history" collapsible collapsed={collapsedSections.has('history')} onToggle={() => toggleSection('history')} />
+            {!collapsedSections.has('history') && (stints.length > 0 ? (
                 <DataTable minWidth={480}>
                     <thead>
                         <tr>
@@ -355,7 +406,7 @@ const UserDetails = () => {
                 </DataTable>
             ) : (
                 <Panel><Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No permanent coaching stints on record.</Box></Panel>
-            )}
+            ))}
         </PageWrap>
     );
 };

@@ -2,53 +2,56 @@ import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const SegTabs = ({ value, onChange, options, ariaLabel, buttonSx }) => (
-    <Box
-        role="tablist"
-        aria-label={ariaLabel}
-        sx={{
-            display: 'inline-flex',
-            height: '34px',
-            boxSizing: 'border-box',
-            border: '1px solid var(--line)',
-            borderRadius: 'var(--r-sm)',
-            overflow: 'hidden',
-            '& button': {
+const SegTabs = ({ value, onChange, options, ariaLabel, buttonSx }) => {
+    const buttonHeight = buttonSx?.height || '32px';
+    return (
+        <Box
+            role="tablist"
+            aria-label={ariaLabel}
+            sx={{
                 display: 'inline-flex',
-                alignItems: 'center',
-                height: '32px',
-                background: 'var(--surface)',
-                border: 0,
-                color: 'var(--text-muted)',
-                font: 'inherit',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                padding: '0 15px',
-                cursor: 'pointer',
-                borderRight: '1px solid var(--line-soft)',
-                whiteSpace: 'nowrap',
+                height: `calc(${buttonHeight} + 2px)`,
                 boxSizing: 'border-box',
-                ...buttonSx,
-            },
-            '& button:last-of-type': { borderRight: 0 },
-            '& button.on': { background: 'var(--brand-deep)', color: '#fff' },
-            '& button:not(.on):hover': { background: 'var(--surface-2)' },
-        }}
-    >
-        {options.map(({ value: optionValue, label }) => (
-            <button
-                key={optionValue}
-                type="button"
-                role="tab"
-                aria-selected={value === optionValue}
-                className={value === optionValue ? 'on' : ''}
-                onClick={() => onChange(optionValue)}
-            >
-                {label}
-            </button>
-        ))}
-    </Box>
-);
+                border: '1px solid var(--line)',
+                borderRadius: 'var(--r-sm)',
+                overflow: 'hidden',
+                '& button': {
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    height: buttonHeight,
+                    background: 'var(--surface)',
+                    border: 0,
+                    color: 'var(--text-muted)',
+                    font: 'inherit',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    padding: '0 15px',
+                    cursor: 'pointer',
+                    borderRight: '1px solid var(--line-soft)',
+                    whiteSpace: 'nowrap',
+                    boxSizing: 'border-box',
+                    ...buttonSx,
+                },
+                '& button:last-of-type': { borderRight: 0 },
+                '& button.on': { background: 'var(--brand-deep)', color: '#fff' },
+                '& button:not(.on):hover': { background: 'var(--surface-2)' },
+            }}
+        >
+            {options.map(({ value: optionValue, label }) => (
+                <button
+                    key={optionValue}
+                    type="button"
+                    role="tab"
+                    aria-selected={value === optionValue}
+                    className={value === optionValue ? 'on' : ''}
+                    onClick={() => onChange(optionValue)}
+                >
+                    {label}
+                </button>
+            ))}
+        </Box>
+    );
+};
 
 SegTabs.propTypes = {
     value: PropTypes.string.isRequired,
