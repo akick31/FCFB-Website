@@ -7,6 +7,8 @@ import { getGameById, chewGameByGameId, endGameByGameId } from '../../api/gameAp
 import { getAllPlaysByGameId } from '../../api/playApi';
 import { getGameStatsByIdAndTeam, generateGameStats } from '../../api/gameStatsApi.jsx';
 import { getTeamByName } from '../../api/teamApi';
+import { getCurrentSeasonOrLatest } from '../../api/seasonApi';
+import { getScheduleBySeasonAndTeam } from '../../api/scheduleApi';
 import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
 import { useVenuesMap } from '../../hooks/useVenuesMap';
 import { field } from '../../utils/fieldHelper';
@@ -38,6 +40,19 @@ const rankLabel = (rank) => (rank && rank <= 25 ? `#${rank}` : 'Unranked');
 
 const markFrom = (teamsMap, name, teamObject) => teamsMap[name] || (teamObject ? toEntry(teamObject) : { name });
 
+const computeTeamSeasonRecord = (scheduleRows, teamName) => {
+    let wins = 0;
+    let losses = 0;
+    (scheduleRows || []).forEach((row) => {
+        if (!row.finished || row.home_score == null || row.away_score == null) return;
+        const isHome = row.home_team === teamName;
+        const teamScore = isHome ? row.home_score : row.away_score;
+        const oppScore = isHome ? row.away_score : row.home_score;
+        if (teamScore > oppScore) wins += 1; else losses += 1;
+    });
+    return { wins, losses };
+};
+
 const CoachLink = ({ coach }) => {
     if (!coach) return '-';
     return <Box component={Link} to={`/user-details/${coach}`} sx={{ color: 'var(--brand)', fontWeight: 700, textDecoration: 'none' }}>@{coach}</Box>;
@@ -60,6 +75,7 @@ const GameDetails = ({ isAdmin }) => {
     const [homeStats, setHomeStats] = useState(null);
     const [awayTeam, setAwayTeam] = useState(null);
     const [homeTeam, setHomeTeam] = useState(null);
+    const [seasonRecord, setSeasonRecord] = useState({ away: null, home: null });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -76,12 +92,13 @@ const GameDetails = ({ isAdmin }) => {
                 const gameData = await getGameById(gameId);
                 if (!active) return;
                 setGame(gameData);
-                const [playsRes, awayStatsRes, homeStatsRes, awayTeamData, homeTeamData] = await Promise.all([
+                const [playsRes, awayStatsRes, homeStatsRes, awayTeamData, homeTeamData, liveSeason] = await Promise.all([
                     getAllPlaysByGameId(gameId).catch(() => []),
                     getGameStatsByIdAndTeam(gameId, gameData.away_team).catch(() => null),
                     getGameStatsByIdAndTeam(gameId, gameData.home_team).catch(() => null),
                     getTeamByName(gameData.away_team).catch(() => null),
                     getTeamByName(gameData.home_team).catch(() => null),
+                    getCurrentSeasonOrLatest().catch(() => null),
                 ]);
                 if (!active) return;
                 const playList = playsRes?.data ?? playsRes;
@@ -90,6 +107,25 @@ const GameDetails = ({ isAdmin }) => {
                 setHomeStats(unwrap(homeStatsRes));
                 setAwayTeam(awayTeamData);
                 setHomeTeam(homeTeamData);
+
+                if (gameData.season != null && gameData.season === liveSeason) {
+                    setSeasonRecord({
+                        away: { wins: awayTeamData?.current_wins || 0, losses: awayTeamData?.current_losses || 0 },
+                        home: { wins: homeTeamData?.current_wins || 0, losses: homeTeamData?.current_losses || 0 },
+                    });
+                } else if (gameData.season != null) {
+                    const [awaySchedule, homeSchedule] = await Promise.all([
+                        getScheduleBySeasonAndTeam(gameData.season, gameData.away_team).catch(() => []),
+                        getScheduleBySeasonAndTeam(gameData.season, gameData.home_team).catch(() => []),
+                    ]);
+                    if (!active) return;
+                    setSeasonRecord({
+                        away: computeTeamSeasonRecord(awaySchedule, gameData.away_team),
+                        home: computeTeamSeasonRecord(homeSchedule, gameData.home_team),
+                    });
+                } else {
+                    setSeasonRecord({ away: null, home: null });
+                }
             } catch {
                 if (active) setError('Failed to load game details. Please try again.');
             } finally {
@@ -158,7 +194,7 @@ const GameDetails = ({ isAdmin }) => {
 
     const infoRows = [
         { label: 'Conference', away: <ConferenceMark conference={awayTeam?.conference} size={20} />, home: <ConferenceMark conference={homeTeam?.conference} size={20} /> },
-        { label: 'Record', away: `${game.away_wins || 0}-${game.away_losses || 0}`, home: `${game.home_wins || 0}-${game.home_losses || 0}` },
+        { label: 'Record', away: seasonRecord.away ? `${seasonRecord.away.wins}-${seasonRecord.away.losses}` : `${game.away_wins || 0}-${game.away_losses || 0}`, home: seasonRecord.home ? `${seasonRecord.home.wins}-${seasonRecord.home.losses}` : `${game.home_wins || 0}-${game.home_losses || 0}` },
         { label: 'Ranking', away: rankLabel(game.away_team_rank), home: rankLabel(game.home_team_rank) },
         { label: 'ELO', away: awayTeam?.current_elo != null ? Math.round(awayTeam.current_elo) : '-', home: homeTeam?.current_elo != null ? Math.round(homeTeam.current_elo) : '-' },
         { label: 'Offense', away: formatOffensivePlaybook(game.away_offensive_playbook), home: formatOffensivePlaybook(game.home_offensive_playbook) },

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { getAllUsers } from '../../api/userApi';
+import { getAllUsers, getUsernameHistory } from '../../api/userApi';
 import { getAllTeams } from '../../api/teamApi';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
@@ -112,8 +112,9 @@ const UserDetails = () => {
                 setUser(foundUser);
                 if (!foundUser) return;
 
-                const names = [foundUser.coach_name, foundUser.username].filter(Boolean);
-                const txns = coachTransactionsFor(allTransactions, names);
+                const historicalUsernames = await getUsernameHistory(foundUser.id).catch(() => []);
+                const names = [foundUser.coach_name, foundUser.username, ...historicalUsernames].filter(Boolean);
+                const txns = coachTransactionsFor(allTransactions, names, foundUser.discord_id);
                 setTransactions(txns);
                 setAllTeams(allTeams);
 
@@ -163,7 +164,10 @@ const UserDetails = () => {
         return () => { active = false; };
     }, [decodedName]);
 
-    const stints = useMemo(() => buildCoachStints(transactions), [transactions]);
+    const stints = useMemo(
+        () => buildCoachStints(transactions, user ? { team: user.team, position: user.position } : null),
+        [transactions, user],
+    );
 
     const teamEntries = useMemo(() => stints
         .filter((stint) => !stint.endDate)
@@ -342,7 +346,7 @@ const UserDetails = () => {
                                     </td>
                                     <td className="lft">{formatPosition(stint.position)}</td>
                                     <td className="num">{recordByTeam[stint.team] ? `${recordByTeam[stint.team].wins}-${recordByTeam[stint.team].losses}` : '-'}</td>
-                                    <td className="lft">{formatStintDate(stint.startDate)}</td>
+                                    <td className="lft">{stint.startDate ? formatStintDate(stint.startDate) : 'Unknown'}</td>
                                     <td className="lft" style={{ color: active ? 'var(--field)' : undefined }}>{active ? 'Present' : formatStintDate(stint.endDate)}</td>
                                 </Box>
                             );

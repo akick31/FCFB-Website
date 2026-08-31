@@ -1,6 +1,10 @@
 const SHORT_STINT_MS = 14 * 24 * 60 * 60 * 1000;
 
-const matchesCoach = (entry, names) => {
+const matchesCoach = (entry, names, discordId) => {
+    if (discordId) {
+        const discordIds = Array.isArray(entry.coach_discord_ids) ? entry.coach_discord_ids : [entry.coach_discord_ids];
+        if (discordIds.includes(discordId)) return true;
+    }
     const coaches = Array.isArray(entry.coach) ? entry.coach : [entry.coach];
     return coaches.some((coach) => names.includes(coach));
 };
@@ -10,12 +14,12 @@ const timeOf = (dateStr) => {
     return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
 };
 
-export const coachTransactionsFor = (transactions, names) =>
+export const coachTransactionsFor = (transactions, names, discordId) =>
     (transactions || [])
-        .filter((entry) => matchesCoach(entry, names))
+        .filter((entry) => matchesCoach(entry, names, discordId))
         .sort((a, b) => timeOf(b.transaction_date) - timeOf(a.transaction_date));
 
-export const buildCoachStints = (transactions) => {
+export const buildCoachStints = (transactions, currentTeam) => {
     const sorted = [...transactions].sort((a, b) => timeOf(a.transaction_date) - timeOf(b.transaction_date));
     const stints = [];
     const open = {};
@@ -35,9 +39,17 @@ export const buildCoachStints = (transactions) => {
     });
 
     Object.values(open).forEach((stint) => stints.push({ ...stint, endDate: null }));
+
+    if (currentTeam?.team && !stints.some((stint) => stint.team === currentTeam.team && !stint.endDate)) {
+        stints.push({ team: currentTeam.team, position: currentTeam.position || 'HEAD_COACH', startDate: null, endDate: null });
+    }
+
     return stints
         .filter((stint) => !stint.endDate || (timeOf(stint.endDate) - timeOf(stint.startDate)) >= SHORT_STINT_MS)
-        .sort((a, b) => timeOf(b.startDate) - timeOf(a.startDate));
+        .sort((a, b) => {
+            const activeDiff = (b.endDate ? 0 : 1) - (a.endDate ? 0 : 1);
+            return activeDiff !== 0 ? activeDiff : timeOf(b.startDate) - timeOf(a.startDate);
+        });
 };
 
 export const currentRosterByTeam = (transactions) => {
