@@ -6,6 +6,7 @@ import { getFilteredGames } from '../../api/gameApi';
 import { getPostseasonSchedule } from '../../api/scheduleApi';
 import { getCurrentSeason, getLatestCompletedSeason } from '../../api/seasonApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
+import { useConferencesMap, activeConferenceCodes, conferenceLabel } from '../../components/constants/conferences';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
@@ -45,6 +46,7 @@ const Scoreboard = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
+    const conferencesMap = useConferencesMap();
     useSeo(ROUTE_META['/scoreboard']);
 
     const activeTab = TABS.some((option) => option.value === tab) ? tab : 'live';
@@ -58,11 +60,32 @@ const Scoreboard = () => {
     const [page, setPage] = useState(Number.isFinite(parsedPage) && parsedPage >= 0 ? parsedPage : 0);
     const [pageCount, setPageCount] = useState(1);
     const [loading, setLoading] = useState(true);
+    const [conference, setConference] = useState(searchParams.get('conference') || 'ALL');
+    const [rankedOnly, setRankedOnly] = useState(searchParams.get('ranked') === '1');
 
     const changePage = (nextPage) => {
         setPage(nextPage);
         const next = new URLSearchParams(searchParams);
         if (nextPage > 0) next.set('page', String(nextPage)); else next.delete('page');
+        setSearchParams(next, { replace: true });
+    };
+
+    const changeConference = (value) => {
+        setConference(value);
+        setPage(0);
+        const next = new URLSearchParams(searchParams);
+        if (value && value !== 'ALL') next.set('conference', value); else next.delete('conference');
+        next.delete('page');
+        setSearchParams(next, { replace: true });
+    };
+
+    const changeRanked = (value) => {
+        const ranked = value === 'ranked';
+        setRankedOnly(ranked);
+        setPage(0);
+        const next = new URLSearchParams(searchParams);
+        if (ranked) next.set('ranked', '1'); else next.delete('ranked');
+        next.delete('page');
         setSearchParams(next, { replace: true });
     };
 
@@ -103,21 +126,28 @@ const Scoreboard = () => {
         setLoading(true);
         (async () => {
             try {
+                const conferenceParam = conference !== 'ALL' ? conference : undefined;
+                const filterParams = rankedOnly ? ['RANKED_GAME'] : undefined;
                 if (activeTab === 'live') {
-                    const response = await getFilteredGames({ category: 'ONGOING', sort: 'CLOSEST_TO_END', page: 0, size: 30 }).catch(() => null);
-                    if (active) { setGames(response?.content || []); setPageCount(1); }
+                    const response = await getFilteredGames({ category: 'ONGOING', sort: 'CLOSEST_TO_END', page, size: PAGE_SIZE, conference: conferenceParam, filters: filterParams }).catch(() => null);
+                    if (active) { setGames(response?.content || []); setPageCount(response?.total_pages || 1); }
                 } else if (activeTab === 'scrimmages') {
-                    const response = await getFilteredGames({ category: 'SCRIMMAGE', sort: 'CLOSEST_TO_END', page: 0, size: 30 }).catch(() => null);
-                    if (active) { setGames(response?.content || []); setPageCount(1); }
+                    const response = await getFilteredGames({ category: 'SCRIMMAGE', sort: 'CLOSEST_TO_END', page, size: PAGE_SIZE, conference: conferenceParam, filters: filterParams }).catch(() => null);
+                    if (active) { setGames(response?.content || []); setPageCount(response?.total_pages || 1); }
                 } else if (week === 'postseason') {
                     const post = await getPostseasonSchedule(season).catch(() => []);
-                    const finals = (post || []).filter((game) => game.game_status === 'FINAL' || game.home_score != null);
+                    const finals = (post || [])
+                        .filter((game) => game.game_status === 'FINAL' || game.home_score != null)
+                        .filter((game) => !conferenceParam || teamsMap[game.home_team]?.conference === conferenceParam || teamsMap[game.away_team]?.conference === conferenceParam)
+                        .filter((game) => !rankedOnly
+                            || (game.home_team_rank >= 1 && game.home_team_rank <= 25)
+                            || (game.away_team_rank >= 1 && game.away_team_rank <= 25));
                     if (active) {
                         setPageCount(Math.max(1, Math.ceil(finals.length / PAGE_SIZE)));
                         setGames(finals.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE));
                     }
                 } else {
-                    const response = await getFilteredGames({ category: 'PAST', season, week, sort: 'NEWEST', page, size: PAGE_SIZE }).catch(() => null);
+                    const response = await getFilteredGames({ category: 'PAST', season, week, sort: 'NEWEST', page, size: PAGE_SIZE, conference: conferenceParam, filters: filterParams }).catch(() => null);
                     if (active) {
                         setGames(response?.content || []);
                         setPageCount(response?.total_pages || 1);
@@ -128,12 +158,17 @@ const Scoreboard = () => {
             }
         })();
         return () => { active = false; };
-    }, [activeTab, season, week, page]);
+    }, [activeTab, season, week, page, conference, rankedOnly, teamsMap]);
 
     const weekOptions = useMemo(() => [
         { value: 'postseason', label: 'Postseason' },
         ...REGULAR_WEEKS.map((value) => ({ value, label: weekLabel(value) })),
     ], []);
+
+    const conferenceOptions = useMemo(() => [
+        { value: 'ALL', label: 'All conferences' },
+        ...activeConferenceCodes().map((conf) => ({ value: conf, label: conferenceLabel(conf) })),
+    ], [conferencesMap]);
 
     const emptyCopy = {
         live: { title: 'No live games right now', note: offseason ? 'The league is between seasons.' : 'Check back when games are in progress.' },
@@ -158,6 +193,18 @@ const Scoreboard = () => {
                         options={weekOptions}
                     />
                 )}
+                <SelectPill
+                    label="Conference"
+                    value={conference}
+                    onChange={changeConference}
+                    options={conferenceOptions}
+                />
+                <SelectPill
+                    label="Rank"
+                    value={rankedOnly ? 'ranked' : 'all'}
+                    onChange={changeRanked}
+                    options={[{ value: 'all', label: 'All games' }, { value: 'ranked', label: 'Top 25 only' }]}
+                />
             </PageHeading>
 
             {loading ? (

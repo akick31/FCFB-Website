@@ -3,7 +3,7 @@ import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
 const SelectPill = ({ label, value, onChange, options, ariaLabel, sx }) => (
-    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px', border: '1px solid var(--line)', background: 'var(--surface)', borderRadius: 'var(--r-sm)', padding: '6px 10px', ...sx }}>
+    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px', height: '34px', boxSizing: 'border-box', border: '1px solid var(--line)', background: 'var(--surface)', borderRadius: 'var(--r-sm)', padding: '0 10px', ...sx }}>
         {label && (
             <Box component="span" sx={{ color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.6rem', letterSpacing: '0.04em' }}>
                 {label}

@@ -8,17 +8,22 @@ const SegTabs = ({ value, onChange, options, ariaLabel, buttonSx }) => (
         aria-label={ariaLabel}
         sx={{
             display: 'inline-flex',
+            height: '34px',
+            boxSizing: 'border-box',
             border: '1px solid var(--line)',
             borderRadius: 'var(--r-sm)',
             overflow: 'hidden',
             '& button': {
+                display: 'inline-flex',
+                alignItems: 'center',
+                height: '32px',
                 background: 'var(--surface)',
                 border: 0,
                 color: 'var(--text-muted)',
                 font: 'inherit',
                 fontSize: '0.78rem',
                 fontWeight: 700,
-                padding: '8px 15px',
+                padding: '0 15px',
                 cursor: 'pointer',
                 borderRight: '1px solid var(--line-soft)',
                 whiteSpace: 'nowrap',
