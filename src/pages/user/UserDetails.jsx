@@ -279,8 +279,8 @@ const UserDetails = () => {
                 </TileGrid>
             )}
 
-            <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
-                <SectionTitle title="Coach stats" collapsible collapsed={collapsedSections.has('stats')} onToggle={() => toggleSection('stats')} sx={{ width: 'auto' }} />
+            <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap', mb: '12px' }}>
+                <SectionTitle title="Coach stats" collapsible collapsed={collapsedSections.has('stats')} onToggle={() => toggleSection('stats')} sx={{ width: 'auto', mb: 0 }} />
                 {!collapsedSections.has('stats') && statSeasons.length > 0 && (
                     <SelectPill
                         label="Viewing"
@@ -327,8 +327,8 @@ const UserDetails = () => {
 
             {(eloLines.length > 0 || rankLines.length > 0) && (
                 <>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
-                        <SectionTitle title="Trends" collapsible collapsed={collapsedSections.has('trends')} onToggle={() => toggleSection('trends')} sx={{ width: 'auto' }} />
+                    <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap', mb: '12px' }}>
+                        <SectionTitle title="Trends" collapsible collapsed={collapsedSections.has('trends')} onToggle={() => toggleSection('trends')} sx={{ width: 'auto', mb: 0 }} />
                         {!collapsedSections.has('trends') && (
                             <SelectPill
                                 label="Viewing"

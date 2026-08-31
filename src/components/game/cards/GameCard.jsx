@@ -16,7 +16,6 @@ import { getPreviousPlay } from '../../../api/playApi';
 import { ensureTeam } from '../../../hooks/useTeamsMap';
 
 const QUARTER_KEYS = ['q1_score', 'q2_score', 'q3_score', 'q4_score'];
-const sum = (values) => values.reduce((total, value) => total + (value || 0), 0);
 
 const useQuarterScores = (game) => {
     const [stats, setStats] = useState({ home: null, away: null });
@@ -105,7 +104,7 @@ const GameCard = ({ game, teamsMap, compact = false }) => {
     const labels = hasOt ? ['Q1', 'Q2', 'Q3', 'Q4', 'OT'] : ['Q1', 'Q2', 'Q3', 'Q4'];
     const homeQuarters = keys.map((key) => stats.home?.[key]);
     const awayQuarters = keys.map((key) => stats.away?.[key]);
-    const showQuarters = Boolean(stats.home && stats.away) && sum(homeQuarters) === game.home_score && sum(awayQuarters) === game.away_score;
+    const showQuarters = Boolean(stats.home && stats.away) && [...homeQuarters, ...awayQuarters].some((value) => value != null);
     const columns = showQuarters ? labels : [];
 
     const qWidthMobile = compact ? 34 : 38;
