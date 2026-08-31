@@ -158,7 +158,7 @@ const Scoreboard = () => {
             }
         })();
         return () => { active = false; };
-    }, [activeTab, season, week, page, conference, rankedOnly, teamsMap]);
+    }, [activeTab, season, week, page, conference, rankedOnly]);
 
     const weekOptions = useMemo(() => [
         { value: 'postseason', label: 'Postseason' },
