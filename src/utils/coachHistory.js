@@ -52,6 +52,38 @@ export const buildCoachStints = (transactions, currentTeam) => {
         });
 };
 
+export const buildTeamCoachHistory = (transactions, teamName) => {
+    const teamEntries = (transactions || []).filter((entry) => entry.team === teamName);
+    const sorted = [...teamEntries].sort((a, b) => timeOf(a.transaction_date) - timeOf(b.transaction_date));
+    const stints = [];
+    const open = {};
+
+    sorted.forEach((entry) => {
+        const type = (entry.transaction || '').toUpperCase();
+        const position = entry.position || 'HEAD_COACH';
+        const date = entry.transaction_date || '';
+        const coaches = Array.isArray(entry.coach) ? entry.coach : [entry.coach];
+        const coach = coaches.filter(Boolean)[0] || null;
+        if (!coach) return;
+
+        if (type === 'HIRED' || type === 'HIRED_INTERIM') {
+            open[position] = { coach, position, startDate: date };
+        } else if (type === 'FIRED' && open[position]) {
+            stints.push({ ...open[position], endDate: date });
+            delete open[position];
+        }
+    });
+
+    Object.values(open).forEach((stint) => stints.push({ ...stint, endDate: null }));
+
+    return stints
+        .filter((stint) => !stint.endDate || (timeOf(stint.endDate) - timeOf(stint.startDate)) >= SHORT_STINT_MS)
+        .sort((a, b) => {
+            const activeDiff = (b.endDate ? 0 : 1) - (a.endDate ? 0 : 1);
+            return activeDiff !== 0 ? activeDiff : timeOf(b.startDate) - timeOf(a.startDate);
+        });
+};
+
 export const currentRosterByTeam = (transactions) => {
     const sorted = [...transactions].sort((a, b) => timeOf(a.transaction_date) - timeOf(b.transaction_date));
     const roster = {};

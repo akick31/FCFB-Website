@@ -69,7 +69,7 @@ pipeline {
                             --restart unless-stopped \
                             --memory=512m \
                             -v /var/images:/app/images \
-                            -p 462:462 \
+                            -p 461:461 \
                             --env-file .env \
                             -e WEBSITE_SERVICE_KEY=${WEBSITE_SERVICE_KEY} \
                             ${IMAGE_NAME}:latest
