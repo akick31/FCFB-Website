@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import { getAllUsers, updateUser } from '../../api/userApi';
-import { getAllTeams } from '../../api/teamApi';
+import { getAllTeams, hireCoach, fireSingleCoach } from '../../api/teamApi';
 import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS } from '../../constants/teamEnums';
 import { formatOffensivePlaybook, formatDefensivePlaybook, formatRole, formatPosition } from '../../utils/formatText';
 import { slugId } from '../../utils/a11y';
@@ -42,10 +42,12 @@ const NumberField = ({ label, value, onChange }) => (
 
 NumberField.propTypes = { label: PropTypes.string.isRequired, value: PropTypes.number, onChange: PropTypes.func.isRequired };
 
-const EditCoach = () => {
+const EditCoach = ({ user: adminUser }) => {
     const { username } = useParams();
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+    const [coach, setCoach] = useState(null);
+    const [originalTeam, setOriginalTeam] = useState(null);
+    const [originalPosition, setOriginalPosition] = useState(null);
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -58,7 +60,9 @@ const EditCoach = () => {
                 const [allUsers, allTeams] = await Promise.all([getAllUsers(), getAllTeams().catch(() => [])]);
                 const decoded = decodeURIComponent(username || '');
                 const found = allUsers.find((entry) => entry.username === decoded || entry.coach_name === decoded);
-                setUser(found || null);
+                setCoach(found || null);
+                setOriginalTeam(found?.team ?? null);
+                setOriginalPosition(found?.position ?? null);
                 setTeams(allTeams.filter((team) => team.active).map((team) => team.name).sort((a, b) => a.localeCompare(b)));
                 if (!found) setError('Coach not found');
             } catch (err) {
@@ -71,14 +75,27 @@ const EditCoach = () => {
         fetchData();
     }, [username]);
 
-    const handleChange = (field, value) => setUser((prev) => ({ ...prev, [field]: value }));
+    const handleChange = (field, value) => setCoach((prev) => ({ ...prev, [field]: value }));
 
     const handleSave = async () => {
         setSaving(true);
         setError(null);
         setSuccess(false);
         try {
-            await updateUser(user);
+            const nextTeam = coach.team || null;
+            if (nextTeam !== originalTeam) {
+                if (!coach.discord_id) {
+                    setError('Cannot change team: this coach has no Discord ID on file, so the move can’t be logged to coaching history. Link a Discord ID first, or use Team Management.');
+                    setSaving(false);
+                    return;
+                }
+                if (nextTeam) {
+                    await hireCoach({ team: nextTeam, discordId: coach.discord_id, coachPosition: coach.position, processedBy: adminUser?.username });
+                } else if (originalTeam) {
+                    await fireSingleCoach({ team: originalTeam, discordId: coach.discord_id, coachPosition: originalPosition || 'HEAD_COACH', processedBy: adminUser?.username });
+                }
+            }
+            await updateUser(coach);
             setSuccess(true);
             setTimeout(() => navigate('/admin/team-management'), 1500);
         } catch (err) {
@@ -96,7 +113,7 @@ const EditCoach = () => {
         );
     }
 
-    if (!user) {
+    if (!coach) {
         return (
             <AdminLayout title="Edit Coach">
                 <Alert severity="error">{error || 'Coach not found'}</Alert>
@@ -105,11 +122,11 @@ const EditCoach = () => {
     }
 
     const isFullAdmin = typeof window !== 'undefined' && localStorage.getItem('role') === 'ADMIN';
-    const roleFieldDisabled = !isFullAdmin && user.role === 'ADMIN';
+    const roleFieldDisabled = !isFullAdmin && coach.role === 'ADMIN';
     const visibleRoles = isFullAdmin || roleFieldDisabled ? ROLES : ROLES.filter((role) => role !== 'ADMIN');
 
     return (
-        <AdminLayout title={`Edit Coach: ${user.coach_name || user.username}`}>
+        <AdminLayout title={`Edit Coach: ${coach.coach_name || coach.username}`}>
             <Box component="button" type="button" onClick={() => goBackOr(navigate, '/admin/team-management')} sx={{ ...backSx, border: 0, background: 'transparent', cursor: 'pointer', font: 'inherit', p: 0 }}>&larr; Team management</Box>
 
             {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
@@ -118,23 +135,23 @@ const EditCoach = () => {
             <Panel header="Basic information" sx={{ mb: '16px' }}>
                 <Box sx={gridSx}>
                     <Field label="Coach name">
-                        <Box component="input" value={user.coach_name || ''} onChange={(e) => handleChange('coach_name', e.target.value)} sx={inputSx} />
+                        <Box component="input" value={coach.coach_name || ''} onChange={(e) => handleChange('coach_name', e.target.value)} sx={inputSx} />
                     </Field>
                     <Field label="Discord tag">
-                        <Box component="input" value={user.discord_tag || ''} onChange={(e) => handleChange('discord_tag', e.target.value)} sx={inputSx} />
+                        <Box component="input" value={coach.discord_tag || ''} onChange={(e) => handleChange('discord_tag', e.target.value)} sx={inputSx} />
                     </Field>
                     <Field label="Role">
-                        <Box component="select" value={user.role || ''} onChange={(e) => handleChange('role', e.target.value)} sx={selectSx} disabled={roleFieldDisabled} title={roleFieldDisabled ? 'Only an admin can change another admin’s role' : undefined}>
+                        <Box component="select" value={coach.role || ''} onChange={(e) => handleChange('role', e.target.value)} sx={selectSx} disabled={roleFieldDisabled} title={roleFieldDisabled ? 'Only an admin can change another admin’s role' : undefined}>
                             {visibleRoles.map((role) => <option key={role} value={role}>{formatRole(role)}</option>)}
                         </Box>
                     </Field>
                     <Field label="Position">
-                        <Box component="select" value={user.position || ''} onChange={(e) => handleChange('position', e.target.value)} sx={selectSx}>
+                        <Box component="select" value={coach.position || ''} onChange={(e) => handleChange('position', e.target.value)} sx={selectSx}>
                             {POSITIONS.map((position) => <option key={position} value={position}>{formatPosition(position)}</option>)}
                         </Box>
                     </Field>
                     <Field label="Team">
-                        <Box component="select" value={user.team || ''} onChange={(e) => handleChange('team', e.target.value || null)} sx={selectSx}>
+                        <Box component="select" value={coach.team || ''} onChange={(e) => handleChange('team', e.target.value || null)} sx={selectSx}>
                             <option value="">None (free agent)</option>
                             {teams.map((team) => <option key={team} value={team}>{team}</option>)}
                         </Box>
@@ -145,12 +162,12 @@ const EditCoach = () => {
             <Panel header="Playbooks" sx={{ mb: '16px' }}>
                 <Box sx={gridSx}>
                     <Field label="Offensive playbook">
-                        <Box component="select" value={user.offensive_playbook || ''} onChange={(e) => handleChange('offensive_playbook', e.target.value)} sx={selectSx}>
+                        <Box component="select" value={coach.offensive_playbook || ''} onChange={(e) => handleChange('offensive_playbook', e.target.value)} sx={selectSx}>
                             {OFFENSIVE_PLAYBOOKS.map((playbook) => <option key={playbook} value={playbook}>{formatOffensivePlaybook(playbook)}</option>)}
                         </Box>
                     </Field>
                     <Field label="Defensive playbook">
-                        <Box component="select" value={user.defensive_playbook || ''} onChange={(e) => handleChange('defensive_playbook', e.target.value)} sx={selectSx}>
+                        <Box component="select" value={coach.defensive_playbook || ''} onChange={(e) => handleChange('defensive_playbook', e.target.value)} sx={selectSx}>
                             {DEFENSIVE_PLAYBOOKS.map((playbook) => <option key={playbook} value={playbook}>{formatDefensivePlaybook(playbook)}</option>)}
                         </Box>
                     </Field>
@@ -159,18 +176,18 @@ const EditCoach = () => {
 
             <Panel header="Record" sx={{ mb: '16px' }}>
                 <Box sx={gridSx}>
-                    <NumberField label="Wins" value={user.wins} onChange={(v) => handleChange('wins', v)} />
-                    <NumberField label="Losses" value={user.losses} onChange={(v) => handleChange('losses', v)} />
-                    <NumberField label="Conference wins" value={user.conference_wins} onChange={(v) => handleChange('conference_wins', v)} />
-                    <NumberField label="Conference losses" value={user.conference_losses} onChange={(v) => handleChange('conference_losses', v)} />
-                    <NumberField label="Conf champ wins" value={user.conference_championship_wins} onChange={(v) => handleChange('conference_championship_wins', v)} />
-                    <NumberField label="Conf champ losses" value={user.conference_championship_losses} onChange={(v) => handleChange('conference_championship_losses', v)} />
-                    <NumberField label="Bowl wins" value={user.bowl_wins} onChange={(v) => handleChange('bowl_wins', v)} />
-                    <NumberField label="Bowl losses" value={user.bowl_losses} onChange={(v) => handleChange('bowl_losses', v)} />
-                    <NumberField label="Playoff wins" value={user.playoff_wins} onChange={(v) => handleChange('playoff_wins', v)} />
-                    <NumberField label="Playoff losses" value={user.playoff_losses} onChange={(v) => handleChange('playoff_losses', v)} />
-                    <NumberField label="National champ wins" value={user.national_championship_wins} onChange={(v) => handleChange('national_championship_wins', v)} />
-                    <NumberField label="National champ losses" value={user.national_championship_losses} onChange={(v) => handleChange('national_championship_losses', v)} />
+                    <NumberField label="Wins" value={coach.wins} onChange={(v) => handleChange('wins', v)} />
+                    <NumberField label="Losses" value={coach.losses} onChange={(v) => handleChange('losses', v)} />
+                    <NumberField label="Conference wins" value={coach.conference_wins} onChange={(v) => handleChange('conference_wins', v)} />
+                    <NumberField label="Conference losses" value={coach.conference_losses} onChange={(v) => handleChange('conference_losses', v)} />
+                    <NumberField label="Conf champ wins" value={coach.conference_championship_wins} onChange={(v) => handleChange('conference_championship_wins', v)} />
+                    <NumberField label="Conf champ losses" value={coach.conference_championship_losses} onChange={(v) => handleChange('conference_championship_losses', v)} />
+                    <NumberField label="Bowl wins" value={coach.bowl_wins} onChange={(v) => handleChange('bowl_wins', v)} />
+                    <NumberField label="Bowl losses" value={coach.bowl_losses} onChange={(v) => handleChange('bowl_losses', v)} />
+                    <NumberField label="Playoff wins" value={coach.playoff_wins} onChange={(v) => handleChange('playoff_wins', v)} />
+                    <NumberField label="Playoff losses" value={coach.playoff_losses} onChange={(v) => handleChange('playoff_losses', v)} />
+                    <NumberField label="National champ wins" value={coach.national_championship_wins} onChange={(v) => handleChange('national_championship_wins', v)} />
+                    <NumberField label="National champ losses" value={coach.national_championship_losses} onChange={(v) => handleChange('national_championship_losses', v)} />
                 </Box>
             </Panel>
 
@@ -181,5 +198,7 @@ const EditCoach = () => {
         </AdminLayout>
     );
 };
+
+EditCoach.propTypes = { user: PropTypes.object };
 
 export default EditCoach;

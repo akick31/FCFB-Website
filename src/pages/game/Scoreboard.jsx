@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getFilteredGames } from '../../api/gameApi';
 import { getPostseasonSchedule } from '../../api/scheduleApi';
-import { getCurrentSeason, getLatestCompletedSeason } from '../../api/seasonApi';
+import { getCurrentSeason, getCurrentWeek, getAllSeasons, getLatestCompletedSeason } from '../../api/seasonApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { useConferencesMap, activeConferenceCodes, conferenceLabel } from '../../components/constants/conferences';
 import PageWrap from '../../components/layout/PageWrap';
@@ -20,7 +20,8 @@ import { weekLabel } from '../../utils/formatText';
 
 const TABS = [{ value: 'live', label: 'Live' }, { value: 'final', label: 'Final' }, { value: 'scrimmages', label: 'Scrimmages' }];
 const PAGE_SIZE = 12;
-const REGULAR_WEEKS = Array.from({ length: 13 }, (_, index) => 13 - index);
+const SEARCH_SIZE = 100;
+const REGULAR_WEEKS = Array.from({ length: 13 }, (_, index) => index + 1);
 
 const resolveCurrentSeason = async () => {
     try {
@@ -62,6 +63,8 @@ const Scoreboard = () => {
     const [loading, setLoading] = useState(true);
     const [conference, setConference] = useState(searchParams.get('conference') || 'ALL');
     const [rankedOnly, setRankedOnly] = useState(searchParams.get('ranked') === '1');
+    const [searchTeam, setSearchTeam] = useState(searchParams.get('team') || '');
+    const [allSeasons, setAllSeasons] = useState([]);
 
     const changePage = (nextPage) => {
         setPage(nextPage);
@@ -89,6 +92,15 @@ const Scoreboard = () => {
         setSearchParams(next, { replace: true });
     };
 
+    const changeSearchTeam = (value) => {
+        setSearchTeam(value);
+        setPage(0);
+        const next = new URLSearchParams(searchParams);
+        if (value) next.set('team', value); else next.delete('team');
+        next.delete('page');
+        setSearchParams(next, { replace: true });
+    };
+
     const changeTab = (nextTab) => {
         setPage(0);
         navigate(season != null && week != null ? `/scoreboard/${nextTab}/${season}/${week}` : `/scoreboard/${nextTab}`);
@@ -98,6 +110,12 @@ const Scoreboard = () => {
         setWeek(nextWeek);
         setPage(0);
         navigate(`/scoreboard/${activeTab}/${season}/${nextWeek}`, { replace: true });
+    };
+
+    const changeSeason = (nextSeason) => {
+        setSeason(nextSeason);
+        setPage(0);
+        navigate(`/scoreboard/${activeTab}/${nextSeason}/${week}`, { replace: true });
     };
 
     useEffect(() => {
@@ -113,62 +131,99 @@ const Scoreboard = () => {
 
     useEffect(() => {
         (async () => {
-            const [current, latest] = await Promise.all([resolveCurrentSeason(), getLatestCompletedSeason().catch(() => null)]);
+            const [current, rawWeek] = await Promise.all([resolveCurrentSeason(), getCurrentWeek().catch(() => null)]);
             setOffseason(current == null);
-            if (!seasonParam) setSeason(current ?? latest?.season_number ?? latest?.seasonNumber ?? null);
-            if (!weekParam) setWeek(current == null ? 'postseason' : Math.min(latest?.current_week ?? latest?.currentWeek ?? 13, 13));
+            if (current == null) {
+                const latest = await getLatestCompletedSeason().catch(() => null);
+                if (!seasonParam) setSeason(latest?.season_number ?? latest?.seasonNumber ?? null);
+                if (!weekParam) setWeek('postseason');
+                return;
+            }
+            const weekNumber = typeof rawWeek === 'number' ? rawWeek : (rawWeek?.week ?? rawWeek?.current_week ?? rawWeek?.currentWeek ?? null);
+            if (!seasonParam) setSeason(current);
+            if (!weekParam) setWeek(weekNumber != null ? Math.min(Math.max(weekNumber, 1), 13) : 1);
         })();
+    }, []);
+
+    useEffect(() => {
+        getAllSeasons()
+            .then((data) => {
+                const numbers = (data || [])
+                    .map((entry) => entry.season_number ?? entry.seasonNumber)
+                    .filter((value) => value != null)
+                    .sort((a, b) => b - a);
+                setAllSeasons(numbers);
+            })
+            .catch(() => setAllSeasons([]));
     }, []);
 
     useEffect(() => {
         if (season == null) return undefined;
         let active = true;
         setLoading(true);
-        (async () => {
-            try {
-                const conferenceParam = conference !== 'ALL' ? conference : undefined;
-                const filterParams = rankedOnly ? ['RANKED_GAME'] : undefined;
-                if (activeTab === 'live') {
-                    const response = await getFilteredGames({ category: 'ONGOING', sort: 'CLOSEST_TO_END', page, size: PAGE_SIZE, conference: conferenceParam, filters: filterParams }).catch(() => null);
-                    if (active) { setGames(response?.content || []); setPageCount(response?.total_pages || 1); }
-                } else if (activeTab === 'scrimmages') {
-                    const response = await getFilteredGames({ category: 'SCRIMMAGE', sort: 'CLOSEST_TO_END', page, size: PAGE_SIZE, conference: conferenceParam, filters: filterParams }).catch(() => null);
-                    if (active) { setGames(response?.content || []); setPageCount(response?.total_pages || 1); }
-                } else if (week === 'postseason') {
-                    const post = await getPostseasonSchedule(season).catch(() => []);
-                    const finals = (post || [])
-                        .filter((game) => game.game_status === 'FINAL' || game.home_score != null)
-                        .filter((game) => !conferenceParam || teamsMap[game.home_team]?.conference === conferenceParam || teamsMap[game.away_team]?.conference === conferenceParam)
-                        .filter((game) => !rankedOnly
-                            || (game.home_team_rank >= 1 && game.home_team_rank <= 25)
-                            || (game.away_team_rank >= 1 && game.away_team_rank <= 25));
-                    if (active) {
-                        setPageCount(Math.max(1, Math.ceil(finals.length / PAGE_SIZE)));
-                        setGames(finals.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE));
+        const searchesTeams = (activeTab === 'live' || activeTab === 'final') && searchTeam.trim() !== '';
+        const query = searchTeam.trim().toLowerCase();
+        const matchesSearch = (game) => !searchesTeams
+            || game.home_team.toLowerCase().includes(query)
+            || game.away_team.toLowerCase().includes(query)
+            || teamsMap[game.home_team]?.abbreviation?.toLowerCase().includes(query)
+            || teamsMap[game.away_team]?.abbreviation?.toLowerCase().includes(query);
+
+        const timeout = setTimeout(() => {
+            (async () => {
+                try {
+                    const conferenceParam = conference !== 'ALL' ? conference : undefined;
+                    const filterParams = rankedOnly ? ['RANKED_GAME'] : undefined;
+                    const fetchSize = searchesTeams ? SEARCH_SIZE : PAGE_SIZE;
+                    const fetchPage = searchesTeams ? 0 : page;
+                    if (activeTab === 'live') {
+                        const response = await getFilteredGames({ category: 'ONGOING', sort: 'CLOSEST_TO_END', page: fetchPage, size: fetchSize, conference: conferenceParam, filters: filterParams }).catch(() => null);
+                        if (active) {
+                            setGames((response?.content || []).filter(matchesSearch));
+                            setPageCount(searchesTeams ? 1 : (response?.total_pages || 1));
+                        }
+                    } else if (activeTab === 'scrimmages') {
+                        const response = await getFilteredGames({ category: 'SCRIMMAGE', sort: 'CLOSEST_TO_END', page, size: PAGE_SIZE, conference: conferenceParam, filters: filterParams }).catch(() => null);
+                        if (active) { setGames(response?.content || []); setPageCount(response?.total_pages || 1); }
+                    } else if (week === 'postseason') {
+                        const post = await getPostseasonSchedule(season).catch(() => []);
+                        const finals = (post || [])
+                            .filter((game) => game.game_status === 'FINAL' || game.home_score != null)
+                            .filter((game) => !conferenceParam || teamsMap[game.home_team]?.conference === conferenceParam || teamsMap[game.away_team]?.conference === conferenceParam)
+                            .filter((game) => !rankedOnly
+                                || (game.home_team_rank >= 1 && game.home_team_rank <= 25)
+                                || (game.away_team_rank >= 1 && game.away_team_rank <= 25))
+                            .filter(matchesSearch);
+                        if (active) {
+                            setPageCount(Math.max(1, Math.ceil(finals.length / PAGE_SIZE)));
+                            setGames(finals.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE));
+                        }
+                    } else {
+                        const response = await getFilteredGames({ category: 'PAST', season, week, sort: 'NEWEST', page: fetchPage, size: fetchSize, conference: conferenceParam, filters: filterParams }).catch(() => null);
+                        if (active) {
+                            setGames((response?.content || []).filter(matchesSearch));
+                            setPageCount(searchesTeams ? 1 : (response?.total_pages || 1));
+                        }
                     }
-                } else {
-                    const response = await getFilteredGames({ category: 'PAST', season, week, sort: 'NEWEST', page, size: PAGE_SIZE, conference: conferenceParam, filters: filterParams }).catch(() => null);
-                    if (active) {
-                        setGames(response?.content || []);
-                        setPageCount(response?.total_pages || 1);
-                    }
+                } finally {
+                    if (active) setLoading(false);
                 }
-            } finally {
-                if (active) setLoading(false);
-            }
-        })();
-        return () => { active = false; };
-    }, [activeTab, season, week, page, conference, rankedOnly]);
+            })();
+        }, searchesTeams ? 300 : 0);
+        return () => { active = false; clearTimeout(timeout); };
+    }, [activeTab, season, week, page, conference, rankedOnly, searchTeam]);
 
     const weekOptions = useMemo(() => [
-        { value: 'postseason', label: 'Postseason' },
         ...REGULAR_WEEKS.map((value) => ({ value, label: weekLabel(value) })),
+        { value: 'postseason', label: 'Postseason' },
     ], []);
 
     const conferenceOptions = useMemo(() => [
         { value: 'ALL', label: 'All conferences' },
         ...activeConferenceCodes().map((conf) => ({ value: conf, label: conferenceLabel(conf) })),
     ], [conferencesMap]);
+
+    const teamOptions = useMemo(() => Object.values(teamsMap).sort((a, b) => a.name.localeCompare(b.name)), [teamsMap]);
 
     const emptyCopy = {
         live: { title: 'No live games right now', note: offseason ? 'The league is between seasons.' : 'Check back when games are in progress.' },
@@ -185,6 +240,14 @@ const Scoreboard = () => {
                     options={TABS}
                     ariaLabel="Scoreboard filter"
                 />
+                {activeTab === 'final' && allSeasons.length > 0 && (
+                    <SelectPill
+                        label="Season"
+                        value={season ?? ''}
+                        onChange={(next) => changeSeason(Number(next))}
+                        options={allSeasons.map((value) => ({ value, label: `Season ${value}` }))}
+                    />
+                )}
                 {activeTab === 'final' && (
                     <SelectPill
                         label="Week"
@@ -205,6 +268,22 @@ const Scoreboard = () => {
                     onChange={changeRanked}
                     options={[{ value: 'all', label: 'All games' }, { value: 'ranked', label: 'Top 25 only' }]}
                 />
+                {(activeTab === 'live' || activeTab === 'final') && (
+                    <>
+                        <Box
+                            component="input"
+                            list="scoreboard-team-options"
+                            placeholder="Search team…"
+                            aria-label="Search team"
+                            value={searchTeam}
+                            onChange={(event) => changeSearchTeam(event.target.value)}
+                            sx={{ height: '34px', boxSizing: 'border-box', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', padding: '0 10px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, minWidth: 170, '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 } }}
+                        />
+                        <datalist id="scoreboard-team-options">
+                            {teamOptions.map((team) => <option key={team.name} value={team.name} />)}
+                        </datalist>
+                    </>
+                )}
             </PageHeading>
 
             {loading ? (

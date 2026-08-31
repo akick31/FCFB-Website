@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
 import { Link, useSearchParams } from 'react-router-dom';
-import { updateUsername, updateEmail, updatePassword, updateUser, getUserById } from '../../api/userApi';
+import { updateUsername, updateEmail, updatePassword, updateUser, getUserById, getUsernameHistory, addHistoricalUsername } from '../../api/userApi';
 import { logout } from '../../api/authApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../theme/ColorModeContext';
@@ -137,6 +137,55 @@ const DiscordRow = ({ user }) => {
 
 DiscordRow.propTypes = { user: PropTypes.object.isRequired };
 
+const PastUsernamesRow = ({ userId }) => {
+    const [history, setHistory] = useState([]);
+    const [open, setOpen] = useState(false);
+    const [draft, setDraft] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (!userId) return;
+        getUsernameHistory(userId).then(setHistory).catch(() => setHistory([]));
+    }, [userId]);
+
+    const save = async () => {
+        setSaving(true);
+        setError('');
+        try {
+            await addHistoricalUsername(userId, draft);
+            setHistory((prev) => [...prev, draft]);
+            setDraft('');
+            setOpen(false);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <Box sx={{ borderBottom: '1px solid var(--line-soft)', '&:last-of-type': { borderBottom: 0 } }}>
+            <Box sx={{ ...rowSx, borderBottom: 0 }}>
+                <Box>
+                    <Box sx={lblSx}>Past usernames</Box>
+                    <Box sx={descSx}>{history.length ? history.join(', ') : 'None on record'}</Box>
+                </Box>
+                <Box component="button" sx={ctrlSx} onClick={() => { setOpen((v) => !v); setError(''); }}>{open ? 'Cancel' : 'Add'}</Box>
+            </Box>
+            {open && (
+                <Box sx={{ px: 2, pb: 2, display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <Box component="input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="A username you used to have" sx={{ ...inputSx, flex: '1 1 220px' }} />
+                    <Box component="button" onClick={save} disabled={saving || !draft} sx={primarySx}>{saving ? 'Saving…' : 'Save'}</Box>
+                    {error && <Alert severity="error" sx={{ width: '100%' }}>{error}</Alert>}
+                </Box>
+            )}
+        </Box>
+    );
+};
+
+PastUsernamesRow.propTypes = { userId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]) };
+
 const Profile = ({ user, setUser }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
@@ -191,6 +240,7 @@ const Profile = ({ user, setUser }) => {
                         </Box>
                         <FieldRow label="Coach name" desc={user.coach_name || 'Set your coach name'} onSave={async (value) => { await updateUser({ ...user, coach_name: value }); patch({ coach_name: value }); }} />
                         <FieldRow label="Username" desc={user.username} onSave={async (value) => { await updateUsername(user.id, value); patch({ username: value }); }} />
+                        <PastUsernamesRow userId={user.id} />
                         <FieldRow label="Email" type="email" desc="Change your account email" onSave={async (value) => { await updateEmail(user.id, value); }} />
                         <PasswordRow onSave={(current, next) => updatePassword(user.id, current, next)} />
                         <DiscordRow user={user} />

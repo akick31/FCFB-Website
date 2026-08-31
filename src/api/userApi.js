@@ -153,6 +153,37 @@ export const updateUsername = async (userId, newUsername) => {
     }
 };
 
+export const getUsernameHistory = async (userId) => {
+    if (!userId) throw new Error("User ID is required");
+
+    try {
+        const response = await apiClient.get('/user/username-history', {
+            params: { userId },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch username history:", error);
+        return [];
+    }
+};
+
+export const addHistoricalUsername = async (userId, username) => {
+    if (!userId || !username) throw new Error("User ID and username are required");
+
+    try {
+        const response = await apiClient.post('/user/username-history', null, {
+            params: { userId, username },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to add historical username:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to add historical username");
+        }
+        throw new Error("An unexpected error occurred while adding historical username");
+    }
+};
+
 export const updateEmail = async (userId, newEmail) => {
     if (!userId) throw new Error("User ID is required");
 
