@@ -51,7 +51,12 @@ import {
     Stats,
     RecordsBoard,
     Graphs,
-    AdminApiDocs
+    AdminApiDocs,
+    ScoutingReport,
+    MatchupPreview,
+    CoachTendencyCard,
+    DriveChart,
+    HeadToHead
 } from './pages';
 
 const AppRoutes = () => {
@@ -253,6 +258,11 @@ const AppRoutes = () => {
                             </ProtectedRoute>
                         } />
                         <Route path="/developers" element={<ApiDocs />} />
+                        <Route path="/tools/scouting-report" element={<ScoutingReport />} />
+                        <Route path="/tools/matchup-preview" element={<MatchupPreview />} />
+                        <Route path="/tools/coach-tendencies" element={<CoachTendencyCard />} />
+                        <Route path="/tools/drive-chart" element={<DriveChart />} />
+                        <Route path="/tools/head-to-head" element={<HeadToHead />} />
                         <Route path="/verify" element={<Verify />} />
                         <Route path="/game-details/:gameId" element={<GameDetails isAdmin={isAdmin} />} />
                         <Route path="/team/:teamId" element={<TeamDetails />} />

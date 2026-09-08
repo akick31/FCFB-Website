@@ -7,7 +7,7 @@ import { seasonHasStarted } from '../../utils/statsCatalog';
 import { paramConfig, PAGE_SIZE_PRESETS } from '../../utils/apiDocsParamConfig';
 import { humanizeParamName } from '../../utils/humanize';
 import { MethodBadge } from './OperationList';
-import SearchableSelect from './SearchableSelect';
+import SearchableSelect from '../ui/SearchableSelect';
 import JsonViewer from './JsonViewer';
 
 const RECENT_GAMES_LIMIT = 100;
@@ -17,6 +17,82 @@ const labelSx = { fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted
 const sendBtnSx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', py: '9px', font: 'inherit', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.5, cursor: 'not-allowed' } };
 
 const needsLookup = (parameters, names) => parameters.some((p) => names.includes(p.name.toLowerCase()));
+
+const shellQuote = (value) => `'${String(value).replace(/'/g, `'\\''`)}'`;
+
+const buildCurlCommand = ({ method, url, params, apiKey, fileField, requestBody, bodyText }) => {
+    const query = new URLSearchParams();
+    Object.entries(params || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') return;
+        (Array.isArray(value) ? value : [value]).forEach((entry) => query.append(key, entry));
+    });
+    const queryString = query.toString();
+    const fullUrl = `${url}${queryString ? `?${queryString}` : ''}`;
+    const keyToken = apiKey || 'YOUR_API_KEY';
+
+    const lines = [`curl -X ${method} ${shellQuote(fullUrl)}`, `  -H "X-Api-Key: ${keyToken}"`];
+    if (fileField) {
+        lines.push(`  -F "${fileField}=@/path/to/file"`);
+    } else if (requestBody) {
+        lines.push('  -H "Content-Type: application/json"');
+        lines.push(`  -d ${shellQuote(bodyText || '{}')}`);
+    }
+    return lines.join(' \\\n');
+};
+
+const RequestPreview = ({ operation, apiKey, resolvedPath, params, bodyText }) => {
+    const [copied, setCopied] = useState(false);
+    const url = `${backendRoot}${resolvedPath}`;
+    const command = buildCurlCommand({
+        method: operation.method,
+        url,
+        params,
+        apiKey,
+        fileField: operation.fileField,
+        requestBody: operation.requestBody,
+        bodyText,
+    });
+
+    const copy = async () => {
+        try {
+            await navigator.clipboard.writeText(command);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+        } catch {
+            setCopied(false);
+        }
+    };
+
+    return (
+        <Box sx={{ mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: '8px' }}>
+                <Box sx={labelSx}>Request preview (curl)</Box>
+                <Box component="button" onClick={copy} sx={{ border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', py: '4px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
+                    {copied ? 'Copied!' : 'Copy'}
+                </Box>
+            </Box>
+            <Box
+                component="pre"
+                sx={{ ...inputSx, whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.76rem', m: 0, lineHeight: 1.5 }}
+            >
+                {command}
+            </Box>
+            <Box sx={{ mt: '6px', fontSize: '0.68rem', color: 'var(--text-dim)' }}>
+                {apiKey
+                    ? "This includes your personal API key. Treat it like a password, don't paste this command anywhere public."
+                    : "Swap YOUR_API_KEY for your personal key. Keep it private, don't paste it into public channels or commit it to source control."}
+            </Box>
+        </Box>
+    );
+};
+
+RequestPreview.propTypes = {
+    operation: PropTypes.object.isRequired,
+    apiKey: PropTypes.string.isRequired,
+    resolvedPath: PropTypes.string.isRequired,
+    params: PropTypes.object.isRequired,
+    bodyText: PropTypes.string,
+};
 
 const parseJsonOrText = (text) => {
     try {
@@ -32,7 +108,7 @@ const docsGet = (apiKey, path, params) =>
     axios
         .get(`${backendRoot}${API_PREFIX}${path}`, {
             params,
-            headers: { 'X-Api-Key': apiKey, 'X-Client-Name': 'fcfb-website' },
+            headers: { ...(apiKey ? { 'X-Api-Key': apiKey } : {}), 'X-Client-Name': 'fcfb-website' },
         })
         .then((res) => res.data);
 
@@ -171,7 +247,6 @@ const OperationDetail = ({ operation, apiKey }) => {
     }, [response]);
 
     useEffect(() => {
-        if (!apiKey) return;
         docsGet(apiKey, '/season/all')
             .then((all) => {
                 const started = (all || [])
@@ -208,7 +283,6 @@ const OperationDetail = ({ operation, apiKey }) => {
     }, [operation.id]);
 
     useEffect(() => {
-        if (!apiKey) return;
         const needsOngoingGameId = operation.path.endsWith('/game/ongoing') && needsLookup(operation.parameters, ['id']);
         if (ongoingGames.length === 0 && (needsLookup(operation.parameters, ['channelid', 'platformid']) || needsOngoingGameId)) {
             docsGet(apiKey, '/game', { category: 'ONGOING', page: 0, size: RECENT_GAMES_LIMIT })
@@ -247,23 +321,13 @@ const OperationDetail = ({ operation, apiKey }) => {
     const pathParams = useMemo(() => operation.parameters.filter((p) => p.in === 'path'), [operation]);
     const queryParams = useMemo(() => operation.parameters.filter((p) => p.in === 'query'), [operation]);
 
-    const send = async () => {
-        setFormError('');
-        const missing = pathParams.filter((p) => !paramValues[p.name]);
-        if (missing.length > 0) {
-            setFormError(`Missing required parameter: ${missing.map((p) => paramConfig(p, lookups, paramValues, operation.path).label || humanizeParamName(p.name)).join(', ')}`);
-            return;
-        }
-        if (operation.fileField && !file) {
-            setFormError('Choose a file to upload');
-            return;
-        }
-
+    const buildRequest = () => {
         let resolvedPath = operation.path;
         pathParams.forEach((p) => {
             const config = paramConfig(p, lookups, paramValues, operation.path);
-            const resolved = config.resolve ? config.resolve(paramValues[p.name]) : paramValues[p.name];
-            resolvedPath = resolvedPath.replace(`{${p.name}}`, encodeURIComponent(resolved));
+            const raw = paramValues[p.name];
+            const resolved = raw ? (config.resolve ? config.resolve(raw) : raw) : null;
+            resolvedPath = resolvedPath.replace(`{${p.name}}`, resolved != null ? encodeURIComponent(resolved) : `{${p.name}}`);
         });
 
         const params = {};
@@ -280,6 +344,23 @@ const OperationDetail = ({ operation, apiKey }) => {
             if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) return;
             params[p.name] = config.resolve ? config.resolve(value) : value;
         });
+
+        return { resolvedPath, params };
+    };
+
+    const send = async () => {
+        setFormError('');
+        const missing = pathParams.filter((p) => !paramValues[p.name]);
+        if (missing.length > 0) {
+            setFormError(`Missing required parameter: ${missing.map((p) => paramConfig(p, lookups, paramValues, operation.path).label || humanizeParamName(p.name)).join(', ')}`);
+            return;
+        }
+        if (operation.fileField && !file) {
+            setFormError('Choose a file to upload');
+            return;
+        }
+
+        const { resolvedPath, params } = buildRequest();
 
         let data;
         if (operation.fileField) {
@@ -322,6 +403,8 @@ const OperationDetail = ({ operation, apiKey }) => {
         }
     };
 
+    const preview = buildRequest();
+
     return (
         <Box sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -353,6 +436,8 @@ const OperationDetail = ({ operation, apiKey }) => {
                     />
                 </Box>
             )}
+
+            <RequestPreview operation={operation} apiKey={apiKey} resolvedPath={preview.resolvedPath} params={preview.params} bodyText={bodyText} />
 
             {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
 

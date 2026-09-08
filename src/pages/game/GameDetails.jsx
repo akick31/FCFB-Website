@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Box, CircularProgress, Alert, Button } from '@mui/material';
-import { ArrowBack, Assessment, RestaurantMenu, Stop } from '@mui/icons-material';
+import { Box, CircularProgress, Alert, Button, Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
+import { ArrowBack, Assessment, RestaurantMenu, Stop, Close } from '@mui/icons-material';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { getGameById, chewGameByGameId, endGameByGameId } from '../../api/gameApi';
@@ -18,15 +18,19 @@ import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/fo
 import { conferenceLabel } from '../../components/constants/conferences';
 import { STAT_GROUPS, statCell } from '../../utils/teamStatFields';
 import { gameHeaderTitle, gameTypeName, buildWinProbSeries, buildScoreSeries, quarterBoundaries } from '../../utils/gameDetail';
+import { buildDrives } from '../../utils/driveChart';
+import { formatBallSpot } from '../../utils/formatPlay';
 import { goBackOr } from '../../utils/navigation';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import Panel from '../../components/ui/Panel';
 import SectionTitle from '../../components/ui/SectionTitle';
+import DataTable from '../../components/ui/DataTable';
 import TeamMark from '../../components/ui/TeamMark';
 import ConferenceMark from '../../components/ui/ConferenceMark';
 import GameScorebug from '../../components/game/detail/GameScorebug';
-import ComparisonTable from '../../components/game/detail/ComparisonTable';
+import DriveFieldChart from '../../components/game/detail/DriveFieldChart';
+import ComparisonTable from '../../components/ui/ComparisonTable';
 import WinProbChart from '../../components/game/detail/WinProbChart';
 import ScoreChart from '../../components/game/detail/ScoreChart';
 import PlaysPanel from '../../components/game/detail/PlaysPanel';
@@ -78,6 +82,7 @@ const GameDetails = ({ isAdmin }) => {
     const [seasonRecord, setSeasonRecord] = useState({ away: null, home: null });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [viewedDrive, setViewedDrive] = useState(null);
 
     useSeo({
         title: game ? `${game.away_team} at ${game.home_team} | FCFB` : 'Game Details | FCFB',
@@ -161,6 +166,8 @@ const GameDetails = ({ isAdmin }) => {
         || ((a.quarter ?? 0) - (b.quarter ?? 0))
         || ((b.clock ?? 0) - (a.clock ?? 0))
         || ((a.play_id ?? 0) - (b.play_id ?? 0)));
+    const drives = buildDrives(orderedPlays);
+    const currentDrive = drives[drives.length - 1] || null;
 
     const ADMIN_SUCCESS_MESSAGES = {
         chew: 'Chew mode set.',
@@ -244,6 +251,17 @@ const GameDetails = ({ isAdmin }) => {
 
             <GameScorebug game={game} awayMark={awayMark} homeMark={homeMark} homeTeam={homeTeam} awayColor={awayColor} homeColor={homeColor} spreadText={spreadText} venueText={venueText} threadLink={threadLink} columns={columns} awayQuarters={awayQuarters} homeQuarters={homeQuarters} showQuarters={showQuarters} />
 
+            {!isFinal && currentDrive && (
+                <Box sx={{ mt: '16px' }}>
+                    <SectionTitle title="Current drive" note={`${currentDrive.team} · ${currentDrive.playCount} plays`} />
+                    <Panel>
+                        <Box sx={{ p: 2 }}>
+                            <DriveFieldChart drive={currentDrive} homeMark={homeMark} awayMark={awayMark} homeColor={homeColor} awayColor={awayColor} />
+                        </Box>
+                    </Panel>
+                </Box>
+            )}
+
             {isAdmin && (
                 <Box sx={{ mt: '16px' }}>
                     {adminMessage && <Alert severity={adminMessage.severity} sx={{ mb: 1 }} onClose={() => setAdminMessage(null)}>{adminMessage.text}</Alert>}
@@ -321,11 +339,76 @@ const GameDetails = ({ isAdmin }) => {
                 </>
             )}
 
+            {drives.length > 0 && (
+                <Box sx={{ mt: '16px' }}>
+                    <SectionTitle title="Drives" />
+                    <DataTable minWidth={760}>
+                        <thead>
+                            <tr>
+                                <th className="lft stick">Team</th>
+                                <th className="lft">Quarter</th>
+                                <th className="lft">Start</th>
+                                <th>Plays</th>
+                                <th>Net yards</th>
+                                <th className="lft">End</th>
+                                <th className="lft">Result</th>
+                                <th className="lft">Score after</th>
+                                <th className="lft">Chart</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {drives.map((drive) => {
+                                const mark = drive.team === game.home_team ? homeMark : awayMark;
+                                return (
+                                    <tr key={drive.index}>
+                                        <td className="lft stick">
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <TeamMark team={mark} size={18} />
+                                                {drive.team}
+                                            </Box>
+                                        </td>
+                                        <td className="lft">Q{drive.quarter}</td>
+                                        <td className="lft">
+                                            {drive.startReason}
+                                            <Box sx={{ fontSize: '0.68rem', color: 'var(--text-dim)' }}>{formatBallSpot(drive.startBallLocation, drive.possession, homeMark?.abbreviation, awayMark?.abbreviation)}</Box>
+                                        </td>
+                                        <td>{drive.playCount}</td>
+                                        <td>{drive.netYards}</td>
+                                        <td className="lft">{formatBallSpot(drive.endBallLocation, drive.possession, homeMark?.abbreviation, awayMark?.abbreviation)}</td>
+                                        <td className="lft">{drive.outcome}</td>
+                                        <td className="lft">{awayMark?.abbreviation} {drive.awayScoreAfter} - {drive.homeScoreAfter} {homeMark?.abbreviation}</td>
+                                        <td className="lft">
+                                            <Box component="button" type="button" onClick={() => setViewedDrive(drive)} sx={{ border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', py: '5px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
+                                                View drive chart
+                                            </Box>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </DataTable>
+                </Box>
+            )}
+
             {plays.length > 0 && (
                 <Box sx={{ mt: '16px' }}>
                     <PlaysPanel plays={plays} homeAbbr={homeMark?.abbreviation} awayAbbr={awayMark?.abbreviation} homeName={game.home_team} awayName={game.away_team} />
                 </Box>
             )}
+
+            <Dialog open={Boolean(viewedDrive)} onClose={() => setViewedDrive(null)} maxWidth="md" fullWidth>
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.01em' }}>
+                    {viewedDrive ? `${viewedDrive.team} drive · Q${viewedDrive.quarter}` : 'Drive'}
+                    <IconButton size="small" onClick={() => setViewedDrive(null)} aria-label="Close">
+                        <Close fontSize="small" />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent dividers>
+                    {viewedDrive && (
+                        <DriveFieldChart drive={viewedDrive} homeMark={homeMark} awayMark={awayMark} homeColor={homeColor} awayColor={awayColor} />
+                    )}
+                </DialogContent>
+            </Dialog>
         </PageWrap>
     );
 };
