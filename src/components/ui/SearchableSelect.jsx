@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', py: '8px', pr: '30px', font: 'inherit', fontSize: '0.82rem' };
+const inputSx = { width: '100%', height: '34px', boxSizing: 'border-box', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', py: 0, pr: '30px', font: 'inherit', fontSize: '0.82rem' };
 
 const SearchableSelect = ({ id, value, onChange, options, placeholder }) => {
     const [query, setQuery] = useState(value);

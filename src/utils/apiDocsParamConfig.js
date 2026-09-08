@@ -3,7 +3,7 @@ import { STAT_CATALOG } from './statsCatalog';
 import { field } from './fieldHelper';
 
 const YES_NO_OPTIONS = [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }];
-const PLAY_CALL_VALUES = ['RUN', 'PASS', 'SPIKE', 'KNEEL', 'FIELD_GOAL', 'PAT', 'TWO_POINT', 'KICKOFF_NORMAL', 'KICKOFF_ONSIDE', 'KICKOFF_SQUIB', 'PUNT'];
+export const PLAY_CALL_VALUES = ['RUN', 'PASS', 'SPIKE', 'KNEEL', 'FIELD_GOAL', 'PAT', 'TWO_POINT', 'KICKOFF_NORMAL', 'KICKOFF_ONSIDE', 'KICKOFF_SQUIB', 'PUNT'];
 const POLL_TYPE_VALUES = ['COACHES_POLL', 'PLAYOFF_COMMITTEE'];
 const SUBDIVISION_VALUES = ['FCFB', 'FBS', 'FCS', 'FAKE'];
 const LIMIT_PRESETS = [5, 10, 25, 50, 100];

@@ -136,6 +136,23 @@ export const revokeApiKey = async () => {
     }
 };
 
+export const updateScoutingReportHiddenColumns = async (userId, hiddenColumns) => {
+    if (!userId) throw new Error("User ID is required");
+
+    try {
+        const response = await apiClient.put('/user/scouting-report-columns', hiddenColumns, {
+            params: { id: userId },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to update scouting report columns:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to update scouting report columns");
+        }
+        throw new Error("An unexpected error occurred while updating scouting report columns");
+    }
+};
+
 export const updateUsername = async (userId, newUsername) => {
     if (!userId) throw new Error("User ID is required");
 

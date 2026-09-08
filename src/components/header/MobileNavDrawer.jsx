@@ -3,7 +3,31 @@ import { Drawer, Box, List, ListItem, ListItemButton, ListItemText, Divider } fr
 import { useLocation, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import mainLogo from '../../assets/graphics/main_logo.png';
-import { NAV_ITEMS } from './navConfig';
+import { NAV_ITEMS, ANALYTICS_ITEMS, TOOLS_ITEMS } from './navConfig';
+
+const NavSection = ({ title, items, go, isActive, itemSx }) => (
+    <>
+        <Box sx={{ px: 2, py: '6px', fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>{title}</Box>
+        <List>
+            {items.map((item) => (
+                <ListItem key={item.path} disablePadding>
+                    <ListItemButton onClick={() => go(item.path)} sx={itemSx(isActive(item.path))}>
+                        <ListItemText primary={item.label} />
+                    </ListItemButton>
+                </ListItem>
+            ))}
+        </List>
+        <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)', my: 1 }} />
+    </>
+);
+
+NavSection.propTypes = {
+    title: PropTypes.string.isRequired,
+    items: PropTypes.arrayOf(PropTypes.shape({ label: PropTypes.string.isRequired, path: PropTypes.string.isRequired })).isRequired,
+    go: PropTypes.func.isRequired,
+    isActive: PropTypes.func.isRequired,
+    itemSx: PropTypes.func.isRequired,
+};
 
 const MobileNavDrawer = ({ open, onClose, isAuthenticated, isAdmin, onLogout }) => {
     const location = useLocation();
@@ -53,6 +77,8 @@ const MobileNavDrawer = ({ open, onClose, isAuthenticated, isAdmin, onLogout }) 
                 )}
             </List>
             <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)', my: 1 }} />
+            <NavSection title="Analytics" items={ANALYTICS_ITEMS} go={go} isActive={isActive} itemSx={itemSx} />
+            <NavSection title="Tools" items={TOOLS_ITEMS} go={go} isActive={isActive} itemSx={itemSx} />
             <List>
                 {isAuthenticated ? (
                     <>

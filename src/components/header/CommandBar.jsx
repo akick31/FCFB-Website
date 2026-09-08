@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Box, Button, IconButton, Avatar, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
-import { Menu as MenuIcon, Person, Logout, SportsFootball, Code } from '@mui/icons-material';
+import { Menu as MenuIcon, Person, Logout, SportsFootball } from '@mui/icons-material';
 import { useLocation, Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import mainLogo from '../../assets/graphics/main_logo.png';
-import { NAV_ITEMS } from './navConfig';
+import { NAV_ITEMS, ANALYTICS_ITEMS, TOOLS_ITEMS } from './navConfig';
 import { clickableProps } from '../../utils/a11y';
 import TeamMark from '../ui/TeamMark';
+import NavDropdown from './NavDropdown';
 
 const navButtonSx = (active) => ({
     color: '#cfe3ee',
@@ -58,6 +59,8 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, team, onMobileOpen, onLogo
                         {item.label}
                     </Button>
                 ))}
+                <NavDropdown label="Analytics" items={ANALYTICS_ITEMS} onNavigate={closeUserMenu} />
+                <NavDropdown label="Tools" items={TOOLS_ITEMS} onNavigate={closeUserMenu} />
                 {isAdmin && (
                     <Button component={Link} to="/admin" onClick={closeUserMenu} disableRipple sx={navButtonSx(isActive('/admin'))}>
                         Admin
@@ -114,10 +117,6 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, team, onMobileOpen, onLogo
                 <MenuItem component={Link} to="/profile" onClick={closeUserMenu}>
                     <ListItemIcon><Person fontSize="small" /></ListItemIcon>
                     <ListItemText>Profile</ListItemText>
-                </MenuItem>
-                <MenuItem component={Link} to="/developers" onClick={closeUserMenu}>
-                    <ListItemIcon><Code fontSize="small" /></ListItemIcon>
-                    <ListItemText>Developers</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={() => { setUserAnchor(null); onLogout(); }}>
                     <ListItemIcon><Logout fontSize="small" /></ListItemIcon>

@@ -45,6 +45,38 @@ export const getPreviousPlay = async (gameId) => {
     }
 };
 
+export const getAllPlaysByDiscordId = async (discordId) => {
+    try {
+        const response = await apiClient.get('/play/all/user', {
+            params: { discordId }
+        });
+        return response.data;
+    } catch (error) {
+        if (error.response?.status === 404) return [];
+        console.error("Failed to fetch plays for coach:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to fetch plays for coach");
+        }
+        throw new Error("An unexpected error occurred while fetching plays for coach");
+    }
+};
+
+export const getAllPlaysByTeam = async (team) => {
+    try {
+        const response = await apiClient.get('/play/all/team', {
+            params: { team }
+        });
+        return response.data;
+    } catch (error) {
+        if (error.response?.status === 404) return [];
+        console.error("Failed to fetch plays for team:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to fetch plays for team");
+        }
+        throw new Error("An unexpected error occurred while fetching plays for team");
+    }
+};
+
 export const rollbackPlay = async (gameId) => {
     try {
         const response = await apiClient.put(`/play/rollback?gameId=${gameId}`);

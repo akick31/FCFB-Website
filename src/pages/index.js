@@ -13,5 +13,7 @@ export { UserDetails, Coaches } from './user';
 
 export { Stats, RecordsBoard, Graphs } from './stats';
 
+export { ScoutingReport, MatchupPreview, CoachTendencyCard, DriveChart, HeadToHead } from './tools';
+
 export { default as Complete } from './register/Complete';
 export { default as RegistrationSuccess } from './register/Success';

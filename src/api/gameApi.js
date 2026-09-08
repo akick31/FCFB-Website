@@ -53,6 +53,20 @@ export const getFilteredGames = async (params) => {
     }
 };
 
+export const getGamesByIds = async (gameIds) => {
+    if (!gameIds || gameIds.length === 0) return [];
+    try {
+        const response = await apiClient.post('/game/batch', gameIds);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch games by id:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to fetch games by id");
+        }
+        throw new Error("An unexpected error occurred while fetching games by id");
+    }
+};
+
 export const startGame = async (startRequest) => {
     try {
         const response = await apiClient.post('/game', startRequest);
