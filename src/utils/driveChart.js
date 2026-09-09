@@ -9,6 +9,10 @@ export const orderPlaysChronologically = (plays) => [...plays].sort((a, b) =>
 const KICKOFF_CALLS = ['KICKOFF_NORMAL', 'KICKOFF_ONSIDE', 'KICKOFF_SQUIB'];
 const isKickoff = (play) => KICKOFF_CALLS.includes(String(play.play_call || '').toUpperCase());
 
+const RETURN_TOUCHDOWN_RESULTS = ['RETURN_TOUCHDOWN', 'PUNT_RETURN_TOUCHDOWN', 'KICK_SIX', 'TURNOVER_TOUCHDOWN', 'KICKING_TEAM_TOUCHDOWN', 'PUNT_TEAM_TOUCHDOWN'];
+const isReturnTouchdown = (play) => RETURN_TOUCHDOWN_RESULTS.includes(String(play.actual_result || '').toUpperCase());
+const isConversionAttempt = (play) => ['PAT', 'TWO_POINT'].includes(String(play.play_call || '').toUpperCase());
+
 const kickoffStartReason = (play) => {
     const outcome = String(play.actual_result || '').toUpperCase();
     const call = String(play.play_call || '').toUpperCase();
@@ -42,13 +46,16 @@ const conversionLabel = (play) => {
     return null;
 };
 
-const driveOutcomeLabel = (plays) => {
+const driveOutcomeLabel = (plays, endedByClock) => {
     const last = plays[plays.length - 1];
     const touchdownPlay = plays.find((play) => String(play.actual_result || '').toUpperCase() === 'TOUCHDOWN');
     if (touchdownPlay) {
         const conversion = last !== touchdownPlay ? conversionLabel(last) : null;
         return conversion ? `Touchdown, ${conversion}` : 'Touchdown';
     }
+
+    if (endedByClock === 'END_OF_GAME') return 'End of Game';
+    if (endedByClock === 'END_OF_HALF') return 'End of Half';
 
     const outcome = String(last.actual_result || '').toUpperCase();
     const call = String(last.play_call || '').toUpperCase();
@@ -71,7 +78,19 @@ const driveOutcomeLabel = (plays) => {
 };
 
 export const buildDrives = (orderedPlays) => {
-    const relevant = orderedPlays.filter((play) => play.actual_result !== 'END_OF_GAME' && play.actual_result !== 'END_OF_HALF');
+    const halfEndQuarters = new Set();
+    let hasGameEndMarker = false;
+    orderedPlays.forEach((play) => {
+        const outcome = String(play.actual_result || '').toUpperCase();
+        if (outcome === 'END_OF_HALF') halfEndQuarters.add(play.quarter);
+        if (outcome === 'END_OF_GAME') hasGameEndMarker = true;
+    });
+
+    const relevant = orderedPlays.filter((play) => {
+        const outcome = String(play.actual_result || '').toUpperCase();
+        return outcome !== 'END_OF_GAME' && outcome !== 'END_OF_HALF';
+    });
+
     const drives = [];
     let current = null;
     let lastKickoff = null;
@@ -82,7 +101,9 @@ export const buildDrives = (orderedPlays) => {
             current = null;
             return;
         }
-        if (!current || current.possession !== play.possession) {
+        const previousPlay = current?.plays[current.plays.length - 1];
+        const continuesReturnTouchdown = isConversionAttempt(play) && previousPlay && isReturnTouchdown(previousPlay);
+        if (!current || (!continuesReturnTouchdown && current.possession !== play.possession)) {
             const previousDrive = drives[drives.length - 1];
             const startReason = lastKickoff
                 ? kickoffStartReason(lastKickoff)
@@ -96,11 +117,24 @@ export const buildDrives = (orderedPlays) => {
                 homeScoreBefore: play.home_score,
                 awayScoreBefore: play.away_score,
                 plays: [],
+                endedByClock: null,
             };
             drives.push(current);
             lastKickoff = null;
         }
         current.plays.push(play);
+    });
+
+    drives.forEach((drive, i) => {
+        const driveEndQuarter = drive.plays[drive.plays.length - 1].quarter;
+        const nextDrive = drives[i + 1];
+        const precedesLaterQuarter = !nextDrive || nextDrive.plays[0].quarter > driveEndQuarter;
+        if (!precedesLaterQuarter) return;
+        if (!nextDrive && hasGameEndMarker) {
+            drive.endedByClock = 'END_OF_GAME';
+        } else if (halfEndQuarters.has(driveEndQuarter)) {
+            drive.endedByClock = 'END_OF_HALF';
+        }
     });
 
     return drives.map((drive, index) => {
@@ -116,7 +150,7 @@ export const buildDrives = (orderedPlays) => {
             endBallLocation: last.ball_location,
             startReason: drive.startReason,
             netYards,
-            outcome: driveOutcomeLabel(drive.plays),
+            outcome: driveOutcomeLabel(drive.plays, drive.endedByClock),
             homeScoreBefore: drive.homeScoreBefore,
             awayScoreBefore: drive.awayScoreBefore,
             homeScoreAfter: last.home_score,
