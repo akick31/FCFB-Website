@@ -190,6 +190,51 @@ export const applyScenarioFilters = (plays, { mode, target, sides, downs, fieldP
     return true;
 });
 
+export const NUMBER_MIN = 1;
+export const NUMBER_MAX = 1500;
+export const DEFAULT_NUMBER_BUCKET_SIZE = 100;
+
+export const buildNumberBuckets = (bucketSize = DEFAULT_NUMBER_BUCKET_SIZE) => {
+    const size = Math.max(1, Math.floor(bucketSize) || DEFAULT_NUMBER_BUCKET_SIZE);
+    const buckets = [];
+    for (let min = NUMBER_MIN; min <= NUMBER_MAX; min += size) {
+        const max = Math.min(min + size - 1, NUMBER_MAX);
+        buckets.push({ min, max, label: `${min}-${max}` });
+    }
+    return buckets;
+};
+
+export const resolveOwnNumber = (play, target) => {
+    if (play.offensive_submitter_id === target) return play.offensive_number;
+    if (play.defensive_submitter_id === target) return play.defensive_number;
+    return null;
+};
+
+const ownNumbersOf = (plays, target) => plays
+    .map((play) => resolveOwnNumber(play, target))
+    .filter((value) => value != null && !Number.isNaN(Number(value)))
+    .map(Number);
+
+export const favoriteNumbers = (plays, target, limit = 10) => {
+    const numbers = ownNumbersOf(plays, target);
+    const total = numbers.length;
+    const counts = new Map();
+    numbers.forEach((number) => counts.set(number, (counts.get(number) || 0) + 1));
+    return [...counts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([number, count]) => ({ number, count, share: total ? count / total : null }));
+};
+
+export const numberBucketCounts = (plays, target, bucketSize = DEFAULT_NUMBER_BUCKET_SIZE) => {
+    const numbers = ownNumbersOf(plays, target);
+    const total = numbers.length;
+    return buildNumberBuckets(bucketSize).map((bucket) => {
+        const count = numbers.filter((number) => number >= bucket.min && number <= bucket.max).length;
+        return { ...bucket, count, share: total ? count / total : null };
+    });
+};
+
 const csvEscape = (value) => {
     const str = value == null ? '' : String(value);
     return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
