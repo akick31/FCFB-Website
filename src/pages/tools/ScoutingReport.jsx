@@ -25,6 +25,10 @@ import {
     orderedGameIdsFromPlays,
     orderGameIdsByRecency,
     applyScenarioFilters,
+    favoriteNumbers,
+    numberBucketCounts,
+    DEFAULT_NUMBER_BUCKET_SIZE,
+    NUMBER_MAX,
     encodeHiddenColumns,
     decodeHiddenColumns,
     playsToCsv,
@@ -37,6 +41,8 @@ const parseIntArray = (value) => (value ? value.split(',').map(Number).filter((n
 const parseStringArray = (value) => (value ? value.split(',').filter(Boolean) : []);
 
 const userLabel = (user) => (user.team ? `${user.username} (${user.team})` : user.username);
+const sharePct = (value) => (value == null ? '-' : `${(value * 100).toFixed(1)}%`);
+const BUCKET_SIZE_PRESETS = [100, 250, 375, 750, 1000];
 
 const CONTROL_HEIGHT = '34px';
 
@@ -102,6 +108,8 @@ const ScoutingReport = () => {
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [columnsOpen, setColumnsOpen] = useState(true);
     const [savingColumns, setSavingColumns] = useState(false);
+    const [numbersOpen, setNumbersOpen] = useState(true);
+    const [bucketSize, setBucketSize] = useState(DEFAULT_NUMBER_BUCKET_SIZE);
     const nextFilterId = useRef(0);
 
     useEffect(() => {
@@ -232,6 +240,28 @@ const ScoutingReport = () => {
         () => applyScenarioFilters(plays, { mode: 'coach', target: reportTarget, sides, downs, fieldPositions, playTypes, tempo, customFilters }),
         [plays, reportTarget, sides, downs, fieldPositions, playTypes, tempo, customFilters],
     );
+
+    const favoriteNumbersList = useMemo(() => favoriteNumbers(filteredPlays, reportTarget, 10), [filteredPlays, reportTarget]);
+    const numberBuckets = useMemo(() => numberBucketCounts(filteredPlays, reportTarget, bucketSize), [filteredPlays, reportTarget, bucketSize]);
+    const filterSummary = useMemo(() => {
+        const parts = [];
+        const labelsFor = (values, options) => values.map((value) => options.find((option) => option.value === value)?.label || value).join(', ');
+        if (sides.length) parts.push(`Side: ${labelsFor(sides, SIDE_OPTIONS)}`);
+        if (downs.length) parts.push(`Down: ${labelsFor(downs, DOWN_OPTIONS)}`);
+        if (fieldPositions.length) parts.push(`Field position: ${labelsFor(fieldPositions, FIELD_POSITION_OPTIONS)}`);
+        if (playTypes.length) parts.push(`Play type: ${labelsFor(playTypes, PLAY_TYPE_OPTIONS)}`);
+        if (tempo.length) parts.push(`Tempo: ${labelsFor(tempo, TEMPO_OPTIONS)}`);
+        customFilters.forEach((filter) => {
+            if (filter.value === '' || filter.value == null) return;
+            const field = CUSTOM_FIELD_CATALOG.find((entry) => entry.key === filter.field);
+            if (!field) return;
+            const operator = OPERATORS_BY_TYPE[field.type].find((entry) => entry.value === filter.operator);
+            const value = field.type === 'enum' ? humanizeEnumValue(filter.value) : filter.value;
+            parts.push(`${field.label} ${operator?.label || filter.operator} ${value}`);
+        });
+        return parts.join(', ');
+    }, [sides, downs, fieldPositions, playTypes, tempo, customFilters]);
+    const numbersFiltered = filterSummary.length > 0;
 
     const addCustomFilter = () => {
         const field = CUSTOM_FIELD_CATALOG[0];
@@ -397,6 +427,76 @@ const ScoutingReport = () => {
                             </Box>
                         </Box>
                     </Panel>
+
+                    <SectionTitle title="Numbers" collapsible collapsed={!numbersOpen} onToggle={() => setNumbersOpen((prev) => !prev)} note={numbersFiltered ? `Matches the filters above (${filterSummary})` : 'Overall (no filters chosen)'} />
+                    {numbersOpen && (
+                        <Panel sx={{ mb: '16px' }}>
+                            <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <Box>
+                                    <Box sx={{ ...labelSx, mb: '8px' }}>Favorite numbers</Box>
+                                    <DataTable minWidth={360}>
+                                        <thead>
+                                            <tr>
+                                                <th className="lft">Number</th>
+                                                <th>Count</th>
+                                                <th>Share</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {favoriteNumbersList.length === 0 ? (
+                                                <tr><td className="lft" colSpan={3}>No numbers recorded.</td></tr>
+                                            ) : favoriteNumbersList.map((entry) => (
+                                                <tr key={entry.number}>
+                                                    <td className="lft">{entry.number}</td>
+                                                    <td>{entry.count}</td>
+                                                    <td>{sharePct(entry.share)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </DataTable>
+                                </Box>
+
+                                <Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', mb: '8px' }}>
+                                        <Box sx={labelSx}>Number ranges (1-{NUMBER_MAX})</Box>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                            <Box component="span" sx={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>Bucket size</Box>
+                                            {BUCKET_SIZE_PRESETS.map((preset) => (
+                                                <Chip key={preset} active={bucketSize === preset} onClick={() => setBucketSize(preset)}>{preset}</Chip>
+                                            ))}
+                                            <Box
+                                                component="input"
+                                                type="number"
+                                                min={1}
+                                                max={NUMBER_MAX}
+                                                value={bucketSize}
+                                                onChange={(event) => setBucketSize(Math.min(NUMBER_MAX, Math.max(1, Math.floor(Number(event.target.value)) || DEFAULT_NUMBER_BUCKET_SIZE)))}
+                                                sx={{ ...inputSx, width: '76px', textAlign: 'center' }}
+                                            />
+                                        </Box>
+                                    </Box>
+                                    <DataTable minWidth={480}>
+                                        <thead>
+                                            <tr>
+                                                <th className="lft">Range</th>
+                                                <th>Count</th>
+                                                <th>Share</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {numberBuckets.map((bucket) => (
+                                                <tr key={bucket.label}>
+                                                    <td className="lft">{bucket.label}</td>
+                                                    <td>{bucket.count}</td>
+                                                    <td>{sharePct(bucket.share)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </DataTable>
+                                </Box>
+                            </Box>
+                        </Panel>
+                    )}
 
                     <SectionTitle title="Columns" collapsible collapsed={!columnsOpen} onToggle={() => setColumnsOpen((prev) => !prev)} note={`${visibleColumns.length} of ${PLAY_COLUMNS.length} shown`} />
                     {columnsOpen && (
