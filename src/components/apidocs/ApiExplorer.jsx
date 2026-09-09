@@ -52,7 +52,7 @@ const ApiExplorer = ({ specKind }) => {
     const [query, setQuery] = useState('');
     const [selectedId, setSelectedId] = useState(null);
     const [apiKey, setApiKey] = useState(getStoredApiKey);
-    const isLoggedIn = Boolean(localStorage.getItem('token'));
+    const isLoggedIn = typeof window !== 'undefined' && Boolean(window.localStorage.getItem('token'));
 
     const updateApiKey = (value) => {
         setApiKey(value);

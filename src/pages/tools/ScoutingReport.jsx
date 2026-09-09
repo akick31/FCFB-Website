@@ -38,7 +38,7 @@ import { useSeo } from '../../hooks/useSeo';
 
 const ARRAY_PARAMS = { sides: 'sides', downs: 'downs', fieldPositions: 'fp', playTypes: 'types', tempo: 'tempo' };
 const parseIntArray = (value) => (value ? value.split(',').map(Number).filter((n) => !Number.isNaN(n)) : []);
-const parseStringArray = (value) => (value ? value.split(',').filter(Boolean) : []);
+const parseStringArray = (value) => (value ? value.split(',').filter(Boolean).map((entry) => entry.toUpperCase()) : []);
 
 const userLabel = (user) => (user.team ? `${user.username} (${user.team})` : user.username);
 const sharePct = (value) => (value == null ? '-' : `${(value * 100).toFixed(1)}%`);
@@ -213,11 +213,12 @@ const ScoutingReport = () => {
         next.set('games', String(gameCount));
         if (rangeMode === 'season') next.set('season', '1'); else next.delete('season');
         const setOrDelete = (key, values) => { if (values.length) next.set(key, values.join(',')); else next.delete(key); };
-        setOrDelete(ARRAY_PARAMS.sides, sides);
+        const setOrDeleteLower = (key, values) => { if (values.length) next.set(key, values.map((value) => String(value).toLowerCase()).join(',')); else next.delete(key); };
+        setOrDeleteLower(ARRAY_PARAMS.sides, sides);
         setOrDelete(ARRAY_PARAMS.downs, downs);
-        setOrDelete(ARRAY_PARAMS.fieldPositions, fieldPositions);
-        setOrDelete(ARRAY_PARAMS.playTypes, playTypes);
-        setOrDelete(ARRAY_PARAMS.tempo, tempo);
+        setOrDeleteLower(ARRAY_PARAMS.fieldPositions, fieldPositions);
+        setOrDeleteLower(ARRAY_PARAMS.playTypes, playTypes);
+        setOrDeleteLower(ARRAY_PARAMS.tempo, tempo);
         const colsEncoded = encodeHiddenColumns(hiddenColumns);
         if (colsEncoded) next.set('cols', colsEncoded); else next.delete('cols');
         setSearchParams(next, { replace: true });

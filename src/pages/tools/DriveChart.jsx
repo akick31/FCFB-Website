@@ -47,6 +47,7 @@ const DriveChart = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [orderedPlays, setOrderedPlays] = useState([]);
+    const [allOrderedPlays, setAllOrderedPlays] = useState([]);
     const [game, setGame] = useState(null);
 
     const [index, setIndex] = useState(0);
@@ -99,8 +100,10 @@ const DriveChart = () => {
                 getAllPlaysByGameId(overrideGameId),
                 games.find((entry) => entry.game_id === overrideGameId) || getGameById(overrideGameId).catch(() => null),
             ]);
-            const ordered = orderPlaysChronologically(plays.filter((play) => play.actual_result !== 'END_OF_GAME' && play.actual_result !== 'END_OF_HALF'));
+            const fullyOrdered = orderPlaysChronologically(plays);
+            const ordered = fullyOrdered.filter((play) => play.actual_result !== 'END_OF_GAME' && play.actual_result !== 'END_OF_HALF');
             setOrderedPlays(ordered);
+            setAllOrderedPlays(fullyOrdered);
             setGame(resolvedGame);
             if (resolvedGame && !games.some((entry) => entry.game_id === overrideGameId)) {
                 setGames((prev) => [resolvedGame, ...prev]);
@@ -133,7 +136,7 @@ const DriveChart = () => {
     const wpSeries = useMemo(() => buildWinProbSeries(orderedPlays), [orderedPlays]);
     const scoreSeries = useMemo(() => buildScoreSeries(orderedPlays), [orderedPlays]);
     const wpMarks = useMemo(() => quarterBoundaries(wpSeries), [wpSeries]);
-    const drives = useMemo(() => buildDrives(orderedPlays), [orderedPlays]);
+    const drives = useMemo(() => buildDrives(allOrderedPlays), [allOrderedPlays]);
 
     const currentPlay = orderedPlays[index] || null;
     const atEnd = index >= orderedPlays.length - 1;
