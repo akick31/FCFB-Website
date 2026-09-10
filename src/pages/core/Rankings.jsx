@@ -83,7 +83,10 @@ const Rankings = () => {
     const [weeksByPoll, setWeeksByPoll] = useState({ COACHES_POLL: [], PLAYOFF_COMMITTEE: [] });
     const [weeksByMetric, setWeeksByMetric] = useState({});
     const [weeksLoaded, setWeeksLoaded] = useState(false);
-    const [week, setWeek] = useState(null);
+    const [weekOverride, setWeekOverride] = useState(() => {
+        const urlWeek = Number(searchParams.get('week'));
+        return urlWeek || null;
+    });
     const [pollData, setPollData] = useState({ current: [], prevRankByTeamId: {} });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -189,17 +192,11 @@ const Rankings = () => {
         return weeksByPoll[POLL_TYPE[mode]] || [];
     }, [mode, eloWeeks, weeksByPoll, weeksByMetric]);
 
-    useEffect(() => {
-        setWeek((current) => {
-            if (!weeksForMode.length) return null;
-            if (current == null) {
-                const urlWeek = Number(searchParams.get('week'));
-                if (urlWeek && weeksForMode.includes(urlWeek)) return urlWeek;
-            }
-            if (current == null || !weeksForMode.includes(current)) return maxWeek(weeksForMode);
-            return current;
-        });
-    }, [weeksForMode]);
+    const week = useMemo(() => {
+        if (!weeksForMode.length) return null;
+        if (weekOverride != null && weeksForMode.includes(weekOverride)) return weekOverride;
+        return maxWeek(weeksForMode);
+    }, [weeksForMode, weekOverride]);
 
     useEffect(() => {
         if (mode === 'elo' || isMetricMode(mode) || season == null || week == null) return undefined;
@@ -428,7 +425,7 @@ const Rankings = () => {
                     <SelectPill
                         label="Week"
                         value={week}
-                        onChange={(next) => setWeek(Number(next))}
+                        onChange={(next) => setWeekOverride(Number(next))}
                         options={weeksForMode.map((option) => ({ value: option, label: (isMetricMode(mode) || mode === 'elo' ? granularWeekLabel : weekLabel)(option) }))}
                         sx={{ height: '38px', boxSizing: 'border-box' }}
                     />
