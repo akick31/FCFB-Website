@@ -190,9 +190,10 @@ const MatchupPreview = () => {
     const teamHeader = (name) => {
         const mark = teamsMap[name] || toEntry({ name });
         return (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, minWidth: 0 }}>
                 <TeamMark team={mark} size={22} />
-                <Box component="span">{name}</Box>
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</Box>
+                <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>{mark?.abbreviation || name}</Box>
             </Box>
         );
     };

@@ -200,7 +200,12 @@ const TeamDetails = () => {
                     setMetricStats({ values: {}, ranks: {}, totals: {} });
                     return;
                 }
-                const week = weeks[weeks.length - 1];
+                const numericWeeks = weeks.map(Number).filter(Number.isFinite);
+                if (!numericWeeks.length) {
+                    setMetricStats({ values: {}, ranks: {}, totals: {} });
+                    return;
+                }
+                const week = Math.max(...numericWeeks);
                 const fetchMetric = async (entry) => {
                     const rows = await getRankingMetrics(seasonView, week, entry.value).catch(() => []);
                     const higherIsBetter = rankingMetricHigherIsBetter(entry.value);

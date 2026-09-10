@@ -38,6 +38,11 @@ const modeForSlug = (slug) => {
     return METRIC_VALUES.has(upper) ? upper : slug;
 };
 
+const maxWeek = (list) => {
+    const numeric = (list || []).map(Number).filter(Number.isFinite);
+    return numeric.length ? Math.max(...numeric) : null;
+};
+
 const pythagoreanRecord = (value, wins, losses) => {
     if (value == null || wins == null || losses == null) return null;
     const gamesPlayed = wins + losses;
@@ -77,6 +82,7 @@ const Rankings = () => {
     const [eloHistory, setEloHistory] = useState([]);
     const [weeksByPoll, setWeeksByPoll] = useState({ COACHES_POLL: [], PLAYOFF_COMMITTEE: [] });
     const [weeksByMetric, setWeeksByMetric] = useState({});
+    const [weeksLoaded, setWeeksLoaded] = useState(false);
     const [week, setWeek] = useState(null);
     const [pollData, setPollData] = useState({ current: [], prevRankByTeamId: {} });
     const [loading, setLoading] = useState(true);
@@ -122,13 +128,14 @@ const Rankings = () => {
     useEffect(() => {
         if (season == null) return undefined;
         let active = true;
-        Promise.all([
+        setWeeksLoaded(false);
+        const pollPromise = Promise.all([
             getRankingWeeks(season, 'COACHES_POLL').catch(() => []),
             getRankingWeeks(season, 'PLAYOFF_COMMITTEE').catch(() => []),
         ]).then(([coaches, committee]) => {
             if (active) setWeeksByPoll({ COACHES_POLL: coaches || [], PLAYOFF_COMMITTEE: committee || [] });
         });
-        Promise.all(
+        const metricPromise = Promise.all(
             RANKING_METRIC_TYPES.map((entry) => getRankingMetricWeeks(season, entry.value).catch(() => [])),
         ).then((results) => {
             if (!active) return;
@@ -136,6 +143,7 @@ const Rankings = () => {
             RANKING_METRIC_TYPES.forEach((entry, index) => { next[entry.value] = results[index] || []; });
             setWeeksByMetric(next);
         });
+        Promise.all([pollPromise, metricPromise]).finally(() => { if (active) setWeeksLoaded(true); });
         return () => { active = false; };
     }, [season]);
 
@@ -161,19 +169,19 @@ const Rankings = () => {
     };
 
     const defaultMode = useMemo(() => {
-        const overallMaxWeek = Math.max(0, ...tabs.map(weeksForTab).flat());
+        const overallMaxWeek = maxWeek(tabs.map(weeksForTab).flat()) ?? 0;
         return tabs.find((t) => weeksForTab(t).includes(overallMaxWeek)) || tabs[0];
     }, [tabs, weeksByPoll, eloWeeks, weeksByMetric]);
 
     const requestedMode = modeForSlug(type);
-    const mode = tabs.includes(requestedMode) ? requestedMode : defaultMode;
+    const mode = requestedMode && (!weeksLoaded || tabs.includes(requestedMode)) ? requestedMode : defaultMode;
 
     useEffect(() => {
-        if (loading || tabs.length === 0) return;
+        if (!weeksLoaded || tabs.length === 0) return;
         if (!tabs.includes(requestedMode)) {
             navigate({ pathname: `/rankings/${slugForMode(defaultMode)}`, search: searchParams.toString() }, { replace: true });
         }
-    }, [requestedMode, tabs, defaultMode, loading, navigate]);
+    }, [requestedMode, tabs, defaultMode, weeksLoaded, navigate]);
 
     const weeksForMode = useMemo(() => {
         if (mode === 'elo') return eloWeeks;
@@ -188,7 +196,7 @@ const Rankings = () => {
                 const urlWeek = Number(searchParams.get('week'));
                 if (urlWeek && weeksForMode.includes(urlWeek)) return urlWeek;
             }
-            if (current == null || !weeksForMode.includes(current)) return weeksForMode[weeksForMode.length - 1];
+            if (current == null || !weeksForMode.includes(current)) return maxWeek(weeksForMode);
             return current;
         });
     }, [weeksForMode]);

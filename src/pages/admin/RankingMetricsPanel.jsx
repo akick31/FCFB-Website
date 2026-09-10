@@ -49,7 +49,11 @@ const RankingMetricsPanel = () => {
         getValidRankingMetricWeeks(Number(season)).then((weeks) => {
             if (!active) return;
             setValidWeeks(weeks || []);
-            setWeek((current) => (weeks?.includes(Number(current)) ? current : weeks?.[weeks.length - 1] || ''));
+            setWeek((current) => {
+                if (weeks?.includes(Number(current))) return current;
+                const numericWeeks = (weeks || []).map(Number).filter(Number.isFinite);
+                return numericWeeks.length ? Math.max(...numericWeeks) : '';
+            });
         }).catch(() => { if (active) { setValidWeeks([]); setWeek(''); } });
         return () => { active = false; };
     }, [season]);
@@ -104,7 +108,8 @@ const RankingMetricsPanel = () => {
         try {
             const results = await backfillRankingMetrics(Number(season));
             setBackfillResult(results);
-            const lastWeek = results?.[results.length - 1]?.week;
+            const resultWeeks = (results || []).map((entry) => Number(entry.week)).filter(Number.isFinite);
+            const lastWeek = resultWeeks.length ? Math.max(...resultWeeks) : null;
             if (lastWeek) {
                 setWeek(lastWeek);
                 await loadPreview(season, lastWeek, previewMetric);
