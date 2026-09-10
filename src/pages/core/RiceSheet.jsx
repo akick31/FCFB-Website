@@ -31,6 +31,10 @@ const BOWL_START_WEEK = 14;
 const TOP_N_QUICK_VIEWS = [10, 25];
 
 const parseTeamIds = (param) => (param || '').split(',').map((id) => Number(id)).filter((id) => Number.isFinite(id)).slice(0, MAX_TEAMS);
+const maxWeek = (list) => {
+    const numeric = (list || []).map(Number).filter(Number.isFinite);
+    return numeric.length ? Math.max(...numeric) : null;
+};
 
 const higherIsBetterFor = (type) => (type.startsWith('ADJUSTED_') ? adjustedMetricHigherIsBetter(type) : rankingMetricHigherIsBetter(type));
 
@@ -96,9 +100,9 @@ const RiceSheet = () => {
         if (!validWeeks.length) return null;
         if (excludeBowls) {
             const regularSeasonWeeks = validWeeks.filter((w) => w < BOWL_START_WEEK);
-            if (regularSeasonWeeks.length) return regularSeasonWeeks[regularSeasonWeeks.length - 1];
+            if (regularSeasonWeeks.length) return maxWeek(regularSeasonWeeks);
         }
-        return validWeeks[validWeeks.length - 1];
+        return maxWeek(validWeeks);
     }, [validWeeks, excludeBowls]);
 
     useEffect(() => {

@@ -198,26 +198,28 @@ const Home = () => {
                     component={champion.gameId ? Link : 'div'}
                     to={champion.gameId ? `/game-details/${champion.gameId}` : undefined}
                     sx={{
-                        display: 'flex', alignItems: 'center', gap: '16px', background: 'linear-gradient(120deg, var(--brand-deep), #01293b)', border: '1px solid color-mix(in srgb, var(--gold) 40%, var(--line))', borderRadius: 'var(--r-lg)', p: '16px 20px', cursor: champion.gameId ? 'pointer' : 'default', mt: '16px', position: 'relative', overflow: 'hidden', color: 'inherit', textDecoration: 'none',
+                        display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, gap: '16px', background: 'linear-gradient(120deg, var(--brand-deep), #01293b)', border: '1px solid color-mix(in srgb, var(--gold) 40%, var(--line))', borderRadius: 'var(--r-lg)', p: '16px 20px', cursor: champion.gameId ? 'pointer' : 'default', mt: '16px', position: 'relative', overflow: 'hidden', color: 'inherit', textDecoration: 'none',
                         '&::after': { content: '""', position: 'absolute', right: '-40px', top: '-20px', bottom: '-20px', width: '120px', background: 'var(--gold)', opacity: 0.1, transform: 'skewX(-11deg)' },
                     }}
                 >
-                    <Box component="img" src={trophy} alt="Trophy" sx={{ height: 52, width: 'auto', zIndex: 1 }} />
-                    <Box sx={{ zIndex: 1, minWidth: 0 }}>
-                        <Box sx={{ fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, color: 'var(--gold)' }}>
-                            Season {champion.season} National Champion
-                        </Box>
-                        <Box component="h2" sx={{ fontFamily: 'var(--cond)', color: '#fff', fontSize: '1.3rem', m: '3px 0 2px' }}>
-                            Congratulations to {champion.winner}
-                        </Box>
-                        {champion.loser && (
-                            <Box sx={{ color: '#cfe3ee', fontSize: '0.82rem' }}>
-                                {champion.winner} defeated {champion.loser} {champion.winScore}-{champion.loseScore} for the Season {champion.season} national championship.
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1, minWidth: 0, width: { xs: '100%', sm: 'auto' } }}>
+                        <Box component="img" src={trophy} alt="Trophy" sx={{ height: 52, width: 'auto', flexShrink: 0 }} />
+                        <Box sx={{ minWidth: 0 }}>
+                            <Box sx={{ fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, color: 'var(--gold)' }}>
+                                Season {champion.season} National Champion
                             </Box>
-                        )}
+                            <Box component="h2" sx={{ fontFamily: 'var(--cond)', color: '#fff', fontSize: '1.3rem', m: '3px 0 2px' }}>
+                                Congratulations to {champion.winner}
+                            </Box>
+                            {champion.loser && (
+                                <Box sx={{ color: '#cfe3ee', fontSize: '0.82rem' }}>
+                                    {champion.winner} defeated {champion.loser} {champion.winScore}-{champion.loseScore} for the Season {champion.season} national championship.
+                                </Box>
+                            )}
+                        </Box>
                     </Box>
                     {champion.loser && (
-                        <Box sx={{ ml: 'auto', zIndex: 1, display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                        <Box sx={{ ml: { xs: 0, sm: 'auto' }, zIndex: 1, display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
                             <TeamMark team={teamsMap[champion.loser]} size={40} />
                             <Box sx={{ color: 'var(--text-dim)', fontWeight: 800 }}>{champion.loseScore}-{champion.winScore}</Box>
                             <TeamMark team={teamsMap[champion.winner]} size={40} />
