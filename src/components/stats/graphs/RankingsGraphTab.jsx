@@ -6,7 +6,7 @@ import Panel from '../../ui/Panel';
 import SelectPill from '../../ui/SelectPill';
 import MultiLineChart from '../../charts/MultiLineChart';
 import { getEloHistory } from '../../../api/eloHistoryApi.jsx';
-import { getRankingsHistory } from '../../../api/rankingsHistoryApi.jsx';
+import { getRankingWeeks, getRankings } from '../../../api/rankingApi';
 import { getRankingMetricWeeks, getRankingMetrics } from '../../../api/rankingMetricApi';
 import { pickTeamColor } from '../../../utils/teamColor';
 import { RANKING_METRIC_TYPES, rankingMetricHigherIsBetter, rankingMetricDescription, rankingMetricLabel } from '../../../constants/rankingMetrics';
@@ -118,25 +118,24 @@ const RankingsGraphTab = ({ season, teams, teamsMap, mode, sub, onSubChange }) =
                 .catch(() => { if (active) setRawByTeam({}); })
                 .finally(() => { if (active) setLoading(false); });
         } else if (isPoll) {
-            getRankingsHistory('all', season)
-                .then((rows) => {
+            getRankingWeeks(season, 'COACHES_POLL')
+                .then((weeks) => Promise.all(
+                    (weeks || []).map((week) => getRankings(season, week, 'COACHES_POLL').catch(() => []).then((entries) => ({ week, entries }))),
+                ))
+                .then((byWeek) => {
                     if (!active) return;
                     const map = {};
-                    const add = (name, wk, rank) => {
-                        if (!name || wk == null || +wk > 14 || !rank || rank < 1 || rank > 25) return;
-                        map[name] = map[name] || {};
-                        map[name][+wk] = rank;
-                    };
-                    (Array.isArray(rows) ? rows : []).forEach((game) => {
-                        const wk = game.week ?? game.week_number;
-                        add(game.home_team, wk, game.home_team_rank);
-                        add(game.away_team, wk, game.away_team_rank);
+                    byWeek.forEach(({ week, entries }) => {
+                        (entries || []).forEach((entry) => {
+                            const name = entry.teamName;
+                            const rank = entry.rank;
+                            if (!name || rank == null || rank < 1 || rank > 25) return;
+                            map[name] = map[name] || [];
+                            map[name].push({ x: week, val: rank });
+                        });
                     });
-                    const out = {};
-                    Object.entries(map).forEach(([name, weeks]) => {
-                        out[name] = Object.entries(weeks).map(([w, r]) => ({ x: +w, val: r })).sort((a, b) => a.x - b.x);
-                    });
-                    setRawByTeam(out);
+                    Object.values(map).forEach((pts) => pts.sort((a, b) => a.x - b.x));
+                    setRawByTeam(map);
                 })
                 .catch(() => { if (active) setRawByTeam({}); })
                 .finally(() => { if (active) setLoading(false); });
