@@ -93,6 +93,13 @@ const SeasonManagement = () => {
         runAction(() => updateCurrentWeek(field(currentSeason, 'seasonNumber', 'season_number'), week));
     };
 
+    const handleNextWeek = () => {
+        if (!currentSeason) return;
+        const seasonNumber = field(currentSeason, 'seasonNumber', 'season_number');
+        const nextWeek = (field(currentSeason, 'currentWeek', 'current_week') ?? 0) + 1;
+        runAction(() => updateCurrentWeek(seasonNumber, nextWeek));
+    };
+
     const handleToggleOffseason = () => {
         runAction(() => (isOffseason ? endOffseason() : startOffseason()));
     };
@@ -171,6 +178,9 @@ const SeasonManagement = () => {
                             <Box component="input" type="number" min={1} value={weekInput} onChange={(e) => setWeekInput(e.target.value)} disabled={!currentSeason} sx={{ ...inputSx, width: 120 }} />
                         </Box>
                         <Box component="button" type="button" onClick={handleSaveWeek} disabled={busy || !currentSeason} sx={ctrlSx}>Save week</Box>
+                        <Box component="button" type="button" onClick={handleNextWeek} disabled={busy || !currentSeason} sx={btnPrimarySx} title="Advance the current week by one and compute ranking metrics for the week that just finished">
+                            Move to next week{currentSeason ? ` (→ ${(field(currentSeason, 'currentWeek', 'current_week') ?? 0) + 1})` : ''}
+                        </Box>
                         <Box component="button" type="button" onClick={handleToggleOffseason} disabled={busy} sx={ctrlSx}>
                             {isOffseason ? 'End offseason' : 'Start offseason'}
                         </Box>
