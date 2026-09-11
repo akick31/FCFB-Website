@@ -21,6 +21,7 @@ export const PLAY_TYPE_OPTIONS = [
     { value: 'RUN', label: 'Run' },
     { value: 'PASS', label: 'Pass' },
     { value: 'PAT', label: 'PAT' },
+    { value: 'TWO_POINT', label: 'Two point' },
     { value: 'PUNT', label: 'Punt' },
     { value: 'FIELD_GOAL', label: 'Field goal' },
     { value: 'KICKOFF_NORMAL', label: 'Kickoff (normal)' },
