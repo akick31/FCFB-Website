@@ -6,14 +6,17 @@ import SegTabs from '../../ui/SegTabs';
 import SelectPill from '../../ui/SelectPill';
 import StatusPill from '../../ui/StatusPill';
 import { describePlay, formatDownDistanceSpot } from '../../../utils/formatPlay';
+import { getPlayAnimationUrl } from '../../../api/playAnimationApi';
 
 const COUNT_OPTIONS = [{ value: '5', label: 'Last 5' }, { value: '10', label: 'Last 10' }, { value: '25', label: 'Last 25' }, { value: '50', label: 'Last 50' }, { value: 'all', label: 'All plays' }];
 
 const PlayRow = ({ play, homeAbbr, awayAbbr, homeName, awayName }) => {
+    const [showHighlight, setShowHighlight] = useState(false);
     const spot = formatDownDistanceSpot(play, homeAbbr, awayAbbr);
     const description = describePlay(play, { homeName, awayName });
     const teamAbbr = play.possession === 'HOME' ? homeAbbr : awayAbbr;
     const hasNumbers = play.offensive_number != null && play.defensive_number != null;
+    const playId = play.play_id;
     return (
         <Box sx={{ px: 1.75, py: 1, borderBottom: '1px solid var(--line-soft)', '&:last-of-type': { borderBottom: 'none' } }}>
             <Box sx={{ display: 'flex', gap: '10px', alignItems: 'baseline', fontSize: '0.8rem' }}>
@@ -23,10 +26,27 @@ const PlayRow = ({ play, homeAbbr, awayAbbr, homeName, awayName }) => {
                     {play.scored && <Box component="span" sx={{ ml: 0.75 }}><StatusPill variant="championship">Score</StatusPill></Box>}
                 </Box>
                 <Box sx={{ color: 'var(--text-dim)', fontSize: '0.72rem', fontWeight: 700, flex: '0 0 auto', fontVariantNumeric: 'tabular-nums' }}>{play.away_score}-{play.home_score}</Box>
+                {playId != null && (
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={() => setShowHighlight((shown) => !shown)}
+                        aria-label={showHighlight ? 'Hide highlight' : 'Watch highlight'}
+                        aria-expanded={showHighlight}
+                        sx={{ border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: 0.9, py: 0.3, fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer', flex: '0 0 auto' }}
+                    >
+                        {showHighlight ? 'Hide' : '▶ Highlight'}
+                    </Box>
+                )}
             </Box>
             {hasNumbers && (
                 <Box sx={{ color: 'var(--text-dim)', fontSize: '0.68rem', mt: '3px', ml: '48px' }}>
                     Offense: {play.offensive_number}, Defense: {play.defensive_number}{play.difference != null ? `, Difference: ${play.difference}` : ''}
+                </Box>
+            )}
+            {showHighlight && playId != null && (
+                <Box sx={{ mt: 1, ml: '48px' }}>
+                    <Box component="img" src={getPlayAnimationUrl(playId)} alt={`Animation of ${description}`} loading="lazy" sx={{ width: '100%', maxWidth: 520, borderRadius: 'var(--r-sm)', border: '1px solid var(--line-soft)', display: 'block' }} />
                 </Box>
             )}
         </Box>
