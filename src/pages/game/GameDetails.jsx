@@ -3,7 +3,7 @@ import { Box, CircularProgress, Alert, Button, Dialog, DialogTitle, DialogConten
 import { ArrowBack, Assessment, RestaurantMenu, Stop, Close } from '@mui/icons-material';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { getGameById, chewGameByGameId, endGameByGameId } from '../../api/gameApi';
+import { getGameById, chewGameByGameId, unchewGameByGameId, endGameByGameId } from '../../api/gameApi';
 import { getAllPlaysByGameId } from '../../api/playApi';
 import { getGameStatsByIdAndTeam, generateGameStats } from '../../api/gameStatsApi.jsx';
 import { getTeamByName } from '../../api/teamApi';
@@ -19,6 +19,7 @@ import { conferenceLabel } from '../../components/constants/conferences';
 import { STAT_GROUPS, statCell } from '../../utils/teamStatFields';
 import { gameHeaderTitle, gameTypeName, buildWinProbSeries, buildScoreSeries, quarterBoundaries } from '../../utils/gameDetail';
 import { buildDrives } from '../../utils/driveChart';
+import ChewConfirmDialog from '../../components/gameManagement/ChewConfirmDialog';
 import { formatBallSpot } from '../../utils/formatPlay';
 import { goBackOr } from '../../utils/navigation';
 import PageWrap from '../../components/layout/PageWrap';
@@ -83,6 +84,7 @@ const GameDetails = ({ isAdmin }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [viewedDrive, setViewedDrive] = useState(null);
+    const [chewConfirmOpen, setChewConfirmOpen] = useState(false);
 
     useSeo({
         title: game ? `${game.away_team} at ${game.home_team} | FCFB` : 'Game Details | FCFB',
@@ -169,8 +171,11 @@ const GameDetails = ({ isAdmin }) => {
     const drives = buildDrives(orderedPlays);
     const currentDrive = drives[drives.length - 1] || null;
 
+    const isChewing = game?.game_mode === 'CHEW';
+
     const ADMIN_SUCCESS_MESSAGES = {
         chew: 'Chew mode set.',
+        unchew: 'Chew mode turned off.',
         stats: 'Game stats regenerated.',
         end: 'Game ended.',
     };
@@ -181,7 +186,7 @@ const GameDetails = ({ isAdmin }) => {
         try {
             await action();
             setAdminMessage({ severity: 'success', text: ADMIN_SUCCESS_MESSAGES[key] });
-            if (key === 'end') {
+            if (key === 'end' || key === 'chew' || key === 'unchew') {
                 const refreshed = await getGameById(gameId).catch(() => null);
                 if (refreshed) setGame(refreshed);
             }
@@ -220,6 +225,7 @@ const GameDetails = ({ isAdmin }) => {
         ['Vegas spread', game.home_vegas_spread != null ? `${homeMark?.abbreviation} ${game.home_vegas_spread > 0 ? '+' : ''}${game.home_vegas_spread}` : '-'],
         ['Plays', game.num_plays || '-'],
         ['Game type', gameTypeName(game.game_type)],
+        ...(game.game_mode === 'CHEW' ? [['Chew mode', game.game_mode_set_by ? `Set by ${game.game_mode_set_by}` : 'On']] : []),
         ['Game ID', game.game_id],
     ];
 
@@ -270,8 +276,8 @@ const GameDetails = ({ isAdmin }) => {
                             Generate game stats
                         </Button>
                         {!isFinal && (
-                            <Button variant="outlined" size="small" color="warning" startIcon={<RestaurantMenu />} disabled={adminBusy === 'chew'} onClick={() => runAdmin('chew', () => chewGameByGameId(game.game_id))}>
-                                Chew game
+                            <Button variant="outlined" size="small" color="warning" startIcon={<RestaurantMenu />} disabled={adminBusy === 'chew' || adminBusy === 'unchew'} onClick={() => setChewConfirmOpen(true)}>
+                                {isChewing ? 'Take out of chew mode' : 'Chew game'}
                             </Button>
                         )}
                         {!isFinal && (
@@ -280,6 +286,22 @@ const GameDetails = ({ isAdmin }) => {
                             </Button>
                         )}
                     </Box>
+                    <ChewConfirmDialog
+                        open={chewConfirmOpen}
+                        chewing={isChewing}
+                        awayTeam={game.away_team}
+                        homeTeam={game.home_team}
+                        processing={adminBusy === 'chew' || adminBusy === 'unchew'}
+                        onCancel={() => setChewConfirmOpen(false)}
+                        onConfirm={() => {
+                            setChewConfirmOpen(false);
+                            if (isChewing) {
+                                runAdmin('unchew', () => unchewGameByGameId(game.game_id));
+                            } else {
+                                runAdmin('chew', () => chewGameByGameId(game.game_id));
+                            }
+                        }}
+                    />
                 </Box>
             )}
 
