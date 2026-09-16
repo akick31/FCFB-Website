@@ -6,6 +6,7 @@ import SelectPill from '../../components/ui/SelectPill';
 import ScrimmageDialog from '../../components/gameManagement/ScrimmageDialog';
 import StartGameDialog from '../../components/gameManagement/StartGameDialog';
 import StartWeekConfirmDialog from '../../components/gameManagement/StartWeekConfirmDialog';
+import ChewAllConfirmDialog from '../../components/gameManagement/ChewAllConfirmDialog';
 import GamesTable from '../../components/gameManagement/GamesTable';
 import {
     startGame,
@@ -41,6 +42,7 @@ const GameManagement = () => {
     const [scrimmageTeams, setScrimmageTeams] = useState({ homeTeam: '', awayTeam: '', scrimmageType: 'Standard' });
     const [availableTeams, setAvailableTeams] = useState([]);
     const [startGameDialogOpen, setStartGameDialogOpen] = useState(false);
+    const [chewAllDialogOpen, setChewAllDialogOpen] = useState(false);
     const [startGameData, setStartGameData] = useState({ subdivision: 'FCFB', homeTeam: '', awayTeam: '', tvChannel: 'ABC', gameType: 'Out of Conference' });
 
     const {
@@ -179,12 +181,12 @@ const GameManagement = () => {
     };
 
     const handleMarkAllAsChewMode = async () => {
-        if (filteredGames.length === 0) { setError('No games to mark as chew mode'); return; }
+        setChewAllDialogOpen(false);
         setLoading(true);
         setError(null);
         try {
             await markAllGamesAsChewMode();
-            setSuccess('All games marked as chew mode!');
+            setSuccess('All ongoing games marked as chew mode!');
         } catch (err) {
             setError(`Failed to mark games as chew mode: ${err.message}`);
         } finally {
@@ -270,7 +272,7 @@ const GameManagement = () => {
                 <Panel header="Quick actions">
                     <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <Box component="button" type="button" onClick={refetchGames} disabled={gamesLoading} sx={btnGhostSx}>&#8635; Refresh games</Box>
-                        <Box component="button" type="button" onClick={handleMarkAllAsChewMode} disabled={loading} sx={btnGhostSx}>Put all games in chew mode</Box>
+                        <Box component="button" type="button" onClick={() => setChewAllDialogOpen(true)} disabled={loading} sx={btnGhostSx}>Put all games in chew mode</Box>
                         <Box component="button" type="button" onClick={handleEndAllGames} disabled={loading} sx={{ ...btnGhostSx, color: 'var(--live)' }}>End all ongoing games</Box>
                     </Box>
                 </Panel>
@@ -296,6 +298,13 @@ const GameManagement = () => {
                     onPageChange={handlePageChange}
                 />
             </Panel>
+
+            <ChewAllConfirmDialog
+                open={chewAllDialogOpen}
+                processing={loading}
+                onCancel={() => setChewAllDialogOpen(false)}
+                onConfirm={handleMarkAllAsChewMode}
+            />
 
             <StartWeekConfirmDialog
                 open={confirmDialogOpen}

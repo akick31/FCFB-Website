@@ -184,5 +184,18 @@ export const chewGameByGameId = async (gameId) => {
     }
 };
 
+export const unchewGameByGameId = async (gameId) => {
+    try {
+        const response = await apiClient.post('/game/unchew', null, { params: { gameId } });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to take game out of chew mode:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to take game out of chew mode");
+        }
+        throw new Error("An unexpected error occurred while taking game out of chew mode");
+    }
+};
+
 
 
