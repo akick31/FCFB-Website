@@ -33,7 +33,6 @@ export const RANKING_METRIC_TYPES = [
         value: 'POWER_RATING',
         group: 'COMPUTER',
         label: 'Nutter Power Rating',
-        shortLabel: 'Nutter Rating',
         higherIsBetter: true,
         description: 'A blended computer rating: 52% Pythagorean EQW, 28% win percentage, and 20% average difference in the number-guessing matchup on offense, defense, and special teams.',
     },
