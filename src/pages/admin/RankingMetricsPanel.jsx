@@ -4,7 +4,7 @@ import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
 import { computeRankingMetrics, backfillRankingMetrics, getRankingMetrics, getValidRankingMetricWeeks } from '../../api/rankingMetricApi';
 import { getAllSeasons } from '../../api/seasonApi';
-import { RANKING_METRIC_TYPES, rankingMetricShortLabel, rankingMetricHigherIsBetter, rankingMetricDescription } from '../../constants/rankingMetrics';
+import { RANKING_METRIC_TYPES, rankingMetricColumnLabel, rankingMetricHigherIsBetter, rankingMetricDescription } from '../../constants/rankingMetrics';
 import { weekLabel } from '../../utils/formatText';
 
 const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
@@ -198,7 +198,7 @@ const RankingMetricsPanel = () => {
                                 <tr>
                                     <th className="lft stick">Team</th>
                                     <th className="lft">Record</th>
-                                    <th>{rankingMetricShortLabel(previewMetric)}</th>
+                                    <th>{rankingMetricColumnLabel(previewMetric)}</th>
                                 </tr>
                             </thead>
                             <tbody>
