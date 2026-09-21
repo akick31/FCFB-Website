@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
+import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
@@ -34,9 +35,9 @@ CoachlessName.propTypes = {
 const Score = ({ value, dimmed, winner, side }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
         {winner && side === 'away' && null}
-        {winner && side === 'home' && <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, color: 'var(--text)', fontSize: '0.9rem' }}>▸</Box>}
+        {winner && side === 'home' && <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, color: 'var(--text)', fontSize: '1.6rem', lineHeight: 1 }}>▸</Box>}
         <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, fontVariantNumeric: 'tabular-nums', fontSize: { xs: '1.8rem', md: '2.9rem' }, lineHeight: 0.9, color: dimmed ? 'var(--text-dim)' : 'var(--text)' }}>{value}</Box>
-        {winner && side === 'away' && <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, color: 'var(--text)', fontSize: '0.9rem' }}>◂</Box>}
+        {winner && side === 'away' && <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, color: 'var(--text)', fontSize: '1.6rem', lineHeight: 1 }}>◂</Box>}
     </Box>
 );
 
@@ -146,10 +147,10 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
             {situationText && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, px: 2, py: 0.8, background: 'var(--surface-2)', borderTop: '1px solid var(--line-soft)', borderBottom: '1px solid var(--line-soft)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
                     <Box component="span">{situationText}</Box>
-                    {possessionMark?.abbreviation && (
+                    {possessionMark?.name && (
                         <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, color: 'var(--text-dim)', fontSize: '0.7rem' }}>
-                            <Box sx={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--field)' }} />
-                            {possessionMark.abbreviation} ball
+                            <SportsFootballIcon sx={{ fontSize: 13, color: 'var(--text)' }} />
+                            {possessionMark.name} ball
                         </Box>
                     )}
                 </Box>
