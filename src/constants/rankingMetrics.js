@@ -11,7 +11,7 @@ export const RANKING_METRIC_TYPES = [
         label: 'Margin of Victory',
         shortLabel: 'MOV',
         higherIsBetter: true,
-        description: 'Average point differential per game (points scored minus points allowed).',
+        description: 'Average point differential per game (points scored minus points allowed). Shown in full here, with no cap applied.',
     },
     {
         value: 'SCORING_OFFENSE',
@@ -30,7 +30,7 @@ export const RANKING_METRIC_TYPES = [
         label: 'Nutter Power Rating',
         shortLabel: 'Power Rating',
         higherIsBetter: true,
-        description: 'A blended computer rating: 58.5% Pythagorean EQW, 31.5% win percentage, and 10% average difference in the number-guessing matchup on offense, defense, and special teams.',
+        description: 'A blended computer rating: 52% Pythagorean EQW, 28% win percentage, and 20% average difference in the number-guessing matchup on offense, defense, and special teams.',
     },
     {
         value: 'COLLEY_MATRIX',
@@ -42,13 +42,13 @@ export const RANKING_METRIC_TYPES = [
         value: 'ASR',
         label: 'ASR',
         higherIsBetter: true,
-        description: 'Adjusted Strength Rating: a schedule-adjusted scoring margin, in the same family as real computer polls like Sagarin and Massey. Solved as a system of linear equations so a team’s rating equals its average margin of victory plus the average rating of its opponents.',
+        description: 'Adjusted Strength Rating: a schedule-adjusted scoring margin, in the same family as real computer polls like Sagarin and Massey. Solved as a system of linear equations so a team’s rating equals its average margin of victory plus the average rating of its opponents. Each game’s margin is capped at 28 points, so a blowout counts as a decisive win without letting one scoreline dominate the rating.',
     },
     {
         value: 'COMPOSITE',
         label: 'Composite',
         higherIsBetter: true,
-        description: 'A poll of polls, similar to how the real BCS composite blended human polls and computer rankings into one number. Averages this system’s other computer rankings after normalizing each to a common 0-100 scale.',
+        description: 'A poll of polls, similar to how the real BCS composite blended human polls and computer rankings into one number. Blends three independent signals after normalizing each to a common 0-100 scale: 45% Colley Matrix for record and schedule, 40% ASR for schedule-adjusted scoring margin, and 15% Pythagorean EQW for scoring efficiency.',
     },
 ];
 
