@@ -20,17 +20,21 @@ import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getAllSeasons, getCurrentSeasonOrLatest } from '../../api/seasonApi';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { eloWeekBuckets, eloByTeamForWeek, eloRankingForWeek } from '../../utils/eloRankings';
-import { RANKING_METRIC_TYPES, rankingMetricLabel, rankingMetricShortLabel, rankingMetricHigherIsBetter, rankingMetricDescription } from '../../constants/rankingMetrics';
+import { RANKING_METRIC_TYPES, RANKING_METRIC_GROUPS, rankingMetricGroup, rankingMetricLabel, rankingMetricShortLabel, rankingMetricColumnLabel, rankingMetricHigherIsBetter, rankingMetricDescription } from '../../constants/rankingMetrics';
 import { rankMetricEntries } from '../../utils/rankMetricEntries';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
 
 const POLL_TYPE = { coaches: 'COACHES_POLL', committee: 'PLAYOFF_COMMITTEE' };
 const FIXED_TAB_LABEL = { coaches: 'Coaches Poll', committee: 'Playoff Committee', elo: 'ELO' };
+const GROUP_TAB_VALUE = Object.fromEntries(RANKING_METRIC_GROUPS.map((group) => [group.value, group.value.toLowerCase()]));
+const TAB_VALUE_GROUP = Object.fromEntries(RANKING_METRIC_GROUPS.map((group) => [group.value.toLowerCase(), group.value]));
+const groupTabFor = (mode) => GROUP_TAB_VALUE[rankingMetricGroup(mode)];
 const METRIC_VALUES = new Set(RANKING_METRIC_TYPES.map((entry) => entry.value));
 const isMetricMode = (mode) => METRIC_VALUES.has(mode);
 const hasShowFilter = (mode) => isMetricMode(mode) || mode === 'elo';
 const tabLabel = (tab) => FIXED_TAB_LABEL[tab] || rankingMetricLabel(tab);
+const groupLabel = (group) => RANKING_METRIC_GROUPS.find((entry) => entry.value === group)?.label || group;
 const slugForMode = (mode) => (isMetricMode(mode) ? mode.toLowerCase().replace(/_/g, '-') : mode);
 const modeForSlug = (slug) => {
     if (!slug) return slug;
@@ -152,6 +156,8 @@ const Rankings = () => {
 
     const changeSeason = (next) => { setSeason(next); setConference('ALL'); };
 
+    const goToMode = (next) => navigate({ pathname: `/rankings/${slugForMode(next)}`, search: searchParams.toString() });
+
     const eloWeeks = useMemo(() => eloWeekBuckets(eloHistory, season), [eloHistory, season]);
 
     const tabs = useMemo(() => {
@@ -165,6 +171,18 @@ const Rankings = () => {
         return list.length ? list : ['coaches'];
     }, [weeksByPoll, eloWeeks, weeksByMetric]);
 
+    const metricTabs = useMemo(() => tabs.filter(isMetricMode), [tabs]);
+
+    const metricTabsForGroup = (group) => metricTabs.filter((metric) => rankingMetricGroup(metric) === group);
+
+    const segOptions = useMemo(() => {
+        const list = tabs.filter((tab) => !isMetricMode(tab)).map((tab) => ({ value: tab, label: tabLabel(tab) }));
+        RANKING_METRIC_GROUPS.forEach((group) => {
+            if (metricTabsForGroup(group.value).length) list.push({ value: GROUP_TAB_VALUE[group.value], label: group.label });
+        });
+        return list;
+    }, [tabs, metricTabs]);
+
     const weeksForTab = (candidate) => {
         if (candidate === 'elo') return eloWeeks;
         if (isMetricMode(candidate)) return weeksByMetric[candidate] || [];
@@ -176,6 +194,12 @@ const Rankings = () => {
         return tabs.find((t) => weeksForTab(t).includes(overallMaxWeek)) || tabs[0];
     }, [tabs, weeksByPoll, eloWeeks, weeksByMetric]);
 
+    const defaultMetricForGroup = (group) => {
+        const available = metricTabsForGroup(group);
+        if (group === 'COMPUTER' && available.includes('COMPOSITE')) return 'COMPOSITE';
+        return available[0];
+    };
+
     const requestedMode = modeForSlug(type);
     const mode = requestedMode && (!weeksLoaded || tabs.includes(requestedMode)) ? requestedMode : defaultMode;
 
@@ -185,6 +209,10 @@ const Rankings = () => {
             navigate({ pathname: `/rankings/${slugForMode(defaultMode)}`, search: searchParams.toString() }, { replace: true });
         }
     }, [requestedMode, tabs, defaultMode, weeksLoaded, navigate]);
+
+    const changeTab = (next) => goToMode(TAB_VALUE_GROUP[next] ? defaultMetricForGroup(TAB_VALUE_GROUP[next]) : next);
+
+    const changeMetric = (next) => goToMode(next);
 
     const weeksForMode = useMemo(() => {
         if (mode === 'elo') return eloWeeks;
@@ -381,9 +409,9 @@ const Rankings = () => {
             <PageHeading eyebrow="Top 25" title="Rankings">
                 <SegTabs
                     ariaLabel="Ranking type"
-                    value={mode}
-                    onChange={(next) => navigate({ pathname: `/rankings/${slugForMode(next)}`, search: searchParams.toString() })}
-                    options={tabs.map((tab) => ({ value: tab, label: tabLabel(tab) }))}
+                    value={isMetricMode(mode) ? groupTabFor(mode) : mode}
+                    onChange={changeTab}
+                    options={segOptions}
                     buttonSx={{ height: '36px' }}
                 />
                 {season != null && seasons.length > 0 && (
@@ -443,6 +471,17 @@ const Rankings = () => {
             </PageHeading>
 
             {isMetricMode(mode) && (
+                <Box sx={{ mb: '14px' }}>
+                    <SegTabs
+                        ariaLabel={`${groupLabel(rankingMetricGroup(mode))} metric`}
+                        value={mode}
+                        onChange={changeMetric}
+                        options={metricTabsForGroup(rankingMetricGroup(mode)).map((metric) => ({ value: metric, label: rankingMetricShortLabel(metric) }))}
+                    />
+                </Box>
+            )}
+
+            {isMetricMode(mode) && (
                 <Box sx={{ color: 'var(--text-muted)', fontSize: '0.82rem', mb: '16px' }}>
                     {rankingMetricDescription(mode)}
                 </Box>
@@ -457,7 +496,7 @@ const Rankings = () => {
                         <th style={{ width: '11%', textAlign: 'center !important' }}>Conference</th>
                         <th style={{ width: '11%', textAlign: 'center !important' }}>Previous</th>
                         <th style={{ width: '9%', textAlign: 'center !important' }}>Δ</th>
-                        <th style={{ width: '10%' }}>{isMetricMode(mode) ? rankingMetricShortLabel(mode) : 'ELO'}</th>
+                        <th style={{ width: '10%' }}>{isMetricMode(mode) ? rankingMetricColumnLabel(mode) : 'ELO'}</th>
                         {mode === 'EQUIVALENT_WINS' && <th style={{ width: '11%', textAlign: 'center' }}>Pythag Record</th>}
                         <th style={{ width: mode === 'EQUIVALENT_WINS' ? '13%' : '18%' }}>Coach</th>
                     </tr>
