@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
+import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
@@ -188,8 +189,8 @@ const GameCard = ({ game, teamsMap, compact = false }) => {
                             {game.down ? `${formatDownAndDistance(game.down, game.yards_to_go)} ${formatBallLocationWithTeam(game.ball_location, game.possession, game.home_team, game.away_team, home, away)}` : ''}
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, justifyContent: 'flex-end', color: 'var(--text-dim)', fontSize: '0.68rem', whiteSpace: 'nowrap' }}>
-                            <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--field)' }} />
-                            {(game.possession === 'HOME' ? homeTeam : awayTeam).abbreviation} ball
+                            <SportsFootballIcon sx={{ fontSize: 13, color: 'var(--text)' }} />
+                            {(game.possession === 'HOME' ? homeTeam : awayTeam).name} ball
                         </Box>
                     </Box>
                     {previousPlayText && (

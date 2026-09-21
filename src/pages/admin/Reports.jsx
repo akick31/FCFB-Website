@@ -91,7 +91,10 @@ const Reports = ({ user }) => {
     const positionFilter = searchParams.get('position') || 'ALL';
     const transactionTypeFilter = searchParams.get('type') || 'ALL';
 
-    const [userDelayData, setUserDelayData] = useState([]);
+    const [seasonDelayData, setSeasonDelayData] = useState([]);
+    const [weeklyDelayData, setWeeklyDelayData] = useState([]);
+    const [weeklyDelayLoading, setWeeklyDelayLoading] = useState(false);
+    const [seasonContext, setSeasonContext] = useState(null);
     const [delayLoading, setDelayLoading] = useState(true);
     const [delayError, setDelayError] = useState(null);
     const [seasons, setSeasons] = useState([]);
