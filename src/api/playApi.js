@@ -89,3 +89,18 @@ export const rollbackPlay = async (gameId) => {
         throw new Error("An unexpected error occurred while rolling back play");
     }
 };
+
+export const getUserDelayOfGameInstancesByWeek = async (season, week) => {
+    try {
+        const response = await apiClient.get('/play/delay-of-game/users', {
+            params: { season, week }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch weekly delay of game instances:", error);
+        if (error.response) {
+            throw new Error(error.response.data.error || "Failed to fetch weekly delay of game instances");
+        }
+        throw new Error("An unexpected error occurred while fetching weekly delay of game instances");
+    }
+};
