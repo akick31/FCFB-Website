@@ -9,10 +9,10 @@ import SelectPill from '../../components/ui/SelectPill';
 import SegTabs from '../../components/ui/SegTabs';
 import TeamMark from '../../components/ui/TeamMark';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
-import { getAllUsers } from '../../api/userApi';
-import { getAllTeams } from '../../api/teamApi';
+import { getUserDelayOfGameInstances } from '../../api/playApi';
+import { getAllSeasons, getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
-import { formatPosition } from '../../utils/formatText';
+import { formatPosition, weekLabel } from '../../utils/formatText';
 
 const searchSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', font: 'inherit', fontSize: '0.82rem', minWidth: 210, boxSizing: 'border-box' };
 const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
@@ -23,6 +23,29 @@ const transactionColor = (type) => {
     if (type === 'FIRED') return 'var(--live)';
     if (type === 'HIRED_INTERIM') return 'var(--gold)';
     return 'var(--field)';
+};
+
+const MAX_WEEK = 13;
+const FULL_SEASON = 'full-season';
+const DELAY_OF_GAME_REPORT = 'delay-of-game';
+const COACH_TRANSACTION_REPORT = 'coach-transactions';
+
+const seasonNumberOf = (entry) => entry.season_number ?? entry.seasonNumber;
+
+const weekCountOf = (entry) => {
+    const current = entry.current_week ?? entry.currentWeek;
+    if (current == null) return MAX_WEEK;
+    return Math.min(Math.max(current, 1), MAX_WEEK);
+};
+
+const fallbackWeekCount = (season, period) => {
+    if (season !== period?.season || typeof period?.week !== 'number') return MAX_WEEK;
+    return period.week;
+};
+
+const normalizeWeek = (value) => {
+    if (typeof value === 'number') return value;
+    return value?.week ?? value?.current_week ?? value?.currentWeek ?? null;
 };
 
 const delayColor = (count) => {
@@ -64,8 +87,8 @@ const Reports = ({ user }) => {
         setSearchParams(next, { replace: true });
     };
 
-    const tab = searchParams.get('tab') || 'delays';
-    const setTab = (value) => updateParam('tab', value, 'delays');
+    const report = searchParams.get('report') === COACH_TRANSACTION_REPORT ? COACH_TRANSACTION_REPORT : DELAY_OF_GAME_REPORT;
+    const setReport = (value) => setSearchParams(new URLSearchParams({ report: value }), { replace: true });
 
     const [transactions, setTransactions] = useState([]);
     const [transactionLoading, setTransactionLoading] = useState(true);
@@ -78,15 +101,35 @@ const Reports = ({ user }) => {
     const [userDelayData, setUserDelayData] = useState([]);
     const [delayLoading, setDelayLoading] = useState(true);
     const [delayError, setDelayError] = useState(null);
-    const delaySearchTerm = searchParams.get('dq') || '';
-    const delayTeamFilter = searchParams.get('dteam') || 'ALL';
+    const [seasons, setSeasons] = useState([]);
+    const [seasonsUnavailable, setSeasonsUnavailable] = useState(false);
+    const [currentPeriod, setCurrentPeriod] = useState(null);
     const delaySortField = searchParams.get('sort') || 'delayInstances';
     const delaySortDirection = searchParams.get('dir') || 'desc';
+
+    const seasonParam = searchParams.get('season');
+    const weekParam = searchParams.get('week');
+    const delaySeason = seasonParam ? Number(seasonParam) : currentPeriod?.season ?? null;
+    const selectedWeek = weekParam ?? (currentPeriod?.week != null ? String(currentPeriod.week) : null);
+    const availableWeeks = useMemo(() => {
+        const entry = seasons.find((season) => seasonNumberOf(season) === delaySeason);
+        const weeks = entry ? weekCountOf(entry) : fallbackWeekCount(delaySeason, currentPeriod);
+        return Array.from({ length: weeks }, (_, index) => index + 1);
+    }, [seasons, delaySeason, currentPeriod]);
+    const weekOutOfRange = selectedWeek != null && selectedWeek !== FULL_SEASON && !availableWeeks.includes(Number(selectedWeek));
+    const delayWeek = weekOutOfRange ? FULL_SEASON : selectedWeek;
 
     useEffect(() => {
         if (!user || !user.role) return;
         if (user.role !== 'ADMIN' && user.role !== 'CONFERENCE_COMMISSIONER') navigate('*');
     }, [user, navigate]);
+
+    useEffect(() => {
+        if (searchParams.get('report')) return;
+        const next = new URLSearchParams(searchParams);
+        next.set('report', report);
+        setSearchParams(next, { replace: true });
+    }, [searchParams, report, setSearchParams]);
 
     useEffect(() => {
         if (user?.role !== 'ADMIN' && user?.role !== 'CONFERENCE_COMMISSIONER') return;
@@ -98,19 +141,40 @@ const Reports = ({ user }) => {
 
     useEffect(() => {
         if (user?.role !== 'ADMIN' && user?.role !== 'CONFERENCE_COMMISSIONER') return;
-        Promise.all([getAllUsers(), getAllTeams()])
-            .then(([usersResponse, teamsResponse]) => {
-                setUserDelayData(usersResponse.map((u) => ({
-                    username: u.username,
-                    discordTag: u.discord_tag || '-',
-                    team: u.team || 'No team',
-                    teamLogo: teamsResponse.find((t) => t.name === u.team)?.logo || null,
-                    delayInstances: u.delay_of_game_instances,
+        Promise.all([
+            getAllSeasons().catch((err) => { console.error('Failed to fetch seasons:', err); return []; }),
+            getCurrentSeasonOrLatest().catch(() => null),
+            getCurrentWeekOrLatest().catch(() => null),
+        ])
+            .then(([allSeasons, season, rawWeek]) => {
+                const usableSeasons = (allSeasons || []).filter((entry) => seasonNumberOf(entry) != null);
+                setSeasonsUnavailable(usableSeasons.length === 0);
+                setSeasons(usableSeasons.sort((a, b) => seasonNumberOf(b) - seasonNumberOf(a)));
+                const week = normalizeWeek(rawWeek);
+                setCurrentPeriod({ season, week: week == null ? FULL_SEASON : Math.min(Math.max(week, 1), MAX_WEEK) });
+            });
+    }, [user]);
+
+    useEffect(() => {
+        if (user?.role !== 'ADMIN' && user?.role !== 'CONFERENCE_COMMISSIONER') return undefined;
+        if (delaySeason == null || delayWeek == null) return undefined;
+        let active = true;
+        setDelayLoading(true);
+        getUserDelayOfGameInstances(delaySeason, delayWeek === FULL_SEASON ? null : Number(delayWeek))
+            .then((rows) => {
+                if (!active) return;
+                setDelayError(null);
+                setUserDelayData((rows || []).map((row) => ({
+                    username: row.username,
+                    discordTag: row.discord_tag || '-',
+                    team: row.team || 'No team',
+                    delayInstances: row.delay_of_game_instances,
                 })));
             })
-            .catch((err) => { console.error('Failed to fetch delay data:', err); setDelayError('Failed to load user delay data'); })
-            .finally(() => setDelayLoading(false));
-    }, [user]);
+            .catch((err) => { if (!active) return; console.error('Failed to fetch delay data:', err); setDelayError('Failed to load user delay data'); })
+            .finally(() => { if (active) setDelayLoading(false); });
+        return () => { active = false; };
+    }, [user, delaySeason, delayWeek]);
 
     const uniqueTeams = useMemo(() => [...new Set(transactions.map((t) => t.team))].filter(Boolean).sort(), [transactions]);
     const uniquePositions = useMemo(() => [...new Set(transactions.map((t) => t.position))].filter(Boolean).sort(), [transactions]);
@@ -121,6 +185,14 @@ const Reports = ({ user }) => {
     const positionOptions = useMemo(() => [{ value: 'ALL', label: 'All positions' }, ...uniquePositions.map((p) => ({ value: p, label: formatPosition(p) }))], [uniquePositions]);
     const typeOptions = useMemo(() => [{ value: 'ALL', label: 'All transactions' }, ...uniqueTransactionTypes.map((t) => ({ value: t, label: t.replace(/_/g, ' ') }))], [uniqueTransactionTypes]);
     const delayTeamOptions = useMemo(() => [{ value: 'ALL', label: 'All teams' }, ...uniqueDelayTeams.map((t) => ({ value: t, label: t }))], [uniqueDelayTeams]);
+    const delaySeasonOptions = useMemo(() => {
+        if (seasons.length > 0) return seasons.map((entry) => ({ value: seasonNumberOf(entry), label: `Season ${seasonNumberOf(entry)}` }));
+        return delaySeason == null ? [] : [{ value: delaySeason, label: `Season ${delaySeason}` }];
+    }, [seasons, delaySeason]);
+    const delayWeekOptions = useMemo(() => [
+        { value: FULL_SEASON, label: 'Full season' },
+        ...availableWeeks.map((week) => ({ value: String(week), label: weekLabel(week) })),
+    ], [availableWeeks]);
 
     const filteredTransactions = useMemo(() => {
         let filtered = transactions;
@@ -139,9 +211,9 @@ const Reports = ({ user }) => {
 
     const filteredUserDelayData = useMemo(() => {
         let filtered = userDelayData;
-        if (delayTeamFilter !== 'ALL') filtered = filtered.filter((u) => u.team === delayTeamFilter);
-        if (delaySearchTerm) {
-            const searchLower = delaySearchTerm.toLowerCase();
+        if (teamFilter !== 'ALL') filtered = filtered.filter((u) => u.team === teamFilter);
+        if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
             filtered = filtered.filter((u) =>
                 u.username?.toLowerCase().includes(searchLower) ||
                 u.discordTag?.toLowerCase().includes(searchLower) ||
@@ -155,7 +227,7 @@ const Reports = ({ user }) => {
             if (aValue > bValue) return delaySortDirection === 'asc' ? 1 : -1;
             return 0;
         });
-    }, [userDelayData, delayTeamFilter, delaySearchTerm, delaySortField, delaySortDirection]);
+    }, [userDelayData, teamFilter, searchTerm, delaySortField, delaySortDirection]);
 
     const handleDelaySort = (field) => {
         const next = new URLSearchParams(searchParams);
@@ -169,7 +241,7 @@ const Reports = ({ user }) => {
         setSearchParams(next, { replace: true });
     };
 
-    if ((transactionLoading || delayLoading)) {
+    if (transactionLoading || currentPeriod == null) {
         return (
             <AdminLayout title="Reports">
                 <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
@@ -177,10 +249,10 @@ const Reports = ({ user }) => {
         );
     }
 
-    if (transactionError || delayError) {
+    if (transactionError) {
         return (
             <AdminLayout title="Reports">
-                <Alert severity="error">{transactionError || delayError}</Alert>
+                <Alert severity="error">{transactionError}</Alert>
             </AdminLayout>
         );
     }
@@ -188,16 +260,22 @@ const Reports = ({ user }) => {
     return (
         <AdminLayout
             title="Reports"
-            controls={<SegTabs value={tab} onChange={setTab} options={[{ value: 'delays', label: 'User delay instances' }, { value: 'transactions', label: 'Coach transaction log' }]} />}
+            controls={<SegTabs value={report} onChange={setReport} options={[{ value: DELAY_OF_GAME_REPORT, label: 'User delay instances' }, { value: COACH_TRANSACTION_REPORT, label: 'Coach transaction log' }]} />}
         >
-            {tab === 'delays' && (
+            {report === DELAY_OF_GAME_REPORT && (
                 <>
                     <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', mb: '16px' }}>
-                        <Box component="input" placeholder="Search users..." aria-label="Search users" value={delaySearchTerm} onChange={(e) => updateParam('dq', e.target.value)} sx={searchSx} />
-                        <SelectPill label="Team" value={delayTeamFilter} onChange={(value) => updateParam('dteam', value, 'ALL')} options={delayTeamOptions} sx={pillHeightSx} />
+                        <Box component="input" placeholder="Search users..." aria-label="Search users" value={searchTerm} onChange={(e) => updateParam('q', e.target.value)} sx={searchSx} />
+                        <SelectPill label="Season" value={delaySeason ?? ''} onChange={(value) => updateParam('season', value)} options={delaySeasonOptions} sx={pillHeightSx} />
+                        <SelectPill label="Week" value={delayWeek ?? FULL_SEASON} onChange={(value) => updateParam('week', value)} options={delayWeekOptions} sx={pillHeightSx} />
+                        <SelectPill label="Team" value={teamFilter} onChange={(value) => updateParam('team', value, 'ALL')} options={delayTeamOptions} sx={pillHeightSx} />
                     </Box>
 
-                    <Panel header="User delay instances" more={`${filteredUserDelayData.length} users`}>
+                    {seasonsUnavailable && <Alert severity="warning" sx={{ mb: '16px' }}>Could not load the season list, so the week options cover the current season only.</Alert>}
+
+                    {delayError && <Alert severity="error" sx={{ mb: '16px' }}>{delayError}</Alert>}
+
+                    <Panel header={delayWeek === FULL_SEASON ? 'User delay instances, full season' : `User delay instances, ${weekLabel(Number(delayWeek))}`} more={`${filteredUserDelayData.length} users`}>
                         <DataTable minWidth={560}>
                             <thead>
                                 <tr>
@@ -208,7 +286,19 @@ const Reports = ({ user }) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredUserDelayData.map((row) => (
+                                {delayLoading && (
+                                    <tr>
+                                        <Box component="td" colSpan={4} sx={{ py: 3, textAlign: 'center' }}><CircularProgress size={22} /></Box>
+                                    </tr>
+                                )}
+                                {!delayLoading && filteredUserDelayData.length === 0 && (
+                                    <tr>
+                                        <Box component="td" colSpan={4} sx={{ textAlign: 'center', color: 'var(--text-muted)', py: 3 }}>
+                                            No delay of game instances for this {delayWeek === FULL_SEASON ? 'season' : 'week'}.
+                                        </Box>
+                                    </tr>
+                                )}
+                                {!delayLoading && filteredUserDelayData.map((row) => (
                                     <tr key={row.username}>
                                         <td className="lft stick">@{row.username}</td>
                                         <td className="lft">{row.discordTag}</td>
@@ -229,7 +319,7 @@ const Reports = ({ user }) => {
                 </>
             )}
 
-            {tab === 'transactions' && (
+            {report === COACH_TRANSACTION_REPORT && (
                 <>
                     <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', mb: '16px' }}>
                         <Box component="input" placeholder="Search transactions..." aria-label="Search transactions" value={searchTerm} onChange={(e) => updateParam('q', e.target.value)} sx={searchSx} />

@@ -15,6 +15,8 @@ const SegTabs = ({ value, onChange, options, ariaLabel, buttonSx }) => {
                 border: '1px solid var(--line)',
                 borderRadius: 'var(--r-sm)',
                 overflow: 'hidden',
+                overflowX: 'auto',
+                maxWidth: '100%',
                 '& button': {
                     display: 'inline-flex',
                     alignItems: 'center',

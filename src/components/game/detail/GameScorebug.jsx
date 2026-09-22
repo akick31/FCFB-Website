@@ -1,11 +1,13 @@
 import React from 'react';
 import { Box } from '@mui/material';
+import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
 import TvLogo from '../../ui/TvLogo';
 import GameTypeLabel from '../cards/GameTypeLabel';
-import { formatScoreboardStatus } from '../../../utils/gameUtils';
+import { formatScoreboardStatus, formatScoreboardQuarter, formatDownAndDistance } from '../../../utils/gameUtils';
+import { formatBallLocationWithTeam } from '../scoreboard/utils/scoreboardFormatters';
 
 const CoachlessName = ({ mark, name, rank, record, align, teamId }) => (
     <Box
@@ -33,9 +35,9 @@ CoachlessName.propTypes = {
 const Score = ({ value, dimmed, winner, side }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
         {winner && side === 'away' && null}
-        {winner && side === 'home' && <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, color: 'var(--text)', fontSize: '0.9rem' }}>▸</Box>}
+        {winner && side === 'home' && <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, color: 'var(--text)', fontSize: '1.6rem', lineHeight: 1 }}>▸</Box>}
         <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, fontVariantNumeric: 'tabular-nums', fontSize: { xs: '1.8rem', md: '2.9rem' }, lineHeight: 0.9, color: dimmed ? 'var(--text-dim)' : 'var(--text)' }}>{value}</Box>
-        {winner && side === 'away' && <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, color: 'var(--text)', fontSize: '0.9rem' }}>◂</Box>}
+        {winner && side === 'away' && <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, color: 'var(--text)', fontSize: '1.6rem', lineHeight: 1 }}>◂</Box>}
     </Box>
 );
 
@@ -47,6 +49,11 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
     const finalLabel = game.game_status === 'FINAL'
         ? `Final${overtime ? ' / OT' : ''}`
         : formatScoreboardStatus(game.game_status);
+    const inPlay = (game.game_status === 'IN_PROGRESS' || game.game_status === 'OVERTIME') && game.quarter > 0;
+    const possessionMark = game.possession === 'HOME' ? homeMark : awayMark;
+    const situationText = inPlay && game.down
+        ? `${formatDownAndDistance(game.down, game.yards_to_go)} · ${formatBallLocationWithTeam(game.ball_location, game.possession, game.home_team, game.away_team, homeMark, awayMark)}`
+        : null;
     const awayRecord = `${game.away_wins || 0}-${game.away_losses || 0}`;
     const homeRecord = `${game.home_wins || 0}-${game.home_losses || 0}`;
     const quarterCols = [...columns, 'T'];
@@ -101,7 +108,20 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
                 </Box>
 
                 <Box sx={{ gridArea: 'status', zIndex: 1, textAlign: 'center' }}>
-                    <Box sx={{ fontFamily: 'var(--cond)', color: 'var(--text-dim)', fontSize: '0.8rem' }}>{finalLabel.toUpperCase()}</Box>
+                    {inPlay ? (
+                        <>
+                            <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, color: 'var(--brand)', fontSize: { xs: '0.8rem', md: '0.95rem' }, whiteSpace: 'nowrap' }}>
+                                {formatScoreboardQuarter(game.quarter)}
+                            </Box>
+                            {game.clock && (
+                                <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: 'var(--text)', fontSize: { xs: '0.9rem', md: '1.1rem' }, lineHeight: 1.1 }}>
+                                    {game.clock}
+                                </Box>
+                            )}
+                        </>
+                    ) : (
+                        <Box sx={{ fontFamily: 'var(--cond)', color: 'var(--text-dim)', fontSize: '0.8rem' }}>{finalLabel.toUpperCase()}</Box>
+                    )}
                 </Box>
 
                 <Box sx={{ gridArea: 'homescore', zIndex: 1 }}>
@@ -123,6 +143,18 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
                     </Box>
                 )}
             </Box>
+
+            {situationText && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, px: 2, py: 0.8, background: 'var(--surface-2)', borderTop: '1px solid var(--line-soft)', borderBottom: '1px solid var(--line-soft)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+                    <Box component="span">{situationText}</Box>
+                    {possessionMark?.name && (
+                        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, color: 'var(--text-dim)', fontSize: '0.7rem' }}>
+                            <SportsFootballIcon sx={{ fontSize: 13, color: 'var(--text)' }} />
+                            {possessionMark.name} ball
+                        </Box>
+                    )}
+                </Box>
+            )}
 
             {venueText && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', pb: threadLink ? 0.75 : 1.25, fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }}>
