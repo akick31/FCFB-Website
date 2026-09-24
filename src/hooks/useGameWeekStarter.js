@@ -34,9 +34,9 @@ const useGameWeekStarter = (initialSeason, initialWeek, onError) => {
                     clearInterval(pollIntervalRef.current);
                     pollIntervalRef.current = null;
                     setIsStarting(false);
-                    const schedule = await getScheduleBySeasonAndWeek(selectedStartSeason, selectedStartWeek);
-                    setWeekSchedule(schedule || []);
                 }
+                const schedule = await getScheduleBySeasonAndWeek(selectedStartSeason, selectedStartWeek);
+                setWeekSchedule(schedule || []);
             } catch (err) {
                 console.error('Error polling job status:', err);
             }
