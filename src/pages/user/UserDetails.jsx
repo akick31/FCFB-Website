@@ -6,7 +6,7 @@ import { getAllUsers, getUsernameHistory } from '../../api/userApi';
 import { getAllTeams } from '../../api/teamApi';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
-import { getRankingsHistory } from '../../api/rankingsHistoryApi.jsx';
+import { getRankedGames } from '../../api/rankingApi';
 import { getCoachStats } from '../../api/coachStatsApi';
 import { getCurrentSeason, getLatestCompletedSeason } from '../../api/seasonApi';
 import { aggregateSeasonStats } from '../../utils/aggregateStats';
@@ -139,7 +139,7 @@ const UserDetails = () => {
                 const [perTeam, statsData] = await Promise.all([
                     Promise.all(coachedTeamNames.map(async (teamName) => {
                         const [rankGames, eloRows] = await Promise.all([
-                            getRankingsHistory(teamName, null).catch(() => []),
+                            getRankedGames(teamName, null).catch(() => []),
                             getEloHistory(teamName, null).catch(() => []),
                         ]);
                         return [teamName, teamCoachPoints(teamName, rankGames, eloRows, names)];
