@@ -5,6 +5,7 @@ import { checkIfUserIsAdmin } from '../../utils/utils';
 import { getTeamById } from '../../api/teamApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
 import { getRankingsHistory } from '../../api/rankingsHistoryApi.jsx';
+import { getLatestRankings } from '../../api/rankingApi';
 import { getRankingMetricWeeks, getRankingMetrics } from '../../api/rankingMetricApi';
 import { RANKING_METRIC_TYPES, rankingMetricLabel, rankingMetricShortLabel, rankingMetricHigherIsBetter } from '../../constants/rankingMetrics';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
@@ -66,6 +67,7 @@ const TeamDetails = () => {
     const { mode } = useColorMode();
 
     const [team, setTeam] = useState(null);
+    const [pollRank, setPollRank] = useState(null);
     const [seasons, setSeasons] = useState([]);
     const [seasonView, setSeasonView] = useState(null);
     const scope = searchParams.get('scope') === 'postseason' ? 'postseason' : 'regular';
@@ -104,6 +106,11 @@ const TeamDetails = () => {
                 const teamData = await getTeamById(teamId);
                 if (!active) return;
                 setTeam(teamData);
+                getLatestRankings('COACHES_POLL')
+                    .then((entries) => {
+                        if (active) setPollRank(entries.find((entry) => entry.teamId === teamData.id)?.rank ?? null);
+                    })
+                    .catch(() => {});
 
                 const [defSeason, elo, rankGames, allStatsData, allTransactions, allUsers] = await Promise.all([
                     resolveDefaultSeason(),
@@ -319,7 +326,7 @@ const TeamDetails = () => {
                     </Box>
                 </Box>
             )}
-            <TeamHeader team={team} mark={mark} pollRank={team.coaches_poll_ranking} />
+            <TeamHeader team={team} mark={mark} pollRank={pollRank} />
 
             <SectionTitle title="Program history" collapsible collapsed={collapsedSections.has('history')} onToggle={() => toggleSection('history')} />
             {!collapsedSections.has('history') && (
