@@ -7,7 +7,7 @@ export const getEloHistory = async (team, season = null) => {
             params.season = season;
         }
         
-        const response = await apiClient.get('/game-stats/elo-history', { params });
+        const response = await apiClient.get('/elo/history', { params });
         return response.data;
     } catch (error) {
         console.error('Failed to fetch ELO history:', error);

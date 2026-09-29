@@ -74,13 +74,6 @@ export const getTeamPlaybooks = (team) => {
     };
 };
 
-export const getTeamRankings = (team) => {
-    return {
-        coachesPoll: team.coaches_poll_ranking,
-        playoffCommittee: team.playoff_committee_ranking
-    };
-};
-
 export const getTeamColors = (team) => {
     return {
         primary: team.primary_color || '#004260',
