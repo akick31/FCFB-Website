@@ -4,8 +4,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { checkIfUserIsAdmin } from '../../utils/utils';
 import { getTeamById } from '../../api/teamApi';
 import { getEloHistory } from '../../api/eloHistoryApi.jsx';
-import { getRankingsHistory } from '../../api/rankingsHistoryApi.jsx';
-import { getLatestRankings } from '../../api/rankingApi';
+import { getLatestRankings, getTeamRankings } from '../../api/rankingApi';
 import { getRankingMetricWeeks, getRankingMetrics } from '../../api/rankingMetricApi';
 import { RANKING_METRIC_TYPES, rankingMetricLabel, rankingMetricShortLabel, rankingMetricHigherIsBetter } from '../../constants/rankingMetrics';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
@@ -112,10 +111,10 @@ const TeamDetails = () => {
                     })
                     .catch(() => {});
 
-                const [defSeason, elo, rankGames, allStatsData, allTransactions, allUsers] = await Promise.all([
+                const [defSeason, elo, teamRankings, allStatsData, allTransactions, allUsers] = await Promise.all([
                     resolveDefaultSeason(),
                     getEloHistory(teamData.name, null).catch(() => []),
-                    getRankingsHistory(teamData.name, null).catch(() => []),
+                    getTeamRankings(teamData.id, 'COACHES_POLL').catch(() => []),
                     getFilteredSeasonStats(teamData.name, null, null, null, 0, 50).catch(() => null),
                     getEntireCoachTransactionLog().catch(() => []),
                     getAllUsers().catch(() => []),
@@ -132,9 +131,9 @@ const TeamDetails = () => {
                 const eloRows = (elo || [])
                     .filter((row) => row.elo != null && row.season >= 1)
                     .map((row) => ({ season: row.season, week: row.week, value: Math.round(row.elo) }));
-                const rankPoints = (rankGames || [])
-                    .map((game) => ({ season: game.season, week: game.week, value: game.home_team === teamData.name ? game.home_team_rank : game.away_team_rank }))
-                    .filter((point) => point.season >= 1 && point.value >= 1 && point.value <= 25);
+                const rankPoints = (teamRankings || [])
+                    .map((entry) => ({ season: entry.season, week: entry.week, value: entry.rank }))
+                    .filter((point) => point.season >= 1);
                 setAllEloRows(eloRows);
                 setAllRankPoints(rankPoints);
                 setAllTimeStats(aggregateSeasonStats(statsRows(allStatsData)));
