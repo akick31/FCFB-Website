@@ -20,7 +20,7 @@ import { getAllPlaysByTeam, getAllPlaysByDiscordId } from '../../api/playApi';
 import { getGamesByIds } from '../../api/gameApi';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getCoachStats } from '../../api/coachStatsApi';
-import { getRankingsHistory } from '../../api/rankingsHistoryApi.jsx';
+import { getRankedGames } from '../../api/rankingApi';
 import { orderedGameIdsFromPlays } from '../../utils/scoutingReport';
 import { buildTeamRankings, buildCoachRankings, ordinal } from '../../utils/leagueRankings';
 import { buildMatchupHistory, matchupCurrentStreak, matchupLongestStreak, matchupLargestMargin } from '../../utils/headToHead';
@@ -177,7 +177,7 @@ const HeadToHead = () => {
         Promise.all([
             getAllTeamsIncludingInactive().catch(() => []),
             getAllUsers().catch(() => []),
-            getRankingsHistory('all').catch(() => []),
+            getRankedGames('all').catch(() => []),
         ])
             .then(([allTeams, allUsers, rankedGames]) => {
                 setTeams(allTeams || []);
