@@ -15,3 +15,4 @@ export { default as SeasonManagement } from './SeasonManagement';
 export { default as GameWeek } from './GameWeek';
 export { default as RankingsManagement } from './RankingsManagement';
 export { default as AdminApiDocs } from './AdminApiDocs'; 
+export { default as AdminFieldAppearance } from './AdminFieldAppearance';

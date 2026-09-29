@@ -5,7 +5,7 @@ export { GameDetails, Scoreboard } from './game';
 export { Teams, TeamDetails, ModifyTeam } from './team';
 
 export { Admin, UserManagement, GameManagement, TeamManagement, EditTeam, EditCoach, CoachTransactionLog,
-    EditGame, StatsManagement, Reports, Scheduling, SeasonManagement, GameWeek, RankingsManagement, AdminConferences, AdminConferenceDetail, AdminApiDocs } from './admin';
+    EditGame, StatsManagement, Reports, Scheduling, SeasonManagement, GameWeek, RankingsManagement, AdminConferences, AdminConferenceDetail, AdminApiDocs, AdminFieldAppearance } from './admin';
 
 export { Home, Profile, ApiDocs, Standings, Rankings, RiceSheet, Schedule, Error, NotFound } from './core';
 

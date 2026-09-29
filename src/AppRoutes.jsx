@@ -52,6 +52,7 @@ import {
     RecordsBoard,
     Graphs,
     AdminApiDocs,
+    AdminFieldAppearance,
     ScoutingReport,
     MatchupPreview,
     CoachTendencyCard,
@@ -230,6 +231,11 @@ const AppRoutes = () => {
                         <Route path="/admin/conferences/:code" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <AdminConferenceDetail />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/admin/field-appearance" element={
+                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                <AdminFieldAppearance />
                             </ProtectedRoute>
                         } />
                         <Route path="/admin/scheduling" element={

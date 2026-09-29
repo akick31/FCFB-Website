@@ -10,6 +10,7 @@ import {
     AccountTree,
     EventNote,
     Code,
+    Palette,
 } from '@mui/icons-material';
 
 export const adminNavigationItems = [
@@ -20,6 +21,7 @@ export const adminNavigationItems = [
     { label: 'Conference Management', icon: <AccountTree />, path: '/admin/conferences' },
     { label: 'Game Management', icon: <SportsFootball />, path: '/admin/game-management' },
     { label: 'Schedule Management', icon: <CalendarMonth />, path: '/admin/scheduling' },
+    { label: 'Field Appearance', icon: <Palette />, path: '/admin/field-appearance' },
     { label: 'Rankings Management', icon: <FormatListNumbered />, path: '/admin/rankings' },
     { label: 'Stats Management', icon: <Assessment />, path: '/admin/stats-management' },
     { label: 'Reports', icon: <TrendingUp />, path: '/admin/reports' },
