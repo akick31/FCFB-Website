@@ -84,6 +84,7 @@ const GameDetails = ({ isAdmin }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [viewedDrive, setViewedDrive] = useState(null);
+    const [driveSort, setDriveSort] = useState({ key: 'index', dir: 'desc' });
     const [chewConfirmOpen, setChewConfirmOpen] = useState(false);
 
     useSeo({
@@ -170,6 +171,27 @@ const GameDetails = ({ isAdmin }) => {
         || ((a.play_id ?? 0) - (b.play_id ?? 0)));
     const drives = buildDrives(orderedPlays);
     const currentDrive = drives[drives.length - 1] || null;
+    const sortedDrives = [...drives].sort((a, b) => {
+        const av = a[driveSort.key];
+        const bv = b[driveSort.key];
+        const result = typeof av === 'string' || typeof bv === 'string'
+            ? String(av ?? '').localeCompare(String(bv ?? ''))
+            : (av ?? 0) - (bv ?? 0);
+        return (driveSort.dir === 'asc' ? result : -result) || (a.index - b.index);
+    });
+    const toggleDriveSort = (key) => setDriveSort((prev) => (
+        prev.key === key ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }
+    ));
+    const driveSortHeader = (key, label, className = '') => (
+        <th
+            className={className}
+            onClick={() => toggleDriveSort(key)}
+            aria-sort={driveSort.key === key ? (driveSort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+            style={{ cursor: 'pointer', userSelect: 'none' }}
+        >
+            {label}{driveSort.key === key ? (driveSort.dir === 'asc' ? ' ▲' : ' ▼') : ''}
+        </th>
+    );
 
     const isChewing = game?.game_mode === 'CHEW';
 
@@ -367,19 +389,19 @@ const GameDetails = ({ isAdmin }) => {
                     <DataTable minWidth={760}>
                         <thead>
                             <tr>
-                                <th className="lft stick">Team</th>
-                                <th className="lft">Quarter</th>
-                                <th className="lft">Start</th>
-                                <th>Plays</th>
-                                <th>Net yards</th>
-                                <th className="lft">End</th>
-                                <th className="lft">Result</th>
-                                <th className="lft">Score after</th>
+                                {driveSortHeader('team', 'Team', 'lft stick')}
+                                {driveSortHeader('quarter', 'Quarter', 'lft')}
+                                {driveSortHeader('startReason', 'Start', 'lft')}
+                                {driveSortHeader('playCount', 'Plays')}
+                                {driveSortHeader('netYards', 'Net yards')}
+                                {driveSortHeader('endBallLocation', 'End', 'lft')}
+                                {driveSortHeader('outcome', 'Result', 'lft')}
+                                {driveSortHeader('index', 'Score after', 'lft')}
                                 <th className="lft">Chart</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {drives.map((drive) => {
+                            {sortedDrives.map((drive) => {
                                 const mark = drive.team === game.home_team ? homeMark : awayMark;
                                 return (
                                     <tr key={drive.index}>
