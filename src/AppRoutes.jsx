@@ -10,6 +10,7 @@ import {
     TeamDetails,
     Login,
     ModifyTeam,
+    TeamAppearance,
     Registration,
     Profile,
     Admin,
@@ -53,6 +54,7 @@ import {
     Graphs,
     AdminApiDocs,
     AdminFieldAppearance,
+    AdminTeamAppearance,
     ScoutingReport,
     MatchupPreview,
     CoachTendencyCard,
@@ -233,6 +235,11 @@ const AppRoutes = () => {
                                 <AdminConferenceDetail />
                             </ProtectedRoute>
                         } />
+                        <Route path="/admin/team-appearance" element={
+                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                <AdminTeamAppearance />
+                            </ProtectedRoute>
+                        } />
                         <Route path="/admin/field-appearance" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <AdminFieldAppearance />
@@ -274,6 +281,11 @@ const AppRoutes = () => {
                         <Route path="/team/:teamId" element={<TeamDetails />} />
                         <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
                         <Route path="/user-details/:coachName" element={<UserDetails />} />
+                        <Route path="/team-appearance/:teamName" element={
+                            <ProtectedRoute requireAuth={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
+                                <TeamAppearance user={user} />
+                            </ProtectedRoute>
+                        } />
                         <Route path="/modify-team/:teamId" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <ModifyTeam />

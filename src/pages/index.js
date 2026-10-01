@@ -2,10 +2,10 @@ export { Login, Registration, ResetPassword, Verify } from './auth';
 
 export { GameDetails, Scoreboard } from './game';
 
-export { Teams, TeamDetails, ModifyTeam } from './team';
+export { Teams, TeamDetails, ModifyTeam, TeamAppearance } from './team';
 
 export { Admin, UserManagement, GameManagement, TeamManagement, EditTeam, EditCoach, CoachTransactionLog,
-    EditGame, StatsManagement, Reports, Scheduling, SeasonManagement, GameWeek, RankingsManagement, AdminConferences, AdminConferenceDetail, AdminApiDocs, AdminFieldAppearance } from './admin';
+    EditGame, StatsManagement, Reports, Scheduling, SeasonManagement, GameWeek, RankingsManagement, AdminConferences, AdminConferenceDetail, AdminApiDocs, AdminFieldAppearance, AdminTeamAppearance } from './admin';
 
 export { Home, Profile, ApiDocs, Standings, Rankings, RiceSheet, Schedule, Error, NotFound } from './core';
 
