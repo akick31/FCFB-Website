@@ -325,7 +325,7 @@ const TeamDetails = () => {
                     </Box>
                     <Box
                         component={Link}
-                        to={`/team-appearance/${encodeURIComponent(team.name)}`}
+                        to={`/team-appearance/${teamId}`}
                         sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '14px', py: '8px', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'none', '&:hover': { borderColor: 'var(--brand)' } }}
                     >
                         Appearance

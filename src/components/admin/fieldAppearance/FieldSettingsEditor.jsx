@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Alert } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+import { Box, Alert, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import Panel from '../../ui/Panel';
 import Toggle from '../../ui/Toggle';
 import LogoUrlField from '../LogoUrlField';
 import { formFrom, payloadFrom } from './fieldDefinitions';
+import { renderPostseasonPreview } from '../../../api/fieldAppearanceApi';
+
+const PREVIEW_DEBOUNCE_MS = 450;
 
 const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
 const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem' };
@@ -63,17 +66,45 @@ FieldControl.propTypes = {
     onChange: PropTypes.func.isRequired,
 };
 
-const FieldSettingsEditor = ({ title, sections, source, onSave }) => {
+const FieldSettingsEditor = ({ title, sections, source, onSave, preview }) => {
     const [form, setForm] = useState(() => formFrom(sections, source));
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [saved, setSaved] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [previewLoading, setPreviewLoading] = useState(!!preview);
+    const [previewError, setPreviewError] = useState(null);
+    const previewUrlRef = useRef(null);
 
     useEffect(() => {
         setForm(formFrom(sections, source));
         setError(null);
         setSaved(false);
     }, [sections, source]);
+
+    useEffect(() => {
+        if (!preview) return undefined;
+        let cancelled = false;
+        setPreviewLoading(true);
+        const half = preview.category === 'BOWL' ? 'bowl' : 'postseason';
+        const timer = setTimeout(async () => {
+            try {
+                const url = await renderPostseasonPreview({ category: preview.category, key: preview.key, [half]: payloadFrom(sections, form) });
+                if (cancelled) { URL.revokeObjectURL(url); return; }
+                if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+                previewUrlRef.current = url;
+                setPreviewUrl(url);
+                setPreviewError(null);
+            } catch (err) {
+                if (!cancelled) setPreviewError(err.message || 'No past game to preview');
+            } finally {
+                if (!cancelled) setPreviewLoading(false);
+            }
+        }, PREVIEW_DEBOUNCE_MS);
+        return () => { cancelled = true; clearTimeout(timer); };
+    }, [preview, sections, form]);
+
+    useEffect(() => () => { if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current); }, []);
 
     const change = (key, value) => {
         setSaved(false);
@@ -95,7 +126,7 @@ const FieldSettingsEditor = ({ title, sections, source, onSave }) => {
         }
     };
 
-    return (
+    const editor = (
         <Panel header={title}>
             <Box component="form" onSubmit={submit} sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {error && <Alert severity="error">{error}</Alert>}
@@ -120,6 +151,24 @@ const FieldSettingsEditor = ({ title, sections, source, onSave }) => {
             </Box>
         </Panel>
     );
+
+    if (!preview) return editor;
+
+    return (
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 360px' }, gap: '16px', alignItems: 'start' }}>
+            {editor}
+            <Panel header="Field preview" sx={{ position: { md: 'sticky' }, top: { md: '16px' } }}>
+                <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', minHeight: 160 }}>
+                    {previewError && <Alert severity="warning" sx={{ width: '100%' }}>{previewError}</Alert>}
+                    <Box sx={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                        {previewUrl && <Box component="img" src={previewUrl} alt="Field preview" sx={{ maxWidth: '100%', borderRadius: 'var(--r-sm)', border: '1px solid var(--line)', opacity: previewLoading ? 0.5 : 1, transition: 'opacity 0.15s' }} />}
+                        {previewLoading && <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={26} /></Box>}
+                    </Box>
+                    <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem', textAlign: 'center' }}>Shows the last-played matchup for this field.</Box>
+                </Box>
+            </Panel>
+        </Box>
+    );
 };
 
 FieldSettingsEditor.propTypes = {
@@ -127,6 +176,7 @@ FieldSettingsEditor.propTypes = {
     sections: PropTypes.array.isRequired,
     source: PropTypes.object.isRequired,
     onSave: PropTypes.func.isRequired,
+    preview: PropTypes.shape({ category: PropTypes.string, key: PropTypes.string }),
 };
 
 export default FieldSettingsEditor;

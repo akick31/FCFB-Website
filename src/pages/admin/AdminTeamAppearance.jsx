@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
+import BackButton from '../../components/ui/BackButton';
 import Panel from '../../components/ui/Panel';
 import TeamMark from '../../components/ui/TeamMark';
 import TeamUniformThumb from '../../components/admin/TeamUniformThumb';
@@ -12,6 +13,7 @@ const searchSx = { width: '100%', maxWidth: 320, border: '1px solid var(--line)'
 const openSx = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', height: '32px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.74rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
 
 const AdminTeamAppearance = () => {
+    const navigate = useNavigate();
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -35,6 +37,7 @@ const AdminTeamAppearance = () => {
             title="Uniform appearance"
             controls={<Box component="input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search teams" sx={searchSx} />}
         >
+            <BackButton onBack={() => navigate(-1)} />
             {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: '40px' }}><CircularProgress /></Box>
@@ -48,7 +51,7 @@ const AdminTeamAppearance = () => {
                                     <Box sx={{ fontWeight: 700, fontSize: '0.82rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{team.name}</Box>
                                 </Box>
                                 <TeamUniformThumb team={team.name} />
-                                <Box component={Link} to={`/team-appearance/${encodeURIComponent(team.name)}`} sx={openSx}>Open editor</Box>
+                                <Box component={Link} to={`/team-appearance/${team.id}`} sx={openSx}>Open editor</Box>
                             </Box>
                         </Panel>
                     ))}

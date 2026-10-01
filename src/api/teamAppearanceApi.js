@@ -34,6 +34,38 @@ export const updateTeamField = async (team, body) => {
     }
 };
 
+export const getTeamColors = async (team) => {
+    try {
+        return (await apiClient.get('/team-appearance/colors', { params: { team } })).data;
+    } catch (error) {
+        throw failure(error, 'Failed to load team colors');
+    }
+};
+
+export const updateTeamColors = async (team, body) => {
+    try {
+        return (await apiClient.put('/team-appearance/colors', body, { params: { team } })).data;
+    } catch (error) {
+        throw failure(error, 'Failed to save team colors');
+    }
+};
+
+export const getTeamLogos = async (team) => {
+    try {
+        return (await apiClient.get('/team-appearance/logos', { params: { team } })).data;
+    } catch (error) {
+        throw failure(error, 'Failed to load team logos');
+    }
+};
+
+export const updateTeamLogos = async (team, body) => {
+    try {
+        return (await apiClient.put('/team-appearance/logos', body, { params: { team } })).data;
+    } catch (error) {
+        throw failure(error, 'Failed to save team logos');
+    }
+};
+
 export const renderAppearancePreview = async (request) => {
     try {
         const response = await apiClient.post('/appearance-preview', request, { responseType: 'blob' });

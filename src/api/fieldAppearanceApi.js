@@ -33,3 +33,12 @@ export const getConferenceChampionshipField = (conference) =>
 
 export const updateConferenceChampionshipField = (conference, body) =>
     saveData('/postseason-field/conference-championship', { conference }, body, 'Failed to save conference championship field');
+
+export const renderPostseasonPreview = async (request) => {
+    try {
+        const response = await apiClient.post('/appearance-preview/postseason', request, { responseType: 'blob' });
+        return URL.createObjectURL(response.data);
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Failed to render preview');
+    }
+};

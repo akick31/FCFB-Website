@@ -281,7 +281,7 @@ const AppRoutes = () => {
                         <Route path="/team/:teamId" element={<TeamDetails />} />
                         <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
                         <Route path="/user-details/:coachName" element={<UserDetails />} />
-                        <Route path="/team-appearance/:teamName" element={
+                        <Route path="/team-appearance/:teamId" element={
                             <ProtectedRoute requireAuth={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <TeamAppearance user={user} />
                             </ProtectedRoute>

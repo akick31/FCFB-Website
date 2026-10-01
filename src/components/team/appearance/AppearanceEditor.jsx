@@ -12,8 +12,8 @@ const btnSx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borde
 
 const PREVIEW_DEBOUNCE_MS = 450;
 
-const AppearanceEditor = ({ team, view, half, sections, source, canEdit, onSave }) => {
-    const [form, setForm] = useState(() => formFrom(sections, source));
+const AppearanceEditor = ({ team, view, half, sections, source, canEdit, onSave, teamColors, wallTextDefault }) => {
+    const [form, setForm] = useState(() => formFrom(sections, source, teamColors));
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [saved, setSaved] = useState(false);
@@ -23,10 +23,10 @@ const AppearanceEditor = ({ team, view, half, sections, source, canEdit, onSave 
     const previewUrlRef = useRef(null);
 
     useEffect(() => {
-        setForm(formFrom(sections, source));
+        setForm(formFrom(sections, source, teamColors));
         setError(null);
         setSaved(false);
-    }, [sections, source]);
+    }, [sections, source, teamColors]);
 
     useEffect(() => {
         let cancelled = false;
@@ -55,7 +55,14 @@ const AppearanceEditor = ({ team, view, half, sections, source, canEdit, onSave 
 
     const change = (key, value) => {
         setSaved(false);
-        setForm((current) => ({ ...current, [key]: value }));
+        setForm((current) => {
+            const next = { ...current, [key]: value };
+            const showsText = value === 'TEXT_ONLY' || value === 'TEXT_WITH_LOGOS';
+            if (key === 'wall_design' && showsText && !current.wall_text && wallTextDefault) {
+                next.wall_text = wallTextDefault;
+            }
+            return next;
+        });
     };
 
     const submit = async (event) => {
@@ -86,7 +93,7 @@ const AppearanceEditor = ({ team, view, half, sections, source, canEdit, onSave 
                                 {section.fields.map((definition) => (
                                     <Box key={definition.key}>
                                         <Box sx={labelSx}>{definition.label}</Box>
-                                        <AppearanceControl definition={definition} value={form[definition.key]} onChange={(value) => change(definition.key, value)} disabled={!canEdit} />
+                                        <AppearanceControl definition={definition} value={form[definition.key]} onChange={(value) => change(definition.key, value)} disabled={!canEdit} teamColors={teamColors} />
                                         {definition.help && <Box sx={helpSx}>{definition.help}</Box>}
                                     </Box>
                                 ))}
@@ -122,6 +129,8 @@ AppearanceEditor.propTypes = {
     source: PropTypes.object.isRequired,
     canEdit: PropTypes.bool.isRequired,
     onSave: PropTypes.func.isRequired,
+    teamColors: PropTypes.object,
+    wallTextDefault: PropTypes.string,
 };
 
 export default AppearanceEditor;

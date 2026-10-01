@@ -250,7 +250,7 @@ const Profile = ({ user, setUser }) => {
                                     <Box sx={lblSx}>Team appearance</Box>
                                     <Box sx={descSx}>Edit your uniform and home field</Box>
                                 </Box>
-                                <Box component={Link} to={`/team-appearance/${encodeURIComponent(user.team)}`} sx={{ ...ctrlSx, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Open editor</Box>
+                                <Box component={Link} to={`/team-appearance/${teamsMap[user.team]?.id}`} sx={{ ...ctrlSx, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Open editor</Box>
                             </Box>
                         )}
                     </Panel>

@@ -1,57 +1,87 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
+import TeamMark from '../../components/ui/TeamMark';
+import BackButton from '../../components/ui/BackButton';
 import AppearanceEditor from '../../components/team/appearance/AppearanceEditor';
+import ColorsEditor from '../../components/team/appearance/ColorsEditor';
+import LogosEditor from '../../components/team/appearance/LogosEditor';
 import { UNIFORM_SECTIONS, TEAM_FIELD_SECTIONS } from '../../components/team/appearance/appearanceSections';
-import { getTeamByName } from '../../api/teamApi';
-import { getTeamUniform, updateTeamUniform, getTeamField, updateTeamField } from '../../api/teamAppearanceApi';
+import { getTeamById } from '../../api/teamApi';
+import {
+    getTeamUniform, updateTeamUniform, getTeamField, updateTeamField, getTeamColors, updateTeamColors, getTeamLogos, updateTeamLogos,
+} from '../../api/teamAppearanceApi';
 import { checkIfUserIsAdmin } from '../../utils/utils';
 
-const TAB_OPTIONS = [{ value: 'uniform', label: 'Uniform' }, { value: 'field', label: 'Field' }];
+const BASE_TABS = [
+    { value: 'uniform', label: 'Uniform' },
+    { value: 'field', label: 'Field' },
+    { value: 'colors', label: 'Colors' },
+];
 
 const TeamAppearance = ({ user }) => {
-    const { teamName } = useParams();
+    const { teamId } = useParams();
+    const navigate = useNavigate();
     const [tab, setTab] = useState('uniform');
     const [team, setTeam] = useState(null);
     const [uniform, setUniform] = useState(null);
     const [field, setField] = useState(null);
+    const [colors, setColors] = useState(null);
+    const [logos, setLogos] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const teamName = team?.name;
 
     useEffect(() => {
         let cancelled = false;
         setLoading(true);
-        Promise.all([getTeamByName(teamName), getTeamUniform(teamName), getTeamField(teamName)])
-            .then(([loadedTeam, loadedUniform, loadedField]) => {
-                if (cancelled) return;
+        getTeamById(teamId)
+            .then((loadedTeam) => {
+                if (cancelled) return null;
                 setTeam(loadedTeam);
+                const name = loadedTeam?.name;
+                if (!name) throw new Error('Team not found');
+                return Promise.all([getTeamUniform(name), getTeamField(name), getTeamColors(name), getTeamLogos(name)]);
+            })
+            .then((loaded) => {
+                if (cancelled || !loaded) return;
+                const [loadedUniform, loadedField, loadedColors, loadedLogos] = loaded;
                 setUniform(loadedUniform);
                 setField(loadedField);
+                setColors(loadedColors);
+                setLogos(loadedLogos);
             })
             .catch((err) => { if (!cancelled) setError(err.message || 'Failed to load team appearance'); })
             .finally(() => { if (!cancelled) setLoading(false); });
         return () => { cancelled = true; };
-    }, [teamName]);
+    }, [teamId]);
 
-    const canEdit = useMemo(() => checkIfUserIsAdmin() || (!!user?.team && user.team === teamName), [user, teamName]);
+    const isAdmin = useMemo(() => checkIfUserIsAdmin(), []);
+    const tabs = useMemo(() => (isAdmin ? [...BASE_TABS, { value: 'logos', label: 'Logos' }] : BASE_TABS), [isAdmin]);
+    const canEdit = useMemo(() => isAdmin || (!!user?.team && !!teamName && user.team === teamName), [isAdmin, user, teamName]);
 
     if (loading) {
         return <PageWrap><Box sx={{ display: 'flex', justifyContent: 'center', p: '40px' }}><CircularProgress /></Box></PageWrap>;
     }
-    if (error) {
-        return <PageWrap><Alert severity="error">{error}</Alert></PageWrap>;
+    if (error || !teamName) {
+        return <PageWrap><BackButton onBack={() => navigate(-1)} /><Alert severity="error">{error || 'Team not found.'}</Alert></PageWrap>;
     }
 
     return (
         <PageWrap>
-            <PageHeading eyebrow={team?.name || teamName} title="Team appearance" />
+            <BackButton onBack={() => navigate(-1)} />
+            <PageHeading
+                eyebrow={<Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><TeamMark team={team} size={20} />{teamName}</Box>}
+                title="Team appearance"
+            />
             {!canEdit && <Alert severity="info" sx={{ mb: '16px' }}>You can only edit your own team&apos;s appearance. This is a read-only preview.</Alert>}
             <Box sx={{ mb: '16px' }}>
-                <SegTabs value={tab} onChange={setTab} options={TAB_OPTIONS} ariaLabel="Appearance section" />
+                <SegTabs value={tab} onChange={setTab} options={tabs} ariaLabel="Appearance section" />
             </Box>
             {tab === 'uniform' && uniform && (
                 <AppearanceEditor
@@ -60,6 +90,7 @@ const TeamAppearance = ({ user }) => {
                     half="uniform"
                     sections={UNIFORM_SECTIONS}
                     source={uniform}
+                    teamColors={colors}
                     canEdit={canEdit}
                     onSave={async (payload) => { setUniform(await updateTeamUniform(teamName, payload)); }}
                 />
@@ -71,8 +102,27 @@ const TeamAppearance = ({ user }) => {
                     half="field"
                     sections={TEAM_FIELD_SECTIONS}
                     source={field}
+                    teamColors={colors}
+                    wallTextDefault={teamName}
                     canEdit={canEdit}
                     onSave={async (payload) => { setField(await updateTeamField(teamName, payload)); }}
+                />
+            )}
+            {tab === 'colors' && colors && (
+                <ColorsEditor
+                    team={teamName}
+                    source={colors}
+                    isAdmin={isAdmin}
+                    canEditTertiary={canEdit}
+                    onSave={async (payload) => { setColors(await updateTeamColors(teamName, payload)); }}
+                />
+            )}
+            {tab === 'logos' && isAdmin && logos && (
+                <LogosEditor
+                    team={teamName}
+                    source={logos}
+                    canEdit={isAdmin}
+                    onSave={async (payload) => { setLogos(await updateTeamLogos(teamName, payload)); }}
                 />
             )}
         </PageWrap>

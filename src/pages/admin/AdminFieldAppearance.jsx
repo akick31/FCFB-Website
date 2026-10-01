@@ -1,9 +1,12 @@
+import { useNavigate } from 'react-router-dom';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import AdminLayout from '../../components/layout/AdminLayout';
+import BackButton from '../../components/ui/BackButton';
 import Panel from '../../components/ui/Panel';
 import SegTabs from '../../components/ui/SegTabs';
 import FieldSettingsEditor from '../../components/admin/fieldAppearance/FieldSettingsEditor';
+import PostseasonFieldThumb from '../../components/admin/fieldAppearance/PostseasonFieldThumb';
 import { BOWL_SECTIONS, POSTSEASON_SECTIONS } from '../../components/admin/fieldAppearance/fieldDefinitions';
 import { getConferences } from '../../api/conferenceApi';
 import {
@@ -50,6 +53,8 @@ const CATEGORIES = {
     },
 };
 
+const PREVIEW_CATEGORY = { bowl: 'BOWL', playoff: 'PLAYOFF', conference: 'CCG' };
+
 const TAB_OPTIONS = Object.entries(CATEGORIES).map(([value, category]) => ({ value, label: category.label }));
 
 const itemButtonSx = (active) => ({
@@ -71,6 +76,7 @@ const itemButtonSx = (active) => ({
 });
 
 const AdminFieldAppearance = () => {
+    const navigate = useNavigate();
     const [category, setCategory] = useState('bowl');
     const [items, setItems] = useState([]);
     const [selectedId, setSelectedId] = useState(null);
@@ -131,6 +137,7 @@ const AdminFieldAppearance = () => {
 
     return (
         <AdminLayout title="Field appearance" controls={<SegTabs value={category} onChange={changeCategory} options={TAB_OPTIONS} ariaLabel="Field category" />}>
+            <BackButton onBack={() => navigate(-1)} />
             {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: '40px' }}><CircularProgress /></Box>
@@ -145,7 +152,22 @@ const AdminFieldAppearance = () => {
                         {items.length === 0 && <Box sx={{ p: '16px', color: 'var(--text-dim)', fontSize: '0.8rem' }}>No {config.noun}s found.</Box>}
                     </Panel>
                     {selected && source && (
-                        <FieldSettingsEditor title={selected.label} sections={config.sections} source={source} onSave={save} />
+                        <FieldSettingsEditor
+                            title={selected.label}
+                            sections={config.sections}
+                            source={source}
+                            onSave={save}
+                            preview={{ category: PREVIEW_CATEGORY[category], key: selectedId }}
+                        />
+                    )}
+                    {category === 'playoff' && (
+                        <Panel header="All rounds (saved) — for reference" sx={{ mt: '16px' }}>
+                            <Box sx={{ p: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
+                                {ROUND_ORDER.map((round) => (
+                                    <PostseasonFieldThumb key={round} category="PLAYOFF" keyName={round} label={round} />
+                                ))}
+                            </Box>
+                        </Panel>
                     )}
                 </Box>
             )}
