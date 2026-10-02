@@ -15,7 +15,6 @@ import {
     Alert,
     useTheme,
 } from "@mui/material";
-import { ChromePicker } from 'react-color';
 import { updateTeam } from '../../api/teamApi';
 import {Header} from "../../styles/GamesStyles";
 
@@ -35,13 +34,6 @@ const ModifyTeamForm = ({ team }) => {
         setFormData((prev) => ({
             ...prev,
             [name]: value,
-        }));
-    };
-
-    const handleColorChange = (color, colorType) => {
-        setFormData((prev) => ({
-            ...prev,
-            [colorType]: color.hex,
         }));
     };
 
@@ -94,26 +86,6 @@ const ModifyTeamForm = ({ team }) => {
                             fullWidth
                             required
                         />
-
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            <Typography variant="body1" align="left">Primary Color</Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                <ChromePicker
-                                    color={formData.primary_color}
-                                    onChangeComplete={(color) => handleColorChange(color, "primary_color")}
-                                />
-                            </Box>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            <Typography variant="body1" align="left">Secondary Color</Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                <ChromePicker
-                                    color={formData.secondary_color}
-                                    onChangeComplete={(color) => handleColorChange(color, "secondary_color")}
-                                />
-                            </Box>
-                        </Box>
 
                         <FormControl fullWidth margin="normal">
                             <InputLabel id="offensive-playbook-label">Offensive Playbook</InputLabel>

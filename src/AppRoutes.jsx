@@ -5,6 +5,7 @@ import Footer from './components/layout/Footer';
 import {
     Home,
     GameDetails,
+    GameAppearance,
     Scoreboard,
     Teams,
     TeamDetails,
@@ -171,7 +172,7 @@ const AppRoutes = () => {
                         <Route path="/register/success" element={<RegistrationSuccess />} />
                         <Route path="/profile" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={false} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <Profile user={user} setUser={setUser} />
+                                <Profile user={user} setUser={setUser} setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
                             </ProtectedRoute>
                         } />
                         <Route path="/admin" element={
@@ -278,6 +279,7 @@ const AppRoutes = () => {
                         <Route path="/tools/head-to-head" element={<HeadToHead />} />
                         <Route path="/verify" element={<Verify />} />
                         <Route path="/game-details/:gameId" element={<GameDetails isAdmin={isAdmin} />} />
+                        <Route path="/game-details/:gameId/appearance" element={<GameAppearance />} />
                         <Route path="/team/:teamId" element={<TeamDetails />} />
                         <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
                         <Route path="/user-details/:coachName" element={<UserDetails />} />

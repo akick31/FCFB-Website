@@ -42,3 +42,9 @@ export const renderPostseasonPreview = async (request) => {
         throw new Error(error.response?.data?.error || 'Failed to render preview');
     }
 };
+
+export const updateBowlMeta = (bowl, body) => saveData('/bowl-field/meta', { bowl }, body, 'Failed to update bowl');
+
+export const getGameField = (gameId) => fetchData('/game-field', { gameId }, 'Failed to load game field');
+
+export const updateGameField = (gameId, body) => saveData('/game-field', { gameId }, body, 'Failed to save game field');

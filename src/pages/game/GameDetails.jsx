@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress, Alert, Button, Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
-import { ArrowBack, Assessment, RestaurantMenu, Stop, Close } from '@mui/icons-material';
+import { ArrowBack, Assessment, RestaurantMenu, Stop, Close, Palette } from '@mui/icons-material';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { getGameById, chewGameByGameId, unchewGameByGameId, endGameByGameId } from '../../api/gameApi';
@@ -296,6 +296,9 @@ const GameDetails = ({ isAdmin }) => {
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                         <Button variant="outlined" size="small" startIcon={<Assessment />} disabled={adminBusy === 'stats'} onClick={() => runAdmin('stats', () => generateGameStats(game.game_id))}>
                             Generate game stats
+                        </Button>
+                        <Button variant="outlined" size="small" startIcon={<Palette />} onClick={() => navigate(`/game-details/${game.game_id}/appearance`)}>
+                            Edit appearance
                         </Button>
                         {!isFinal && (
                             <Button variant="outlined" size="small" color="warning" startIcon={<RestaurantMenu />} disabled={adminBusy === 'chew' || adminBusy === 'unchew'} onClick={() => setChewConfirmOpen(true)}>

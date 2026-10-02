@@ -52,7 +52,7 @@ const TeamUniformThumb = ({ team, view = 'UNIFORM', height = 120 }) => {
 
 TeamUniformThumb.propTypes = {
     team: PropTypes.string.isRequired,
-    view: PropTypes.oneOf(['UNIFORM', 'HELMET', 'FIELD']),
+    view: PropTypes.oneOf(['UNIFORM', 'HELMET', 'FIELD', 'AWAY_UNIFORM', 'SECONDARY_HELMET']),
     height: PropTypes.number,
 };
 

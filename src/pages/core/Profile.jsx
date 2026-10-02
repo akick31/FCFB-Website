@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { updateUsername, updateEmail, updatePassword, updateUser, getUserById, getUsernameHistory, addHistoricalUsername } from '../../api/userApi';
 import { logout } from '../../api/authApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
@@ -186,7 +186,8 @@ const PastUsernamesRow = ({ userId }) => {
 
 PastUsernamesRow.propTypes = { userId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]) };
 
-const Profile = ({ user, setUser }) => {
+const Profile = ({ user, setUser, setIsAuthenticated, setIsAdmin }) => {
+    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
     const { mode, setMode } = useColorMode();
@@ -220,8 +221,8 @@ const Profile = ({ user, setUser }) => {
     const patch = (updates) => setUser?.((prev) => ({ ...prev, ...updates }));
 
     const handleLogout = async () => {
-        await logout(() => {}, setUser, () => {}).catch(() => {});
-        window.location.assign('/');
+        await logout(setIsAuthenticated || (() => {}), setUser, setIsAdmin || (() => {})).catch(() => {});
+        navigate('/');
     };
 
     return (
@@ -295,6 +296,6 @@ const Profile = ({ user, setUser }) => {
     );
 };
 
-Profile.propTypes = { user: PropTypes.object, setUser: PropTypes.func };
+Profile.propTypes = { user: PropTypes.object, setUser: PropTypes.func, setIsAuthenticated: PropTypes.func, setIsAdmin: PropTypes.func };
 
 export default Profile;

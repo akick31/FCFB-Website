@@ -14,8 +14,9 @@ const TEAM_COLOR_PICKS = [
     { label: 'Secondary', key: 'secondary_color' },
     { label: 'Tertiary', key: 'tertiary_color' },
 ];
+const WHITE = '#FFFFFF';
 
-const ColorControl = ({ value, onChange, clearable, disabled, teamColors }) => (
+const ColorControl = ({ value, onChange, clearable, disabled, teamColors, resetColor }) => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Box
@@ -45,6 +46,14 @@ const ColorControl = ({ value, onChange, clearable, disabled, teamColors }) => (
                         <Box sx={swatchSx(teamColors[pick.key])} />{pick.label}
                     </Box>
                 ))}
+                <Box component="button" type="button" disabled={disabled} onClick={() => onChange(WHITE)} sx={{ ...pickSx, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <Box sx={swatchSx(WHITE)} />White
+                </Box>
+                {resetColor && (
+                    <Box component="button" type="button" disabled={disabled} onClick={() => onChange(resetColor.toUpperCase())} sx={{ ...pickSx, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <Box sx={swatchSx(resetColor)} />Default
+                    </Box>
+                )}
             </Box>
         )}
     </Box>
@@ -56,6 +65,7 @@ ColorControl.propTypes = {
     clearable: PropTypes.bool,
     disabled: PropTypes.bool,
     teamColors: PropTypes.object,
+    resetColor: PropTypes.string,
 };
 
 const ScaleControl = ({ definition, value, onChange, disabled }) => (
@@ -71,7 +81,7 @@ const ScaleControl = ({ definition, value, onChange, disabled }) => (
             onChange={(event) => onChange(Number(event.target.value))}
             sx={{ flex: 1, accentColor: 'var(--brand)' }}
         />
-        <Box sx={{ width: 44, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{Number(value).toFixed(2)}x</Box>
+        <Box sx={{ width: 48, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{Number(value).toFixed(definition.decimals ?? 2)}{definition.unit ?? 'x'}</Box>
     </Box>
 );
 
@@ -85,12 +95,13 @@ ScaleControl.propTypes = {
 const AppearanceControl = ({ definition, value, onChange, disabled, teamColors }) => {
     switch (definition.type) {
         case 'color':
-            return <ColorControl value={value} onChange={onChange} disabled={disabled} teamColors={definition.defaultColor ? teamColors : null} />;
+            return <ColorControl value={value} onChange={onChange} disabled={disabled} teamColors={teamColors} resetColor={definition.resetColor} />;
         case 'optionalColor':
-            return <ColorControl value={value} onChange={onChange} clearable disabled={disabled} teamColors={definition.defaultColor ? teamColors : null} />;
+            return <ColorControl value={value} onChange={onChange} clearable disabled={disabled} teamColors={teamColors} resetColor={definition.resetColor} />;
         case 'scale':
             return <ScaleControl definition={definition} value={value} onChange={onChange} disabled={disabled} />;
         case 'select':
+        case 'graphic':
             return (
                 <Box component="select" disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} sx={inputSx}>
                     {definition.options.map((option) => (

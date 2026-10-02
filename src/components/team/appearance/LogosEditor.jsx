@@ -50,7 +50,7 @@ const PreviewPanel = ({ title, state, bg }) => (
 
 PreviewPanel.propTypes = { title: PropTypes.string.isRequired, state: PropTypes.object.isRequired, bg: PropTypes.string };
 
-const LogosEditor = ({ team, source, canEdit, onSave }) => {
+const LogosEditor = ({ team, source, canEdit, onSave, onDirtyChange }) => {
     const [form, setForm] = useState({ logo: source.logo || '', logoDark: source.logo_dark || '', secondaryLogo: source.secondary_logo || '' });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
@@ -58,13 +58,14 @@ const LogosEditor = ({ team, source, canEdit, onSave }) => {
 
     useEffect(() => {
         setForm({ logo: source.logo || '', logoDark: source.logo_dark || '', secondaryLogo: source.secondary_logo || '' });
+        onDirtyChange?.(false);
     }, [source]);
 
-    const draft = { logo: form.logo, logoDark: form.logoDark, secondaryLogo: form.secondaryLogo };
+    const draft = { logo: form.logo, logo_dark: form.logoDark, secondary_logo: form.secondaryLogo };
     const uniform = usePreview(team, 'UNIFORM', draft);
     const fieldPreview = usePreview(team, 'FIELD', draft);
 
-    const change = (key, value) => { setSaved(false); setForm((current) => ({ ...current, [key]: value })); };
+    const change = (key, value) => { setSaved(false); onDirtyChange?.(true); setForm((current) => ({ ...current, [key]: value })); };
 
     const submit = async (event) => {
         event.preventDefault();
@@ -72,8 +73,9 @@ const LogosEditor = ({ team, source, canEdit, onSave }) => {
         setError(null);
         setSaved(false);
         try {
-            await onSave({ logo: form.logo || null, logoDark: form.logoDark || null, secondaryLogo: form.secondaryLogo || null });
+            await onSave({ logo: form.logo || null, logo_dark: form.logoDark || null, secondary_logo: form.secondaryLogo || null });
             setSaved(true);
+            onDirtyChange?.(false);
         } catch (err) {
             setError(err.message || 'Failed to save');
         } finally {
@@ -113,6 +115,7 @@ LogosEditor.propTypes = {
     source: PropTypes.object.isRequired,
     canEdit: PropTypes.bool.isRequired,
     onSave: PropTypes.func.isRequired,
+    onDirtyChange: PropTypes.func,
 };
 
 export default LogosEditor;

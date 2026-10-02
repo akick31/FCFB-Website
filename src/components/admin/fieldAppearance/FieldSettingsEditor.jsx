@@ -51,6 +51,32 @@ const FieldControl = ({ definition, value, onChange }) => {
                     ))}
                 </Box>
             );
+        case 'colorToken': {
+            const tokens = ['HOME', 'AWAY', 'WHITE'];
+            const mode = value === '' ? 'NONE' : (tokens.includes(value) ? value : 'CUSTOM');
+            return (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <Box
+                        component="select"
+                        value={mode}
+                        onChange={(event) => {
+                            const next = event.target.value;
+                            if (next === 'CUSTOM') onChange('#000000');
+                            else if (next === 'NONE') onChange('');
+                            else onChange(next);
+                        }}
+                        sx={inputSx}
+                    >
+                        <option value="NONE">Not set</option>
+                        <option value="HOME">Home team color</option>
+                        <option value="AWAY">Away team color</option>
+                        <option value="WHITE">White</option>
+                        <option value="CUSTOM">Custom...</option>
+                    </Box>
+                    {mode === 'CUSTOM' && <ColorControl value={value} onChange={onChange} clearable />}
+                </Box>
+            );
+        }
         case 'toggle':
             return <Toggle on={value} onClick={() => onChange(!value)} />;
         case 'logo':
@@ -66,7 +92,7 @@ FieldControl.propTypes = {
     onChange: PropTypes.func.isRequired,
 };
 
-const FieldSettingsEditor = ({ title, sections, source, onSave, preview }) => {
+const FieldSettingsEditor = ({ title, sections, source, onSave, preview, aside }) => {
     const [form, setForm] = useState(() => formFrom(sections, source));
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
@@ -131,6 +157,9 @@ const FieldSettingsEditor = ({ title, sections, source, onSave, preview }) => {
             <Box component="form" onSubmit={submit} sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {error && <Alert severity="error">{error}</Alert>}
                 {saved && <Alert severity="success">Saved</Alert>}
+                <Box component="button" type="submit" disabled={saving} sx={{ ...btnSx, alignSelf: 'flex-start' }}>
+                    {saving ? 'Saving...' : 'Save'}
+                </Box>
                 {sections.map((section) => (
                     <Box key={section.title}>
                         <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.85rem', mb: '10px' }}>{section.title}</Box>
@@ -145,9 +174,6 @@ const FieldSettingsEditor = ({ title, sections, source, onSave, preview }) => {
                         </Box>
                     </Box>
                 ))}
-                <Box component="button" type="submit" disabled={saving} sx={{ ...btnSx, justifySelf: 'start', alignSelf: 'flex-start' }}>
-                    {saving ? 'Saving...' : 'Save'}
-                </Box>
             </Box>
         </Panel>
     );
@@ -157,16 +183,19 @@ const FieldSettingsEditor = ({ title, sections, source, onSave, preview }) => {
     return (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 360px' }, gap: '16px', alignItems: 'start' }}>
             {editor}
-            <Panel header="Field preview" sx={{ position: { md: 'sticky' }, top: { md: '16px' } }}>
-                <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', minHeight: 160 }}>
-                    {previewError && <Alert severity="warning" sx={{ width: '100%' }}>{previewError}</Alert>}
-                    <Box sx={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-                        {previewUrl && <Box component="img" src={previewUrl} alt="Field preview" sx={{ maxWidth: '100%', borderRadius: 'var(--r-sm)', border: '1px solid var(--line)', opacity: previewLoading ? 0.5 : 1, transition: 'opacity 0.15s' }} />}
-                        {previewLoading && <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={26} /></Box>}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px', position: { md: 'sticky' }, top: { md: '16px' } }}>
+                <Panel header="Field preview">
+                    <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', minHeight: 160 }}>
+                        {previewError && <Alert severity="warning" sx={{ width: '100%' }}>{previewError}</Alert>}
+                        <Box sx={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                            {previewUrl && <Box component="img" src={previewUrl} alt="Field preview" sx={{ maxWidth: '100%', borderRadius: 'var(--r-sm)', border: '1px solid var(--line)', opacity: previewLoading ? 0.5 : 1, transition: 'opacity 0.15s' }} />}
+                            {previewLoading && <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={26} /></Box>}
+                        </Box>
+                        <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem', textAlign: 'center' }}>Shows the last-played matchup for this field.</Box>
                     </Box>
-                    <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem', textAlign: 'center' }}>Shows the last-played matchup for this field.</Box>
-                </Box>
-            </Panel>
+                </Panel>
+                {aside}
+            </Box>
         </Box>
     );
 };
@@ -177,6 +206,7 @@ FieldSettingsEditor.propTypes = {
     source: PropTypes.object.isRequired,
     onSave: PropTypes.func.isRequired,
     preview: PropTypes.shape({ category: PropTypes.string, key: PropTypes.string }),
+    aside: PropTypes.node,
 };
 
 export default FieldSettingsEditor;

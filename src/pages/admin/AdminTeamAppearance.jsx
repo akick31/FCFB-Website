@@ -34,7 +34,7 @@ const AdminTeamAppearance = () => {
 
     return (
         <AdminLayout
-            title="Uniform appearance"
+            title="Team appearance"
             controls={<Box component="input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search teams" sx={searchSx} />}
         >
             <BackButton onBack={() => navigate(-1)} />
@@ -50,7 +50,10 @@ const AdminTeamAppearance = () => {
                                     <TeamMark team={team} size={26} />
                                     <Box sx={{ fontWeight: 700, fontSize: '0.82rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{team.name}</Box>
                                 </Box>
-                                <TeamUniformThumb team={team.name} />
+                                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                    <TeamUniformThumb team={team.name} view="HELMET" height={96} />
+                                    <TeamUniformThumb team={team.name} view="SECONDARY_HELMET" height={96} />
+                                </Box>
                                 <Box component={Link} to={`/team-appearance/${team.id}`} sx={openSx}>Open editor</Box>
                             </Box>
                         </Panel>

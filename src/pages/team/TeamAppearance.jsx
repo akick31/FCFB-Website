@@ -23,10 +23,27 @@ const BASE_TABS = [
     { value: 'colors', label: 'Colors' },
 ];
 
+const UNSAVED_MESSAGE = 'You have unsaved appearance changes. Leave without saving?';
+
 const TeamAppearance = ({ user }) => {
     const { teamId } = useParams();
     const navigate = useNavigate();
     const [tab, setTab] = useState('uniform');
+    const [dirtyTabs, setDirtyTabs] = useState({});
+    const hasUnsaved = Object.values(dirtyTabs).some(Boolean);
+    const setTabDirty = (key) => (isDirty) => setDirtyTabs((current) => (current[key] === isDirty ? current : { ...current, [key]: isDirty }));
+
+    useEffect(() => {
+        if (!hasUnsaved) return undefined;
+        const handler = (event) => { event.preventDefault(); event.returnValue = UNSAVED_MESSAGE; return UNSAVED_MESSAGE; };
+        window.addEventListener('beforeunload', handler);
+        return () => window.removeEventListener('beforeunload', handler);
+    }, [hasUnsaved]);
+
+    const leave = () => {
+        // eslint-disable-next-line no-alert
+        if (!hasUnsaved || window.confirm(UNSAVED_MESSAGE)) navigate(-1);
+    };
     const [team, setTeam] = useState(null);
     const [uniform, setUniform] = useState(null);
     const [field, setField] = useState(null);
@@ -72,9 +89,11 @@ const TeamAppearance = ({ user }) => {
         return <PageWrap><BackButton onBack={() => navigate(-1)} /><Alert severity="error">{error || 'Team not found.'}</Alert></PageWrap>;
     }
 
+    const panel = (key) => ({ sx: { display: tab === key ? 'block' : 'none' } });
+
     return (
         <PageWrap>
-            <BackButton onBack={() => navigate(-1)} />
+            <BackButton onBack={leave} />
             <PageHeading
                 eyebrow={<Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><TeamMark team={team} size={20} />{teamName}</Box>}
                 title="Team appearance"
@@ -83,47 +102,61 @@ const TeamAppearance = ({ user }) => {
             <Box sx={{ mb: '16px' }}>
                 <SegTabs value={tab} onChange={setTab} options={tabs} ariaLabel="Appearance section" />
             </Box>
-            {tab === 'uniform' && uniform && (
-                <AppearanceEditor
-                    team={teamName}
-                    view="UNIFORM"
-                    half="uniform"
-                    sections={UNIFORM_SECTIONS}
-                    source={uniform}
-                    teamColors={colors}
-                    canEdit={canEdit}
-                    onSave={async (payload) => { setUniform(await updateTeamUniform(teamName, payload)); }}
-                />
+            {uniform && (
+                <Box {...panel('uniform')}>
+                    <AppearanceEditor
+                        team={teamName}
+                        view="UNIFORM"
+                        half="uniform"
+                        sections={UNIFORM_SECTIONS}
+                        source={uniform}
+                        teamColors={colors}
+                        canEdit={canEdit}
+                        previewLabel="Home uniform"
+                        extraPreviews={[{ view: 'AWAY_UNIFORM', label: 'Away uniform' }, { view: 'SECONDARY_HELMET', label: 'Secondary helmet' }]}
+                        onDirtyChange={setTabDirty('uniform')}
+                        onSave={async (payload) => { setUniform(await updateTeamUniform(teamName, payload)); }}
+                    />
+                </Box>
             )}
-            {tab === 'field' && field && (
-                <AppearanceEditor
-                    team={teamName}
-                    view="FIELD"
-                    half="field"
-                    sections={TEAM_FIELD_SECTIONS}
-                    source={field}
-                    teamColors={colors}
-                    wallTextDefault={teamName}
-                    canEdit={canEdit}
-                    onSave={async (payload) => { setField(await updateTeamField(teamName, payload)); }}
-                />
+            {field && (
+                <Box {...panel('field')}>
+                    <AppearanceEditor
+                        team={teamName}
+                        view="FIELD"
+                        half="field"
+                        sections={TEAM_FIELD_SECTIONS}
+                        source={field}
+                        teamColors={colors}
+                        wallTextDefault={teamName}
+                        canEdit={canEdit}
+                        onDirtyChange={setTabDirty('field')}
+                        onSave={async (payload) => { setField(await updateTeamField(teamName, payload)); }}
+                    />
+                </Box>
             )}
-            {tab === 'colors' && colors && (
-                <ColorsEditor
-                    team={teamName}
-                    source={colors}
-                    isAdmin={isAdmin}
-                    canEditTertiary={canEdit}
-                    onSave={async (payload) => { setColors(await updateTeamColors(teamName, payload)); }}
-                />
+            {colors && (
+                <Box {...panel('colors')}>
+                    <ColorsEditor
+                        team={teamName}
+                        source={colors}
+                        isAdmin={isAdmin}
+                        canEditTertiary={canEdit}
+                        onDirtyChange={setTabDirty('colors')}
+                        onSave={async (payload) => { setColors(await updateTeamColors(teamName, payload)); }}
+                    />
+                </Box>
             )}
-            {tab === 'logos' && isAdmin && logos && (
-                <LogosEditor
-                    team={teamName}
-                    source={logos}
-                    canEdit={isAdmin}
-                    onSave={async (payload) => { setLogos(await updateTeamLogos(teamName, payload)); }}
-                />
+            {isAdmin && logos && (
+                <Box {...panel('logos')}>
+                    <LogosEditor
+                        team={teamName}
+                        source={logos}
+                        canEdit={isAdmin}
+                        onDirtyChange={setTabDirty('logos')}
+                        onSave={async (payload) => { setLogos(await updateTeamLogos(teamName, payload)); }}
+                    />
+                </Box>
             )}
         </PageWrap>
     );

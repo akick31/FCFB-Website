@@ -1,6 +1,6 @@
 export { Login, Registration, ResetPassword, Verify } from './auth';
 
-export { GameDetails, Scoreboard } from './game';
+export { GameDetails, GameAppearance, Scoreboard } from './game';
 
 export { Teams, TeamDetails, ModifyTeam, TeamAppearance } from './team';
 

@@ -66,7 +66,7 @@ const PreviewPanel = ({ title, state }) => (
 
 PreviewPanel.propTypes = { title: PropTypes.string.isRequired, state: PropTypes.object.isRequired };
 
-const ColorsEditor = ({ team, source, isAdmin, canEditTertiary, onSave }) => {
+const ColorsEditor = ({ team, source, isAdmin, canEditTertiary, onSave, onDirtyChange }) => {
     const [form, setForm] = useState({
         primary_color: source.primary_color || '#000000',
         secondary_color: source.secondary_color || '#000000',
@@ -82,12 +82,13 @@ const ColorsEditor = ({ team, source, isAdmin, canEditTertiary, onSave }) => {
             secondary_color: source.secondary_color || '#000000',
             tertiary_color: source.tertiary_color || '#000000',
         });
+        onDirtyChange?.(false);
     }, [source]);
 
     const scorebug = usePreview(team, 'SCOREBUG', form);
     const uniform = usePreview(team, 'UNIFORM', form);
 
-    const change = (key, value) => { setSaved(false); setForm((current) => ({ ...current, [key]: value })); };
+    const change = (key, value) => { setSaved(false); onDirtyChange?.(true); setForm((current) => ({ ...current, [key]: value })); };
 
     const submit = async (event) => {
         event.preventDefault();
@@ -96,10 +97,11 @@ const ColorsEditor = ({ team, source, isAdmin, canEditTertiary, onSave }) => {
         setSaved(false);
         try {
             const payload = {};
-            if (isAdmin) { payload.primaryColor = form.primary_color; payload.secondaryColor = form.secondary_color; }
-            if (canEditTertiary) payload.tertiaryColor = form.tertiary_color;
+            if (isAdmin) { payload.primary_color = form.primary_color; payload.secondary_color = form.secondary_color; }
+            if (canEditTertiary) payload.tertiary_color = form.tertiary_color;
             await onSave(payload);
             setSaved(true);
+            onDirtyChange?.(false);
         } catch (err) {
             setError(err.message || 'Failed to save');
         } finally {
@@ -138,6 +140,7 @@ ColorsEditor.propTypes = {
     isAdmin: PropTypes.bool.isRequired,
     canEditTertiary: PropTypes.bool.isRequired,
     onSave: PropTypes.func.isRequired,
+    onDirtyChange: PropTypes.func,
 };
 
 export default ColorsEditor;
