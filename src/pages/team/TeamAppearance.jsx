@@ -112,8 +112,10 @@ const TeamAppearance = ({ user }) => {
                         source={uniform}
                         teamColors={colors}
                         canEdit={canEdit}
-                        previewLabel="Home uniform"
-                        extraPreviews={[{ view: 'AWAY_UNIFORM', label: 'Away uniform' }, { view: 'SECONDARY_HELMET', label: 'Secondary helmet' }]}
+                        previewGroups={[
+                            { title: 'Primary Uniform Preview', views: [{ view: 'HELMET', label: 'Primary helmet' }, { view: 'UNIFORM', label: 'Home jersey' }, { view: 'AWAY_UNIFORM', label: 'Away jersey' }] },
+                            { title: 'Secondary Helmet', views: [{ view: 'SECONDARY_HELMET' }], note: 'Only worn by the away team when both shells clash.' },
+                        ]}
                         onDirtyChange={setTabDirty('uniform')}
                         onSave={async (payload) => { setUniform(await updateTeamUniform(teamName, payload)); }}
                     />

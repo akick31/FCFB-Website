@@ -34,6 +34,14 @@ export const updateTeamField = async (team, body) => {
     }
 };
 
+export const getConferenceLogoColors = async (team) => {
+    try {
+        return (await apiClient.get('/team-appearance/conference-logo-colors', { params: { team } })).data;
+    } catch (error) {
+        throw failure(error, 'Failed to load conference logo colors');
+    }
+};
+
 export const getTeamColors = async (team) => {
     try {
         return (await apiClient.get('/team-appearance/colors', { params: { team } })).data;

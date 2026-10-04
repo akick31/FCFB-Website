@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import Toggle from '../../ui/Toggle';
 import LogoUrlField from '../../admin/LogoUrlField';
+import ConferenceColorsControl from './ConferenceColorsControl';
 
 const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem' };
 const clearSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
@@ -92,7 +93,7 @@ ScaleControl.propTypes = {
     disabled: PropTypes.bool,
 };
 
-const AppearanceControl = ({ definition, value, onChange, disabled, teamColors }) => {
+const AppearanceControl = ({ definition, value, onChange, disabled, teamColors, team }) => {
     switch (definition.type) {
         case 'color':
             return <ColorControl value={value} onChange={onChange} disabled={disabled} teamColors={teamColors} resetColor={definition.resetColor} />;
@@ -102,6 +103,7 @@ const AppearanceControl = ({ definition, value, onChange, disabled, teamColors }
             return <ScaleControl definition={definition} value={value} onChange={onChange} disabled={disabled} />;
         case 'select':
         case 'graphic':
+        case 'stripe':
             return (
                 <Box component="select" disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} sx={inputSx}>
                     {definition.options.map((option) => (
@@ -113,6 +115,8 @@ const AppearanceControl = ({ definition, value, onChange, disabled, teamColors }
             return <Toggle on={value} onClick={() => onChange(!value)} disabled={disabled} />;
         case 'logo':
             return <LogoUrlField label="" value={value} onChange={(event) => onChange(event.target.value)} />;
+        case 'conferenceColors':
+            return <ConferenceColorsControl team={team} value={value} onChange={onChange} disabled={disabled} />;
         default:
             return <Box component="input" disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} placeholder={definition.placeholder} sx={inputSx} />;
     }
@@ -124,6 +128,7 @@ AppearanceControl.propTypes = {
     onChange: PropTypes.func.isRequired,
     disabled: PropTypes.bool,
     teamColors: PropTypes.object,
+    team: PropTypes.string,
 };
 
 export default AppearanceControl;

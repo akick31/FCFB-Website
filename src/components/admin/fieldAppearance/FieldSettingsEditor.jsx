@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import Panel from '../../ui/Panel';
 import Toggle from '../../ui/Toggle';
 import LogoUrlField from '../LogoUrlField';
-import { formFrom, payloadFrom } from './fieldDefinitions';
+import { formFrom, payloadFrom, isVisible } from './fieldDefinitions';
 import { renderPostseasonPreview } from '../../../api/fieldAppearanceApi';
 
 const PREVIEW_DEBOUNCE_MS = 450;
@@ -44,6 +44,7 @@ const FieldControl = ({ definition, value, onChange }) => {
         case 'optionalColor':
             return <ColorControl value={value} onChange={onChange} clearable />;
         case 'select':
+        case 'mode':
             return (
                 <Box component="select" value={value} onChange={(event) => onChange(event.target.value)} sx={inputSx}>
                     {definition.options.map((option) => (
@@ -154,17 +155,12 @@ const FieldSettingsEditor = ({ title, sections, source, onSave, preview, aside }
 
     const editor = (
         <Panel header={title}>
-            <Box component="form" onSubmit={submit} sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {error && <Alert severity="error">{error}</Alert>}
-                {saved && <Alert severity="success">Saved</Alert>}
-                <Box component="button" type="submit" disabled={saving} sx={{ ...btnSx, alignSelf: 'flex-start' }}>
-                    {saving ? 'Saving...' : 'Save'}
-                </Box>
+            <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {sections.map((section) => (
                     <Box key={section.title}>
                         <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.85rem', mb: '10px' }}>{section.title}</Box>
                         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
-                            {section.fields.map((definition) => (
+                            {section.fields.filter((definition) => isVisible(definition, form)).map((definition) => (
                                 <Box key={definition.key}>
                                     <Box sx={labelSx}>{definition.label}</Box>
                                     <FieldControl definition={definition} value={form[definition.key]} onChange={(value) => change(definition.key, value)} />
@@ -178,10 +174,29 @@ const FieldSettingsEditor = ({ title, sections, source, onSave, preview, aside }
         </Panel>
     );
 
-    if (!preview) return editor;
+    const header = (
+        <>
+            {error && <Alert severity="error" sx={{ mb: '12px' }}>{error}</Alert>}
+            {saved && <Alert severity="success" sx={{ mb: '12px' }}>Saved</Alert>}
+            <Box component="button" type="submit" disabled={saving} sx={{ ...btnSx, mb: '16px' }}>
+                {saving ? 'Saving...' : 'Save'}
+            </Box>
+        </>
+    );
+
+    if (!preview) {
+        return (
+            <Box component="form" onSubmit={submit}>
+                {header}
+                {editor}
+            </Box>
+        );
+    }
 
     return (
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 360px' }, gap: '16px', alignItems: 'start' }}>
+        <Box component="form" onSubmit={submit}>
+            {header}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 360px' }, gap: '16px', alignItems: 'start' }}>
             {editor}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px', position: { md: 'sticky' }, top: { md: '16px' } }}>
                 <Panel header="Field preview">
@@ -195,6 +210,7 @@ const FieldSettingsEditor = ({ title, sections, source, onSave, preview, aside }
                     </Box>
                 </Panel>
                 {aside}
+            </Box>
             </Box>
         </Box>
     );
