@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import Panel from '../../ui/Panel';
 import Toggle from '../../ui/Toggle';
 import LogoUrlField from '../LogoUrlField';
+import FontControl from '../../team/appearance/FontControl';
 import { formFrom, payloadFrom, isVisible } from './fieldDefinitions';
 import { renderPostseasonPreview } from '../../../api/fieldAppearanceApi';
 
@@ -82,6 +83,8 @@ const FieldControl = ({ definition, value, onChange }) => {
             return <Toggle on={value} onClick={() => onChange(!value)} />;
         case 'logo':
             return <LogoUrlField label="" value={value} onChange={(event) => onChange(event.target.value)} />;
+        case 'font':
+            return <FontControl value={value} onChange={onChange} allowDefault={definition.allowDefault} />;
         default:
             return <Box component="input" value={value} onChange={(event) => onChange(event.target.value)} placeholder={definition.placeholder} sx={inputSx} />;
     }

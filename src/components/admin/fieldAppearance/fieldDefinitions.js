@@ -1,21 +1,8 @@
-const END_ZONE_FONTS = [
-    { value: 'CLASSIC', label: 'Classic' },
-    { value: 'BLOCK', label: 'Block' },
-    { value: 'SANS', label: 'Sans' },
-    { value: 'SERIF', label: 'Serif' },
-    { value: 'SLAB', label: 'Slab serif' },
-    { value: 'CONDENSED', label: 'Condensed' },
-    { value: 'IMPACT', label: 'Impact' },
-    { value: 'GEORGIA', label: 'Georgia' },
-    { value: 'TYPEWRITER', label: 'Typewriter' },
-    { value: 'MONOSPACE', label: 'Monospace' },
-];
 const END_ZONE_LOGO_SOURCES = [
     { value: 'PRIMARY', label: 'Team logo' },
     { value: 'SECONDARY', label: 'Team secondary logo' },
     { value: 'CUSTOM', label: 'Custom URL' },
 ];
-const END_ZONE_FONTS_WITH_DEFAULT = [{ value: '', label: 'Use default' }, ...END_ZONE_FONTS];
 const WALL_DESIGNS = [
     { value: 'TEXT_WITH_LOGOS', label: 'Text with logos' },
     { value: 'TEXT_ONLY', label: 'Text only' },
@@ -43,7 +30,7 @@ const sidelineModeOf = (source) => {
 };
 
 const turf = { key: 'turf_color', label: 'Turf color', type: 'color' };
-const endZoneFont = { key: 'end_zone_font', label: 'End zone font', type: 'select', options: END_ZONE_FONTS };
+const endZoneFont = { key: 'end_zone_font', label: 'End zone font', type: 'font' };
 const wallDesign = { key: 'wall_design', label: 'Wall design', type: 'select', options: WALL_DESIGNS };
 const wallColor = { key: 'wall_color', label: 'Wall color', type: 'optionalColor', help: 'White is not allowed. Blank uses the built-in look.' };
 const wallText = { key: 'wall_text', label: 'Wall text', type: 'text', placeholder: 'Blank uses the built-in text' };
@@ -51,9 +38,9 @@ const wallTextOutline = { key: 'wall_text_outline_color', label: 'Wall text outl
 const goalPostColor = { key: 'goal_post_color', label: 'Goal post color', type: 'color', resetColor: '#FFCD00' };
 const goalPostStyle = { key: 'goal_post_style', label: 'Goal post style', type: 'select', options: GOAL_POST_STYLES };
 const yardNumberOutline = { key: 'yard_number_outline_color', label: 'Yard number outline', type: 'optionalColor' };
-const yardNumberFont = { key: 'yard_number_font', label: 'Yard number font', type: 'select', options: END_ZONE_FONTS };
-const homeEndZoneFont = { key: 'left_end_zone_font', label: 'Home end zone font', type: 'select', options: END_ZONE_FONTS_WITH_DEFAULT };
-const awayEndZoneFont = { key: 'right_end_zone_font', label: 'Away end zone font', type: 'select', options: END_ZONE_FONTS_WITH_DEFAULT };
+const yardNumberFont = { key: 'yard_number_font', label: 'Yard number font', type: 'font' };
+const homeEndZoneFont = { key: 'left_end_zone_font', label: 'Home end zone font', type: 'font', allowDefault: true };
+const awayEndZoneFont = { key: 'right_end_zone_font', label: 'Away end zone font', type: 'font', allowDefault: true };
 const redZoneBorder = { key: 'red_zone_border_color', label: 'Red zone border', type: 'optionalColor' };
 
 export const BOWL_SECTIONS = [
@@ -200,6 +187,7 @@ export const NC_SECTIONS = [postseasonField, postseasonMarkings, ...postseasonWa
 const emptyValue = (definition, source) => {
     const stored = source[definition.key];
     if (definition.type === 'mode') return definition.derive(source);
+    if (definition.type === 'font') return stored ?? (definition.allowDefault ? '' : 'CLASSIC');
     if (definition.type === 'toggle') return stored !== false;
     return stored ?? '';
 };

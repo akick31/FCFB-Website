@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import Toggle from '../../ui/Toggle';
 import LogoUrlField from '../../admin/LogoUrlField';
 import ConferenceColorsControl from './ConferenceColorsControl';
+import FontControl from './FontControl';
 
 const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem' };
 const clearSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
@@ -117,6 +118,8 @@ const AppearanceControl = ({ definition, value, onChange, disabled, teamColors, 
             return <LogoUrlField label="" value={value} onChange={(event) => onChange(event.target.value)} />;
         case 'conferenceColors':
             return <ConferenceColorsControl team={team} value={value} onChange={onChange} disabled={disabled} />;
+        case 'font':
+            return <FontControl value={value} onChange={onChange} disabled={disabled} allowDefault={definition.allowDefault} />;
         default:
             return <Box component="input" disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} placeholder={definition.placeholder} sx={inputSx} />;
     }

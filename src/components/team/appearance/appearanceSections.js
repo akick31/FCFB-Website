@@ -1,15 +1,3 @@
-const END_ZONE_FONTS = [
-    { value: 'CLASSIC', label: 'Classic' },
-    { value: 'BLOCK', label: 'Block' },
-    { value: 'SANS', label: 'Sans' },
-    { value: 'SERIF', label: 'Serif' },
-    { value: 'SLAB', label: 'Slab serif' },
-    { value: 'CONDENSED', label: 'Condensed' },
-    { value: 'IMPACT', label: 'Impact' },
-    { value: 'GEORGIA', label: 'Georgia' },
-    { value: 'TYPEWRITER', label: 'Typewriter' },
-    { value: 'MONOSPACE', label: 'Monospace' },
-];
 const WALL_DESIGNS = [
     { value: 'TEXT_WITH_LOGOS', label: 'Text with logos' },
     { value: 'TEXT_ONLY', label: 'Text only' },
@@ -123,9 +111,9 @@ export const TEAM_FIELD_SECTIONS = [
             { key: 'end_zone_outline_enabled', label: 'Show text outline', type: 'toggle' },
             { key: 'end_zone_outline_color', label: 'End zone text outline', type: 'optionalColor', help: 'Blank picks a readable outline automatically.', showIf: (f) => f.end_zone_outline_enabled },
             { key: 'end_zone_text_left', label: 'Left end zone text', type: 'text', placeholder: 'Team name', help: 'Blank uses the team name.' },
-            { key: 'left_end_zone_font', label: 'Left end zone font', type: 'select', options: END_ZONE_FONTS },
+            { key: 'left_end_zone_font', label: 'Left end zone font', type: 'font' },
             { key: 'end_zone_text_right', label: 'Right end zone text', type: 'text', placeholder: 'Team name' },
-            { key: 'right_end_zone_font', label: 'Right end zone font', type: 'select', options: END_ZONE_FONTS },
+            { key: 'right_end_zone_font', label: 'Right end zone font', type: 'font' },
             { key: 'end_zone_logo_enabled', label: 'Show end zone logo', type: 'toggle', help: 'Draws a logo beside the end zone text.' },
             { key: 'end_zone_logo_source', label: 'End zone logo source', type: 'select', options: FIELD_LOGO_SOURCES, showIf: (f) => f.end_zone_logo_enabled },
             { key: 'end_zone_logo_url', label: 'Custom logo URL', type: 'logo', showIf: (f) => f.end_zone_logo_enabled && f.end_zone_logo_source === 'CUSTOM' },
@@ -136,7 +124,7 @@ export const TEAM_FIELD_SECTIONS = [
         title: 'Markings',
         fields: [
             { key: 'field_number_outline_color', label: 'Yard number outline', type: 'optionalColor', defaultColor: 'secondary' },
-            { key: 'yard_number_font', label: 'Yard number font', type: 'select', options: END_ZONE_FONTS },
+            { key: 'yard_number_font', label: 'Yard number font', type: 'font' },
             { key: 'red_zone_border_color', label: 'Red zone border', type: 'optionalColor' },
             { key: 'oob_line_color', label: 'Sideline accent', type: 'optionalColor' },
         ],
@@ -195,6 +183,7 @@ const emptyValue = (definition, source, teamColors) => {
     const stored = source[definition.key];
     if (definition.type === 'graphic') return graphicFrom(source, definition);
     if (definition.type === 'stripe') return stripeFrom(source, definition);
+    if (definition.type === 'font') return stored ?? (definition.allowDefault ? '' : 'CLASSIC');
     if (definition.type === 'toggle') return stored !== false;
     if (definition.type === 'scale') return stored ?? definition.fallback ?? 0;
     if (stored === null || stored === undefined || stored === '') return resolveDefault(definition, teamColors);
