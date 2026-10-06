@@ -30,6 +30,21 @@ const MAX_TEAMS = 25;
 const BOWL_START_WEEK = 14;
 const TOP_N_QUICK_VIEWS = [10, 25];
 
+const OPPONENT_SORTS = [
+    { value: 'week', label: 'Week' },
+    { value: 'result', label: 'Result' },
+    { value: 'rank', label: 'Opp. rank' },
+];
+const DEFAULT_OPPONENT_SORT = 'week';
+const rankValue = (rank) => (rank == null ? Infinity : rank);
+const resultGroup = (opponent) => (opponent.won === true ? 0 : opponent.won === false ? 1 : 2);
+const byWeek = (a, b) => (a.week || 0) - (b.week || 0);
+const opponentComparators = {
+    week: byWeek,
+    result: (a, b) => resultGroup(a) - resultGroup(b) || rankValue(a.rank) - rankValue(b.rank) || byWeek(a, b),
+    rank: (a, b) => rankValue(a.rank) - rankValue(b.rank) || byWeek(a, b),
+};
+
 const parseTeamIds = (param) => (param || '').split(',').map((id) => Number(id)).filter((id) => Number.isFinite(id)).slice(0, MAX_TEAMS);
 const maxWeek = (list) => {
     const numeric = (list || []).map(Number).filter(Number.isFinite);
@@ -52,6 +67,7 @@ const RiceSheet = () => {
     const [selectedTeamIds, setSelectedTeamIds] = useState(() => parseTeamIds(searchParams.get('teams')));
     const [excludeBowls, setExcludeBowls] = useState(false);
     const [quickView, setQuickView] = useState(() => searchParams.get('quickView') || '');
+    const [opponentSort, setOpponentSort] = useState(() => searchParams.get('sort') || DEFAULT_OPPONENT_SORT);
     const [compact, setCompact] = useState(false);
     const [compactOverrides, setCompactOverrides] = useState({});
     const [dragTeamId, setDragTeamId] = useState(null);
@@ -152,8 +168,9 @@ const RiceSheet = () => {
         apply('season', season != null ? String(season) : null);
         apply('teams', selectedTeamIds.length ? selectedTeamIds.join(',') : null);
         apply('quickView', quickView || null);
+        apply('sort', opponentSort !== DEFAULT_OPPONENT_SORT ? opponentSort : null);
         if (changed) setSearchParams(next, { replace: true });
-    }, [season, selectedTeamIds, quickView]);
+    }, [season, selectedTeamIds, quickView, opponentSort]);
 
     const teamById = useMemo(() => Object.fromEntries(teams.map((team) => [team.id, team])), [teams]);
     const seasonTeams = useMemo(
@@ -248,7 +265,8 @@ const RiceSheet = () => {
         .map((opponent) => ({
             ...opponent,
             rank: compositeRankByTeamId[teamIdByName[opponent.name]] ?? null,
-        }));
+        }))
+        .sort(opponentComparators[opponentSort] || byWeek);
 
     const teamsMap = useMemo(() => {
         const merged = { ...activeTeamsMap };
@@ -311,6 +329,13 @@ const RiceSheet = () => {
                     value={quickView}
                     onChange={applyQuickView}
                     options={quickViewOptions}
+                    sx={{ height: '38px', boxSizing: 'border-box' }}
+                />
+                <SelectPill
+                    label="Sort games by"
+                    value={opponentSort}
+                    onChange={setOpponentSort}
+                    options={OPPONENT_SORTS}
                     sx={{ height: '38px', boxSizing: 'border-box' }}
                 />
                 <FormControlLabel
