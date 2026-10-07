@@ -241,11 +241,12 @@ const AppRoutes = () => {
                                 <AdminTeamAppearance />
                             </ProtectedRoute>
                         } />
-                        <Route path="/admin/field-appearance" element={
+                        <Route path="/admin/postseason-appearance/*" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <AdminFieldAppearance />
                             </ProtectedRoute>
                         } />
+                        <Route path="/admin/field-appearance" element={<Navigate to="/admin/postseason-appearance" replace />} />
                         <Route path="/admin/scheduling" element={
                             <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <Scheduling user={user} />
@@ -283,7 +284,7 @@ const AppRoutes = () => {
                         <Route path="/team/:teamId" element={<TeamDetails />} />
                         <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
                         <Route path="/user-details/:coachName" element={<UserDetails />} />
-                        <Route path="/team-appearance/:teamId" element={
+                        <Route path="/team-appearance/:teamId/:tab?" element={
                             <ProtectedRoute requireAuth={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
                                 <TeamAppearance user={user} />
                             </ProtectedRoute>

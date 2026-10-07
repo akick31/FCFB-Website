@@ -25,13 +25,20 @@ const BASE_TABS = [
 
 const UNSAVED_MESSAGE = 'You have unsaved appearance changes. Leave without saving?';
 
+const TAB_VALUES = ['uniform', 'field', 'colors', 'logos'];
+
 const TeamAppearance = ({ user }) => {
-    const { teamId } = useParams();
+    const { teamId, tab: tabParam } = useParams();
     const navigate = useNavigate();
-    const [tab, setTab] = useState('uniform');
+    const tab = TAB_VALUES.includes(tabParam) ? tabParam : 'uniform';
+    const setTab = (value) => navigate(`/team-appearance/${teamId}/${value}`, { replace: true });
     const [dirtyTabs, setDirtyTabs] = useState({});
     const hasUnsaved = Object.values(dirtyTabs).some(Boolean);
     const setTabDirty = (key) => (isDirty) => setDirtyTabs((current) => (current[key] === isDirty ? current : { ...current, [key]: isDirty }));
+
+    useEffect(() => {
+        if (!TAB_VALUES.includes(tabParam)) navigate(`/team-appearance/${teamId}/uniform`, { replace: true });
+    }, [tabParam, teamId, navigate]);
 
     useEffect(() => {
         if (!hasUnsaved) return undefined;
@@ -113,8 +120,10 @@ const TeamAppearance = ({ user }) => {
                         teamColors={colors}
                         canEdit={canEdit}
                         previewGroups={[
-                            { title: 'Primary Uniform Preview', views: [{ view: 'HELMET', label: 'Primary helmet' }, { view: 'UNIFORM', label: 'Home jersey' }, { view: 'AWAY_UNIFORM', label: 'Away jersey' }] },
-                            { title: 'Secondary Helmet', views: [{ view: 'SECONDARY_HELMET' }], note: 'Only worn by the away team when both shells clash.' },
+                            { title: 'Primary helmet', views: [{ view: 'HELMET' }] },
+                            { title: 'Home jersey', views: [{ view: 'JERSEY' }] },
+                            { title: 'Away jersey', views: [{ view: 'AWAY_JERSEY' }] },
+                            { title: 'Secondary helmet', views: [{ view: 'SECONDARY_HELMET' }], note: 'Worn by the away team when both shells clash.' },
                         ]}
                         onDirtyChange={setTabDirty('uniform')}
                         onSave={async (payload) => { setUniform(await updateTeamUniform(teamName, payload)); }}

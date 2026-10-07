@@ -117,7 +117,7 @@ const AppearanceControl = ({ definition, value, onChange, disabled, teamColors, 
         case 'logo':
             return <LogoUrlField label="" value={value} onChange={(event) => onChange(event.target.value)} />;
         case 'conferenceColors':
-            return <ConferenceColorsControl team={team} value={value} onChange={onChange} disabled={disabled} />;
+            return <ConferenceColorsControl team={team} value={value} onChange={onChange} disabled={disabled} teamColors={teamColors} />;
         case 'font':
             return <FontControl value={value} onChange={onChange} disabled={disabled} allowDefault={definition.allowDefault} />;
         default:

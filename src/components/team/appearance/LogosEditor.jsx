@@ -1,40 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import Panel from '../../ui/Panel';
 import LogoUrlField from '../../admin/LogoUrlField';
-import { renderAppearancePreview } from '../../../api/teamAppearanceApi';
+import { useAppearancePreview } from './useAppearancePreview';
 
 const btnSx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
-const PREVIEW_DEBOUNCE_MS = 450;
-
-const usePreview = (team, view, draft) => {
-    const [url, setUrl] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const urlRef = useRef(null);
-    useEffect(() => {
-        let cancelled = false;
-        setLoading(true);
-        const timer = setTimeout(async () => {
-            try {
-                const loaded = await renderAppearancePreview({ team, view, ...draft });
-                if (cancelled) { URL.revokeObjectURL(loaded); return; }
-                if (urlRef.current) URL.revokeObjectURL(urlRef.current);
-                urlRef.current = loaded;
-                setUrl(loaded);
-                setError(null);
-            } catch (err) {
-                if (!cancelled) setError(err.message || 'Preview unavailable');
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        }, PREVIEW_DEBOUNCE_MS);
-        return () => { cancelled = true; clearTimeout(timer); };
-    }, [team, view, draft]);
-    useEffect(() => () => { if (urlRef.current) URL.revokeObjectURL(urlRef.current); }, []);
-    return { url, loading, error };
-};
 
 const PreviewPanel = ({ title, state, bg }) => (
     <Panel header={title}>
@@ -61,9 +32,9 @@ const LogosEditor = ({ team, source, canEdit, onSave, onDirtyChange }) => {
         onDirtyChange?.(false);
     }, [source]);
 
-    const draft = { logo: form.logo, logo_dark: form.logoDark, secondary_logo: form.secondaryLogo };
-    const uniform = usePreview(team, 'UNIFORM', draft);
-    const fieldPreview = usePreview(team, 'FIELD', draft);
+    const previewBody = useMemo(() => ({ logo: form.logo, logo_dark: form.logoDark, secondary_logo: form.secondaryLogo }), [form]);
+    const uniform = useAppearancePreview(team, 'UNIFORM', previewBody);
+    const fieldPreview = useAppearancePreview(team, 'FIELD', previewBody);
 
     const change = (key, value) => { setSaved(false); onDirtyChange?.(true); setForm((current) => ({ ...current, [key]: value })); };
 

@@ -87,11 +87,19 @@ const AppearanceEditor = ({ team, view, half, sections, source, canEdit, onSave,
                             {section.help && <Box sx={{ ...helpSx, mt: 0, mb: '12px' }}>{section.help}</Box>}
                             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
                                 {section.fields.filter((definition) => isVisible(definition, form)).map((definition) => (
-                                    <Box key={definition.key}>
-                                        <Box sx={labelSx}>{definition.label}</Box>
-                                        <AppearanceControl definition={definition} value={form[definition.key]} onChange={(value) => change(definition.key, value)} disabled={!canEdit} teamColors={teamColors} team={team} />
-                                        {definition.help && <Box sx={helpSx}>{definition.help}</Box>}
-                                    </Box>
+                                    definition.type === 'subheading' ? (
+                                        <Box key={definition.key} sx={{ gridColumn: '1 / -1', mt: '2px', pt: '8px', borderTop: '1px solid var(--line)', fontFamily: 'var(--cond)', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+                                            {definition.label}
+                                        </Box>
+                                    ) : definition.type === 'divider' ? (
+                                        <Box key={definition.key} sx={{ gridColumn: '1 / -1', mt: '2px', borderTop: '1px solid var(--line)' }} />
+                                    ) : (
+                                        <Box key={definition.key} sx={definition.fullWidth ? { gridColumn: '1 / -1' } : (definition.rowSpan ? { gridRow: `span ${definition.rowSpan}` } : undefined)}>
+                                            <Box sx={labelSx}>{definition.label}</Box>
+                                            <AppearanceControl definition={definition} value={form[definition.key]} onChange={(value) => change(definition.key, value)} disabled={!canEdit} teamColors={teamColors} team={team} />
+                                            {definition.help && <Box sx={helpSx}>{definition.help}</Box>}
+                                        </Box>
+                                    )
                                 ))}
                             </Box>
                         </Box>

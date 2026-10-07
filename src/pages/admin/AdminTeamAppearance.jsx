@@ -53,8 +53,8 @@ const AdminTeamAppearance = () => {
                                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                                     <TeamUniformThumb team={team.name} view="HELMET" height={88} />
                                     <TeamUniformThumb team={team.name} view="SECONDARY_HELMET" height={88} />
-                                    <TeamUniformThumb team={team.name} view="UNIFORM" height={88} />
-                                    <TeamUniformThumb team={team.name} view="AWAY_UNIFORM" height={88} />
+                                    <TeamUniformThumb team={team.name} view="JERSEY" height={88} />
+                                    <TeamUniformThumb team={team.name} view="AWAY_JERSEY" height={88} />
                                 </Box>
                                 <Box component={Link} to={`/team-appearance/${team.id}`} sx={openSx}>Open editor</Box>
                             </Box>

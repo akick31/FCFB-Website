@@ -1,15 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import Panel from '../../ui/Panel';
-import { renderAppearancePreview } from '../../../api/teamAppearanceApi';
+import { useAppearancePreview } from './useAppearancePreview';
 
 const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
 const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem' };
 const btnSx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
 const helpSx = { color: 'var(--text-dim)', fontSize: '0.7rem', mt: '4px' };
 
-const PREVIEW_DEBOUNCE_MS = 450;
 
 const ColorRow = ({ label, value, onChange, disabled, help }) => (
     <Box>
@@ -23,34 +22,6 @@ const ColorRow = ({ label, value, onChange, disabled, help }) => (
 );
 
 ColorRow.propTypes = { label: PropTypes.string.isRequired, value: PropTypes.string.isRequired, onChange: PropTypes.func.isRequired, disabled: PropTypes.bool, help: PropTypes.string };
-
-const usePreview = (team, view, draft) => {
-    const [url, setUrl] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const urlRef = useRef(null);
-    useEffect(() => {
-        let cancelled = false;
-        setLoading(true);
-        const timer = setTimeout(async () => {
-            try {
-                const loaded = await renderAppearancePreview({ team, view, colors: draft });
-                if (cancelled) { URL.revokeObjectURL(loaded); return; }
-                if (urlRef.current) URL.revokeObjectURL(urlRef.current);
-                urlRef.current = loaded;
-                setUrl(loaded);
-                setError(null);
-            } catch (err) {
-                if (!cancelled) setError(err.message || 'Preview unavailable');
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        }, PREVIEW_DEBOUNCE_MS);
-        return () => { cancelled = true; clearTimeout(timer); };
-    }, [team, view, draft]);
-    useEffect(() => () => { if (urlRef.current) URL.revokeObjectURL(urlRef.current); }, []);
-    return { url, loading, error };
-};
 
 const PreviewPanel = ({ title, state }) => (
     <Panel header={title}>
@@ -85,8 +56,9 @@ const ColorsEditor = ({ team, source, isAdmin, canEditTertiary, onSave, onDirtyC
         onDirtyChange?.(false);
     }, [source]);
 
-    const scorebug = usePreview(team, 'SCOREBUG', form);
-    const uniform = usePreview(team, 'UNIFORM', form);
+    const previewBody = useMemo(() => ({ colors: form }), [form]);
+    const scorebug = useAppearancePreview(team, 'SCOREBUG', previewBody);
+    const uniform = useAppearancePreview(team, 'UNIFORM', previewBody);
 
     const change = (key, value) => { setSaved(false); onDirtyChange?.(true); setForm((current) => ({ ...current, [key]: value })); };
 

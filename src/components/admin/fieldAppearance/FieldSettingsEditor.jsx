@@ -54,8 +54,9 @@ const FieldControl = ({ definition, value, onChange }) => {
                 </Box>
             );
         case 'colorToken': {
-            const tokens = ['HOME', 'AWAY', 'WHITE'];
-            const mode = value === '' ? 'NONE' : (tokens.includes(value) ? value : 'CUSTOM');
+            const tokens = ['PRIMARY', 'SECONDARY', 'TERTIARY', 'WHITE', 'BLACK'];
+            const resolved = (value === 'HOME' || value === 'AWAY') ? 'PRIMARY' : value;
+            const mode = resolved === '' ? 'NONE' : (tokens.includes(resolved) ? resolved : 'CUSTOM');
             return (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <Box
@@ -70,10 +71,12 @@ const FieldControl = ({ definition, value, onChange }) => {
                         sx={inputSx}
                     >
                         <option value="NONE">Not set</option>
-                        <option value="HOME">Home team color</option>
-                        <option value="AWAY">Away team color</option>
+                        <option value="PRIMARY">Primary</option>
+                        <option value="SECONDARY">Secondary</option>
+                        <option value="TERTIARY">Tertiary</option>
                         <option value="WHITE">White</option>
-                        <option value="CUSTOM">Custom...</option>
+                        <option value="BLACK">Black</option>
+                        <option value="CUSTOM">Custom hex...</option>
                     </Box>
                     {mode === 'CUSTOM' && <ColorControl value={value} onChange={onChange} clearable />}
                 </Box>
@@ -138,7 +141,14 @@ const FieldSettingsEditor = ({ title, sections, source, onSave, preview, aside }
 
     const change = (key, value) => {
         setSaved(false);
-        setForm((current) => ({ ...current, [key]: value }));
+        setForm((current) => {
+            const next = { ...current, [key]: value };
+            const definition = sections.flatMap((section) => section.fields).find((field) => field.key === key);
+            if (definition?.type === 'mode' && value === 'DIFFERENT' && definition.perSide) {
+                definition.perSide.forEach((perSideKey) => { if (!next[perSideKey]) next[perSideKey] = 'PRIMARY'; });
+            }
+            return next;
+        });
     };
 
     const submit = async (event) => {
@@ -164,11 +174,17 @@ const FieldSettingsEditor = ({ title, sections, source, onSave, preview, aside }
                         <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.85rem', mb: '10px' }}>{section.title}</Box>
                         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
                             {section.fields.filter((definition) => isVisible(definition, form)).map((definition) => (
-                                <Box key={definition.key}>
-                                    <Box sx={labelSx}>{definition.label}</Box>
-                                    <FieldControl definition={definition} value={form[definition.key]} onChange={(value) => change(definition.key, value)} />
-                                    {definition.help && <Box sx={helpSx}>{definition.help}</Box>}
-                                </Box>
+                                definition.type === 'subheading' ? (
+                                    <Box key={definition.key} sx={{ gridColumn: '1 / -1', mt: '2px', pt: '8px', borderTop: '1px solid var(--line)', fontFamily: 'var(--cond)', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+                                        {definition.label}
+                                    </Box>
+                                ) : (
+                                    <Box key={definition.key}>
+                                        <Box sx={labelSx}>{definition.label}</Box>
+                                        <FieldControl definition={definition} value={form[definition.key]} onChange={(value) => change(definition.key, value)} />
+                                        {definition.help && <Box sx={helpSx}>{definition.help}</Box>}
+                                    </Box>
+                                )
                             ))}
                         </Box>
                     </Box>

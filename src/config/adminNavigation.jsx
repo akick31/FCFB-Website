@@ -22,7 +22,7 @@ export const adminNavigationItems = [
     { label: 'Game Management', icon: <SportsFootball />, path: '/admin/game-management' },
     { label: 'Schedule Management', icon: <CalendarMonth />, path: '/admin/scheduling' },
     { label: 'Team Appearance', icon: <Palette />, path: '/admin/team-appearance' },
-    { label: 'Postseason Appearance', icon: <Palette />, path: '/admin/field-appearance' },
+    { label: 'Postseason Appearance', icon: <Palette />, path: '/admin/postseason-appearance' },
     { label: 'Rankings Management', icon: <FormatListNumbered />, path: '/admin/rankings' },
     { label: 'Stats Management', icon: <Assessment />, path: '/admin/stats-management' },
     { label: 'Reports', icon: <TrendingUp />, path: '/admin/reports' },

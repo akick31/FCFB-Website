@@ -18,7 +18,18 @@ const parseMap = (value) => {
     try { return JSON.parse(value); } catch { return {}; }
 };
 
-const ConferenceColorsControl = ({ team, value, onChange, disabled }) => {
+const tokenColor = (token, hex, teamColors) => {
+    switch (token) {
+        case 'PRIMARY': return teamColors?.primary_color || hex;
+        case 'SECONDARY': return teamColors?.secondary_color || hex;
+        case 'TERTIARY': return teamColors?.tertiary_color || hex;
+        case 'WHITE': return '#FFFFFF';
+        case 'BLACK': return '#000000';
+        default: return hex;
+    }
+};
+
+const ConferenceColorsControl = ({ team, value, onChange, disabled, teamColors }) => {
     const [colors, setColors] = useState(null);
     const map = parseMap(value);
 
@@ -39,12 +50,11 @@ const ConferenceColorsControl = ({ team, value, onChange, disabled }) => {
     if (colors.length === 0) return <Box sx={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>No conference logo to recolor.</Box>;
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
             {colors.map((hex) => (
-                <Box key={hex} sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Box sx={{ width: 20, height: 20, borderRadius: 2, border: '1px solid var(--line)', background: hex, flexShrink: 0 }} />
-                    <Box sx={{ fontSize: '0.72rem', color: 'var(--text-dim)', width: 70, fontVariantNumeric: 'tabular-nums' }}>{hex}</Box>
-                    <Box component="select" disabled={disabled} value={map[hex] || 'KEEP'} onChange={(e) => setToken(hex, e.target.value)} sx={{ ...selectSx, flex: 1 }}>
+                <Box key={hex} sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Box title={hex} sx={{ width: 18, height: 18, borderRadius: 2, border: '1px solid var(--line)', background: tokenColor(map[hex] || 'KEEP', hex, teamColors), flexShrink: 0 }} />
+                    <Box component="select" disabled={disabled} value={map[hex] || 'KEEP'} onChange={(e) => setToken(hex, e.target.value)} sx={selectSx}>
                         {TOKENS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </Box>
                 </Box>
@@ -58,6 +68,7 @@ ConferenceColorsControl.propTypes = {
     value: PropTypes.string,
     onChange: PropTypes.func.isRequired,
     disabled: PropTypes.bool,
+    teamColors: PropTypes.object,
 };
 
 export default ConferenceColorsControl;

@@ -22,6 +22,11 @@ export const registerUploadedFont = (option) => {
     listeners.forEach((l) => l(cached));
 };
 
+export const removeFont = (value) => {
+    cached = (cached || []).filter((f) => f.value !== value);
+    listeners.forEach((l) => l(cached));
+};
+
 export const useFonts = () => {
     const [fonts, setFonts] = useState(cached || []);
     useEffect(() => {

@@ -1,16 +1,36 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
-import { addFont } from '../../../api/fontApi';
-import { useFonts, registerUploadedFont } from './fontStore';
+import { addFont, deleteFont } from '../../../api/fontApi';
+import { useFonts, registerUploadedFont, removeFont } from './fontStore';
+import { checkIfUserIsAdmin } from '../../../utils/utils';
 
 const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem' };
 const smallInputSx = { ...inputSx, height: '32px', fontSize: '0.8rem' };
 const linkSx = { alignSelf: 'flex-start', background: 'none', border: 0, p: 0, color: 'var(--brand)', font: 'inherit', fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.03em', cursor: 'pointer' };
 const addSx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '12px', height: '30px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
 
+const BOLD_SUFFIX = '|BOLD';
+
 const FontControl = ({ value, onChange, disabled, allowDefault }) => {
     const fonts = useFonts();
+    const isAdmin = checkIfUserIsAdmin();
+    const bold = typeof value === 'string' && value.endsWith(BOLD_SUFFIX);
+    const baseValue = bold ? value.slice(0, -BOLD_SUFFIX.length) : (value || '');
+    const emit = (key, isBold) => onChange(isBold ? `${key}${BOLD_SUFFIX}` : key);
+    const canRemove = isAdmin && baseValue.startsWith('CUSTOM_');
+
+    const remove = async () => {
+        // eslint-disable-next-line no-alert
+        if (!window.confirm('Remove this font from the shared library?')) return;
+        try {
+            await deleteFont(baseValue);
+            removeFont(baseValue);
+            onChange(allowDefault ? '' : 'CLASSIC');
+        } catch (err) {
+            setError(err.message || 'Failed to remove font');
+        }
+    };
     const [open, setOpen] = useState(false);
     const [label, setLabel] = useState('');
     const [url, setUrl] = useState('');
@@ -39,10 +59,21 @@ const FontControl = ({ value, onChange, disabled, allowDefault }) => {
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <Box component="select" disabled={disabled} value={value} onChange={(e) => onChange(e.target.value)} sx={inputSx}>
-                {options.map((option) => <option key={option.value || 'default'} value={option.value}>{option.label}</option>)}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Box component="select" disabled={disabled} value={baseValue} onChange={(e) => emit(e.target.value, bold)} sx={{ ...inputSx, flex: 1, width: 'auto' }}>
+                    {options.map((option) => <option key={option.value || 'default'} value={option.value}>{option.label}</option>)}
+                </Box>
+                <Box component="label" sx={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: 'var(--text-dim)', whiteSpace: 'nowrap', cursor: disabled ? 'default' : 'pointer' }}>
+                    <Box component="input" type="checkbox" disabled={disabled} checked={bold} onChange={(e) => emit(baseValue, e.target.checked)} />
+                    Bold
+                </Box>
             </Box>
-            {!disabled && !open && <Box component="button" type="button" onClick={() => setOpen(true)} sx={linkSx}>+ Add a font</Box>}
+            {!disabled && !open && (
+                <Box sx={{ display: 'flex', gap: '12px' }}>
+                    <Box component="button" type="button" onClick={() => setOpen(true)} sx={linkSx}>+ Add a font</Box>
+                    {canRemove && <Box component="button" type="button" onClick={remove} sx={{ ...linkSx, color: 'var(--live)' }}>Remove font</Box>}
+                </Box>
+            )}
             {!disabled && open && (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px', border: '1px solid var(--line)', borderRadius: 'var(--r-sm)', p: '8px', background: 'var(--surface)' }}>
                     <Box component="input" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Font name (shown in the list)" sx={smallInputSx} />

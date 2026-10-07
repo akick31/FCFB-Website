@@ -15,3 +15,11 @@ export const addFont = async (label, url, acknowledged) => {
         throw new Error(error.response?.data?.error || 'Failed to add font');
     }
 };
+
+export const deleteFont = async (name) => {
+    try {
+        await apiClient.delete('/font', { params: { name } });
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Failed to remove font');
+    }
+};

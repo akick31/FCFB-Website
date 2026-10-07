@@ -1,38 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import Panel from '../../ui/Panel';
-import { renderAppearancePreview } from '../../../api/teamAppearanceApi';
-
-const PREVIEW_DEBOUNCE_MS = 450;
+import { useAppearancePreview } from './useAppearancePreview';
 
 const PreviewImage = ({ team, view, body, label }) => {
-    const [url, setUrl] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const urlRef = useRef(null);
-
-    useEffect(() => {
-        let cancelled = false;
-        setLoading(true);
-        const timer = setTimeout(async () => {
-            try {
-                const loaded = await renderAppearancePreview({ team, view, ...body });
-                if (cancelled) { URL.revokeObjectURL(loaded); return; }
-                if (urlRef.current) URL.revokeObjectURL(urlRef.current);
-                urlRef.current = loaded;
-                setUrl(loaded);
-                setError(null);
-            } catch (err) {
-                if (!cancelled) setError(err.message || 'Preview unavailable');
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        }, PREVIEW_DEBOUNCE_MS);
-        return () => { cancelled = true; clearTimeout(timer); };
-    }, [team, view, body]);
-
-    useEffect(() => () => { if (urlRef.current) URL.revokeObjectURL(urlRef.current); }, []);
+    const { url, loading, error } = useAppearancePreview(team, view, body);
 
     return (
         <Box sx={{ flex: '1 1 130px', minWidth: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>

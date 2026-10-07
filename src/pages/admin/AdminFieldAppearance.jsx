@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import AdminLayout from '../../components/layout/AdminLayout';
 import BackButton from '../../components/ui/BackButton';
@@ -59,52 +59,65 @@ const PREVIEW_CATEGORY = { bowl: 'BOWL', playoff: 'PLAYOFF', conference: 'CCG' }
 const TAB_ORDER = ['conference', 'bowl', 'playoff'];
 const TAB_OPTIONS = TAB_ORDER.map((value) => ({ value, label: CATEGORIES[value].label }));
 
-const itemButtonSx = (active) => ({
-    display: 'block',
-    width: '100%',
-    textAlign: 'left',
-    border: 0,
-    borderBottom: '1px solid var(--line-soft)',
-    background: active ? 'color-mix(in srgb, var(--brand) 10%, var(--surface))' : 'transparent',
-    boxShadow: active ? 'inset 3px 0 0 var(--live)' : 'none',
-    color: active ? 'var(--text)' : 'var(--text-muted)',
+const BASE_PATH = '/admin/postseason-appearance';
+const DEFAULT_CATEGORY = 'conference';
+const CATEGORY_SLUGS = { conference: 'conference-championships', bowl: 'bowls', playoff: 'playoff-rounds' };
+const SLUG_TO_CATEGORY = Object.fromEntries(Object.entries(CATEGORY_SLUGS).map(([cat, slug]) => [slug, cat]));
+const slugify = (value) => String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+const selectSx = {
+    minWidth: 280,
+    maxWidth: '100%',
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text)',
+    borderRadius: 'var(--r-sm)',
+    px: '12px',
+    height: '40px',
     font: 'inherit',
-    fontSize: '0.82rem',
+    fontSize: '0.9rem',
     fontWeight: 600,
-    px: '14px',
-    py: '10px',
     cursor: 'pointer',
-    '&:hover': { background: active ? undefined : 'var(--surface-2)' },
-});
+};
 
 const AdminFieldAppearance = () => {
     const navigate = useNavigate();
-    const [category, setCategory] = useState('conference');
+    const params = useParams();
+    const [catSlug, itemSlug] = (params['*'] || '').split('/');
+    const category = SLUG_TO_CATEGORY[catSlug] || DEFAULT_CATEGORY;
+    const config = CATEGORIES[category];
+
     const [items, setItems] = useState([]);
-    const [selectedId, setSelectedId] = useState(null);
     const [source, setSource] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const config = CATEGORIES[category];
+    const selectedId = useMemo(
+        () => items.find((item) => slugify(item.id) === itemSlug)?.id ?? items[0]?.id ?? null,
+        [items, itemSlug],
+    );
 
     const loadItems = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const loaded = await CATEGORIES[category].loadItems();
-            setItems(loaded);
-            setSelectedId((current) => (loaded.some((item) => item.id === current) ? current : loaded[0]?.id ?? null));
+            setItems(await config.loadItems());
         } catch (err) {
             setError(err.message || 'Failed to load fields');
             setItems([]);
-            setSelectedId(null);
         } finally {
             setLoading(false);
         }
-    }, [category]);
+    }, [config]);
 
     useEffect(() => { loadItems(); }, [loadItems]);
+
+    useEffect(() => {
+        if (loading || !selectedId) return;
+        if (catSlug !== CATEGORY_SLUGS[category] || itemSlug !== slugify(selectedId)) {
+            navigate(`${BASE_PATH}/${CATEGORY_SLUGS[category]}/${slugify(selectedId)}`, { replace: true });
+        }
+    }, [loading, selectedId, category, catSlug, itemSlug, navigate]);
 
     useEffect(() => {
         const selected = items.find((item) => item.id === selectedId);
@@ -122,12 +135,8 @@ const AdminFieldAppearance = () => {
             .catch((err) => setError(err.message || 'Failed to load field'));
     }, [items, selectedId, config]);
 
-    const changeCategory = (next) => {
-        setItems([]);
-        setSelectedId(null);
-        setSource(null);
-        setCategory(next);
-    };
+    const changeCategory = (next) => navigate(`${BASE_PATH}/${CATEGORY_SLUGS[next]}`, { replace: true });
+    const selectItem = (id) => navigate(`${BASE_PATH}/${CATEGORY_SLUGS[category]}/${slugify(id)}`, { replace: true });
 
     const save = async (payload) => {
         const saved = await config.save(selectedId, payload);
@@ -144,20 +153,21 @@ const AdminFieldAppearance = () => {
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: '40px' }}><CircularProgress /></Box>
             ) : (
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '240px 1fr' }, gap: '16px', alignItems: 'start' }}>
-                    <Panel header={config.label}>
-                        {items.map((item) => (
-                            <Box key={item.id} component="button" type="button" onClick={() => setSelectedId(item.id)} sx={itemButtonSx(item.id === selectedId)}>
-                                {item.label}
-                            </Box>
-                        ))}
-                        {items.length === 0 && <Box sx={{ p: '16px', color: 'var(--text-dim)', fontSize: '0.8rem' }}>No {config.noun}s found.</Box>}
-                    </Panel>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'stretch' }}>
+                    {items.length === 0 ? (
+                        <Box sx={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>No {config.noun}s found.</Box>
+                    ) : (
+                        <Box component="select" value={selectedId || ''} onChange={(event) => selectItem(event.target.value)} sx={selectSx} aria-label={config.label}>
+                            {items.map((item) => (
+                                <option key={item.id} value={item.id}>{item.label}</option>
+                            ))}
+                        </Box>
+                    )}
                     <Box>
                     {category === 'bowl' && selected && (
                         <BowlMetaEditor
                             bowl={selectedId}
-                            onSaved={(newName) => { loadItems().then(() => setSelectedId(newName)); }}
+                            onSaved={(newName) => { loadItems().then(() => selectItem(newName)); }}
                         />
                     )}
                     {selected && source && (

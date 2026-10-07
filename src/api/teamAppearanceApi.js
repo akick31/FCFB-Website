@@ -1,5 +1,11 @@
 import apiClient from './apiClient';
 
+const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1/arceus';
+
+/** A cacheable GET URL for a team's saved-appearance thumbnail, for use directly as an <img> src. */
+export const getTeamAppearanceThumbUrl = (team, view) =>
+    `${baseURL}/appearance-preview/thumb?team=${encodeURIComponent(team)}&view=${encodeURIComponent(view)}`;
+
 const failure = (error, fallback) => new Error(error.response?.data?.error || fallback);
 
 export const getTeamUniform = async (team) => {
