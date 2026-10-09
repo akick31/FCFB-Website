@@ -11,13 +11,9 @@ export const rate = (rows, numKey, denKey) => {
     return denominator ? (sum(rows, numKey) / denominator) * 100 : null;
 };
 
-export const yardsPerPlay = (rows, yardsKey, yppKey) => {
-    let plays = 0;
-    let yards = 0;
-    rows.forEach((row) => {
-        if (row[yardsKey] != null && row[yppKey]) { plays += row[yardsKey] / row[yppKey]; yards += row[yardsKey]; }
-    });
-    return plays ? yards / plays : null;
+export const averageFromTotals = (rows, totalKey, countKey) => {
+    const count = sum(rows, countKey);
+    return count ? sum(rows, totalKey) / count : null;
 };
 
 export const weightedAverage = (rows, valueKey, weightKey) => {

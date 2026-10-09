@@ -20,6 +20,7 @@ import { getFilteredPlaybookStats } from '../../api/playbookStatsApi';
 import { getAllSeasons } from '../../api/seasonApi';
 import { useConferencesMap, useSeasonConferenceCodes, seasonConferenceList, activeConferenceList, conferenceLabel } from '../../components/constants/conferences';
 import { formatOffensivePlaybook } from '../../utils/formatText';
+import { averageFromTotals } from '../../utils/statAggregation';
 import { STAT_CATALOG, STAT_BY_KEY, buildLeaderboard, seasonHasStarted, formatValue, LEAGUE_STAT_GROUPS, CONFERENCE_COLUMNS, aggregateAllTimeStats, aggregateStatRows, aggregateStatRowsByKey } from '../../utils/statsCatalog';
 import { useSeo } from '../../hooks/useSeo';
 
@@ -40,7 +41,7 @@ const LEAGUE_FIELD_AGGS = {
     total_teams: 'latest',
     total_yards: { agg: 'sum' }, pass_yards: { agg: 'sum' }, rush_yards: { agg: 'sum' },
     pass_touchdowns: { agg: 'sum' }, rush_touchdowns: { agg: 'sum' }, first_downs: { agg: 'sum' },
-    average_yards_per_play: { agg: 'ypp', yards: 'total_yards' },
+    average_yards_per_play: { agg: 'ratio', num: 'offensive_play_yards', den: 'offensive_play_count' },
     pass_attempts: { agg: 'sum' }, pass_completions: { agg: 'sum' }, pass_completion_percentage: { agg: 'rate', num: 'pass_completions', den: 'pass_attempts' },
     pass_successes: { agg: 'sum' }, pass_success_percentage: { agg: 'rate', num: 'pass_successes', den: 'pass_attempts' },
     pass_interceptions: { agg: 'sum' }, longest_pass: { agg: 'max' },
@@ -57,12 +58,12 @@ const LEAGUE_FIELD_AGGS = {
 
 const CONFERENCE_FIELD_AGGS = {
     total_teams: 'latest',
-    total_yards: { agg: 'sum' }, average_yards_per_play: { agg: 'ypp', yards: 'total_yards' },
+    total_yards: { agg: 'sum' }, average_yards_per_play: { agg: 'ratio', num: 'offensive_play_yards', den: 'offensive_play_count' },
     pass_touchdowns: { agg: 'sum' }, rush_touchdowns: { agg: 'sum' }, first_downs: { agg: 'sum' },
     third_down_conversion_percentage: { agg: 'rate', num: 'third_down_conversion_success', den: 'third_down_conversion_attempts' },
     red_zone_success_percentage: { agg: 'rate', num: 'red_zone_successes', den: 'red_zone_attempts' },
     sacks_forced: { agg: 'sum' }, interceptions_forced: { agg: 'sum' }, turnover_differential: { agg: 'sum' },
-    longest_field_goal: { agg: 'max' }, average_punt_length: { agg: 'wavg', weight: 'punts_attempted' },
+    longest_field_goal: { agg: 'max' }, average_punt_length: { agg: 'ratio', num: 'punt_yards', den: 'punt_count' },
     average_response_speed: { agg: 'mean' }, average_offensive_diff: { agg: 'mean' }, average_defensive_diff: { agg: 'mean' },
 };
 
@@ -220,7 +221,8 @@ const Stats = () => {
         const byPlaybook = new Map();
         playbooks.forEach((row) => {
             const key = row.offensive_playbook;
-            const current = byPlaybook.get(key) || { offensive_playbook: key, total_teams: 0, total_games: 0, total_yards: 0, pass_yards: 0, rush_yards: 0, pass_touchdowns: 0, rush_touchdowns: 0, diffWeight: 0, diffSum: 0 };
+            const current = byPlaybook.get(key) || { offensive_playbook: key, total_teams: 0, total_games: 0, total_yards: 0, pass_yards: 0, rush_yards: 0, pass_touchdowns: 0, rush_touchdowns: 0, diffWeight: 0, diffSum: 0, statRows: [] };
+            current.statRows.push(row);
             current.total_teams += row.total_teams || 0;
             current.total_games += row.total_games || 0;
             current.total_yards += row.total_yards || 0;
@@ -235,7 +237,7 @@ const Stats = () => {
             byPlaybook.set(key, current);
         });
         return [...byPlaybook.values()]
-            .map((row) => ({ ...row, yards_per_play: row.total_games ? row.total_yards / (row.total_games * 130) : null, average_offensive_diff: row.diffWeight ? row.diffSum / row.diffWeight : null }))
+            .map((row) => ({ ...row, yards_per_play: averageFromTotals(row.statRows, 'offensive_play_yards', 'offensive_play_count'), average_offensive_diff: row.diffWeight ? row.diffSum / row.diffWeight : null }))
             .sort((a, b) => b.total_yards - a.total_yards);
     }, [playbooks]);
 
