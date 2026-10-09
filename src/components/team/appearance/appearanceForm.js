@@ -13,5 +13,5 @@ export const writeGeneric = (payload, definition, form) => {
     const value = form[definition.key];
     if (definition.type === 'toggle') payload[definition.key] = value;
     else if (definition.type === 'scale') payload[definition.key] = Number(value);
-    else payload[definition.key] = value === '' ? null : value;
+    else payload[definition.key] = value === '' && !definition.preserveEmpty ? null : value;
 };

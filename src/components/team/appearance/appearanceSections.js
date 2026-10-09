@@ -67,14 +67,13 @@ export const UNIFORM_SECTIONS = [
             { key: 'number_color', label: 'Number color', type: 'color', defaultColor: '#FFFFFF' },
             { key: 'number_outline_enabled', label: 'Number outline', type: 'toggle', transient: true, derivedFrom: 'number_outline_color' },
             { key: 'number_outline_color', label: 'Outline color', type: 'color', defaultColor: 'secondary', showIf: (f) => f.number_outline_enabled },
-            { key: 'hasShoulderStripe', label: 'Shoulder stripes', type: 'toggle' },
-            { key: 'shoulderStripeColor', label: 'Stripe color', type: 'color', defaultColor: 'secondary', showIf: (f) => f.hasShoulderStripe },
-            { key: 'numberTopText', label: 'Number top text', type: 'text', placeholder: 'Optional' },
+            { key: 'number_top_text', label: 'Text above number', type: 'text', placeholder: 'Optional', maxLength: 32 },
             { key: 'pants_color', label: 'Pants color', type: 'color', defaultColor: 'primary' },
             { key: '_away_jersey_heading', label: 'Away', type: 'subheading' },
             { key: 'away_number_color', label: 'Number color', type: 'optionalColor', defaultColor: 'primary', help: 'On the white road jersey.' },
             { key: 'away_number_outline_enabled', label: 'Number outline', type: 'toggle', transient: true, derivedFrom: 'away_number_outline_color' },
             { key: 'away_number_outline_color', label: 'Outline color', type: 'color', defaultColor: 'primary', showIf: (f) => f.away_number_outline_enabled },
+            { key: 'away_number_top_text', label: 'Text above number', type: 'text', placeholder: 'Optional', maxLength: 32, fallbackKey: 'number_top_text', preserveEmpty: true, help: 'Blank hides text on the away jersey.' },
             { key: 'away_pants_color', label: 'Pants color', type: 'optionalColor', defaultColor: 'primary', help: 'Blank matches home.' },
         ],
     },
@@ -234,7 +233,7 @@ const emptyValue = (definition, source, teamColors) => {
     if (definition.type === 'graphic') return graphicFrom(source, definition);
     if (definition.type === 'stripe') return stripeFrom(source, definition);
     if (definition.type === 'font') return stored ?? (definition.allowDefault ? '' : 'CLASSIC');
-    return readGeneric(definition, stored, resolveDefault(definition, teamColors));
+    return readGeneric(definition, stored ?? source[definition.fallbackKey], resolveDefault(definition, teamColors));
 };
 
 export const formFrom = (sections, source, teamColors) => {

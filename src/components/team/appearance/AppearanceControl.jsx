@@ -121,7 +121,7 @@ const AppearanceControl = ({ definition, value, onChange, disabled, teamColors, 
         case 'font':
             return <FontControl value={value} onChange={onChange} disabled={disabled} allowDefault={definition.allowDefault} />;
         default:
-            return <Box component="input" disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} placeholder={definition.placeholder} sx={inputSx} />;
+            return <Box component="input" disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} placeholder={definition.placeholder} maxLength={definition.maxLength} sx={inputSx} />;
     }
 };
 
