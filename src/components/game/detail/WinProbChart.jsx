@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
+import { pickChartColor } from '../../../utils/chartColor';
+import { TOKENS } from '../../../styles/tokens';
+import { useColorMode } from '../../../theme/ColorModeContext';
 
 const W = 440;
 const H = 214;
@@ -39,6 +42,11 @@ const buildSegments = (series) => {
 
 const WinProbChart = ({ series, homeColor, awayColor, homeMark, awayMark, quarterMarks }) => {
     const [hover, setHover] = useState(null);
+    const { mode } = useColorMode();
+    const background = TOKENS[mode].surface;
+    const fallback = mode === 'dark' ? '#ffffff' : TOKENS.light.text;
+    const homePlotColor = pickChartColor(homeMark?.primaryColor || homeColor, homeMark?.secondaryColor, background, fallback);
+    const awayPlotColor = pickChartColor(awayMark?.primaryColor || awayColor, awayMark?.secondaryColor, background, fallback);
     if (series.length < 2) return null;
 
     const count = series.length;
@@ -78,7 +86,7 @@ const WinProbChart = ({ series, homeColor, awayColor, homeMark, awayMark, quarte
                         <polygon
                             key={i}
                             points={`${first[0].toFixed(1)},${midY} ${linePoints} ${last[0].toFixed(1)},${midY}`}
-                            fill={segment.side === 1 ? homeColor : awayColor}
+                            fill={segment.side === 1 ? homePlotColor : awayPlotColor}
                             opacity="0.16"
                         />
                     );
@@ -94,7 +102,7 @@ const WinProbChart = ({ series, homeColor, awayColor, homeMark, awayMark, quarte
                     );
                 })}
                 {segments.map((segment, i) => (
-                    <polyline key={i} points={segment.points.map((p) => `${p[0].toFixed(1)},${yOf(p[1]).toFixed(1)}`).join(' ')} fill="none" stroke={segment.side === 1 ? homeColor : awayColor} strokeWidth="2.6" />
+                    <polyline key={i} points={segment.points.map((p) => `${p[0].toFixed(1)},${yOf(p[1]).toFixed(1)}`).join(' ')} fill="none" stroke={segment.side === 1 ? homePlotColor : awayPlotColor} strokeWidth="2.6" />
                 ))}
             </Box>
             {point && (
