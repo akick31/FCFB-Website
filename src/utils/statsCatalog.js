@@ -1,4 +1,4 @@
-import { sum, max, mean, rate, yardsPerPlay, weightedAverage } from './statAggregation';
+import { sum, max, mean, rate, averageFromTotals, weightedAverage } from './statAggregation';
 
 const PERCENT = new Set([
     'pass_completion_percentage', 'pass_success_percentage', 'rush_success_percentage', 'red_zone_success_percentage',
@@ -27,7 +27,7 @@ export const STAT_GROUPS = [
     ['Offense', [
         ['total_yards', 'Total yards', { agg: 'sum' }], ['pass_yards', 'Passing yards', { agg: 'sum' }], ['rush_yards', 'Rushing yards', { agg: 'sum' }],
         ['touchdowns', 'Touchdowns', { agg: 'sum' }], ['pass_touchdowns', 'Passing touchdowns', { agg: 'sum' }], ['rush_touchdowns', 'Rushing touchdowns', { agg: 'sum' }],
-        ['first_downs', 'First downs', { agg: 'sum' }], ['average_yards_per_play', 'Yards per play', { agg: 'ypp', yards: 'total_yards' }],
+        ['first_downs', 'First downs', { agg: 'sum' }], ['average_yards_per_play', 'Yards per play', { agg: 'ratio', num: 'offensive_play_yards', den: 'offensive_play_count' }],
         ['pass_attempts', 'Pass attempts', { agg: 'sum' }], ['pass_completions', 'Pass completions', { agg: 'sum' }], ['pass_completion_percentage', 'Completion %', { agg: 'rate', num: 'pass_completions', den: 'pass_attempts' }],
         ['pass_successes', 'Pass successes', { agg: 'sum' }], ['pass_success_percentage', 'Pass success %', { agg: 'rate', num: 'pass_successes', den: 'pass_attempts' }],
         ['rush_attempts', 'Rush attempts', { agg: 'sum' }], ['rush_successes', 'Rush successes', { agg: 'sum' }], ['rush_success_percentage', 'Rush success %', { agg: 'rate', num: 'rush_successes', den: 'rush_attempts' }],
@@ -41,7 +41,7 @@ export const STAT_GROUPS = [
         ['sacks_forced', 'Sacks', { agg: 'sum' }], ['opponent_total_yards', 'Yards allowed', { agg: 'sum' }], ['opponent_pass_yards', 'Pass yards allowed', { agg: 'sum' }],
         ['opponent_rush_yards', 'Rush yards allowed', { agg: 'sum' }], ['opponent_touchdowns', 'Touchdowns allowed', { agg: 'sum' }],
         ['opponent_pass_touchdowns', 'Pass TDs allowed', { agg: 'sum' }], ['opponent_rush_touchdowns', 'Rush TDs allowed', { agg: 'sum' }],
-        ['opponent_first_downs', 'First downs allowed', { agg: 'sum' }], ['opponent_average_yards_per_play', 'Yards per play allowed', { agg: 'ypp', yards: 'opponent_total_yards' }],
+        ['opponent_first_downs', 'First downs allowed', { agg: 'sum' }], ['opponent_average_yards_per_play', 'Yards per play allowed', { agg: 'ratio', num: 'opponent_offensive_play_yards', den: 'opponent_offensive_play_count' }],
         ['opponent_third_down_conversion_percentage', 'Third down % allowed', { agg: 'rate', num: 'opponent_third_down_conversion_success', den: 'opponent_third_down_conversion_attempts' }],
         ['opponent_fourth_down_conversion_percentage', 'Fourth down % allowed', { agg: 'rate', num: 'opponent_fourth_down_conversion_success', den: 'opponent_fourth_down_conversion_attempts' }],
         ['opponent_red_zone_success_percentage', 'Red zone % allowed', { agg: 'rate', num: 'opponent_red_zone_successes', den: 'opponent_red_zone_attempts' }], ['largest_deficit', 'Largest deficit', { agg: 'max' }],
@@ -59,7 +59,7 @@ export const STAT_GROUPS = [
         ['field_goal_made', 'Field goals made', { agg: 'sum' }], ['field_goal_attempts', 'Field goal attempts', { agg: 'sum' }], ['field_goal_percentage', 'Field goal %', { agg: 'rate', num: 'field_goal_made', den: 'field_goal_attempts' }],
         ['longest_field_goal', 'Longest field goal', { agg: 'max' }], ['field_goal_touchdown', 'Field goal return TDs', { agg: 'sum' }],
         ['blocked_opponent_field_goals', 'Field goals blocked', { agg: 'sum' }], ['blocked_opponent_punt', 'Punts blocked', { agg: 'sum' }],
-        ['punts_attempted', 'Punts', { agg: 'sum' }], ['longest_punt', 'Longest punt', { agg: 'max' }], ['average_punt_length', 'Average punt', { agg: 'wavg', weight: 'punts_attempted' }],
+        ['punts_attempted', 'Punts', { agg: 'sum' }], ['longest_punt', 'Longest punt', { agg: 'max' }], ['average_punt_length', 'Average punt', { agg: 'ratio', num: 'punt_yards', den: 'punt_count' }],
         ['kick_return_td', 'Kick return TDs', { agg: 'sum' }], ['punt_return_td', 'Punt return TDs', { agg: 'sum' }],
         ['touchbacks', 'Touchbacks', { agg: 'sum' }], ['touchback_percentage', 'Touchback %', { agg: 'rate', num: 'touchbacks', den: 'number_of_kickoffs' }],
         ['onside_attempts', 'Onside attempts', { agg: 'sum' }], ['onside_success', 'Onside recoveries', { agg: 'sum' }], ['onside_success_percentage', 'Onside %', { agg: 'rate', num: 'onside_success', den: 'onside_attempts' }],
@@ -112,12 +112,16 @@ export const aggregateStatRows = (rows, fieldAggs) => {
     );
     Object.entries(fieldAggs).forEach(([key, spec]) => {
         if (spec === 'latest') { result[key] = latestRow?.[key]; return; }
-        const { agg, num, den, yards, weight } = spec;
+        const { agg, num, den, weight } = spec;
         if (agg === 'sum') result[key] = sum(rows, key);
         else if (agg === 'max') result[key] = max(rows, key);
         else if (agg === 'mean') result[key] = mean(rows, key);
         else if (agg === 'rate') result[key] = rate(rows, num, den);
-        else if (agg === 'ypp') result[key] = yardsPerPlay(rows, yards, key);
+        else if (agg === 'ratio') {
+            result[num] = sum(rows, num);
+            result[den] = sum(rows, den);
+            result[key] = averageFromTotals(rows, num, den);
+        }
         else if (agg === 'wavg') result[key] = weightedAverage(rows, key, weight);
     });
     return result;
@@ -144,12 +148,16 @@ export const aggregateAllTimeStats = (rows) => {
         const result = { team, conference: latest.conference };
         STAT_CATALOG.forEach((stat) => {
             if (!stat.agg) return;
-            const { agg, num, den, yards, weight } = stat.agg;
+            const { agg, num, den, weight } = stat.agg;
             if (agg === 'sum') result[stat.key] = sum(teamRows, stat.key);
             else if (agg === 'max') result[stat.key] = max(teamRows, stat.key);
             else if (agg === 'mean') result[stat.key] = mean(teamRows, stat.key);
             else if (agg === 'rate') result[stat.key] = rate(teamRows, num, den);
-            else if (agg === 'ypp') result[stat.key] = yardsPerPlay(teamRows, yards, stat.key);
+            else if (agg === 'ratio') {
+                result[num] = sum(teamRows, num);
+                result[den] = sum(teamRows, den);
+                result[stat.key] = averageFromTotals(teamRows, num, den);
+            }
             else if (agg === 'wavg') result[stat.key] = weightedAverage(teamRows, stat.key, weight);
         });
         return result;

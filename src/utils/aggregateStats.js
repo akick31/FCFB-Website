@@ -1,5 +1,5 @@
 import { STAT_ROWS } from './teamStatFields';
-import { sum, max, mean, rate, yardsPerPlay, weightedAverage } from './statAggregation';
+import { sum, max, mean, rate, averageFromTotals, weightedAverage } from './statAggregation';
 
 const aggregateField = (row, rows, result, prefix = '') => {
     const p = (name) => `${prefix}${name}`;
@@ -16,8 +16,10 @@ const aggregateField = (row, rows, result, prefix = '') => {
         case 'rate':
             result[p(row.key)] = rate(rows, p(row.num), p(row.den));
             break;
-        case 'ypp':
-            result[p(row.key)] = yardsPerPlay(rows, p(row.yards), p(row.key));
+        case 'ratio':
+            result[p(row.num)] = sum(rows, p(row.num));
+            result[p(row.den)] = sum(rows, p(row.den));
+            result[p(row.key)] = averageFromTotals(rows, p(row.num), p(row.den));
             break;
         case 'wavg':
             result[p(row.key)] = weightedAverage(rows, p(row.key), p(row.weight));

@@ -4,6 +4,7 @@ import { Box, CircularProgress } from '@mui/material';
 import Panel from '../../ui/Panel';
 import { getFilteredPlaybookStats } from '../../../api/playbookStatsApi';
 import { formatOffensivePlaybook } from '../../../utils/formatText';
+import { averageFromTotals } from '../../../utils/statAggregation';
 
 const PlaybooksGraphTab = ({ season, scope }) => {
     const [rows, setRows] = useState([]);
@@ -24,13 +25,14 @@ const PlaybooksGraphTab = ({ season, scope }) => {
         rows.forEach((row) => {
             const key = row.offensive_playbook;
             if (!key) return;
-            const current = byPlaybook.get(key) || { offensive_playbook: key, total_games: 0, total_yards: 0 };
+            const current = byPlaybook.get(key) || { offensive_playbook: key, total_games: 0, total_yards: 0, statRows: [] };
+            current.statRows.push(row);
             current.total_games += row.total_games || 0;
             current.total_yards += row.total_yards || 0;
             byPlaybook.set(key, current);
         });
         return [...byPlaybook.values()]
-            .map((row) => ({ ...row, ypp: row.total_games ? row.total_yards / (row.total_games * 130) : 0 }))
+            .map((row) => ({ ...row, ypp: averageFromTotals(row.statRows, 'offensive_play_yards', 'offensive_play_count') }))
             .sort((a, b) => b.ypp - a.ypp);
     }, [rows]);
 
@@ -50,7 +52,7 @@ const PlaybooksGraphTab = ({ season, scope }) => {
                             <Box sx={{ height: 16, background: 'var(--surface-2)', borderRadius: '3px', overflow: 'hidden' }}>
                                 <Box sx={{ height: '100%', borderRadius: '3px', background: 'var(--field)', width: `${Math.max(2, (p.ypp / max) * 100)}%` }} />
                             </Box>
-                            <Box className="num" sx={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{p.ypp.toFixed(2)}</Box>
+                            <Box className="num" sx={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{p.ypp == null ? '-' : p.ypp.toFixed(2)}</Box>
                         </Box>
                     ))
                 )}
