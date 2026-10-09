@@ -18,7 +18,7 @@ export const STAT_GROUPS = [
     ]],
     ['Offense', [
         { label: 'Total yards', key: 'total_yards', fmt: 'num', opp: true, agg: 'sum' },
-        { label: 'Yards per play', key: 'average_yards_per_play', fmt: 'dec2', opp: true, agg: 'ypp', yards: 'total_yards' },
+        { label: 'Yards per play', key: 'average_yards_per_play', fmt: 'dec2', opp: true, agg: 'ratio', num: 'offensive_play_yards', den: 'offensive_play_count' },
         { label: 'Touchdowns', key: 'touchdowns', fmt: 'num', opp: true, agg: 'sum' },
         { label: 'First downs', key: 'first_downs', fmt: 'num', opp: true, agg: 'sum' },
         { label: 'Drives', key: 'number_of_drives', fmt: 'num', opp: true, agg: 'sum' },
@@ -64,7 +64,7 @@ export const STAT_GROUPS = [
         { label: 'Field goal %', key: 'field_goal_percentage', fmt: 'pct', opp: true, agg: 'rate', num: 'field_goal_made', den: 'field_goal_attempts' },
         { label: 'Longest field goal', key: 'longest_field_goal', fmt: 'num', opp: true, agg: 'max' },
         { label: 'Punts', key: 'punts_attempted', fmt: 'num', opp: true, agg: 'sum' },
-        { label: 'Average punt length', key: 'average_punt_length', fmt: 'dec2', opp: true, agg: 'wavg', weight: 'punts_attempted' },
+        { label: 'Average punt length', key: 'average_punt_length', fmt: 'dec2', opp: true, agg: 'ratio', num: 'punt_yards', den: 'punt_count' },
         { label: 'Longest punt', key: 'longest_punt', fmt: 'num', opp: true, agg: 'max' },
         { label: 'Kickoffs', key: 'number_of_kickoffs', fmt: 'num', opp: true, agg: 'sum' },
         { label: 'Touchbacks', key: 'touchbacks', fmt: 'num', opp: true, agg: 'sum' },
