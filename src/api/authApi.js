@@ -2,9 +2,7 @@ import apiClient from './apiClient';
 import { getUserById } from './userApi';
 
 const toPlainObject = (maybeFormData) =>
-    maybeFormData instanceof FormData
-        ? Object.fromEntries(maybeFormData.entries())
-        : maybeFormData;
+    maybeFormData instanceof FormData ? Object.fromEntries(maybeFormData.entries()) : maybeFormData;
 
 export const registerUser = async (formOrObj) => {
     try {
@@ -12,7 +10,7 @@ export const registerUser = async (formOrObj) => {
         const response = await apiClient.post('/auth/register', body);
         return response.data;
     } catch (error) {
-        console.error('Failed to register user:', error);
+        console.error('Failed to register user:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to register user');
         }
@@ -20,9 +18,14 @@ export const registerUser = async (formOrObj) => {
     }
 };
 
-export const login = async (usernameOrEmail, password, setIsAuthenticated, setUser) => {
+export const login = async (usernameOrEmail, password, setIsAuthenticated, setUser, signal) => {
+    let sessionToken = localStorage.getItem('token');
+    const isCurrentSession = () => !signal?.aborted && localStorage.getItem('token') === sessionToken;
     try {
         const response = await apiClient.post('/auth/login', { usernameOrEmail, password });
+        if (!isCurrentSession()) {
+            return;
+        }
 
         if (response.status !== 200) {
             setIsAuthenticated(false);
@@ -32,33 +35,37 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
 
         const auth = response.data;
 
-        const token =
-            auth?.token ?? auth?.session?.token ?? auth?.accessToken ?? auth?.jwt ?? null;
-        const userId =
-            auth?.userId ?? auth?.user?.id ?? auth?.user_id ?? auth?.id ?? null;
-        const role =
-            auth?.role ?? auth?.user?.role ?? null;
-
+        const token = auth?.token ?? auth?.session?.token ?? auth?.accessToken ?? auth?.jwt ?? null;
+        const userId = auth?.userId ?? auth?.user?.id ?? auth?.user_id ?? auth?.id ?? null;
+        const role = auth?.role ?? auth?.user?.role ?? null;
 
         if (!token || !userId) {
-            console.error('Login response missing token or userId:', { token, userId, role });
             throw new Error('Login response missing token or userId');
         }
 
         localStorage.setItem('token', token);
+        sessionToken = String(token);
         localStorage.setItem('userId', String(userId));
-        if (role != null) localStorage.setItem('role', String(role));
-        else localStorage.removeItem('role');
-
+        if (role != null) {
+            localStorage.setItem('role', String(role));
+        } else {
+            localStorage.removeItem('role');
+        }
 
         const userData = await getUserById(userId);
-        
+        if (!isCurrentSession()) {
+            return;
+        }
+
         setIsAuthenticated(true);
         setUser(userData);
 
         return true;
     } catch (error) {
-        console.error('Login failed:', error);
+        const currentToken = localStorage.getItem('token');
+        if (signal?.aborted || (currentToken && currentToken !== sessionToken)) {
+            return;
+        }
         if (error.response) {
             throw new Error(error.response.data.error || 'Login failed');
         }
@@ -73,19 +80,20 @@ export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
             headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (response.status === 200) {
+        if (response.status === 200 && localStorage.getItem('token') === token) {
             localStorage.removeItem('token');
             localStorage.removeItem('userId');
             localStorage.removeItem('role');
             setIsAuthenticated(false);
-            if (typeof setIsAdmin === 'function') setIsAdmin(false);
+            if (typeof setIsAdmin === 'function') {
+                setIsAdmin(false);
+            }
             setUser({});
             return true;
         }
 
         return false;
     } catch (error) {
-        console.error('Logout failed:', error);
         if (error.response) {
             throw new Error(error.response.data.error || 'Logout failed');
         }
@@ -98,7 +106,7 @@ export const forgotPassword = async (email) => {
         const response = await apiClient.post('/auth/forgot-password', { email });
         return response.data;
     } catch (error) {
-        console.error('Failed to send forgot password request:', error);
+        console.error('Failed to send forgot password request:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to send forgot password request');
         }
@@ -108,13 +116,13 @@ export const forgotPassword = async (email) => {
 
 export const resetPassword = async (token, newPassword) => {
     try {
-        const response = await apiClient.post('/auth/reset-password', { 
-            token, 
-            newPassword 
+        const response = await apiClient.post('/auth/reset-password', {
+            token,
+            newPassword,
         });
         return response.data;
     } catch (error) {
-        console.error('Failed to reset password:', error);
+        console.error('Failed to reset password:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to reset password');
         }
@@ -123,12 +131,14 @@ export const resetPassword = async (token, newPassword) => {
 };
 
 export const verifyEmail = async (token) => {
-    if (!token) return;
+    if (!token) {
+        return;
+    }
     try {
         const response = await apiClient.get('/auth/verify-email', { params: { token } });
         return response.data;
     } catch (error) {
-        console.error('Email verification failed:', error);
+        console.error('Email verification failed:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Email verification failed');
         }
@@ -137,16 +147,14 @@ export const verifyEmail = async (token) => {
 };
 
 export const resendVerificationEmail = async (newSignupId) => {
-    if (!newSignupId) return;
+    if (!newSignupId) {
+        return;
+    }
     try {
-        const response = await apiClient.post(
-            '/auth/verification-email/resend',
-            null,
-            { params: { newSignupId } }
-        );
+        const response = await apiClient.post('/auth/verification-email/resend', null, { params: { newSignupId } });
         return response.data;
     } catch (error) {
-        console.error('Failed to resend verification email:', error);
+        console.error('Failed to resend verification email:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to resend verification email');
         }
@@ -171,7 +179,7 @@ export const apiWithAuth = async (endpoint, options = {}) => {
         const response = await apiClient.request(config);
         return response.data;
     } catch (error) {
-        console.error('API request failed:', error);
+        console.error('API request failed:');
         if (error.response) {
             throw new Error(error.response.data.error || 'API request failed');
         }

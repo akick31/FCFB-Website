@@ -6,7 +6,8 @@ const ACRONYM_FIXES = [
     [/\bFcs\b/g, 'FCS'],
 ];
 
-const applyAcronymFixes = (text) => ACRONYM_FIXES.reduce((result, [pattern, replacement]) => result.replace(pattern, replacement), text);
+const applyAcronymFixes = (text) =>
+    ACRONYM_FIXES.reduce((result, [pattern, replacement]) => result.replace(pattern, replacement), text);
 
 export const humanizeParamName = (name) => {
     const spaced = name
@@ -24,7 +25,7 @@ export const humanizeEnumValue = (value) =>
             .split('_')
             .filter(Boolean)
             .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-            .join(' '),
+            .join(' ')
     );
 
 export const humanizeTag = (tag) =>
@@ -34,5 +35,5 @@ export const humanizeTag = (tag) =>
             .split('-')
             .filter(Boolean)
             .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' '),
+            .join(' ')
     );

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Box } from '@mui/material';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
@@ -10,15 +10,21 @@ const LINE = 'var(--line)';
 
 const chunkPairs = (games) => {
     const pairs = [];
-    for (let index = 0; index < games.length; index += 2) pairs.push(games.slice(index, index + 2));
+    for (let index = 0; index < games.length; index += 2) {
+        pairs.push(games.slice(index, index + 2));
+    }
     return pairs;
 };
 
 const orderRoundGames = (games, nextRoundGames) => {
-    if (!nextRoundGames || nextRoundGames.length === 0) return games;
+    if (!nextRoundGames || nextRoundGames.length === 0) {
+        return games;
+    }
     const feedIndex = (game) => {
         const teams = [game.home_team, game.away_team];
-        const index = nextRoundGames.findIndex((next) => teams.includes(next.home_team) || teams.includes(next.away_team));
+        const index = nextRoundGames.findIndex(
+            (next) => teams.includes(next.home_team) || teams.includes(next.away_team)
+        );
         return index === -1 ? nextRoundGames.length : index;
     };
     return games
@@ -31,13 +37,54 @@ const bracketSx = {
     display: 'flex',
     overflowX: 'auto',
     py: 0.75,
-    '& .brd': { display: 'flex', flexDirection: 'column', justifyContent: 'space-around', flex: '1 1 0', minWidth: 160, pr: '26px', position: 'relative' },
+    '& .brd': {
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-around',
+        flex: '1 1 0',
+        minWidth: 160,
+        pr: '26px',
+        position: 'relative',
+    },
     '& .brd.out-none': { pr: 0 },
-    '& .rl': { fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800, color: 'var(--text-dim)', textAlign: 'center', mb: '8px', position: 'absolute', top: '-4px', left: 0, right: '26px' },
+    '& .rl': {
+        fontSize: '0.6rem',
+        textTransform: 'uppercase',
+        letterSpacing: '0.06em',
+        fontWeight: 800,
+        color: 'var(--text-dim)',
+        textAlign: 'center',
+        mb: '8px',
+        position: 'absolute',
+        top: '-4px',
+        left: 0,
+        right: '26px',
+    },
     '& .brd.out-none .rl': { right: 0 },
-    '& .brd-inner': { display: 'flex', flexDirection: 'column', justifyContent: 'space-around', flex: 1, gap: '14px', mt: '14px' },
-    '& .pair': { position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', flex: 1, gap: '14px' },
-    '& .bmatch': { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', overflow: 'hidden', cursor: 'pointer', position: 'relative' },
+    '& .brd-inner': {
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-around',
+        flex: 1,
+        gap: '14px',
+        mt: '14px',
+    },
+    '& .pair': {
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-around',
+        flex: 1,
+        gap: '14px',
+    },
+    '& .bmatch': {
+        background: 'var(--surface)',
+        border: '1px solid var(--line)',
+        borderRadius: 'var(--r)',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        position: 'relative',
+    },
     '& .bmatch:hover': { borderColor: 'color-mix(in srgb, var(--brand) 50%, var(--line))' },
     '& .bteam': { display: 'flex', alignItems: 'center', gap: '7px', padding: '6px 9px', fontSize: '0.8rem' },
     '& .bteam + .bteam': { borderTop: '1px solid var(--line-soft)' },
@@ -45,15 +92,70 @@ const bracketSx = {
     '& .bteam .nm': { fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
     '& .bteam .sc': { marginLeft: 'auto', fontFamily: 'var(--cond)', fontWeight: 800 },
     '& .bteam.loser': { color: 'var(--text-dim)' },
-    '& .brd.out-paired .pair::before': { content: '""', position: 'absolute', right: '-13px', top: '25%', bottom: '25%', width: '2px', background: LINE },
-    '& .brd.out-paired .pair > .bmatch::after': { content: '""', position: 'absolute', top: '50%', right: '-13px', width: '13px', height: '2px', background: LINE },
-    '& .brd.out-paired .pair::after': { content: '""', position: 'absolute', right: '-26px', top: '50%', width: '13px', height: '2px', background: LINE },
-    '& .brd.in .brd-inner > .bmatch::before, & .brd.in .pair > .bmatch::before': { content: '""', position: 'absolute', top: '50%', left: '-13px', width: '13px', height: '2px', background: LINE },
-    '& .brd.out-single .bmatch::after': { content: '""', position: 'absolute', top: '50%', right: '-26px', width: '26px', height: '2px', background: LINE },
+    '& .brd.out-paired .pair::before': {
+        content: '""',
+        position: 'absolute',
+        right: '-13px',
+        top: '25%',
+        bottom: '25%',
+        width: '2px',
+        background: LINE,
+    },
+    '& .brd.out-paired .pair > .bmatch::after': {
+        content: '""',
+        position: 'absolute',
+        top: '50%',
+        right: '-13px',
+        width: '13px',
+        height: '2px',
+        background: LINE,
+    },
+    '& .brd.out-paired .pair::after': {
+        content: '""',
+        position: 'absolute',
+        right: '-26px',
+        top: '50%',
+        width: '13px',
+        height: '2px',
+        background: LINE,
+    },
+    '& .brd.in .brd-inner > .bmatch::before, & .brd.in .pair > .bmatch::before': {
+        content: '""',
+        position: 'absolute',
+        top: '50%',
+        left: '-13px',
+        width: '13px',
+        height: '2px',
+        background: LINE,
+    },
+    '& .brd.out-single .bmatch::after': {
+        content: '""',
+        position: 'absolute',
+        top: '50%',
+        right: '-26px',
+        width: '26px',
+        height: '2px',
+        background: LINE,
+    },
 };
 
 const PlayoffBracket = ({ rounds, teamsMap }) => {
-    const roundNumbers = Object.keys(rounds).map(Number).sort((a, b) => a - b);
+    useEffect(() => {
+        Object.values(rounds)
+            .flat()
+            .forEach((game) => {
+                ensureTeam(game.home_team);
+                ensureTeam(game.away_team);
+            });
+    }, [rounds]);
+
+    const roundNumbers = useMemo(
+        () =>
+            Object.keys(rounds)
+                .map(Number)
+                .sort((a, b) => a - b),
+        [rounds]
+    );
 
     const orderedRounds = useMemo(() => {
         const result = {};
@@ -65,21 +167,30 @@ const PlayoffBracket = ({ rounds, teamsMap }) => {
         return result;
     }, [rounds, roundNumbers]);
 
-    if (roundNumbers.length === 0) return null;
+    if (roundNumbers.length === 0) {
+        return null;
+    }
     const first = roundNumbers[0];
 
     const markFor = (name) => {
-        if (!name) return { name };
-        if (!teamsMap[name]) ensureTeam(name);
+        if (!name) {
+            return { name };
+        }
         return teamsMap[name] || { name };
     };
 
     const teamRow = (name, seed, score, isWinner) => (
         <Box className={`bteam ${isWinner ? '' : 'loser'}`}>
-            <Box component="span" className="sd">{seed || ''}</Box>
+            <Box component="span" className="sd">
+                {seed || ''}
+            </Box>
             <TeamMark team={markFor(name)} size={18} />
-            <Box component="span" className="nm">{name}</Box>
-            <Box component="span" className="sc">{score}</Box>
+            <Box component="span" className="nm">
+                {name}
+            </Box>
+            <Box component="span" className="sc">
+                {score}
+            </Box>
         </Box>
     );
 
@@ -106,10 +217,25 @@ const PlayoffBracket = ({ rounds, teamsMap }) => {
                 const nextRound = roundNumbers[index + 1];
                 const nextGames = nextRound != null ? orderedRounds[nextRound] : null;
                 const hasIncoming = round !== first;
-                const outgoingMode = !nextGames ? 'none' : nextGames.length * 2 === games.length ? 'paired' : nextGames.length === games.length ? 'single' : 'single';
-                const inner = outgoingMode === 'paired'
-                    ? <Box className="brd-inner">{chunkPairs(games).map((pair, pairIndex) => <Box key={pairIndex} className="pair">{pair.map(match)}</Box>)}</Box>
-                    : <Box className="brd-inner">{games.map(match)}</Box>;
+                const outgoingMode = !nextGames
+                    ? 'none'
+                    : nextGames.length * 2 === games.length
+                      ? 'paired'
+                      : nextGames.length === games.length
+                        ? 'single'
+                        : 'single';
+                const inner =
+                    outgoingMode === 'paired' ? (
+                        <Box className="brd-inner">
+                            {chunkPairs(games).map((pair, pairIndex) => (
+                                <Box key={pairIndex} className="pair">
+                                    {pair.map(match)}
+                                </Box>
+                            ))}
+                        </Box>
+                    ) : (
+                        <Box className="brd-inner">{games.map(match)}</Box>
+                    );
                 return (
                     <Box key={round} className={`brd out-${outgoingMode} ${hasIncoming ? 'in' : ''}`}>
                         <Box className="rl">{ROUND_LABELS[round] || `Round ${round}`}</Box>

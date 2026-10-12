@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getConferenceRules, saveConferenceRules } from '../api/scheduleApi';
 
 const DEFAULT_CONFERENCE_GAMES = 9;
@@ -9,12 +9,22 @@ const useConferenceRules = ({ code, onError, onSuccess }) => {
     const [divisions, setDivisions] = useState([]);
     const [rulesLoading, setRulesLoading] = useState(false);
     const [savingDivisions, setSavingDivisions] = useState(false);
+    const requestScopeRef = useRef(null);
 
     useEffect(() => {
+        const scope = { active: true };
+        requestScopeRef.current = scope;
+        setSavingDivisions(false);
+        setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
+        setProtectedRivalries([]);
+        setDivisions([]);
         const loadRules = async () => {
             setRulesLoading(true);
             try {
                 const rules = await getConferenceRules(code);
+                if (!scope.active) {
+                    return;
+                }
                 if (rules) {
                     setNumConferenceGames(rules.numConferenceGames || DEFAULT_CONFERENCE_GAMES);
                     setProtectedRivalries(rules.protectedRivalries || []);
@@ -24,16 +34,24 @@ const useConferenceRules = ({ code, onError, onSuccess }) => {
                     setProtectedRivalries([]);
                     setDivisions([]);
                 }
-            } catch (err) {
-                console.error('Error loading conference rules:', err);
+            } catch {
+                if (!scope.active) {
+                    return;
+                }
+                console.error('Error loading conference rules');
                 setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
                 setProtectedRivalries([]);
                 setDivisions([]);
             } finally {
-                setRulesLoading(false);
+                if (scope.active) {
+                    setRulesLoading(false);
+                }
             }
         };
         loadRules();
+        return () => {
+            scope.active = false;
+        };
     }, [code]);
 
     const divisionsEnabled = divisions.filter(Boolean).length > 0;
@@ -43,6 +61,7 @@ const useConferenceRules = ({ code, onError, onSuccess }) => {
     };
 
     const removeRivalry = async (index) => {
+        const scope = requestScopeRef.current;
         const rivalry = protectedRivalries[index];
         const updated = protectedRivalries.filter((_, i) => i !== index);
 
@@ -53,9 +72,13 @@ const useConferenceRules = ({ code, onError, onSuccess }) => {
 
         try {
             await saveConferenceRules(code, numConferenceGames, updated);
-            setProtectedRivalries(updated);
-        } catch (err) {
-            console.error('Error removing rivalry:', err);
+            if (scope.active) {
+                setProtectedRivalries(updated);
+            }
+        } catch {
+            if (scope.active) {
+                console.error('Error removing rivalry');
+            }
         }
     };
 
@@ -66,16 +89,21 @@ const useConferenceRules = ({ code, onError, onSuccess }) => {
     };
 
     const toggleDivisions = async (enabled) => {
+        const scope = requestScopeRef.current;
         const updated = enabled ? ['', ''] : [];
 
         if (!enabled && divisions.some(Boolean)) {
             onError?.(null);
             try {
                 await saveConferenceRules(code, numConferenceGames, protectedRivalries, updated);
-                setDivisions(updated);
-                onSuccess?.('Divisions disabled');
+                if (scope.active) {
+                    setDivisions(updated);
+                    onSuccess?.('Divisions disabled');
+                }
             } catch (err) {
-                onError?.(err.message || 'Failed to disable divisions');
+                if (scope.active) {
+                    onError?.(err.message || 'Failed to disable divisions');
+                }
             }
             return;
         }
@@ -90,16 +118,23 @@ const useConferenceRules = ({ code, onError, onSuccess }) => {
     };
 
     const saveDivisions = async () => {
+        const scope = requestScopeRef.current;
         setSavingDivisions(true);
         onError?.(null);
         onSuccess?.(null);
         try {
             await saveConferenceRules(code, numConferenceGames, protectedRivalries, divisions);
-            onSuccess?.('Divisions saved');
+            if (scope.active) {
+                onSuccess?.('Divisions saved');
+            }
         } catch (err) {
-            onError?.(err.message || 'Failed to save divisions');
+            if (scope.active) {
+                onError?.(err.message || 'Failed to save divisions');
+            }
         } finally {
-            setSavingDivisions(false);
+            if (scope.active) {
+                setSavingDivisions(false);
+            }
         }
     };
 
@@ -108,11 +143,19 @@ const useConferenceRules = ({ code, onError, onSuccess }) => {
     };
 
     return {
-        numConferenceGames, setNumConferenceGames,
-        protectedRivalries, divisions, rulesLoading,
-        divisionsEnabled, savingDivisions,
-        addRivalry, removeRivalry, updateRivalry,
-        toggleDivisions, updateDivision, saveDivisions,
+        numConferenceGames,
+        setNumConferenceGames,
+        protectedRivalries,
+        divisions,
+        rulesLoading,
+        divisionsEnabled,
+        savingDivisions,
+        addRivalry,
+        removeRivalry,
+        updateRivalry,
+        toggleDivisions,
+        updateDivision,
+        saveDivisions,
         handleSaveRules,
     };
 };

@@ -1,18 +1,20 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
-import { getConference } from '../../constants/conferences';
+import { getConference } from '../../../hooks/useConferencesMap';
 import PlayoffLogo from '../../ui/PlayoffLogo';
 import ConferenceMark from '../../ui/ConferenceMark';
 
 const PLAYOFF_ROUNDS = { 1: 'First Round', 2: 'Second Round', 3: 'Quarterfinal', 4: 'Semifinal' };
 
 const LogoImg = ({ src }) =>
-    src ? <Box component="img" src={src} alt="" sx={{ height: 15, width: 'auto', objectFit: 'contain', flexShrink: 0 }} /> : null;
+    src ? (
+        <Box component="img" src={src} alt="" sx={{ height: 15, width: 'auto', objectFit: 'contain', flexShrink: 0 }} />
+    ) : null;
 
 LogoImg.propTypes = { src: PropTypes.string };
 
-const resolve = (game, homeTeam) => {
+const resolveGameTypeDisplay = (game, homeTeam) => {
     const conferenceCode = homeTeam?.conference;
     const conferenceMark = conferenceCode ? <ConferenceMark conference={conferenceCode} size={15} /> : null;
     switch (game.game_type) {
@@ -34,7 +36,7 @@ const resolve = (game, homeTeam) => {
 };
 
 const GameTypeLabel = ({ game, homeTeam }) => {
-    const { node, text } = resolve(game, homeTeam);
+    const { node, text } = resolveGameTypeDisplay(game, homeTeam);
     return (
         <Box
             sx={{
@@ -50,7 +52,9 @@ const GameTypeLabel = ({ game, homeTeam }) => {
             }}
         >
             {node}
-            <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</Box>
+            <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {text}
+            </Box>
         </Box>
     );
 };

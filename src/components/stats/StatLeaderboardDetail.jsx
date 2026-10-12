@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Box } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import PropTypes from 'prop-types';
@@ -25,18 +25,67 @@ const StatLeaderboardDetail = ({ stat, rows, onBack }) => {
 
     const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     const current = Math.min(page, pageCount - 1);
-    const slice = filtered.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
+    const slice = useMemo(
+        () => filtered.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE),
+        [filtered, current]
+    );
+
+    useEffect(() => {
+        slice.forEach((row) => ensureTeam(row.team));
+    }, [slice]);
 
     return (
         <>
             <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                <Box component="button" type="button" onClick={onBack} sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, height: 38, px: 1.5, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}>
+                <Box
+                    component="button"
+                    type="button"
+                    onClick={onBack}
+                    sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        height: 38,
+                        px: 1.5,
+                        border: '1px solid var(--line)',
+                        background: 'var(--surface-2)',
+                        color: 'var(--text-muted)',
+                        borderRadius: 'var(--r-sm)',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                    }}
+                >
                     <ArrowBack sx={{ fontSize: 15 }} /> All leaderboards
                 </Box>
-                <Box component="input" value={teamQuery} onChange={(event) => { setTeamQuery(event.target.value); setPage(0); }} placeholder="Search a team…" aria-label="Search a team"
-                    sx={{ flex: 1, minWidth: 200, height: 38, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: 1.5, font: 'inherit', fontSize: '0.82rem', '&::placeholder': { color: 'var(--text-dim)' } }} />
+                <Box
+                    component="input"
+                    value={teamQuery}
+                    onChange={(event) => {
+                        setTeamQuery(event.target.value);
+                        setPage(0);
+                    }}
+                    placeholder="Search a team…"
+                    aria-label="Search a team"
+                    sx={{
+                        flex: 1,
+                        minWidth: 200,
+                        height: 38,
+                        border: '1px solid var(--line)',
+                        background: 'var(--surface)',
+                        color: 'var(--text)',
+                        borderRadius: 'var(--r-sm)',
+                        px: 1.5,
+                        font: 'inherit',
+                        fontSize: '0.82rem',
+                        '&::placeholder': { color: 'var(--text-dim)' },
+                    }}
+                />
             </Box>
-            <Panel header={stat.label} more={`${filtered.length} team${filtered.length === 1 ? '' : 's'}${stat.ascending ? ' · lowest is best' : ''}`}>
+            <Panel
+                header={stat.label}
+                more={`${filtered.length} team${filtered.length === 1 ? '' : 's'}${stat.ascending ? ' · lowest is best' : ''}`}
+            >
                 <DataTable minWidth={480}>
                     <thead>
                         <tr>
@@ -48,14 +97,18 @@ const StatLeaderboardDetail = ({ stat, rows, onBack }) => {
                     </thead>
                     <tbody>
                         {slice.map((row) => {
-                            ensureTeam(row.team);
                             const teamId = teamsMap[row.team]?.id;
                             return (
                                 <Box
                                     component={teamId ? Link : 'tr'}
                                     to={teamId ? `/team-details/${teamId}` : undefined}
                                     key={row.team}
-                                    sx={{ display: 'table-row', textDecoration: 'none', color: 'inherit', cursor: teamId ? 'pointer' : 'default' }}
+                                    sx={{
+                                        display: 'table-row',
+                                        textDecoration: 'none',
+                                        color: 'inherit',
+                                        cursor: teamId ? 'pointer' : 'default',
+                                    }}
                                 >
                                     <td className="lft stick num">{row.rank}</td>
                                     <td className="lft">
@@ -64,7 +117,11 @@ const StatLeaderboardDetail = ({ stat, rows, onBack }) => {
                                             <span className="nm">{row.team}</span>
                                         </div>
                                     </td>
-                                    <td><Box sx={{ display: 'flex', justifyContent: 'center' }}><ConferenceMark conference={row.conference} /></Box></td>
+                                    <td>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                            <ConferenceMark conference={row.conference} />
+                                        </Box>
+                                    </td>
                                     <td className="num">{stat.format ? stat.format(row[stat.key]) : row[stat.key]}</td>
                                 </Box>
                             );

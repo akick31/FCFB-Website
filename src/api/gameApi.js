@@ -5,11 +5,11 @@ export const getGameById = async (gameId) => {
         const response = await apiClient.get('/game/ongoing', { params: { id: gameId } });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch game by id:", error);
+        console.error('Failed to fetch game by id:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch game by id");
+            throw new Error(error.response.data.error || 'Failed to fetch game by id');
         }
-        throw new Error("An unexpected error occurred while fetching game by id");
+        throw new Error('An unexpected error occurred while fetching game by id');
     }
 };
 
@@ -18,23 +18,41 @@ export const getFilteredGames = async (params) => {
         const searchParams = new URLSearchParams();
 
         if (params.filters) {
-            params.filters.forEach(filter => {
-                if (filter !== null && filter !== '') searchParams.append('filters', filter);
+            params.filters.forEach((filter) => {
+                if (filter !== null && filter !== '') {
+                    searchParams.append('filters', filter);
+                }
             });
         }
 
-        if (params.week) searchParams.append('week', params.week);
-        if (params.minWeek) searchParams.append('minWeek', params.minWeek);
-        if (params.season) searchParams.append('season', params.season);
-        if (params.conference) searchParams.append('conference', params.conference);
-        if (params.gameMode) searchParams.append('gameMode', params.gameMode);
+        if (params.week) {
+            searchParams.append('week', params.week);
+        }
+        if (params.minWeek) {
+            searchParams.append('minWeek', params.minWeek);
+        }
+        if (params.season) {
+            searchParams.append('season', params.season);
+        }
+        if (params.conference) {
+            searchParams.append('conference', params.conference);
+        }
+        if (params.gameMode) {
+            searchParams.append('gameMode', params.gameMode);
+        }
         if (params.gameType) {
             const types = Array.isArray(params.gameType) ? params.gameType : [params.gameType];
-            types.forEach(t => searchParams.append('gameType', t));
+            types.forEach((t) => searchParams.append('gameType', t));
         }
-        if (params.gameStatus) searchParams.append('gameStatus', params.gameStatus);
-        if (params.category) searchParams.append('category', params.category);
-        if (params.sort) searchParams.append('sort', params.sort);
+        if (params.gameStatus) {
+            searchParams.append('gameStatus', params.gameStatus);
+        }
+        if (params.category) {
+            searchParams.append('category', params.category);
+        }
+        if (params.sort) {
+            searchParams.append('sort', params.sort);
+        }
         searchParams.append('page', params.page);
         searchParams.append('size', params.size);
 
@@ -45,64 +63,66 @@ export const getFilteredGames = async (params) => {
 
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch filtered games:", error);
+        console.error('Failed to fetch filtered games:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch filtered games");
+            throw new Error(error.response.data.error || 'Failed to fetch filtered games');
         }
-        throw new Error("An unexpected error occurred while fetching filtered games");
+        throw new Error('An unexpected error occurred while fetching filtered games');
     }
 };
 
 export const getGamesByIds = async (gameIds) => {
-    if (!gameIds || gameIds.length === 0) return [];
+    if (!gameIds || gameIds.length === 0) {
+        return [];
+    }
     try {
         const response = await apiClient.post('/game/batch', gameIds);
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch games by id:", error);
+        console.error('Failed to fetch games by id:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch games by id");
+            throw new Error(error.response.data.error || 'Failed to fetch games by id');
         }
-        throw new Error("An unexpected error occurred while fetching games by id");
+        throw new Error('An unexpected error occurred while fetching games by id');
     }
 };
 
 export const startGame = async (startRequest) => {
     try {
-        const response = await apiClient.post('/game', startRequest);
+        const response = await apiClient.post('/game-creation', startRequest);
         return response.data;
     } catch (error) {
-        console.error("Failed to start game:", error);
+        console.error('Failed to start game:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to start game");
+            throw new Error(error.response.data.error || 'Failed to start game');
         }
-        throw new Error("An unexpected error occurred while starting game");
+        throw new Error('An unexpected error occurred while starting game');
     }
 };
 
 export const startScrimmage = async (startRequest) => {
     try {
-        const response = await apiClient.post('/game', { ...startRequest, gameType: 'SCRIMMAGE' });
+        const response = await apiClient.post('/game-creation', { ...startRequest, gameType: 'SCRIMMAGE' });
         return response.data;
     } catch (error) {
-        console.error("Failed to start scrimmage:", error);
+        console.error('Failed to start scrimmage:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to start scrimmage");
+            throw new Error(error.response.data.error || 'Failed to start scrimmage');
         }
-        throw new Error("An unexpected error occurred while starting scrimmage");
+        throw new Error('An unexpected error occurred while starting scrimmage');
     }
 };
 
 export const startOvertimeGame = async (startRequest) => {
     try {
-        const response = await apiClient.post('/game/overtime', startRequest);
+        const response = await apiClient.post('/game-creation/overtime', startRequest);
         return response.data;
     } catch (error) {
-        console.error("Failed to start overtime game:", error);
+        console.error('Failed to start overtime game:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to start overtime game");
+            throw new Error(error.response.data.error || 'Failed to start overtime game');
         }
-        throw new Error("An unexpected error occurred while starting overtime game");
+        throw new Error('An unexpected error occurred while starting overtime game');
     }
 };
 
@@ -111,24 +131,24 @@ export const markAllGamesAsChewMode = async () => {
         const response = await apiClient.post('/game/chew-all');
         return response.data;
     } catch (error) {
-        console.error("Failed to mark all games as chew mode:", error);
+        console.error('Failed to mark all games as chew mode:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to mark all games as chew mode");
+            throw new Error(error.response.data.error || 'Failed to mark all games as chew mode');
         }
-        throw new Error("An unexpected error occurred while marking all games as chew mode");
+        throw new Error('An unexpected error occurred while marking all games as chew mode');
     }
 };
 
 export const endAllOngoingGames = async () => {
     try {
-        const response = await apiClient.post('/game/end-all');
+        const response = await apiClient.post('/game-finalization/all');
         return response.data;
     } catch (error) {
-        console.error("Failed to end all ongoing games:", error);
+        console.error('Failed to end all ongoing games:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to end all ongoing games");
+            throw new Error(error.response.data.error || 'Failed to end all ongoing games');
         }
-        throw new Error("An unexpected error occurred while ending all ongoing games");
+        throw new Error('An unexpected error occurred while ending all ongoing games');
     }
 };
 
@@ -137,37 +157,37 @@ export const updateGame = async (gameData) => {
         const response = await apiClient.put(`/game`, gameData);
         return response.data;
     } catch (error) {
-        console.error("Failed to update game:", error);
+        console.error('Failed to update game:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to update game");
+            throw new Error(error.response.data.error || 'Failed to update game');
         }
-        throw new Error("An unexpected error occurred while updating game");
+        throw new Error('An unexpected error occurred while updating game');
     }
 };
 
 export const restartGame = async (gameId) => {
     try {
-        const response = await apiClient.post(`/game/restart?channelId=${gameId}`);
+        const response = await apiClient.post(`/game-creation/restart?channelId=${gameId}`);
         return response.data;
     } catch (error) {
-        console.error("Failed to restart game:", error);
+        console.error('Failed to restart game:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to restart game");
+            throw new Error(error.response.data.error || 'Failed to restart game');
         }
-        throw new Error("An unexpected error occurred while restarting game");
+        throw new Error('An unexpected error occurred while restarting game');
     }
 };
 
 export const endGameByGameId = async (gameId) => {
     try {
-        const response = await apiClient.post('/game/end', null, { params: { gameId } });
+        const response = await apiClient.post('/game-finalization', null, { params: { gameId } });
         return response.data;
     } catch (error) {
-        console.error("Failed to end game:", error);
+        console.error('Failed to end game:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to end game");
+            throw new Error(error.response.data.error || 'Failed to end game');
         }
-        throw new Error("An unexpected error occurred while ending game");
+        throw new Error('An unexpected error occurred while ending game');
     }
 };
 
@@ -176,11 +196,11 @@ export const chewGameByGameId = async (gameId) => {
         const response = await apiClient.post('/game/chew', null, { params: { gameId } });
         return response.data;
     } catch (error) {
-        console.error("Failed to chew game:", error);
+        console.error('Failed to chew game:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to chew game");
+            throw new Error(error.response.data.error || 'Failed to chew game');
         }
-        throw new Error("An unexpected error occurred while chewing game");
+        throw new Error('An unexpected error occurred while chewing game');
     }
 };
 
@@ -189,13 +209,10 @@ export const unchewGameByGameId = async (gameId) => {
         const response = await apiClient.post('/game/unchew', null, { params: { gameId } });
         return response.data;
     } catch (error) {
-        console.error("Failed to take game out of chew mode:", error);
+        console.error('Failed to take game out of chew mode:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to take game out of chew mode");
+            throw new Error(error.response.data.error || 'Failed to take game out of chew mode');
         }
-        throw new Error("An unexpected error occurred while taking game out of chew mode");
+        throw new Error('An unexpected error occurred while taking game out of chew mode');
     }
 };
-
-
-

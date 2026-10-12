@@ -18,7 +18,14 @@ export const createAppTheme = (mode = 'dark') => {
         },
         typography: {
             fontFamily: SANS,
-            h1: { fontFamily: COND, fontWeight: 800, fontSize: '2.4rem', lineHeight: 1, letterSpacing: '-0.01em', textTransform: 'uppercase' },
+            h1: {
+                fontFamily: COND,
+                fontWeight: 800,
+                fontSize: '2.4rem',
+                lineHeight: 1,
+                letterSpacing: '-0.01em',
+                textTransform: 'uppercase',
+            },
             h2: { fontFamily: COND, fontWeight: 800, fontSize: '1.7rem', lineHeight: 1.05, textTransform: 'uppercase' },
             h3: { fontFamily: COND, fontWeight: 800, fontSize: '1.2rem', textTransform: 'uppercase' },
             h4: { fontWeight: 700, fontSize: '1.1rem' },

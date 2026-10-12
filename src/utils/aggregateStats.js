@@ -1,44 +1,58 @@
 import { STAT_ROWS } from './teamStatFields';
 import { sum, max, mean, rate, averageFromTotals, weightedAverage } from './statAggregation';
-
-const aggregateField = (row, rows, result, prefix = '') => {
-    const p = (name) => `${prefix}${name}`;
-    switch (row.agg) {
+const aggregateField = (statDefinition, statRows, aggregatedStats, prefix = '') => {
+    const prefixedKey = (name) => `${prefix}${name}`;
+    switch (statDefinition.agg) {
         case 'sum':
-            result[p(row.key)] = sum(rows, p(row.key));
+            aggregatedStats[prefixedKey(statDefinition.key)] = sum(statRows, prefixedKey(statDefinition.key));
             break;
         case 'max':
-            result[p(row.key)] = max(rows, p(row.key));
+            aggregatedStats[prefixedKey(statDefinition.key)] = max(statRows, prefixedKey(statDefinition.key));
             break;
         case 'mean':
-            result[p(row.key)] = mean(rows, p(row.key));
+            aggregatedStats[prefixedKey(statDefinition.key)] = mean(statRows, prefixedKey(statDefinition.key));
             break;
         case 'rate':
-            result[p(row.key)] = rate(rows, p(row.num), p(row.den));
+            aggregatedStats[prefixedKey(statDefinition.key)] = rate(
+                statRows,
+                prefixedKey(statDefinition.num),
+                prefixedKey(statDefinition.den)
+            );
             break;
         case 'ratio':
-            result[p(row.num)] = sum(rows, p(row.num));
-            result[p(row.den)] = sum(rows, p(row.den));
-            result[p(row.key)] = averageFromTotals(rows, p(row.num), p(row.den));
+            aggregatedStats[prefixedKey(statDefinition.num)] = sum(statRows, prefixedKey(statDefinition.num));
+            aggregatedStats[prefixedKey(statDefinition.den)] = sum(statRows, prefixedKey(statDefinition.den));
+            aggregatedStats[prefixedKey(statDefinition.key)] = averageFromTotals(
+                statRows,
+                prefixedKey(statDefinition.num),
+                prefixedKey(statDefinition.den)
+            );
             break;
         case 'wavg':
-            result[p(row.key)] = weightedAverage(rows, p(row.key), p(row.weight));
+            aggregatedStats[prefixedKey(statDefinition.key)] = weightedAverage(
+                statRows,
+                prefixedKey(statDefinition.key),
+                prefixedKey(statDefinition.weight)
+            );
             break;
         case 'fgratio':
-            result[p(row.made)] = sum(rows, p(row.made));
-            result[p(row.att)] = sum(rows, p(row.att));
+            aggregatedStats[prefixedKey(statDefinition.made)] = sum(statRows, prefixedKey(statDefinition.made));
+            aggregatedStats[prefixedKey(statDefinition.att)] = sum(statRows, prefixedKey(statDefinition.att));
             break;
         default:
             break;
     }
 };
-
-export const aggregateSeasonStats = (rows) => {
-    if (!Array.isArray(rows) || rows.length === 0) return null;
-    const result = {};
-    STAT_ROWS.forEach((row) => {
-        aggregateField(row, rows, result);
-        if (row.opp) aggregateField(row, rows, result, 'opponent_');
+export const aggregateSeasonStats = (statRows) => {
+    if (!Array.isArray(statRows) || statRows.length === 0) {
+        return null;
+    }
+    const aggregatedStats = {};
+    STAT_ROWS.forEach((statDefinition) => {
+        aggregateField(statDefinition, statRows, aggregatedStats);
+        if (statDefinition.opp) {
+            aggregateField(statDefinition, statRows, aggregatedStats, 'opponent_');
+        }
     });
-    return result;
+    return aggregatedStats;
 };

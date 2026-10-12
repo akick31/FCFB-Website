@@ -1,7 +1,14 @@
 const luminance = (hex) => {
-    if (!hex) return 0.5;
+    if (!hex) {
+        return 0.5;
+    }
     let value = String(hex).replace('#', '');
-    if (value.length === 3) value = value.split('').map((c) => c + c).join('');
+    if (value.length === 3) {
+        value = value
+            .split('')
+            .map((c) => c + c)
+            .join('');
+    }
     const r = parseInt(value.slice(0, 2), 16);
     const g = parseInt(value.slice(2, 4), 16);
     const b = parseInt(value.slice(4, 6), 16);
@@ -16,7 +23,11 @@ export const pickTeamColor = (team, mode) => {
         const l = luminance(color);
         return dark ? l > 0.24 : l < 0.8;
     };
-    if (legible(primary)) return primary;
-    if (secondary && legible(secondary)) return secondary;
+    if (legible(primary)) {
+        return primary;
+    }
+    if (secondary && legible(secondary)) {
+        return secondary;
+    }
     return dark ? '#cfe0ea' : '#22323e';
 };

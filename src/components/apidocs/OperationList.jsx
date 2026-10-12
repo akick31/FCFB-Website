@@ -2,7 +2,13 @@ import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const METHOD_COLORS = { GET: 'var(--brand)', POST: 'var(--field)', PUT: 'var(--gold)', PATCH: 'var(--gold)', DELETE: 'var(--live)' };
+const METHOD_COLORS = {
+    GET: 'var(--brand)',
+    POST: 'var(--field)',
+    PUT: 'var(--gold)',
+    PATCH: 'var(--gold)',
+    DELETE: 'var(--live)',
+};
 
 export const MethodBadge = ({ method }) => (
     <Box
@@ -35,14 +41,37 @@ const OperationList = ({ groups, query, onQueryChange, selectedId, onSelect }) =
                 value={query}
                 onChange={(e) => onQueryChange(e.target.value)}
                 placeholder="Search endpoints..."
-                sx={{ width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', py: '7px', font: 'inherit', fontSize: '0.8rem' }}
+                sx={{
+                    width: '100%',
+                    border: '1px solid var(--line)',
+                    background: 'var(--surface-2)',
+                    color: 'var(--text)',
+                    borderRadius: 'var(--r-sm)',
+                    px: '10px',
+                    py: '7px',
+                    font: 'inherit',
+                    fontSize: '0.8rem',
+                }}
             />
         </Box>
         <Box sx={{ maxHeight: '640px', overflowY: 'auto' }}>
-            {groups.length === 0 && <Box sx={{ p: 2, color: 'var(--text-muted)', fontSize: '0.8rem' }}>No endpoints match your search.</Box>}
+            {groups.length === 0 && (
+                <Box sx={{ p: 2, color: 'var(--text-muted)', fontSize: '0.8rem' }}>No endpoints match your search.</Box>
+            )}
             {groups.map(([tag, ops]) => (
                 <Box key={tag}>
-                    <Box sx={{ px: '14px', py: '8px', fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', background: 'var(--surface-2)' }}>
+                    <Box
+                        sx={{
+                            px: '14px',
+                            py: '8px',
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em',
+                            color: 'var(--text-dim)',
+                            background: 'var(--surface-2)',
+                        }}
+                    >
                         {tag}
                     </Box>
                     {ops.map((op) => (
@@ -67,10 +96,22 @@ const OperationList = ({ groups, query, onQueryChange, selectedId, onSelect }) =
                                 '&:hover': { background: 'var(--surface-2)' },
                             }}
                         >
-                            <Box sx={{ mt: '2px' }}><MethodBadge method={op.method} /></Box>
+                            <Box sx={{ mt: '2px' }}>
+                                <MethodBadge method={op.method} />
+                            </Box>
                             <Box sx={{ minWidth: 0 }}>
                                 <Box sx={{ fontSize: '0.78rem', lineHeight: 1.3 }}>{op.summary}</Box>
-                                <Box sx={{ fontSize: '0.66rem', color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{op.path}</Box>
+                                <Box
+                                    sx={{
+                                        fontSize: '0.66rem',
+                                        color: 'var(--text-dim)',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
+                                    {op.path}
+                                </Box>
                             </Box>
                         </Box>
                     ))}

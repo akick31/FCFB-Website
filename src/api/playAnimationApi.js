@@ -1,3 +1,3 @@
-const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1/arceus';
+import { baseURL } from '../config/api';
 
 export const getPlayAnimationUrl = (playId) => `${baseURL}/play-animation?playId=${playId}`;

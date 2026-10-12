@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useColorMode } from '../../theme/ColorModeContext';
+import { useColorMode } from '../../context/ColorModeContext';
 
 const TeamMark = ({ team, size = 24, sx }) => {
     const { mode } = useColorMode();
@@ -40,7 +40,12 @@ const TeamMark = ({ team, size = 24, sx }) => {
             ) : (
                 <Box
                     component="span"
-                    sx={{ fontFamily: 'var(--cond)', fontSize: size < 24 ? '0.55rem' : '0.62rem', fontWeight: 800, color: 'var(--text-muted)' }}
+                    sx={{
+                        fontFamily: 'var(--cond)',
+                        fontSize: size < 24 ? '0.55rem' : '0.62rem',
+                        fontWeight: 800,
+                        color: 'var(--text-muted)',
+                    }}
                 >
                     {team?.abbreviation || '?'}
                 </Box>

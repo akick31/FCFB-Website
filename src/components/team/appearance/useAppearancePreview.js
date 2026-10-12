@@ -16,21 +16,40 @@ export const useAppearancePreview = (team, view, body) => {
         const timer = setTimeout(async () => {
             try {
                 const loaded = await renderAppearancePreview({ team, view, ...body });
-                if (cancelled) { URL.revokeObjectURL(loaded); return; }
-                if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+                if (cancelled) {
+                    URL.revokeObjectURL(loaded);
+                    return;
+                }
+                if (urlRef.current) {
+                    URL.revokeObjectURL(urlRef.current);
+                }
                 urlRef.current = loaded;
                 setUrl(loaded);
                 setError(null);
             } catch (err) {
-                if (!cancelled) setError(err.message || 'Preview unavailable');
+                if (!cancelled) {
+                    setError(err.message || 'Preview unavailable');
+                }
             } finally {
-                if (!cancelled) setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
         }, PREVIEW_DEBOUNCE_MS);
-        return () => { cancelled = true; clearTimeout(timer); };
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
     }, [team, view, body]);
 
-    useEffect(() => () => { if (urlRef.current) URL.revokeObjectURL(urlRef.current); }, []);
+    useEffect(
+        () => () => {
+            if (urlRef.current) {
+                URL.revokeObjectURL(urlRef.current);
+            }
+        },
+        []
+    );
 
     return { url, loading, error };
 };

@@ -7,9 +7,11 @@ const NON_DOWN_PLAY_CALLS = ['KICKOFF_NORMAL', 'KICKOFF_ONSIDE', 'KICKOFF_SQUIB'
 const isSpecialTeams = (play) => SPECIAL_TEAMS_PLAY_CALLS.includes(String(play.play_call || '').toUpperCase());
 const isNonDownPlay = (play) => NON_DOWN_PLAY_CALLS.includes(String(play.play_call || '').toUpperCase());
 
-export const hasPossession = (play, mode, target) => (mode === 'coach'
-    ? play.offensive_submitter_id === target
-    : (play.possession === 'HOME' && play.home_team === target) || (play.possession === 'AWAY' && play.away_team === target));
+export const hasPossession = (play, mode, target) =>
+    mode === 'coach'
+        ? play.offensive_submitter_id === target
+        : (play.possession === 'HOME' && play.home_team === target) ||
+          (play.possession === 'AWAY' && play.away_team === target);
 
 export const playCallSplit = (plays, mode, target) => {
     const snaps = plays.filter((play) => hasPossession(play, mode, target) && !isSpecialTeams(play));
@@ -28,7 +30,9 @@ export const playCallSplit = (plays, mode, target) => {
 export const playCallByDown = (plays, mode, target) => {
     const result = {};
     [1, 2, 3, 4].forEach((down) => {
-        const snaps = plays.filter((play) => hasPossession(play, mode, target) && !isNonDownPlay(play) && play.down === down);
+        const snaps = plays.filter(
+            (play) => hasPossession(play, mode, target) && !isNonDownPlay(play) && play.down === down
+        );
         if (snaps.length === 0) {
             result[down] = null;
             return;
@@ -55,7 +59,12 @@ export const fourthDownTendency = (plays, mode, target) => {
 };
 
 export const tempoSplit = (plays, mode, target) => {
-    const snaps = plays.filter((play) => hasPossession(play, mode, target) && !isNonDownPlay(play) && !KICKOFF_CALLS.includes(String(play.play_call || '').toUpperCase()));
+    const snaps = plays.filter(
+        (play) =>
+            hasPossession(play, mode, target) &&
+            !isNonDownPlay(play) &&
+            !KICKOFF_CALLS.includes(String(play.play_call || '').toUpperCase())
+    );
     const total = snaps.length;
     const chew = snaps.filter((play) => tempoOf(play) === 'CHEW').length;
     const hurry = snaps.filter((play) => tempoOf(play) === 'HURRY').length;
@@ -69,17 +78,24 @@ export const tempoSplit = (plays, mode, target) => {
 };
 
 export const kickoffTypeSplit = (plays, mode, target) => {
-    const kicks = plays.filter((play) => hasPossession(play, mode, target) && KICKOFF_CALLS.includes(String(play.play_call || '').toUpperCase()));
+    const kicks = plays.filter(
+        (play) =>
+            hasPossession(play, mode, target) && KICKOFF_CALLS.includes(String(play.play_call || '').toUpperCase())
+    );
     const total = kicks.length;
     const counts = { KICKOFF_NORMAL: 0, KICKOFF_ONSIDE: 0, KICKOFF_SQUIB: 0 };
-    kicks.forEach((play) => { counts[play.play_call] = (counts[play.play_call] || 0) + 1; });
+    kicks.forEach((play) => {
+        counts[play.play_call] = (counts[play.play_call] || 0) + 1;
+    });
     return {
         total,
         counts,
-        shares: total ? {
-            KICKOFF_NORMAL: counts.KICKOFF_NORMAL / total,
-            KICKOFF_ONSIDE: counts.KICKOFF_ONSIDE / total,
-            KICKOFF_SQUIB: counts.KICKOFF_SQUIB / total,
-        } : null,
+        shares: total
+            ? {
+                  KICKOFF_NORMAL: counts.KICKOFF_NORMAL / total,
+                  KICKOFF_ONSIDE: counts.KICKOFF_ONSIDE / total,
+                  KICKOFF_SQUIB: counts.KICKOFF_SQUIB / total,
+              }
+            : null,
     };
 };

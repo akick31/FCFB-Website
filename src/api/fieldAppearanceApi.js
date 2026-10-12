@@ -24,15 +24,26 @@ export const getBowlField = (bowl) => fetchData('/bowl-field', { bowl }, 'Failed
 
 export const updateBowlField = (bowl, body) => saveData('/bowl-field', { bowl }, body, 'Failed to save bowl field');
 
-export const getPlayoffFields = () => fetchData('/postseason-field/playoff/all', undefined, 'Failed to load playoff fields');
+export const getPlayoffFields = () =>
+    fetchData('/postseason-field/playoff/all', undefined, 'Failed to load playoff fields');
 
-export const updatePlayoffField = (round, body) => saveData('/postseason-field/playoff', { round }, body, 'Failed to save playoff field');
+export const updatePlayoffField = (round, body) =>
+    saveData('/postseason-field/playoff', { round }, body, 'Failed to save playoff field');
 
 export const getConferenceChampionshipField = (conference) =>
-    fetchData('/postseason-field/conference-championship', { conference }, 'Failed to load conference championship field');
+    fetchData(
+        '/postseason-field/conference-championship',
+        { conference },
+        'Failed to load conference championship field'
+    );
 
 export const updateConferenceChampionshipField = (conference, body) =>
-    saveData('/postseason-field/conference-championship', { conference }, body, 'Failed to save conference championship field');
+    saveData(
+        '/postseason-field/conference-championship',
+        { conference },
+        body,
+        'Failed to save conference championship field'
+    );
 
 export const renderPostseasonPreview = async (request) => {
     try {

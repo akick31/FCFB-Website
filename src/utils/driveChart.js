@@ -1,26 +1,46 @@
 import { humanizeEnumValue } from './humanize';
 
-export const orderPlaysChronologically = (plays) => [...plays].sort((a, b) =>
-    ((a.play_number ?? 0) - (b.play_number ?? 0))
-    || ((a.quarter ?? 0) - (b.quarter ?? 0))
-    || ((b.clock ?? 0) - (a.clock ?? 0))
-    || ((a.play_id ?? 0) - (b.play_id ?? 0)));
+export const orderPlaysChronologically = (plays) =>
+    [...plays].sort(
+        (a, b) =>
+            (a.play_number ?? 0) - (b.play_number ?? 0) ||
+            (a.quarter ?? 0) - (b.quarter ?? 0) ||
+            (b.clock ?? 0) - (a.clock ?? 0) ||
+            (a.play_id ?? 0) - (b.play_id ?? 0)
+    );
 
 const KICKOFF_CALLS = ['KICKOFF_NORMAL', 'KICKOFF_ONSIDE', 'KICKOFF_SQUIB'];
 const isKickoff = (play) => KICKOFF_CALLS.includes(String(play.play_call || '').toUpperCase());
 
-const RETURN_TOUCHDOWN_RESULTS = ['RETURN_TOUCHDOWN', 'PUNT_RETURN_TOUCHDOWN', 'KICK_SIX', 'TURNOVER_TOUCHDOWN', 'KICKING_TEAM_TOUCHDOWN', 'PUNT_TEAM_TOUCHDOWN'];
+const RETURN_TOUCHDOWN_RESULTS = [
+    'RETURN_TOUCHDOWN',
+    'PUNT_RETURN_TOUCHDOWN',
+    'KICK_SIX',
+    'TURNOVER_TOUCHDOWN',
+    'KICKING_TEAM_TOUCHDOWN',
+    'PUNT_TEAM_TOUCHDOWN',
+];
 const isReturnTouchdown = (play) => RETURN_TOUCHDOWN_RESULTS.includes(String(play.actual_result || '').toUpperCase());
 const isConversionAttempt = (play) => ['PAT', 'TWO_POINT'].includes(String(play.play_call || '').toUpperCase());
 
 const kickoffStartReason = (play) => {
     const outcome = String(play.actual_result || '').toUpperCase();
     const call = String(play.play_call || '').toUpperCase();
-    if (outcome === 'TOUCHBACK') return 'Kickoff (touchback)';
-    if (outcome === 'SUCCESSFUL_ONSIDE') return 'Onside kick recovery';
-    if (outcome === 'MUFFED_KICK') return 'Kickoff (muffed)';
-    if (call === 'KICKOFF_SQUIB') return 'Squib kickoff return';
-    if (call === 'KICKOFF_ONSIDE') return 'Onside kick return';
+    if (outcome === 'TOUCHBACK') {
+        return 'Kickoff (touchback)';
+    }
+    if (outcome === 'SUCCESSFUL_ONSIDE') {
+        return 'Onside kick recovery';
+    }
+    if (outcome === 'MUFFED_KICK') {
+        return 'Kickoff (muffed)';
+    }
+    if (call === 'KICKOFF_SQUIB') {
+        return 'Squib kickoff return';
+    }
+    if (call === 'KICKOFF_ONSIDE') {
+        return 'Onside kick return';
+    }
     return 'Kickoff return';
 };
 
@@ -28,12 +48,24 @@ const turnoverStartReason = (play) => {
     const outcome = String(play.actual_result || '').toUpperCase();
     const call = String(play.play_call || '').toUpperCase();
     const scenario = String(play.result || '').toUpperCase();
-    if (outcome === 'TURNOVER_ON_DOWNS') return 'Turnover on downs';
-    if (call === 'PUNT') return 'Opponent punt';
-    if (scenario.includes('FUMBLE') || outcome === 'MUFFED_PUNT') return 'Opponent fumble';
-    if (call === 'PASS' && (outcome === 'TURNOVER' || outcome === 'TURNOVER_TOUCHDOWN' || outcome === 'KICK_SIX')) return 'Interception';
-    if (outcome === 'SAFETY') return 'Free kick after safety';
-    if (outcome === 'TURNOVER' || outcome === 'TURNOVER_TOUCHDOWN' || outcome === 'KICK_SIX') return 'Turnover';
+    if (outcome === 'TURNOVER_ON_DOWNS') {
+        return 'Turnover on downs';
+    }
+    if (call === 'PUNT') {
+        return 'Opponent punt';
+    }
+    if (scenario.includes('FUMBLE') || outcome === 'MUFFED_PUNT') {
+        return 'Opponent fumble';
+    }
+    if (call === 'PASS' && (outcome === 'TURNOVER' || outcome === 'TURNOVER_TOUCHDOWN' || outcome === 'KICK_SIX')) {
+        return 'Interception';
+    }
+    if (outcome === 'SAFETY') {
+        return 'Free kick after safety';
+    }
+    if (outcome === 'TURNOVER' || outcome === 'TURNOVER_TOUCHDOWN' || outcome === 'KICK_SIX') {
+        return 'Turnover';
+    }
     return 'Change of possession';
 };
 
@@ -41,8 +73,12 @@ const conversionLabel = (play) => {
     const call = String(play.play_call || '').toUpperCase();
     const outcome = String(play.actual_result || '').toUpperCase();
     const made = outcome === 'GOOD' || outcome === 'SUCCESS';
-    if (call === 'PAT') return made ? 'PAT Good' : 'PAT Missed';
-    if (call === 'TWO_POINT') return made ? 'Two-Point Good' : 'Two-Point Failed';
+    if (call === 'PAT') {
+        return made ? 'PAT Good' : 'PAT Missed';
+    }
+    if (call === 'TWO_POINT') {
+        return made ? 'Two-Point Good' : 'Two-Point Failed';
+    }
     return null;
 };
 
@@ -54,26 +90,50 @@ const driveOutcomeLabel = (plays, endedByClock) => {
         return conversion ? `Touchdown, ${conversion}` : 'Touchdown';
     }
 
-    if (endedByClock === 'END_OF_GAME') return 'End of Game';
-    if (endedByClock === 'END_OF_HALF') return 'End of Half';
+    if (endedByClock === 'END_OF_GAME') {
+        return 'End of Game';
+    }
+    if (endedByClock === 'END_OF_HALF') {
+        return 'End of Half';
+    }
 
     const outcome = String(last.actual_result || '').toUpperCase();
     const call = String(last.play_call || '').toUpperCase();
     const scenario = String(last.result || '').toUpperCase();
 
-    if (outcome === 'SAFETY') return 'Safety';
+    if (outcome === 'SAFETY') {
+        return 'Safety';
+    }
     if (call === 'FIELD_GOAL') {
-        if (outcome === 'GOOD') return 'Field Goal';
-        if (outcome === 'BLOCKED') return 'Blocked Field Goal';
+        if (outcome === 'GOOD') {
+            return 'Field Goal';
+        }
+        if (outcome === 'BLOCKED') {
+            return 'Blocked Field Goal';
+        }
         return 'Missed Field Goal';
     }
-    if (call === 'PUNT') return outcome === 'BLOCKED' ? 'Blocked Punt' : 'Punt';
-    if (outcome === 'TURNOVER_ON_DOWNS') return 'Turnover on Downs';
-    if (scenario.includes('FUMBLE') || outcome === 'MUFFED_KICK' || outcome === 'MUFFED_PUNT') return 'Turnover (Fumble)';
-    if (call === 'PASS' && (outcome === 'TURNOVER' || outcome === 'TURNOVER_TOUCHDOWN' || outcome === 'KICK_SIX')) return 'Turnover (Interception)';
-    if (outcome === 'TURNOVER' || outcome === 'TURNOVER_TOUCHDOWN' || outcome === 'KICK_SIX') return 'Turnover';
-    if (outcome === 'KNEEL' || call === 'KNEEL') return 'Ran Out Clock';
-    if (outcome === 'DELAY_OF_GAME') return 'Delay of Game';
+    if (call === 'PUNT') {
+        return outcome === 'BLOCKED' ? 'Blocked Punt' : 'Punt';
+    }
+    if (outcome === 'TURNOVER_ON_DOWNS') {
+        return 'Turnover on Downs';
+    }
+    if (scenario.includes('FUMBLE') || outcome === 'MUFFED_KICK' || outcome === 'MUFFED_PUNT') {
+        return 'Turnover (Fumble)';
+    }
+    if (call === 'PASS' && (outcome === 'TURNOVER' || outcome === 'TURNOVER_TOUCHDOWN' || outcome === 'KICK_SIX')) {
+        return 'Turnover (Interception)';
+    }
+    if (outcome === 'TURNOVER' || outcome === 'TURNOVER_TOUCHDOWN' || outcome === 'KICK_SIX') {
+        return 'Turnover';
+    }
+    if (outcome === 'KNEEL' || call === 'KNEEL') {
+        return 'Ran Out Clock';
+    }
+    if (outcome === 'DELAY_OF_GAME') {
+        return 'Delay of Game';
+    }
     return humanizeEnumValue(outcome || call || 'drive ended');
 };
 
@@ -82,8 +142,12 @@ export const buildDrives = (orderedPlays) => {
     let hasGameEndMarker = false;
     orderedPlays.forEach((play) => {
         const outcome = String(play.actual_result || '').toUpperCase();
-        if (outcome === 'END_OF_HALF') halfEndQuarters.add(play.quarter);
-        if (outcome === 'END_OF_GAME') hasGameEndMarker = true;
+        if (outcome === 'END_OF_HALF') {
+            halfEndQuarters.add(play.quarter);
+        }
+        if (outcome === 'END_OF_GAME') {
+            hasGameEndMarker = true;
+        }
     });
 
     const relevant = orderedPlays.filter((play) => {
@@ -107,7 +171,9 @@ export const buildDrives = (orderedPlays) => {
             const previousDrive = drives[drives.length - 1];
             const startReason = lastKickoff
                 ? kickoffStartReason(lastKickoff)
-                : (previousDrive ? turnoverStartReason(previousDrive.plays[previousDrive.plays.length - 1]) : 'Start of game');
+                : previousDrive
+                  ? turnoverStartReason(previousDrive.plays[previousDrive.plays.length - 1])
+                  : 'Start of game';
             current = {
                 possession: play.possession,
                 team: play.possession === 'HOME' ? play.home_team : play.away_team,
@@ -129,7 +195,9 @@ export const buildDrives = (orderedPlays) => {
         const driveEndQuarter = drive.plays[drive.plays.length - 1].quarter;
         const nextDrive = drives[i + 1];
         const precedesLaterQuarter = !nextDrive || nextDrive.plays[0].quarter > driveEndQuarter;
-        if (!precedesLaterQuarter) return;
+        if (!precedesLaterQuarter) {
+            return;
+        }
         if (!nextDrive && hasGameEndMarker) {
             drive.endedByClock = 'END_OF_GAME';
         } else if (halfEndQuarters.has(driveEndQuarter)) {

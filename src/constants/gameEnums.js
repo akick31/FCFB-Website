@@ -17,30 +17,16 @@ export const TV_CHANNELS = [
     'TNT',
     'PEACOCK',
     'PAC_12_NETWORK',
-    'ESPNEWS'
+    'ESPNEWS',
 ];
 
-export const TEAM_SIDES = [
-    'HOME',
-    'AWAY'
-];
+export const TEAM_SIDES = ['HOME', 'AWAY'];
 
-export const COIN_TOSS_CHOICES = [
-    'RECEIVE',
-    'DEFER'
-];
+export const COIN_TOSS_CHOICES = ['RECEIVE', 'DEFER'];
 
-export const GAME_WARNINGS = [
-    'NONE',
-    'FIRST_WARNING',
-    'SECOND_WARNING'
-];
+export const GAME_WARNINGS = ['NONE', 'FIRST_WARNING', 'SECOND_WARNING'];
 
-export const PLAY_TYPES = [
-    'NORMAL',
-    'KICKOFF',
-    'PAT'
-];
+export const PLAY_TYPES = ['NORMAL', 'KICKOFF', 'PAT'];
 
 export const GAME_STATUSES = [
     'PREGAME',
@@ -49,7 +35,7 @@ export const GAME_STATUSES = [
     'HALFTIME',
     'FINAL',
     'END_OF_REGULATION',
-    'OVERTIME'
+    'OVERTIME',
 ];
 
 export const GAME_TYPES = [
@@ -59,35 +45,34 @@ export const GAME_TYPES = [
     'PLAYOFFS',
     'NATIONAL_CHAMPIONSHIP',
     'BOWL',
-    'SCRIMMAGE'
+    'SCRIMMAGE',
 ];
 
-export const GAME_MODES = [
-    'NORMAL',
-    'CHEW'
-];
+export const GAME_MODES = ['NORMAL', 'CHEW'];
 
 export const GAME_STATUS_DESCRIPTIONS = {
-    'PREGAME': 'Pregame',
-    'OPENING_KICKOFF': 'Opening Kickoff',
-    'IN_PROGRESS': 'In Progress',
-    'HALFTIME': 'Halftime',
-    'FINAL': 'Final',
-    'END_OF_REGULATION': 'End of Regulation',
-    'OVERTIME': 'Overtime'
+    PREGAME: 'Pregame',
+    OPENING_KICKOFF: 'Opening Kickoff',
+    IN_PROGRESS: 'In Progress',
+    HALFTIME: 'Halftime',
+    FINAL: 'Final',
+    END_OF_REGULATION: 'End of Regulation',
+    OVERTIME: 'Overtime',
 };
 
 export const GAME_TYPE_DESCRIPTIONS = {
-    'OUT_OF_CONFERENCE': 'Out of Conference',
-    'CONFERENCE_GAME': 'Conference Game',
-    'CONFERENCE_CHAMPIONSHIP': 'Conference Championship',
-    'PLAYOFFS': 'Playoffs',
-    'NATIONAL_CHAMPIONSHIP': 'National Championship',
-    'BOWL': 'Bowl',
-    'SCRIMMAGE': 'Scrimmage'
+    OUT_OF_CONFERENCE: 'Out of Conference',
+    CONFERENCE_GAME: 'Conference Game',
+    CONFERENCE_CHAMPIONSHIP: 'Conference Championship',
+    PLAYOFFS: 'Playoffs',
+    NATIONAL_CHAMPIONSHIP: 'National Championship',
+    BOWL: 'Bowl',
+    SCRIMMAGE: 'Scrimmage',
 };
 
 export const GAME_MODE_DESCRIPTIONS = {
-    'NORMAL': 'Normal',
-    'CHEW': 'Chew'
+    NORMAL: 'Normal',
+    CHEW: 'Chew',
 };
+
+export const POSTSEASON_GAME_TYPES = ['BOWL', 'PLAYOFFS', 'CONFERENCE_CHAMPIONSHIP', 'NATIONAL_CHAMPIONSHIP'];

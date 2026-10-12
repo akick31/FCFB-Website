@@ -5,7 +5,7 @@ export const getConferences = async () => {
         const response = await apiClient.get('/conference');
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch conferences:', error);
+        console.error('Failed to fetch conferences:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch conferences');
         }

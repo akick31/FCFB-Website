@@ -6,10 +6,19 @@ import { adminNavigationItems } from '../../config/adminNavigation.jsx';
 const AdminNav = () => {
     const location = useLocation();
 
-    const isActive = (path) => (path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(path));
+    const isActive = (path) =>
+        path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(path);
 
     return (
-        <Box sx={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', overflow: 'hidden', height: 'max-content' }}>
+        <Box
+            sx={{
+                background: 'var(--surface)',
+                border: '1px solid var(--line)',
+                borderRadius: 'var(--r-lg)',
+                overflow: 'hidden',
+                height: 'max-content',
+            }}
+        >
             {adminNavigationItems.map((item) => {
                 const active = isActive(item.path);
                 return (
@@ -37,7 +46,12 @@ const AdminNav = () => {
                         }}
                     >
                         <Box sx={{ display: 'flex', flexShrink: 0, '& svg': { fontSize: '1.05rem' } }}>{item.icon}</Box>
-                        <Box component="span" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</Box>
+                        <Box
+                            component="span"
+                            sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                        >
+                            {item.label}
+                        </Box>
                     </Box>
                 );
             })}

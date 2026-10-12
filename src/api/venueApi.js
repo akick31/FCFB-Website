@@ -5,7 +5,7 @@ export const getAllVenues = async () => {
         const response = await apiClient.get('/venue/all');
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch venues:', error);
+        console.error('Failed to fetch venues:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch venues');
         }
@@ -17,7 +17,7 @@ export const deleteVenue = async (name) => {
     try {
         await apiClient.delete(`/venue/${encodeURIComponent(name)}`);
     } catch (error) {
-        console.error('Failed to delete venue:', error);
+        console.error('Failed to delete venue:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to delete venue');
         }

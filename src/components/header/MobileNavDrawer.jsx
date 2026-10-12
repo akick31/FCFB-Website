@@ -7,7 +7,19 @@ import { NAV_ITEMS, ANALYTICS_ITEMS, TOOLS_ITEMS } from './navConfig';
 
 const NavSection = ({ title, items, go, isActive, itemSx }) => (
     <>
-        <Box sx={{ px: 2, py: '6px', fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>{title}</Box>
+        <Box
+            sx={{
+                px: 2,
+                py: '6px',
+                fontSize: '0.68rem',
+                fontWeight: 800,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.5)',
+            }}
+        >
+            {title}
+        </Box>
         <List>
             {items.map((item) => (
                 <ListItem key={item.path} disablePadding>
@@ -23,7 +35,8 @@ const NavSection = ({ title, items, go, isActive, itemSx }) => (
 
 NavSection.propTypes = {
     title: PropTypes.string.isRequired,
-    items: PropTypes.arrayOf(PropTypes.shape({ label: PropTypes.string.isRequired, path: PropTypes.string.isRequired })).isRequired,
+    items: PropTypes.arrayOf(PropTypes.shape({ label: PropTypes.string.isRequired, path: PropTypes.string.isRequired }))
+        .isRequired,
     go: PropTypes.func.isRequired,
     isActive: PropTypes.func.isRequired,
     itemSx: PropTypes.func.isRequired,
@@ -57,7 +70,14 @@ const MobileNavDrawer = ({ open, onClose, isAuthenticated, isAdmin, onLogout }) 
             ModalProps={{ keepMounted: true }}
             PaperProps={{ sx: { width: 280, backgroundColor: 'var(--brand-deep)', color: '#fff' } }}
         >
-            <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+            <Box
+                sx={{
+                    p: 2,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    borderBottom: '1px solid rgba(255,255,255,0.2)',
+                }}
+            >
                 <Box component="img" src={mainLogo} alt="FCFB" sx={{ height: 44 }} />
             </Box>
             <List>
@@ -88,7 +108,13 @@ const MobileNavDrawer = ({ open, onClose, isAuthenticated, isAdmin, onLogout }) 
                             </ListItemButton>
                         </ListItem>
                         <ListItem disablePadding>
-                            <ListItemButton onClick={() => { onClose(); onLogout(); }} sx={itemSx(false)}>
+                            <ListItemButton
+                                onClick={() => {
+                                    onClose();
+                                    onLogout();
+                                }}
+                                sx={itemSx(false)}
+                            >
                                 <ListItemText primary="Log out" />
                             </ListItemButton>
                         </ListItem>

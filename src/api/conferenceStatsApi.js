@@ -1,17 +1,30 @@
 import apiClient from './apiClient';
 
-export const getFilteredConferenceStats = async (conference = null, season = null, subdivision = null, page = 0, size = 20, scope = 'regular') => {
+export const getFilteredConferenceStats = async (
+    conference = null,
+    season = null,
+    subdivision = null,
+    page = 0,
+    size = 20,
+    scope = 'regular'
+) => {
     try {
         const params = { page, size };
-        if (conference) params.conference = conference;
-        if (season) params.season = season;
-        if (subdivision) params.subdivision = subdivision;
+        if (conference) {
+            params.conference = conference;
+        }
+        if (season) {
+            params.season = season;
+        }
+        if (subdivision) {
+            params.subdivision = subdivision;
+        }
 
         const endpoint = scope === 'postseason' ? '/conference-stats/postseason' : '/conference-stats';
         const response = await apiClient.get(endpoint, { params });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch filtered conference stats:', error);
+        console.error('Failed to fetch filtered conference stats:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch filtered conference stats');
         }
@@ -24,7 +37,7 @@ export const generateAllConferenceStats = async () => {
         const response = await apiClient.post('/conference-stats/generate/all');
         return response.data;
     } catch (error) {
-        console.error('Failed to generate all conference stats:', error);
+        console.error('Failed to generate all conference stats:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to generate all conference stats');
         }

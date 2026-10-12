@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
@@ -10,15 +10,68 @@ import SelectPill from '../../components/ui/SelectPill';
 import LogoUrlField from '../../components/admin/LogoUrlField';
 import { getConferences, createConference, setConferenceActive } from '../../api/conferenceApi';
 import { getAllTeams } from '../../api/teamApi';
-import { refreshConferences } from '../../components/constants/conferences';
+import { refreshConferences } from '../../hooks/useConferencesMap';
 
-const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
-const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem' };
-const btnSx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
-const manageBtnSx = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', height: '30px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const labelSx = {
+    display: 'block',
+    fontSize: '0.68rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    fontWeight: 800,
+    color: 'var(--text-dim)',
+    mb: '5px',
+};
+const inputSx = {
+    width: '100%',
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text)',
+    borderRadius: 'var(--r-sm)',
+    px: '10px',
+    height: '38px',
+    boxSizing: 'border-box',
+    font: 'inherit',
+    fontSize: '0.85rem',
+};
+const btnSx = {
+    border: 0,
+    background: 'var(--brand-deep)',
+    color: '#fff',
+    borderRadius: 'var(--r-sm)',
+    px: '16px',
+    height: '38px',
+    boxSizing: 'border-box',
+    font: 'inherit',
+    fontSize: '0.85rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    '&:disabled': { opacity: 0.6, cursor: 'default' },
+};
+const manageBtnSx = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textDecoration: 'none',
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text-muted)',
+    borderRadius: 'var(--r-sm)',
+    px: '10px',
+    height: '30px',
+    boxSizing: 'border-box',
+    font: 'inherit',
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
+};
 const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
 
-const ACTIVE_OPTIONS = [{ value: 'ALL', label: 'Active + inactive' }, { value: 'ACTIVE', label: 'Active only' }, { value: 'INACTIVE', label: 'Inactive only' }];
+const ACTIVE_OPTIONS = [
+    { value: 'ALL', label: 'Active + inactive' },
+    { value: 'ACTIVE', label: 'Active only' },
+    { value: 'INACTIVE', label: 'Inactive only' },
+];
 
 const emptyForm = { code: '', label: '', logoUrl: '', logoUrlDark: '' };
 
@@ -32,48 +85,78 @@ const AdminConferences = () => {
     const [saving, setSaving] = useState(false);
     const [activeFilter, setActiveFilter] = useState('ALL');
 
-    const load = async () => {
+    const scopeRef = useRef(null);
+
+    const load = useCallback(async (scope) => {
+        if (!scope.active) {
+            return;
+        }
+        const request = {};
+        scope.request = request;
+        setError(null);
         setLoading(true);
         try {
             const [conferences, teams] = await Promise.all([getConferences(), getAllTeams()]);
+            if (!scope.active || scope.request !== request) {
+                return;
+            }
             setConferences([...conferences].sort((a, b) => (a.label || '').localeCompare(b.label || '')));
             setTeams(teams);
-        } catch (err) {
-            setError('Failed to load conferences');
+        } catch {
+            if (scope.active && scope.request === request) {
+                setError('Failed to load conferences');
+            }
         } finally {
-            setLoading(false);
+            if (scope.active && scope.request === request) {
+                setLoading(false);
+            }
         }
-    };
+    }, []);
 
-    useEffect(() => { load(); }, []);
+    useEffect(() => {
+        const scope = { active: true };
+        scopeRef.current = scope;
+        load(scope);
+        return () => {
+            scope.active = false;
+        };
+    }, [load]);
 
     const filteredConferences = useMemo(() => {
-        if (activeFilter === 'ALL') return conferences;
+        if (activeFilter === 'ALL') {
+            return conferences;
+        }
         return conferences.filter((conference) => (activeFilter === 'ACTIVE' ? conference.active : !conference.active));
     }, [conferences, activeFilter]);
 
     const teamCountByConference = useMemo(() => {
         const counts = {};
         teams.forEach((team) => {
-            if (!team.conference) return;
+            if (!team.conference) {
+                return;
+            }
             counts[team.conference] = (counts[team.conference] || 0) + 1;
         });
         return counts;
     }, [teams]);
 
     const handleToggleActive = async (conference) => {
+        const scope = scopeRef.current;
         setError(null);
         try {
             await setConferenceActive(conference.code, !conference.active);
             refreshConferences();
-            await load();
+            await load(scope);
         } catch (err) {
-            setError(err.message || 'Failed to update conference');
+            if (scope.active) {
+                setError(err.message || 'Failed to update conference');
+            }
         }
     };
 
     const handleCreate = async (event) => {
         event.preventDefault();
+        const scope = scopeRef.current;
         setSaving(true);
         setError(null);
         setSuccess(null);
@@ -85,13 +168,20 @@ const AdminConferences = () => {
                 logoUrlDark: form.logoUrlDark.trim() || null,
             });
             refreshConferences();
+            if (!scope.active) {
+                return;
+            }
             setForm(emptyForm);
             setSuccess('Conference created');
-            await load();
+            await load(scope);
         } catch (err) {
-            setError(err.message || 'Failed to create conference');
+            if (scope.active) {
+                setError(err.message || 'Failed to create conference');
+            }
         } finally {
-            setSaving(false);
+            if (scope.active) {
+                setSaving(false);
+            }
         }
     };
 
@@ -107,12 +197,28 @@ const AdminConferences = () => {
 
     return (
         <AdminLayout title="Conference Management">
-            {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
-            {success && <Alert severity="success" sx={{ mb: '16px' }}>{success}</Alert>}
+            {error && (
+                <Alert severity="error" sx={{ mb: '16px' }}>
+                    {error}
+                </Alert>
+            )}
+            {success && (
+                <Alert severity="success" sx={{ mb: '16px' }}>
+                    {success}
+                </Alert>
+            )}
 
             <Panel
                 header="Conferences"
-                more={<SelectPill label="Status" value={activeFilter} onChange={setActiveFilter} options={ACTIVE_OPTIONS} sx={pillHeightSx} />}
+                more={
+                    <SelectPill
+                        label="Status"
+                        value={activeFilter}
+                        onChange={setActiveFilter}
+                        options={ACTIVE_OPTIONS}
+                        sx={pillHeightSx}
+                    />
+                }
                 sx={{ mb: '16px' }}
             >
                 <DataTable minWidth={640}>
@@ -129,18 +235,27 @@ const AdminConferences = () => {
                             <tr key={conference.code}>
                                 <td className="lft stick">
                                     <Box className="teamcell">
-                                        {(conference.logo_url || conference.logo_url_dark) && <ConferenceMark conference={conference.code} size={22} />}
+                                        {(conference.logo_url || conference.logo_url_dark) && (
+                                            <ConferenceMark conference={conference.code} size={22} />
+                                        )}
                                         <span className="nm">{conference.label}</span>
                                     </Box>
                                 </td>
                                 <td style={{ textAlign: 'center' }}>{teamCountByConference[conference.code] || 0}</td>
                                 <td style={{ textAlign: 'center' }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                        <Toggle on={!!conference.active} onClick={() => handleToggleActive(conference)} />
+                                        <Toggle
+                                            on={!!conference.active}
+                                            onClick={() => handleToggleActive(conference)}
+                                        />
                                     </Box>
                                 </td>
                                 <td className="lft">
-                                    <Box component={Link} to={`/admin/conferences/${encodeURIComponent(conference.code)}`} sx={manageBtnSx}>
+                                    <Box
+                                        component={Link}
+                                        to={`/admin/conferences/${encodeURIComponent(conference.code)}`}
+                                        sx={manageBtnSx}
+                                    >
                                         Manage
                                     </Box>
                                 </td>
@@ -151,20 +266,58 @@ const AdminConferences = () => {
             </Panel>
 
             <Panel header="Add conference">
-                <Box component="form" onSubmit={handleCreate} sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+                <Box
+                    component="form"
+                    onSubmit={handleCreate}
+                    sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}
+                >
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                            gap: '12px',
+                        }}
+                    >
                         <Box>
                             <Box sx={labelSx}>Code</Box>
-                            <Box component="input" value={form.code} onChange={(e) => setForm((prev) => ({ ...prev, code: e.target.value }))} required sx={inputSx} />
+                            <Box
+                                component="input"
+                                value={form.code}
+                                onChange={(e) => setForm((prev) => ({ ...prev, code: e.target.value }))}
+                                required
+                                sx={inputSx}
+                            />
                         </Box>
                         <Box>
                             <Box sx={labelSx}>Label</Box>
-                            <Box component="input" value={form.label} onChange={(e) => setForm((prev) => ({ ...prev, label: e.target.value }))} required sx={inputSx} />
+                            <Box
+                                component="input"
+                                value={form.label}
+                                onChange={(e) => setForm((prev) => ({ ...prev, label: e.target.value }))}
+                                required
+                                sx={inputSx}
+                            />
                         </Box>
                     </Box>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                        <LogoUrlField label="Logo URL" value={form.logoUrl} onChange={(e) => setForm((prev) => ({ ...prev, logoUrl: e.target.value }))} previewBg="#ffffff" />
-                        <LogoUrlField label="Dark logo URL" value={form.logoUrlDark} onChange={(e) => setForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))} previewBg="#0a1620" />
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                            gap: '12px',
+                        }}
+                    >
+                        <LogoUrlField
+                            label="Logo URL"
+                            value={form.logoUrl}
+                            onChange={(e) => setForm((prev) => ({ ...prev, logoUrl: e.target.value }))}
+                            previewBg="#ffffff"
+                        />
+                        <LogoUrlField
+                            label="Dark logo URL"
+                            value={form.logoUrlDark}
+                            onChange={(e) => setForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))}
+                            previewBg="#0a1620"
+                        />
                     </Box>
                     <Box component="button" type="submit" disabled={saving} sx={{ ...btnSx, justifySelf: 'start' }}>
                         {saving ? 'Adding...' : 'Add conference'}

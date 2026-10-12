@@ -5,13 +5,13 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { getAllUsers, getUsernameHistory } from '../../api/userApi';
 import { getAllTeams } from '../../api/teamApi';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
-import { getEloHistory } from '../../api/eloHistoryApi.jsx';
+import { getEloHistoryForTeams } from '../../api/eloHistoryApi.jsx';
 import { getRankedGames } from '../../api/rankingApi';
 import { getCoachStats } from '../../api/coachStatsApi';
 import { getCurrentSeason, getLatestCompletedSeason } from '../../api/seasonApi';
 import { aggregateSeasonStats } from '../../utils/aggregateStats';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
-import { useColorMode } from '../../theme/ColorModeContext';
+import { useColorMode } from '../../context/ColorModeContext';
 import { pickTeamColor } from '../../utils/teamColor';
 import { formatPosition, formatWinPct } from '../../utils/formatText';
 import { formatResponseTime } from '../../utils/timeUtils';
@@ -37,7 +37,7 @@ const POLL_TICKS = [1, 5, 10, 15, 20, 25].map((v) => ({ v, label: String(v) }));
 const num = (value) => (value == null ? '-' : Number(value).toLocaleString());
 const dec = (value, digits = 2) => (value == null ? '-' : Number(value).toFixed(digits));
 const pct = (value) => (value == null ? '-' : `${Number(value).toFixed(1)}%`);
-const signed = (value) => (value == null ? '-' : (value > 0 ? `+${value}` : `${value}`));
+const signed = (value) => (value == null ? '-' : value > 0 ? `+${value}` : `${value}`);
 
 const resolveDefaultSeason = async () => {
     try {
@@ -57,7 +57,16 @@ const TrendLegend = ({ lines, teamsMap }) => (
                     key={line.team}
                     component={teamId ? Link : 'div'}
                     to={teamId ? `/team-details/${teamId}` : undefined}
-                    sx={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: 'var(--text-muted)', textDecoration: 'none', cursor: teamId ? 'pointer' : 'default', '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' } }}
+                    sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.72rem',
+                        color: 'var(--text-muted)',
+                        textDecoration: 'none',
+                        cursor: teamId ? 'pointer' : 'default',
+                        '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' },
+                    }}
                 >
                     <Box sx={{ width: 11, height: 3, borderRadius: '2px', background: line.color }} />
                     {line.team}
@@ -91,11 +100,16 @@ const UserDetails = () => {
     const [collapsedSections, setCollapsedSections] = useState(() => new Set());
     const [statsSeasonView, setStatsSeasonView] = useState('career');
 
-    const toggleSection = (key) => setCollapsedSections((prev) => {
-        const next = new Set(prev);
-        if (next.has(key)) next.delete(key); else next.add(key);
-        return next;
-    });
+    const toggleSection = (key) =>
+        setCollapsedSections((prev) => {
+            const next = new Set(prev);
+            if (next.has(key)) {
+                next.delete(key);
+            } else {
+                next.add(key);
+            }
+            return next;
+        });
 
     useSeo({
         title: `${decodedName || 'Coach'} | Fake College Football`,
@@ -104,6 +118,9 @@ const UserDetails = () => {
 
     useEffect(() => {
         let active = true;
+        setUser(null);
+        setChampionSeason(null);
+        setSeasonView(null);
         (async () => {
             setLoading(true);
             try {
@@ -114,13 +131,22 @@ const UserDetails = () => {
                     resolveDefaultSeason(),
                     getLatestCompletedSeason().catch(() => null),
                 ]);
-                if (!active) return;
+                if (!active) {
+                    return;
+                }
 
-                const foundUser = allUsers.find((entry) => entry.coach_name === decodedName || entry.username === decodedName) || null;
+                const foundUser =
+                    allUsers.find((entry) => entry.coach_name === decodedName || entry.username === decodedName) ||
+                    null;
                 setUser(foundUser);
-                if (!foundUser) return;
+                if (!foundUser) {
+                    return;
+                }
 
                 const historicalUsernames = await getUsernameHistory(foundUser.id).catch(() => []);
+                if (!active) {
+                    return;
+                }
                 const names = [foundUser.coach_name, foundUser.username, ...historicalUsernames].filter(Boolean);
                 const txns = coachTransactionsFor(allTransactions, names, foundUser.discord_id);
                 setTransactions(txns);
@@ -131,27 +157,32 @@ const UserDetails = () => {
                     setChampionSeason(latest?.season_number ?? latest?.seasonNumber ?? null);
                 }
 
-                const coachedTeamNames = [...new Set([
-                    ...txns.map((entry) => entry.team),
-                    foundUser.team,
-                ].filter(Boolean))];
+                const coachedTeamNames = [
+                    ...new Set([...txns.map((entry) => entry.team), foundUser.team].filter(Boolean)),
+                ];
 
-                const [perTeam, statsData] = await Promise.all([
-                    Promise.all(coachedTeamNames.map(async (teamName) => {
-                        const [rankGames, eloRows] = await Promise.all([
-                            getRankedGames(teamName, null).catch(() => []),
-                            getEloHistory(teamName, null).catch(() => []),
-                        ]);
-                        return [teamName, teamCoachPoints(teamName, rankGames, eloRows, names)];
-                    })),
+                const [rankGames, eloRows, statsData] = await Promise.all([
+                    coachedTeamNames.length ? getRankedGames('all', null).catch(() => []) : Promise.resolve([]),
+                    coachedTeamNames.length
+                        ? getEloHistoryForTeams(coachedTeamNames).catch(() => [])
+                        : Promise.resolve([]),
                     getCoachStats(foundUser.username),
                 ]);
-                if (!active) return;
+                if (!active) {
+                    return;
+                }
                 setCoachStats(statsData);
+
+                const perTeam = coachedTeamNames.map((teamName) => {
+                    const teamEloRows = eloRows.filter((row) => row.team === teamName);
+                    return [teamName, teamCoachPoints(teamName, rankGames, teamEloRows, names)];
+                });
 
                 const series = {};
                 perTeam.forEach(([teamName, points]) => {
-                    if (points.rankPts.length || points.eloPts.length) series[teamName] = points;
+                    if (points.rankPts.length || points.eloPts.length) {
+                        series[teamName] = points;
+                    }
                 });
                 setSeriesByTeam(series);
 
@@ -161,60 +192,89 @@ const UserDetails = () => {
                 if (urlSeason === 'alltime' || (urlSeason && seasonList.includes(Number(urlSeason)))) {
                     setSeasonView(urlSeason === 'alltime' ? 'alltime' : Number(urlSeason));
                 } else {
-                    setSeasonView(defSeason != null && seasonList.includes(defSeason) ? defSeason : (seasonList[0] ?? 'alltime'));
+                    setSeasonView(
+                        defSeason != null && seasonList.includes(defSeason) ? defSeason : (seasonList[0] ?? 'alltime')
+                    );
                 }
             } catch {
-                if (active) setUser(null);
+                if (active) {
+                    setUser(null);
+                }
             } finally {
-                if (active) setLoading(false);
+                if (active) {
+                    setLoading(false);
+                }
             }
         })();
-        return () => { active = false; };
+        return () => {
+            active = false;
+        };
     }, [decodedName]);
 
     const stints = useMemo(
         () => buildCoachStints(transactions, user ? { team: user.team, position: user.position } : null),
-        [transactions, user],
+        [transactions, user]
     );
 
-    const teamEntries = useMemo(() => stints
-        .filter((stint) => !stint.endDate)
-        .map((stint) => ({ team: allTeams.find((team) => team.name === stint.team), position: stint.position }))
-        .filter((entry) => entry.team), [stints, allTeams]);
+    const teamEntries = useMemo(
+        () =>
+            stints
+                .filter((stint) => !stint.endDate)
+                .map((stint) => ({ team: allTeams.find((team) => team.name === stint.team), position: stint.position }))
+                .filter((entry) => entry.team),
+        [stints, allTeams]
+    );
 
     const primaryTeam = useMemo(() => {
         const fromUserTeam = allTeams.find((team) => team.name === user?.team);
-        if (fromUserTeam && teamEntries.some((entry) => entry.team.name === fromUserTeam.name)) return fromUserTeam;
+        if (fromUserTeam && teamEntries.some((entry) => entry.team.name === fromUserTeam.name)) {
+            return fromUserTeam;
+        }
         return teamEntries[0]?.team || fromUserTeam || null;
     }, [teamEntries, allTeams, user]);
 
     const careerStats = useMemo(() => aggregateSeasonStats(coachStats), [coachStats]);
 
     const statSeasons = useMemo(
-        () => [...new Set(coachStats.map((row) => row.season_number))].filter((value) => value != null).sort((a, b) => b - a),
-        [coachStats],
+        () =>
+            [...new Set(coachStats.map((row) => row.season_number))]
+                .filter((value) => value != null)
+                .sort((a, b) => b - a),
+        [coachStats]
     );
 
     const statsSeasonRows = useMemo(
-        () => (statsSeasonView === 'career' ? coachStats : coachStats.filter((row) => row.season_number === statsSeasonView)),
-        [coachStats, statsSeasonView],
+        () =>
+            statsSeasonView === 'career'
+                ? coachStats
+                : coachStats.filter((row) => row.season_number === statsSeasonView),
+        [coachStats, statsSeasonView]
     );
 
     const displayedStats = useMemo(
         () => (statsSeasonView === 'career' ? careerStats : aggregateSeasonStats(statsSeasonRows)),
-        [statsSeasonView, careerStats, statsSeasonRows],
+        [statsSeasonView, careerStats, statsSeasonRows]
     );
 
     const displayedRecord = useMemo(() => {
-        if (statsSeasonView === 'career') return { wins: user?.wins || 0, losses: user?.losses || 0 };
-        return statsSeasonRows.reduce((acc, row) => ({ wins: acc.wins + (row.wins || 0), losses: acc.losses + (row.losses || 0) }), { wins: 0, losses: 0 });
+        if (statsSeasonView === 'career') {
+            return { wins: user?.wins || 0, losses: user?.losses || 0 };
+        }
+        return statsSeasonRows.reduce(
+            (acc, row) => ({ wins: acc.wins + (row.wins || 0), losses: acc.losses + (row.losses || 0) }),
+            { wins: 0, losses: 0 }
+        );
     }, [statsSeasonView, statsSeasonRows, user]);
 
     const recordByTeam = useMemo(() => {
         const record = {};
         coachStats.forEach((row) => {
-            if (!row.team) return;
-            if (!record[row.team]) record[row.team] = { wins: 0, losses: 0 };
+            if (!row.team) {
+                return;
+            }
+            if (!record[row.team]) {
+                record[row.team] = { wins: 0, losses: 0 };
+            }
             record[row.team].wins += row.wins || 0;
             record[row.team].losses += row.losses || 0;
         });
@@ -224,19 +284,35 @@ const UserDetails = () => {
     const isAdmin = checkIfUserIsAdmin();
 
     useEffect(() => {
-        if (seasonView == null) return;
-        if (searchParams.get('season') === String(seasonView)) return;
+        if (seasonView == null) {
+            return;
+        }
+        if (searchParams.get('season') === String(seasonView)) {
+            return;
+        }
         const next = new URLSearchParams(searchParams);
         next.set('season', String(seasonView));
         setSearchParams(next, { replace: true });
     }, [seasonView]);
 
     const colorFor = (teamName) => pickTeamColor(teamsMap[teamName], mode);
-    const eloLines = useMemo(() => buildTrendLines({ seriesByTeam, metric: 'elo', seasonView, colorFor }), [seriesByTeam, seasonView, teamsMap, mode]);
-    const rankLines = useMemo(() => buildTrendLines({ seriesByTeam, metric: 'rank', seasonView, colorFor }), [seriesByTeam, seasonView, teamsMap, mode]);
+    const eloLines = useMemo(
+        () => buildTrendLines({ seriesByTeam, metric: 'elo', seasonView, colorFor }),
+        [seriesByTeam, seasonView, teamsMap, mode]
+    );
+    const rankLines = useMemo(
+        () => buildTrendLines({ seriesByTeam, metric: 'rank', seasonView, colorFor }),
+        [seriesByTeam, seasonView, teamsMap, mode]
+    );
 
     if (loading) {
-        return <PageWrap><Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box></PageWrap>;
+        return (
+            <PageWrap>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+                    <CircularProgress />
+                </Box>
+            </PageWrap>
+        );
     }
 
     if (!user) {
@@ -258,19 +334,46 @@ const UserDetails = () => {
                     <Box
                         component={Link}
                         to={`/admin/edit-coach/${encodeURIComponent(user.username)}`}
-                        sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '14px', py: '8px', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'none', '&:hover': { borderColor: 'var(--brand)' } }}
+                        sx={{
+                            border: '1px solid var(--line)',
+                            background: 'var(--surface)',
+                            color: 'var(--text)',
+                            borderRadius: 'var(--r-sm)',
+                            px: '14px',
+                            py: '8px',
+                            font: 'inherit',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            textDecoration: 'none',
+                            '&:hover': { borderColor: 'var(--brand)' },
+                        }}
                     >
                         Edit coach
                     </Box>
                 )}
             </PageHeading>
 
-            <CoachHeader user={user} team={primaryTeam} mark={primaryTeam ? teamsMap[primaryTeam.name] : null} championSeason={championSeason} />
+            <CoachHeader
+                user={user}
+                team={primaryTeam}
+                mark={primaryTeam ? teamsMap[primaryTeam.name] : null}
+                championSeason={championSeason}
+            />
 
-            <SectionTitle title="Coaching record" collapsible collapsed={collapsedSections.has('record')} onToggle={() => toggleSection('record')} />
+            <SectionTitle
+                title="Coaching record"
+                collapsible
+                collapsed={collapsedSections.has('record')}
+                onToggle={() => toggleSection('record')}
+            />
             {!collapsedSections.has('record') && (
                 <TileGrid>
-                    <StatTile label="All-time record" value={`${user.wins || 0}-${user.losses || 0}`} caption={`${user.conference_wins || 0}-${user.conference_losses || 0} conference`} />
+                    <StatTile
+                        label="All-time record"
+                        value={`${user.wins || 0}-${user.losses || 0}`}
+                        caption={`${user.conference_wins || 0}-${user.conference_losses || 0} conference`}
+                    />
                     <StatTile label="Win percentage" value={formatWinPct(user.win_percentage)} />
                     <StatTile label="National titles" value={user.national_championship_wins || 0} />
                     <StatTile label="Conference titles" value={user.conference_championship_wins || 0} />
@@ -279,31 +382,74 @@ const UserDetails = () => {
                 </TileGrid>
             )}
 
-            <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap', mb: '12px' }}>
-                <SectionTitle title="Coach stats" collapsible collapsed={collapsedSections.has('stats')} onToggle={() => toggleSection('stats')} sx={{ width: 'auto', mb: 0 }} />
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    justifyContent: 'space-between',
+                    gap: 2,
+                    flexWrap: 'wrap',
+                    mb: '12px',
+                }}
+            >
+                <SectionTitle
+                    title="Coach stats"
+                    collapsible
+                    collapsed={collapsedSections.has('stats')}
+                    onToggle={() => toggleSection('stats')}
+                    sx={{ width: 'auto', mb: 0 }}
+                />
                 {!collapsedSections.has('stats') && statSeasons.length > 0 && (
                     <SelectPill
                         label="Viewing"
                         value={statsSeasonView}
                         onChange={(next) => setStatsSeasonView(next === 'career' ? 'career' : Number(next))}
-                        options={[{ value: 'career', label: 'Career' }, ...statSeasons.map((option) => ({ value: option, label: `Season ${option}` }))]}
+                        options={[
+                            { value: 'career', label: 'Career' },
+                            ...statSeasons.map((option) => ({ value: option, label: `Season ${option}` })),
+                        ]}
                     />
                 )}
             </Box>
             {!collapsedSections.has('stats') && (
                 <>
                     <TileGrid>
-                        <StatTile label="Total games" value={displayedRecord.wins + displayedRecord.losses} caption={`${displayedRecord.wins}-${displayedRecord.losses}`} />
-                        {statsSeasonView === 'career' && <StatTile label="Average response" value={user.average_response_time ? formatResponseTime(user.average_response_time) : 'N/A'} />}
-                        {statsSeasonView === 'career' && <StatTile label="Delay of game" value={user.delay_of_game_instances || 0} />}
+                        <StatTile
+                            label="Total games"
+                            value={displayedRecord.wins + displayedRecord.losses}
+                            caption={`${displayedRecord.wins}-${displayedRecord.losses}`}
+                        />
+                        {statsSeasonView === 'career' && (
+                            <StatTile
+                                label="Average response"
+                                value={
+                                    user.average_response_time ? formatResponseTime(user.average_response_time) : 'N/A'
+                                }
+                            />
+                        )}
+                        {statsSeasonView === 'career' && (
+                            <StatTile label="Delay of game" value={user.delay_of_game_instances || 0} />
+                        )}
                         {displayedStats && <StatTile label="Total yards" value={num(displayedStats.total_yards)} />}
-                        {displayedStats && <StatTile label="Yards per play" value={dec(displayedStats.average_yards_per_play, 2)} />}
+                        {displayedStats && (
+                            <StatTile label="Yards per play" value={dec(displayedStats.average_yards_per_play, 2)} />
+                        )}
                         {displayedStats && <StatTile label="Touchdowns" value={num(displayedStats.touchdowns)} />}
-                        {displayedStats && <StatTile label="Avg offensive diff" value={dec(displayedStats.average_offensive_diff)} />}
-                        {displayedStats && <StatTile label="Avg defensive diff" value={dec(displayedStats.average_defensive_diff)} />}
-                        {displayedStats && <StatTile label="Turnover diff" value={signed(displayedStats.turnover_differential)} />}
-                        {displayedStats && <StatTile label="3rd down %" value={pct(displayedStats.third_down_conversion_percentage)} />}
-                        {displayedStats && <StatTile label="Red zone %" value={pct(displayedStats.red_zone_success_percentage)} />}
+                        {displayedStats && (
+                            <StatTile label="Avg offensive diff" value={dec(displayedStats.average_offensive_diff)} />
+                        )}
+                        {displayedStats && (
+                            <StatTile label="Avg defensive diff" value={dec(displayedStats.average_defensive_diff)} />
+                        )}
+                        {displayedStats && (
+                            <StatTile label="Turnover diff" value={signed(displayedStats.turnover_differential)} />
+                        )}
+                        {displayedStats && (
+                            <StatTile label="3rd down %" value={pct(displayedStats.third_down_conversion_percentage)} />
+                        )}
+                        {displayedStats && (
+                            <StatTile label="Red zone %" value={pct(displayedStats.red_zone_success_percentage)} />
+                        )}
                     </TileGrid>
                     {displayedStats && (
                         <Panel sx={{ mt: '16px' }}>
@@ -321,29 +467,64 @@ const UserDetails = () => {
                         collapsed={collapsedSections.has('programs')}
                         onToggle={() => toggleSection('programs')}
                     />
-                    {!collapsedSections.has('programs') && <CurrentTeamsPanel entries={teamEntries} teamsMap={teamsMap} />}
+                    {!collapsedSections.has('programs') && (
+                        <CurrentTeamsPanel entries={teamEntries} teamsMap={teamsMap} />
+                    )}
                 </>
             )}
 
             {(eloLines.length > 0 || rankLines.length > 0) && (
                 <>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap', mb: '12px' }}>
-                        <SectionTitle title="Trends" collapsible collapsed={collapsedSections.has('trends')} onToggle={() => toggleSection('trends')} sx={{ width: 'auto', mb: 0 }} />
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'flex-end',
+                            justifyContent: 'space-between',
+                            gap: 2,
+                            flexWrap: 'wrap',
+                            mb: '12px',
+                        }}
+                    >
+                        <SectionTitle
+                            title="Trends"
+                            collapsible
+                            collapsed={collapsedSections.has('trends')}
+                            onToggle={() => toggleSection('trends')}
+                            sx={{ width: 'auto', mb: 0 }}
+                        />
                         {!collapsedSections.has('trends') && (
                             <SelectPill
                                 label="Viewing"
                                 value={seasonView ?? ''}
                                 onChange={(next) => setSeasonView(next === 'alltime' ? 'alltime' : Number(next))}
-                                options={[...seasons.map((option) => ({ value: option, label: `Season ${option}` })), { value: 'alltime', label: 'All-time' }]}
+                                options={[
+                                    ...seasons.map((option) => ({ value: option, label: `Season ${option}` })),
+                                    { value: 'alltime', label: 'All-time' },
+                                ]}
                             />
                         )}
                     </Box>
                     {!collapsedSections.has('trends') && (
-                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: eloLines.length > 0 && rankLines.length > 0 ? '1fr 1fr' : '1fr' }, gap: '16px' }}>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: {
+                                    xs: '1fr',
+                                    md: eloLines.length > 0 && rankLines.length > 0 ? '1fr 1fr' : '1fr',
+                                },
+                                gap: '16px',
+                            }}
+                        >
                             {eloLines.length > 0 && (
                                 <Panel header="ELO trend" more={seasonLabel} sx={{ overflow: 'visible' }}>
                                     <Box sx={{ p: 2, pb: 0 }}>
-                                        <MultiLineChart lines={eloLines} yMin={eloBounds.yMin} yMax={eloBounds.yMax} height={260} label={(p) => `Season ${p.season}, Week ${p.week}, ELO ${p.val}`} />
+                                        <MultiLineChart
+                                            lines={eloLines}
+                                            yMin={eloBounds.yMin}
+                                            yMax={eloBounds.yMax}
+                                            height={260}
+                                            label={(p) => `Season ${p.season}, Week ${p.week}, ELO ${p.val}`}
+                                        />
                                     </Box>
                                     <TrendLegend lines={eloLines} teamsMap={teamsMap} />
                                 </Panel>
@@ -351,7 +532,15 @@ const UserDetails = () => {
                             {rankLines.length > 0 && (
                                 <Panel header="Coaches poll" more={seasonLabel} sx={{ overflow: 'visible' }}>
                                     <Box sx={{ p: 2, pb: 0 }}>
-                                        <MultiLineChart lines={rankLines} yMin={1} yMax={25} invert yTicks={POLL_TICKS} height={260} label={(p) => `Season ${p.season}, Week ${p.week}, #${p.val}`} />
+                                        <MultiLineChart
+                                            lines={rankLines}
+                                            yMin={1}
+                                            yMax={25}
+                                            invert
+                                            yTicks={POLL_TICKS}
+                                            height={260}
+                                            label={(p) => `Season ${p.season}, Week ${p.week}, #${p.val}`}
+                                        />
                                     </Box>
                                     <TrendLegend lines={rankLines} teamsMap={teamsMap} />
                                 </Panel>
@@ -361,52 +550,88 @@ const UserDetails = () => {
                 </>
             )}
 
-            <SectionTitle title="Coaching history" collapsible collapsed={collapsedSections.has('history')} onToggle={() => toggleSection('history')} />
-            {!collapsedSections.has('history') && (stints.length > 0 ? (
-                <DataTable minWidth={480}>
-                    <thead>
-                        <tr>
-                            <th className="lft stick">Team</th>
-                            <th className="lft">Position</th>
-                            <th>Record at team</th>
-                            <th className="lft">From</th>
-                            <th className="lft">To</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {stints.map((stint, index) => {
-                            const active = !stint.endDate;
-                            const teamId = teamsMap[stint.team]?.id;
-                            return (
-                                <Box
-                                    component={teamId ? Link : 'tr'}
-                                    to={teamId ? `/team-details/${teamId}` : undefined}
-                                    key={`${stint.team}-${index}`}
-                                    sx={{ display: 'table-row', textDecoration: 'none', color: 'inherit', cursor: teamId ? 'pointer' : 'default' }}
-                                >
-                                    <td className="lft stick">
-                                        <Box className="teamcell">
-                                            <TeamMark team={teamsMap[stint.team]} size={22} />
-                                            <span className="nm">{stint.team}</span>
-                                            {active && (
-                                                <Box component="span" sx={{ fontSize: '0.56rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--field)', border: '1px solid color-mix(in srgb, var(--field) 55%, var(--line))', borderRadius: 'var(--r-sm)', px: '5px', py: '2px' }}>
-                                                    Current
-                                                </Box>
-                                            )}
-                                        </Box>
-                                    </td>
-                                    <td className="lft">{formatPosition(stint.position)}</td>
-                                    <td className="num">{recordByTeam[stint.team] ? `${recordByTeam[stint.team].wins}-${recordByTeam[stint.team].losses}` : '-'}</td>
-                                    <td className="lft">{stint.startDate ? formatStintDate(stint.startDate) : 'Unknown'}</td>
-                                    <td className="lft" style={{ color: active ? 'var(--field)' : undefined }}>{active ? 'Present' : formatStintDate(stint.endDate)}</td>
-                                </Box>
-                            );
-                        })}
-                    </tbody>
-                </DataTable>
-            ) : (
-                <Panel><Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No permanent coaching stints on record.</Box></Panel>
-            ))}
+            <SectionTitle
+                title="Coaching history"
+                collapsible
+                collapsed={collapsedSections.has('history')}
+                onToggle={() => toggleSection('history')}
+            />
+            {!collapsedSections.has('history') &&
+                (stints.length > 0 ? (
+                    <DataTable minWidth={480}>
+                        <thead>
+                            <tr>
+                                <th className="lft stick">Team</th>
+                                <th className="lft">Position</th>
+                                <th>Record at team</th>
+                                <th className="lft">From</th>
+                                <th className="lft">To</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {stints.map((stint, index) => {
+                                const active = !stint.endDate;
+                                const teamId = teamsMap[stint.team]?.id;
+                                return (
+                                    <Box
+                                        component={teamId ? Link : 'tr'}
+                                        to={teamId ? `/team-details/${teamId}` : undefined}
+                                        key={`${stint.team}-${index}`}
+                                        sx={{
+                                            display: 'table-row',
+                                            textDecoration: 'none',
+                                            color: 'inherit',
+                                            cursor: teamId ? 'pointer' : 'default',
+                                        }}
+                                    >
+                                        <td className="lft stick">
+                                            <Box className="teamcell">
+                                                <TeamMark team={teamsMap[stint.team]} size={22} />
+                                                <span className="nm">{stint.team}</span>
+                                                {active && (
+                                                    <Box
+                                                        component="span"
+                                                        sx={{
+                                                            fontSize: '0.56rem',
+                                                            fontWeight: 800,
+                                                            textTransform: 'uppercase',
+                                                            letterSpacing: '0.04em',
+                                                            color: 'var(--field)',
+                                                            border: '1px solid color-mix(in srgb, var(--field) 55%, var(--line))',
+                                                            borderRadius: 'var(--r-sm)',
+                                                            px: '5px',
+                                                            py: '2px',
+                                                        }}
+                                                    >
+                                                        Current
+                                                    </Box>
+                                                )}
+                                            </Box>
+                                        </td>
+                                        <td className="lft">{formatPosition(stint.position)}</td>
+                                        <td className="num">
+                                            {recordByTeam[stint.team]
+                                                ? `${recordByTeam[stint.team].wins}-${recordByTeam[stint.team].losses}`
+                                                : '-'}
+                                        </td>
+                                        <td className="lft">
+                                            {stint.startDate ? formatStintDate(stint.startDate) : 'Unknown'}
+                                        </td>
+                                        <td className="lft" style={{ color: active ? 'var(--field)' : undefined }}>
+                                            {active ? 'Present' : formatStintDate(stint.endDate)}
+                                        </td>
+                                    </Box>
+                                );
+                            })}
+                        </tbody>
+                    </DataTable>
+                ) : (
+                    <Panel>
+                        <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>
+                            No permanent coaching stints on record.
+                        </Box>
+                    </Panel>
+                ))}
         </PageWrap>
     );
 };

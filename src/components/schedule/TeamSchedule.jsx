@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import Panel from '../ui/Panel';
 import TeamMark from '../ui/TeamMark';
 import { ensureTeam } from '../../hooks/useTeamsMap';
-import { field } from '../../utils/fieldHelper';
+import { camelOrSnakeField } from '../../utils/fieldHelper';
 
 const markFor = (teamsMap, name) => {
-    if (!name) return { name };
-    if (!teamsMap[name]) ensureTeam(name);
+    if (!name) {
+        return { name };
+    }
     return teamsMap[name] || { name };
 };
 
@@ -17,72 +18,150 @@ const REGULAR_SEASON_WEEKS = 12;
 
 const withUnscheduledWeeks = (schedule) => {
     const gamesByWeek = {};
-    schedule.forEach((game) => { if (game.week != null) gamesByWeek[game.week] = game; });
-    const regularWeeks = Array.from({ length: REGULAR_SEASON_WEEKS }, (_, index) => index + 1)
-        .map((week) => gamesByWeek[week] || { week, unscheduled: true });
+    schedule.forEach((game) => {
+        if (game.week != null) {
+            gamesByWeek[game.week] = game;
+        }
+    });
+    const regularWeeks = Array.from({ length: REGULAR_SEASON_WEEKS }, (_, index) => index + 1).map(
+        (week) => gamesByWeek[week] || { week, unscheduled: true }
+    );
     const laterGames = schedule.filter((game) => (game.week || 0) > REGULAR_SEASON_WEEKS);
     return [...regularWeeks, ...laterGames];
 };
 
 const TeamSchedule = ({ teamName, schedule, season, teamsMap, loading, subtitle, showSeason = false }) => {
+    const rows = useMemo(() => (showSeason ? schedule : withUnscheduledWeeks(schedule)), [schedule, showSeason]);
+    useEffect(() => {
+        if (!loading) {
+            ensureTeam(teamName);
+            rows.forEach((game) => {
+                if (!game.unscheduled) {
+                    ensureTeam(game.home_team === teamName ? game.away_team : game.home_team);
+                }
+            });
+        }
+    }, [teamName, rows, loading]);
+
     if (loading) {
-        return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>;
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                <CircularProgress />
+            </Box>
+        );
     }
 
-    const rows = showSeason ? schedule : withUnscheduledWeeks(schedule);
-
     return (
-        <Panel header={<><TeamMark team={markFor(teamsMap, teamName)} size={22} />{teamName}</>} more={subtitle || `Season ${season}`}>
+        <Panel
+            header={
+                <>
+                    <TeamMark team={markFor(teamsMap, teamName)} size={22} />
+                    {teamName}
+                </>
+            }
+            more={subtitle || `Season ${season}`}
+        >
             {rows.length === 0 ? (
                 <Box sx={{ p: 4, textAlign: 'center', color: 'var(--text-muted)' }}>No games scheduled.</Box>
-            ) : rows.map((game) => {
-                if (game.unscheduled) {
+            ) : (
+                rows.map((game) => {
+                    if (game.unscheduled) {
+                        return (
+                            <Box
+                                key={`unscheduled-${game.week}`}
+                                sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '46px 1fr auto',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    px: 1.75,
+                                    py: 1,
+                                    borderBottom: '1px solid var(--line-soft)',
+                                    fontSize: '0.82rem',
+                                    '&:last-of-type': { borderBottom: 'none' },
+                                }}
+                            >
+                                <Box
+                                    sx={{ color: 'var(--text-dim)', fontWeight: 800, fontSize: '0.66rem' }}
+                                >{`WK ${game.week}`}</Box>
+                                <Box sx={{ color: 'var(--text-dim)', fontStyle: 'italic' }}>Unscheduled</Box>
+                                <Box sx={{ fontWeight: 800, fontFamily: 'var(--cond)', color: 'var(--text-dim)' }}>
+                                    -
+                                </Box>
+                            </Box>
+                        );
+                    }
+                    const isHome = game.home_team === teamName;
+                    const opponent = isHome ? game.away_team : game.home_team;
+                    const us = isHome ? game.home_score : game.away_score;
+                    const them = isHome ? game.away_score : game.home_score;
+                    const win = us > them;
+                    const isNeutralSite = Boolean(camelOrSnakeField(game, 'neutralSite', 'neutral_site'));
+                    const venue = game.venue;
                     return (
                         <Box
-                            key={`unscheduled-${game.week}`}
-                            sx={{ display: 'grid', gridTemplateColumns: '46px 1fr auto', alignItems: 'center', gap: '10px', px: 1.75, py: 1, borderBottom: '1px solid var(--line-soft)', fontSize: '0.82rem', '&:last-of-type': { borderBottom: 'none' } }}
+                            key={game.game_id || game.id}
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: `${showSeason ? 68 : 46}px 1fr auto`,
+                                alignItems: 'center',
+                                gap: '10px',
+                                px: 1.75,
+                                py: 1,
+                                borderBottom: '1px solid var(--line-soft)',
+                                fontSize: '0.82rem',
+                                '&:last-of-type': { borderBottom: 'none' },
+                            }}
                         >
-                            <Box sx={{ color: 'var(--text-dim)', fontWeight: 800, fontSize: '0.66rem' }}>{`WK ${game.week}`}</Box>
-                            <Box sx={{ color: 'var(--text-dim)', fontStyle: 'italic' }}>Unscheduled</Box>
-                            <Box sx={{ fontWeight: 800, fontFamily: 'var(--cond)', color: 'var(--text-dim)' }}>-</Box>
-                        </Box>
-                    );
-                }
-                const isHome = game.home_team === teamName;
-                const opponent = isHome ? game.away_team : game.home_team;
-                const us = isHome ? game.home_score : game.away_score;
-                const them = isHome ? game.away_score : game.home_score;
-                const win = us > them;
-                const isNeutralSite = Boolean(field(game, 'neutralSite', 'neutral_site'));
-                const venue = game.venue;
-                return (
-                    <Box
-                        key={game.game_id || game.id}
-                        sx={{ display: 'grid', gridTemplateColumns: `${showSeason ? 68 : 46}px 1fr auto`, alignItems: 'center', gap: '10px', px: 1.75, py: 1, borderBottom: '1px solid var(--line-soft)', fontSize: '0.82rem', '&:last-of-type': { borderBottom: 'none' } }}
-                    >
-                        <Box sx={{ color: 'var(--text-dim)', fontWeight: 800, fontSize: '0.66rem' }}>{showSeason ? `S${game.season} · W${game.week}` : `WK ${game.week}`}</Box>
-                        <Box
-                            component={game.game_id ? Link : 'div'}
-                            to={game.game_id ? `/game-details/${game.game_id}` : undefined}
-                            sx={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, cursor: game.game_id ? 'pointer' : 'default', minWidth: 0, textDecoration: 'none', color: 'inherit' }}
-                        >
-                            <Box component="span" sx={{ color: 'var(--text-dim)' }}>{isHome ? 'vs' : 'at'}</Box>
-                            <TeamMark team={markFor(teamsMap, opponent)} size={20} />
-                            <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {opponent}
-                                {isNeutralSite && (
-                                    <Box component="span" sx={{ color: 'var(--text-dim)', fontWeight: 400, fontStyle: 'italic' }}>
-                                        {venue ? ` (Neutral site at ${venue})` : ' (Neutral site)'}
-                                    </Box>
-                                )}
+                            <Box sx={{ color: 'var(--text-dim)', fontWeight: 800, fontSize: '0.66rem' }}>
+                                {showSeason ? `S${game.season} · W${game.week}` : `WK ${game.week}`}
+                            </Box>
+                            <Box
+                                component={game.game_id ? Link : 'div'}
+                                to={game.game_id ? `/game-details/${game.game_id}` : undefined}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontWeight: 600,
+                                    cursor: game.game_id ? 'pointer' : 'default',
+                                    minWidth: 0,
+                                    textDecoration: 'none',
+                                    color: 'inherit',
+                                }}
+                            >
+                                <Box component="span" sx={{ color: 'var(--text-dim)' }}>
+                                    {isHome ? 'vs' : 'at'}
+                                </Box>
+                                <TeamMark team={markFor(teamsMap, opponent)} size={20} />
+                                <Box
+                                    component="span"
+                                    sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                >
+                                    {opponent}
+                                    {isNeutralSite && (
+                                        <Box
+                                            component="span"
+                                            sx={{ color: 'var(--text-dim)', fontWeight: 400, fontStyle: 'italic' }}
+                                        >
+                                            {venue ? ` (Neutral site at ${venue})` : ' (Neutral site)'}
+                                        </Box>
+                                    )}
+                                </Box>
+                            </Box>
+                            <Box
+                                sx={{
+                                    fontWeight: 800,
+                                    fontFamily: 'var(--cond)',
+                                    color: game.finished ? (win ? 'var(--field)' : 'var(--live)') : 'var(--text-dim)',
+                                }}
+                            >
+                                {game.finished ? `${win ? 'W' : 'L'} ${us}-${them}` : '-'}
                             </Box>
                         </Box>
-                        <Box sx={{ fontWeight: 800, fontFamily: 'var(--cond)', color: game.finished ? (win ? 'var(--field)' : 'var(--live)') : 'var(--text-dim)' }}>
-                            {game.finished ? `${win ? 'W' : 'L'} ${us}-${them}` : '-'}
-                        </Box>
-                    </Box>
-                );
-            })}
+                    );
+                })
+            )}
         </Panel>
     );
 };

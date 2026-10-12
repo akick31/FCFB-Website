@@ -12,7 +12,7 @@ export const uploadPostseasonLogo = async (file) => {
         });
         return response.data;
     } catch (error) {
-        console.error('Failed to upload postseason logo:', error);
+        console.error('Failed to upload postseason logo:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to upload logo');
         }

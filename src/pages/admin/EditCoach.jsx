@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
@@ -14,19 +14,83 @@ import { goBackOr } from '../../utils/navigation';
 const ROLES = ['USER', 'CONFERENCE_COMMISSIONER', 'ADMIN'];
 const POSITIONS = ['HEAD_COACH', 'OFFENSIVE_COORDINATOR', 'DEFENSIVE_COORDINATOR', 'RETIRED'];
 
-const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
-const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', py: '10px', font: 'inherit', fontSize: '0.85rem' };
-const selectSx = { ...inputSx, cursor: 'pointer', '& option': { background: 'var(--surface-2)', color: 'var(--text)' } };
-const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '18px', py: '10px', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
-const btnGhostSx = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '18px', py: '10px', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
-const backSx = { color: 'var(--brand)', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none', display: 'inline-block', mb: '14px' };
-const gridSx = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0 16px', p: '16px' };
+const labelSx = {
+    display: 'block',
+    fontSize: '0.68rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    fontWeight: 800,
+    color: 'var(--text-dim)',
+    mb: '5px',
+};
+const inputSx = {
+    width: '100%',
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text)',
+    borderRadius: 'var(--r-sm)',
+    px: '12px',
+    py: '10px',
+    font: 'inherit',
+    fontSize: '0.85rem',
+};
+const selectSx = {
+    ...inputSx,
+    cursor: 'pointer',
+    '& option': { background: 'var(--surface-2)', color: 'var(--text)' },
+};
+const btnPrimarySx = {
+    border: 0,
+    background: 'var(--brand-deep)',
+    color: '#fff',
+    borderRadius: 'var(--r-sm)',
+    px: '18px',
+    py: '10px',
+    font: 'inherit',
+    fontSize: '0.85rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    '&:disabled': { opacity: 0.6, cursor: 'default' },
+};
+const btnGhostSx = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textDecoration: 'none',
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text-muted)',
+    borderRadius: 'var(--r-sm)',
+    px: '18px',
+    py: '10px',
+    font: 'inherit',
+    fontSize: '0.85rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
+};
+const backSx = {
+    color: 'var(--brand)',
+    fontSize: '0.8rem',
+    fontWeight: 700,
+    textDecoration: 'none',
+    display: 'inline-block',
+    mb: '14px',
+};
+const gridSx = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+    gap: '0 16px',
+    p: '16px',
+};
 
 const Field = ({ label, children }) => {
     const id = slugId(label);
     return (
         <Box sx={{ mb: '14px' }}>
-            <Box component="label" htmlFor={id} sx={labelSx}>{label}</Box>
+            <Box component="label" htmlFor={id} sx={labelSx}>
+                {label}
+            </Box>
             {React.cloneElement(children, { id })}
         </Box>
     );
@@ -36,11 +100,21 @@ Field.propTypes = { label: PropTypes.string.isRequired, children: PropTypes.node
 
 const NumberField = ({ label, value, onChange }) => (
     <Field label={label}>
-        <Box component="input" type="number" value={value ?? 0} onChange={(e) => onChange(parseInt(e.target.value, 10) || 0)} sx={inputSx} />
+        <Box
+            component="input"
+            type="number"
+            value={value ?? 0}
+            onChange={(e) => onChange(parseInt(e.target.value, 10) || 0)}
+            sx={inputSx}
+        />
     </Field>
 );
 
-NumberField.propTypes = { label: PropTypes.string.isRequired, value: PropTypes.number, onChange: PropTypes.func.isRequired };
+NumberField.propTypes = {
+    label: PropTypes.string.isRequired,
+    value: PropTypes.number,
+    onChange: PropTypes.func.isRequired,
+};
 
 const EditCoach = ({ user: adminUser }) => {
     const { username } = useParams();
@@ -54,30 +128,59 @@ const EditCoach = ({ user: adminUser }) => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
 
+    const scopeRef = useRef(null);
+
     useEffect(() => {
+        const scope = { active: true, redirectTimer: null };
+        scopeRef.current = scope;
+        setLoading(true);
+        setSaving(false);
+        setError(null);
+        setSuccess(false);
+        setCoach(null);
         const fetchData = async () => {
             try {
                 const [allUsers, allTeams] = await Promise.all([getAllUsers(), getAllTeams().catch(() => [])]);
+                if (!scope.active) {
+                    return;
+                }
                 const decoded = decodeURIComponent(username || '');
                 const found = allUsers.find((entry) => entry.username === decoded || entry.coach_name === decoded);
                 setCoach(found || null);
                 setOriginalTeam(found?.team ?? null);
                 setOriginalPosition(found?.position ?? null);
-                setTeams(allTeams.filter((team) => team.active).map((team) => team.name).sort((a, b) => a.localeCompare(b)));
-                if (!found) setError('Coach not found');
-            } catch (err) {
-                console.error('Failed to load coach:', err);
-                setError('Failed to load coach');
+                setTeams(
+                    allTeams
+                        .filter((team) => team.active)
+                        .map((team) => team.name)
+                        .sort((a, b) => a.localeCompare(b))
+                );
+                if (!found) {
+                    setError('Coach not found');
+                }
+            } catch {
+                if (scope.active) {
+                    console.error('Failed to load coach');
+                    setError('Failed to load coach');
+                }
             } finally {
-                setLoading(false);
+                if (scope.active) {
+                    setLoading(false);
+                }
             }
         };
         fetchData();
+        return () => {
+            scope.active = false;
+            clearTimeout(scope.redirectTimer);
+        };
     }, [username]);
 
     const handleChange = (field, value) => setCoach((prev) => ({ ...prev, [field]: value }));
 
     const handleSave = async () => {
+        const scope = scopeRef.current;
+        clearTimeout(scope.redirectTimer);
         setSaving(true);
         setError(null);
         setSuccess(false);
@@ -85,30 +188,54 @@ const EditCoach = ({ user: adminUser }) => {
             const nextTeam = coach.team || null;
             if (nextTeam !== originalTeam) {
                 if (!coach.discord_id) {
-                    setError('Cannot change team: this coach has no Discord ID on file, so the move can’t be logged to coaching history. Link a Discord ID first, or use Team Management.');
+                    setError(
+                        'Cannot change team: this coach has no Discord ID on file, so the move can’t be logged to coaching history. Link a Discord ID first, or use Team Management.'
+                    );
                     setSaving(false);
                     return;
                 }
                 if (nextTeam) {
-                    await hireCoach({ team: nextTeam, discordId: coach.discord_id, coachPosition: coach.position, processedBy: adminUser?.username });
+                    await hireCoach({
+                        team: nextTeam,
+                        discordId: coach.discord_id,
+                        coachPosition: coach.position,
+                        processedBy: adminUser?.username,
+                    });
                 } else if (originalTeam) {
-                    await fireSingleCoach({ team: originalTeam, discordId: coach.discord_id, coachPosition: originalPosition || 'HEAD_COACH', processedBy: adminUser?.username });
+                    await fireSingleCoach({
+                        team: originalTeam,
+                        discordId: coach.discord_id,
+                        coachPosition: originalPosition || 'HEAD_COACH',
+                        processedBy: adminUser?.username,
+                    });
                 }
             }
             await updateUser(coach);
-            setSuccess(true);
-            setTimeout(() => navigate('/admin/team-management'), 1500);
+            if (scope.active) {
+                setSuccess(true);
+                scope.redirectTimer = setTimeout(() => {
+                    if (scope.active) {
+                        navigate('/admin/team-management');
+                    }
+                }, 1500);
+            }
         } catch (err) {
-            setError(err.message || 'Failed to update coach');
+            if (scope.active) {
+                setError(err.message || 'Failed to update coach');
+            }
         } finally {
-            setSaving(false);
+            if (scope.active) {
+                setSaving(false);
+            }
         }
     };
 
     if (loading) {
         return (
             <AdminLayout title="Edit Coach">
-                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
+                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}>
+                    <CircularProgress />
+                </Box>
             </AdminLayout>
         );
     }
@@ -127,33 +254,87 @@ const EditCoach = ({ user: adminUser }) => {
 
     return (
         <AdminLayout title={`Edit Coach: ${coach.coach_name || coach.username}`}>
-            <Box component="button" type="button" onClick={() => goBackOr(navigate, '/admin/team-management')} sx={{ ...backSx, border: 0, background: 'transparent', cursor: 'pointer', font: 'inherit', p: 0 }}>&larr; Team management</Box>
+            <Box
+                component="button"
+                type="button"
+                onClick={() => goBackOr(navigate, '/admin/team-management')}
+                sx={{ ...backSx, border: 0, background: 'transparent', cursor: 'pointer', font: 'inherit', p: 0 }}
+            >
+                &larr; Team management
+            </Box>
 
-            {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
-            {success && <Alert severity="success" sx={{ mb: '16px' }}>Coach updated successfully. Redirecting...</Alert>}
+            {error && (
+                <Alert severity="error" sx={{ mb: '16px' }}>
+                    {error}
+                </Alert>
+            )}
+            {success && (
+                <Alert severity="success" sx={{ mb: '16px' }}>
+                    Coach updated successfully. Redirecting...
+                </Alert>
+            )}
 
             <Panel header="Basic information" sx={{ mb: '16px' }}>
                 <Box sx={gridSx}>
                     <Field label="Coach name">
-                        <Box component="input" value={coach.coach_name || ''} onChange={(e) => handleChange('coach_name', e.target.value)} sx={inputSx} />
+                        <Box
+                            component="input"
+                            value={coach.coach_name || ''}
+                            onChange={(e) => handleChange('coach_name', e.target.value)}
+                            sx={inputSx}
+                        />
                     </Field>
                     <Field label="Discord tag">
-                        <Box component="input" value={coach.discord_tag || ''} onChange={(e) => handleChange('discord_tag', e.target.value)} sx={inputSx} />
+                        <Box
+                            component="input"
+                            value={coach.discord_tag || ''}
+                            onChange={(e) => handleChange('discord_tag', e.target.value)}
+                            sx={inputSx}
+                        />
                     </Field>
                     <Field label="Role">
-                        <Box component="select" value={coach.role || ''} onChange={(e) => handleChange('role', e.target.value)} sx={selectSx} disabled={roleFieldDisabled} title={roleFieldDisabled ? 'Only an admin can change another admin’s role' : undefined}>
-                            {visibleRoles.map((role) => <option key={role} value={role}>{formatRole(role)}</option>)}
+                        <Box
+                            component="select"
+                            value={coach.role || ''}
+                            onChange={(e) => handleChange('role', e.target.value)}
+                            sx={selectSx}
+                            disabled={roleFieldDisabled}
+                            title={roleFieldDisabled ? 'Only an admin can change another admin’s role' : undefined}
+                        >
+                            {visibleRoles.map((role) => (
+                                <option key={role} value={role}>
+                                    {formatRole(role)}
+                                </option>
+                            ))}
                         </Box>
                     </Field>
                     <Field label="Position">
-                        <Box component="select" value={coach.position || ''} onChange={(e) => handleChange('position', e.target.value)} sx={selectSx}>
-                            {POSITIONS.map((position) => <option key={position} value={position}>{formatPosition(position)}</option>)}
+                        <Box
+                            component="select"
+                            value={coach.position || ''}
+                            onChange={(e) => handleChange('position', e.target.value)}
+                            sx={selectSx}
+                        >
+                            {POSITIONS.map((position) => (
+                                <option key={position} value={position}>
+                                    {formatPosition(position)}
+                                </option>
+                            ))}
                         </Box>
                     </Field>
                     <Field label="Team">
-                        <Box component="select" value={coach.team || ''} onChange={(e) => handleChange('team', e.target.value || null)} sx={selectSx}>
+                        <Box
+                            component="select"
+                            value={coach.team || ''}
+                            onChange={(e) => handleChange('team', e.target.value || null)}
+                            sx={selectSx}
+                        >
                             <option value="">None (free agent)</option>
-                            {teams.map((team) => <option key={team} value={team}>{team}</option>)}
+                            {teams.map((team) => (
+                                <option key={team} value={team}>
+                                    {team}
+                                </option>
+                            ))}
                         </Box>
                     </Field>
                 </Box>
@@ -162,13 +343,31 @@ const EditCoach = ({ user: adminUser }) => {
             <Panel header="Playbooks" sx={{ mb: '16px' }}>
                 <Box sx={gridSx}>
                     <Field label="Offensive playbook">
-                        <Box component="select" value={coach.offensive_playbook || ''} onChange={(e) => handleChange('offensive_playbook', e.target.value)} sx={selectSx}>
-                            {OFFENSIVE_PLAYBOOKS.map((playbook) => <option key={playbook} value={playbook}>{formatOffensivePlaybook(playbook)}</option>)}
+                        <Box
+                            component="select"
+                            value={coach.offensive_playbook || ''}
+                            onChange={(e) => handleChange('offensive_playbook', e.target.value)}
+                            sx={selectSx}
+                        >
+                            {OFFENSIVE_PLAYBOOKS.map((playbook) => (
+                                <option key={playbook} value={playbook}>
+                                    {formatOffensivePlaybook(playbook)}
+                                </option>
+                            ))}
                         </Box>
                     </Field>
                     <Field label="Defensive playbook">
-                        <Box component="select" value={coach.defensive_playbook || ''} onChange={(e) => handleChange('defensive_playbook', e.target.value)} sx={selectSx}>
-                            {DEFENSIVE_PLAYBOOKS.map((playbook) => <option key={playbook} value={playbook}>{formatDefensivePlaybook(playbook)}</option>)}
+                        <Box
+                            component="select"
+                            value={coach.defensive_playbook || ''}
+                            onChange={(e) => handleChange('defensive_playbook', e.target.value)}
+                            sx={selectSx}
+                        >
+                            {DEFENSIVE_PLAYBOOKS.map((playbook) => (
+                                <option key={playbook} value={playbook}>
+                                    {formatDefensivePlaybook(playbook)}
+                                </option>
+                            ))}
                         </Box>
                     </Field>
                 </Box>
@@ -178,22 +377,71 @@ const EditCoach = ({ user: adminUser }) => {
                 <Box sx={gridSx}>
                     <NumberField label="Wins" value={coach.wins} onChange={(v) => handleChange('wins', v)} />
                     <NumberField label="Losses" value={coach.losses} onChange={(v) => handleChange('losses', v)} />
-                    <NumberField label="Conference wins" value={coach.conference_wins} onChange={(v) => handleChange('conference_wins', v)} />
-                    <NumberField label="Conference losses" value={coach.conference_losses} onChange={(v) => handleChange('conference_losses', v)} />
-                    <NumberField label="Conf champ wins" value={coach.conference_championship_wins} onChange={(v) => handleChange('conference_championship_wins', v)} />
-                    <NumberField label="Conf champ losses" value={coach.conference_championship_losses} onChange={(v) => handleChange('conference_championship_losses', v)} />
-                    <NumberField label="Bowl wins" value={coach.bowl_wins} onChange={(v) => handleChange('bowl_wins', v)} />
-                    <NumberField label="Bowl losses" value={coach.bowl_losses} onChange={(v) => handleChange('bowl_losses', v)} />
-                    <NumberField label="Playoff wins" value={coach.playoff_wins} onChange={(v) => handleChange('playoff_wins', v)} />
-                    <NumberField label="Playoff losses" value={coach.playoff_losses} onChange={(v) => handleChange('playoff_losses', v)} />
-                    <NumberField label="National champ wins" value={coach.national_championship_wins} onChange={(v) => handleChange('national_championship_wins', v)} />
-                    <NumberField label="National champ losses" value={coach.national_championship_losses} onChange={(v) => handleChange('national_championship_losses', v)} />
+                    <NumberField
+                        label="Conference wins"
+                        value={coach.conference_wins}
+                        onChange={(v) => handleChange('conference_wins', v)}
+                    />
+                    <NumberField
+                        label="Conference losses"
+                        value={coach.conference_losses}
+                        onChange={(v) => handleChange('conference_losses', v)}
+                    />
+                    <NumberField
+                        label="Conf champ wins"
+                        value={coach.conference_championship_wins}
+                        onChange={(v) => handleChange('conference_championship_wins', v)}
+                    />
+                    <NumberField
+                        label="Conf champ losses"
+                        value={coach.conference_championship_losses}
+                        onChange={(v) => handleChange('conference_championship_losses', v)}
+                    />
+                    <NumberField
+                        label="Bowl wins"
+                        value={coach.bowl_wins}
+                        onChange={(v) => handleChange('bowl_wins', v)}
+                    />
+                    <NumberField
+                        label="Bowl losses"
+                        value={coach.bowl_losses}
+                        onChange={(v) => handleChange('bowl_losses', v)}
+                    />
+                    <NumberField
+                        label="Playoff wins"
+                        value={coach.playoff_wins}
+                        onChange={(v) => handleChange('playoff_wins', v)}
+                    />
+                    <NumberField
+                        label="Playoff losses"
+                        value={coach.playoff_losses}
+                        onChange={(v) => handleChange('playoff_losses', v)}
+                    />
+                    <NumberField
+                        label="National champ wins"
+                        value={coach.national_championship_wins}
+                        onChange={(v) => handleChange('national_championship_wins', v)}
+                    />
+                    <NumberField
+                        label="National champ losses"
+                        value={coach.national_championship_losses}
+                        onChange={(v) => handleChange('national_championship_losses', v)}
+                    />
                 </Box>
             </Panel>
 
             <Box sx={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <Box component="button" type="button" onClick={() => goBackOr(navigate, '/admin/team-management')} sx={btnGhostSx}>Cancel</Box>
-                <Box component="button" type="button" onClick={handleSave} disabled={saving} sx={btnPrimarySx}>{saving ? 'Saving...' : 'Save changes'}</Box>
+                <Box
+                    component="button"
+                    type="button"
+                    onClick={() => goBackOr(navigate, '/admin/team-management')}
+                    sx={btnGhostSx}
+                >
+                    Cancel
+                </Box>
+                <Box component="button" type="button" onClick={handleSave} disabled={saving} sx={btnPrimarySx}>
+                    {saving ? 'Saving...' : 'Save changes'}
+                </Box>
             </Box>
         </AdminLayout>
     );

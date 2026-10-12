@@ -5,7 +5,14 @@ import PropTypes from 'prop-types';
 const HOVER = 'color-mix(in srgb, var(--brand) 7%, var(--surface))';
 
 const DataTable = ({ minWidth = 600, tableLayout = 'auto', children }) => (
-    <Box sx={{ border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', overflowX: 'auto', background: 'var(--surface)' }}>
+    <Box
+        sx={{
+            border: '1px solid var(--line)',
+            borderRadius: 'var(--r-lg)',
+            overflowX: 'auto',
+            background: 'var(--surface)',
+        }}
+    >
         <Box
             component="table"
             sx={{
@@ -31,10 +38,21 @@ const DataTable = ({ minWidth = 600, tableLayout = 'auto', children }) => (
                     zIndex: 1,
                 },
                 '& th.lft, & td.lft': { textAlign: 'left' },
-                '& td': { padding: '9px 12px', borderBottom: '1px solid var(--line-soft)', textAlign: 'right', whiteSpace: 'nowrap' },
+                '& td': {
+                    padding: '9px 12px',
+                    borderBottom: '1px solid var(--line-soft)',
+                    textAlign: 'right',
+                    whiteSpace: 'nowrap',
+                },
                 '& tbody tr': { cursor: 'pointer' },
                 '& tbody tr:hover': { background: HOVER },
-                '& .stick': { position: 'sticky', left: 0, background: 'var(--surface)', borderRight: '1px solid var(--line)', zIndex: 2 },
+                '& .stick': {
+                    position: 'sticky',
+                    left: 0,
+                    background: 'var(--surface)',
+                    borderRight: '1px solid var(--line)',
+                    zIndex: 2,
+                },
                 '& thead .stick': { zIndex: 3, background: 'var(--surface-2)' },
                 '& tbody tr:hover .stick': { background: HOVER },
                 '& .num': { fontVariantNumeric: 'tabular-nums' },

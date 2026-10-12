@@ -1,40 +1,54 @@
 import { useEffect, useState } from 'react';
 import { getFonts } from '../../../api/fontApi';
-
-let cached = null;
-let inflight = null;
+let cachedFonts = null;
+let fontsRequest = null;
 const listeners = new Set();
-
-const load = () => {
-    if (cached) return Promise.resolve(cached);
-    if (!inflight) {
-        inflight = getFonts()
-            .then((fonts) => { cached = fonts; inflight = null; listeners.forEach((l) => l(cached)); return cached; })
-            .catch(() => { cached = []; inflight = null; return cached; });
+const loadFonts = () => {
+    if (cachedFonts) {
+        return Promise.resolve(cachedFonts);
     }
-    return inflight;
+    if (!fontsRequest) {
+        fontsRequest = getFonts()
+            .then((fonts) => {
+                cachedFonts = fonts;
+                fontsRequest = null;
+                listeners.forEach((l) => l(cachedFonts));
+                return cachedFonts;
+            })
+            .catch(() => {
+                fontsRequest = null;
+                return cachedFonts || [];
+            });
+    }
+    return fontsRequest;
 };
-
 export const registerUploadedFont = (option) => {
-    if (!option) return;
-    const next = (cached || []).filter((f) => f.value !== option.value);
-    cached = [...next, option].sort((a, b) => a.label.localeCompare(b.label));
-    listeners.forEach((l) => l(cached));
+    if (!option) {
+        return;
+    }
+    const next = (cachedFonts || []).filter((f) => f.value !== option.value);
+    cachedFonts = [...next, option].sort((a, b) => a.label.localeCompare(b.label));
+    listeners.forEach((l) => l(cachedFonts));
 };
-
 export const removeFont = (value) => {
-    cached = (cached || []).filter((f) => f.value !== value);
-    listeners.forEach((l) => l(cached));
+    cachedFonts = (cachedFonts || []).filter((f) => f.value !== value);
+    listeners.forEach((l) => l(cachedFonts));
 };
-
 export const useFonts = () => {
-    const [fonts, setFonts] = useState(cached || []);
+    const [fonts, setFonts] = useState(cachedFonts || []);
     useEffect(() => {
         let mounted = true;
-        load().then((f) => { if (mounted) setFonts(f); });
+        loadFonts().then((f) => {
+            if (mounted) {
+                setFonts(f);
+            }
+        });
         const listener = (f) => setFonts([...f]);
         listeners.add(listener);
-        return () => { mounted = false; listeners.delete(listener); };
+        return () => {
+            mounted = false;
+            listeners.delete(listener);
+        };
     }, []);
     return fonts;
 };

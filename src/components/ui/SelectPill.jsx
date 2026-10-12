@@ -3,9 +3,31 @@ import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
 const SelectPill = ({ label, value, onChange, options, ariaLabel, sx }) => (
-    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px', height: '34px', boxSizing: 'border-box', border: '1px solid var(--line)', background: 'var(--surface)', borderRadius: 'var(--r-sm)', padding: '0 10px', ...sx }}>
+    <Box
+        sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            height: '34px',
+            boxSizing: 'border-box',
+            border: '1px solid var(--line)',
+            background: 'var(--surface)',
+            borderRadius: 'var(--r-sm)',
+            padding: '0 10px',
+            ...sx,
+        }}
+    >
         {label && (
-            <Box component="span" sx={{ color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.6rem', letterSpacing: '0.04em' }}>
+            <Box
+                component="span"
+                sx={{
+                    color: 'var(--text-dim)',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    fontSize: '0.6rem',
+                    letterSpacing: '0.04em',
+                }}
+            >
                 {label}
             </Box>
         )}
@@ -14,10 +36,24 @@ const SelectPill = ({ label, value, onChange, options, ariaLabel, sx }) => (
             aria-label={ariaLabel || label}
             value={value}
             onChange={(event) => onChange(event.target.value)}
-            sx={{ flex: 1, minWidth: 0, background: 'transparent', border: 0, color: 'var(--text)', font: 'inherit', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', outline: 'none', '& option': { background: 'var(--surface)', color: 'var(--text)' } }}
+            sx={{
+                flex: 1,
+                minWidth: 0,
+                background: 'transparent',
+                border: 0,
+                color: 'var(--text)',
+                font: 'inherit',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                outline: 'none',
+                '& option': { background: 'var(--surface)', color: 'var(--text)' },
+            }}
         >
             {options.map(({ value: optionValue, label: optionLabel }) => (
-                <option key={optionValue} value={optionValue}>{optionLabel}</option>
+                <option key={optionValue} value={optionValue}>
+                    {optionLabel}
+                </option>
             ))}
         </Box>
     </Box>
@@ -27,10 +63,12 @@ SelectPill.propTypes = {
     label: PropTypes.node,
     value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     onChange: PropTypes.func.isRequired,
-    options: PropTypes.arrayOf(PropTypes.shape({
-        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-        label: PropTypes.node.isRequired,
-    })).isRequired,
+    options: PropTypes.arrayOf(
+        PropTypes.shape({
+            value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+            label: PropTypes.node.isRequired,
+        })
+    ).isRequired,
     ariaLabel: PropTypes.string,
     sx: PropTypes.object,
 };

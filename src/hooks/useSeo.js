@@ -24,7 +24,9 @@ function setCanonical(href) {
 export function useSeo({ title, description, path } = {}) {
     useEffect(() => {
         const routePath = path ?? window.location.pathname;
-        if (title) document.title = title;
+        if (title) {
+            document.title = title;
+        }
         setMeta('name', 'description', description);
         setMeta('property', 'og:title', title);
         setMeta('property', 'og:description', description);

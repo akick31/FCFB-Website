@@ -4,10 +4,15 @@ import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { getAllTeams } from '../../api/teamApi';
 import { isRealTeam, isTeamAvailable } from '../../utils/teamDataUtils';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
-import { useColorMode } from '../../theme/ColorModeContext';
+import { useColorMode } from '../../context/ColorModeContext';
 import { pickTeamColor } from '../../utils/teamColor';
-import { useConferencesMap, activeConferenceCodes, conferenceLabel } from '../../components/constants/conferences';
-import { formatConference } from '../../utils/formatText';
+import {
+    useConferencesMap,
+    activeConferenceCodes,
+    conferenceLabel,
+    formatConference,
+} from '../../hooks/useConferencesMap';
+
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SelectPill from '../../components/ui/SelectPill';
@@ -15,7 +20,11 @@ import TeamMark from '../../components/ui/TeamMark';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
 
-const SORTS = { elo: (a, b) => (b.current_elo || 0) - (a.current_elo || 0), wins: (a, b) => (b.current_wins || 0) - (a.current_wins || 0), name: (a, b) => a.name.localeCompare(b.name) };
+const SORTS = {
+    elo: (a, b) => (b.current_elo || 0) - (a.current_elo || 0),
+    wins: (a, b) => (b.current_wins || 0) - (a.current_wins || 0),
+    name: (a, b) => a.name.localeCompare(b.name),
+};
 
 const Teams = () => {
     const { conference: confParam, availability: availParam } = useParams();
@@ -36,35 +45,61 @@ const Teams = () => {
 
     const changeConference = (value) => {
         setConference(value);
-        const pathname = value === 'ALL' && availability === 'all' ? '/teams' : `/teams/${value.toLowerCase()}/${availability}`;
+        const pathname =
+            value === 'ALL' && availability === 'all' ? '/teams' : `/teams/${value.toLowerCase()}/${availability}`;
         navigate({ pathname, search: searchParams.toString() }, { replace: true });
     };
 
     const changeAvailability = (value) => {
         setAvailability(value);
-        const pathname = conference === 'ALL' && value === 'all' ? '/teams' : `/teams/${conference.toLowerCase()}/${value}`;
+        const pathname =
+            conference === 'ALL' && value === 'all' ? '/teams' : `/teams/${conference.toLowerCase()}/${value}`;
         navigate({ pathname, search: searchParams.toString() }, { replace: true });
     };
 
     const changeSearch = (value) => {
         setSearch(value);
         const next = new URLSearchParams(searchParams);
-        if (value) next.set('search', value); else next.delete('search');
+        if (value) {
+            next.set('search', value);
+        } else {
+            next.delete('search');
+        }
         setSearchParams(next, { replace: true });
     };
 
     const changeSort = (value) => {
         setSort(value);
         const next = new URLSearchParams(searchParams);
-        if (value && value !== 'name') next.set('sort', value); else next.delete('sort');
+        if (value && value !== 'name') {
+            next.set('sort', value);
+        } else {
+            next.delete('sort');
+        }
         setSearchParams(next, { replace: true });
     };
 
     useEffect(() => {
+        let active = true;
         getAllTeams()
-            .then((data) => setTeams(data.filter((team) => team.active && isRealTeam(team))))
-            .catch(() => setError('Failed to load teams. Please try again.'))
-            .finally(() => setLoading(false));
+            .then((data) => {
+                if (active) {
+                    setTeams(data.filter((team) => team.active && isRealTeam(team)));
+                }
+            })
+            .catch(() => {
+                if (active) {
+                    setError('Failed to load teams. Please try again.');
+                }
+            })
+            .finally(() => {
+                if (active) {
+                    setLoading(false);
+                }
+            });
+        return () => {
+            active = false;
+        };
     }, []);
 
     const availableConferences = useMemo(() => {
@@ -76,21 +111,40 @@ const Teams = () => {
         const query = search.trim().toLowerCase();
         return teams
             .filter((team) => conference === 'ALL' || team.conference === conference)
-            .filter((team) => availability === 'all' || (availability === 'open' ? isTeamAvailable(team) : !isTeamAvailable(team)))
-            .filter((team) => !query
-                || team.name.toLowerCase().includes(query)
-                || (team.coach_usernames || []).some((coach) => coach.toLowerCase().includes(query))
-                || (team.coach_discord_tags || []).some((tag) => tag.toLowerCase().includes(query)))
+            .filter(
+                (team) =>
+                    availability === 'all' || (availability === 'open' ? isTeamAvailable(team) : !isTeamAvailable(team))
+            )
+            .filter(
+                (team) =>
+                    !query ||
+                    team.name.toLowerCase().includes(query) ||
+                    (team.coach_usernames || []).some((coach) => coach.toLowerCase().includes(query)) ||
+                    (team.coach_discord_tags || []).some((tag) => tag.toLowerCase().includes(query))
+            )
             .sort(SORTS[sort]);
     }, [teams, conference, availability, search, sort]);
 
-    const openCount = useMemo(() => teams.filter((team) => !(team.coach_usernames && team.coach_usernames.length)).length, [teams]);
+    const openCount = useMemo(
+        () => teams.filter((team) => !(team.coach_usernames && team.coach_usernames.length)).length,
+        [teams]
+    );
 
     if (loading) {
-        return <PageWrap><Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box></PageWrap>;
+        return (
+            <PageWrap>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+                    <CircularProgress />
+                </Box>
+            </PageWrap>
+        );
     }
     if (error) {
-        return <PageWrap><Alert severity="error">{error}</Alert></PageWrap>;
+        return (
+            <PageWrap>
+                <Alert severity="error">{error}</Alert>
+            </PageWrap>
+        );
     }
 
     return (
@@ -102,25 +156,47 @@ const Teams = () => {
                     aria-label="Search teams"
                     value={search}
                     onChange={(event) => changeSearch(event.target.value)}
-                    sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', padding: '6px 10px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, minWidth: 210, '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 } }}
+                    sx={{
+                        border: '1px solid var(--line)',
+                        background: 'var(--surface)',
+                        color: 'var(--text)',
+                        borderRadius: 'var(--r-sm)',
+                        padding: '6px 10px',
+                        font: 'inherit',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        minWidth: 210,
+                        '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 },
+                    }}
                 />
                 <SelectPill
                     label="Conference"
                     value={conference}
                     onChange={changeConference}
-                    options={[{ value: 'ALL', label: 'All conferences' }, ...availableConferences.map((conf) => ({ value: conf, label: conferenceLabel(conf) }))]}
+                    options={[
+                        { value: 'ALL', label: 'All conferences' },
+                        ...availableConferences.map((conf) => ({ value: conf, label: conferenceLabel(conf) })),
+                    ]}
                 />
                 <SelectPill
                     label="Availability"
                     value={availability}
                     onChange={changeAvailability}
-                    options={[{ value: 'all', label: 'All teams' }, { value: 'open', label: 'Open' }, { value: 'taken', label: 'Taken' }]}
+                    options={[
+                        { value: 'all', label: 'All teams' },
+                        { value: 'open', label: 'Open' },
+                        { value: 'taken', label: 'Taken' },
+                    ]}
                 />
                 <SelectPill
                     label="Sort"
                     value={sort}
                     onChange={changeSort}
-                    options={[{ value: 'elo', label: 'ELO' }, { value: 'wins', label: 'Wins' }, { value: 'name', label: 'Name' }]}
+                    options={[
+                        { value: 'elo', label: 'ELO' },
+                        { value: 'wins', label: 'Wins' },
+                        { value: 'name', label: 'Name' },
+                    ]}
                 />
             </PageHeading>
 
@@ -132,15 +208,58 @@ const Teams = () => {
                             key={team.id}
                             component={Link}
                             to={`/team-details/${team.id}`}
-                            sx={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', p: '13px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', position: 'relative', overflow: 'hidden', textDecoration: 'none', color: 'inherit', transition: 'transform .14s, border-color .14s', '&:hover': { transform: 'translateY(-2px)', borderColor: 'color-mix(in srgb, var(--brand) 50%, var(--line))' }, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' } }}
+                            sx={{
+                                background: 'var(--surface)',
+                                border: '1px solid var(--line)',
+                                borderRadius: 'var(--r)',
+                                p: '13px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                cursor: 'pointer',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                textDecoration: 'none',
+                                color: 'inherit',
+                                transition: 'transform .14s, border-color .14s',
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    borderColor: 'color-mix(in srgb, var(--brand) 50%, var(--line))',
+                                },
+                                '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' },
+                            }}
                         >
-                            <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '3px', background: pickTeamColor(teamMark, mode) }} />
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    left: 0,
+                                    top: 0,
+                                    bottom: 0,
+                                    width: '3px',
+                                    background: pickTeamColor(teamMark, mode),
+                                }}
+                            />
                             <TeamMark team={teamMark} size={38} />
                             <Box sx={{ minWidth: 0 }}>
-                                <Box sx={{ fontWeight: 800, fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{team.name}</Box>
-                                <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem', fontWeight: 600 }}>{formatConference(team.conference)}</Box>
-                                <Box sx={{ color: 'var(--text-muted)', fontSize: '0.74rem', fontWeight: 700, mt: '2px' }}>
-                                    {team.current_wins || 0}-{team.current_losses || 0}, ELO {team.current_elo != null ? Math.round(team.current_elo) : '-'}
+                                <Box
+                                    sx={{
+                                        fontWeight: 800,
+                                        fontSize: '0.9rem',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
+                                    {team.name}
+                                </Box>
+                                <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem', fontWeight: 600 }}>
+                                    {formatConference(team.conference)}
+                                </Box>
+                                <Box
+                                    sx={{ color: 'var(--text-muted)', fontSize: '0.74rem', fontWeight: 700, mt: '2px' }}
+                                >
+                                    {team.current_wins || 0}-{team.current_losses || 0}, ELO{' '}
+                                    {team.current_elo != null ? Math.round(team.current_elo) : '-'}
                                 </Box>
                             </Box>
                         </Box>

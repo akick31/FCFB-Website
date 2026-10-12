@@ -7,7 +7,9 @@ export const teamCoachPoints = (teamName, rankGames, eloRows, names) => {
     (rankGames || []).forEach((game) => {
         const isHome = game.home_team === teamName && coachOnSide(game.home_coaches, names);
         const isAway = game.away_team === teamName && coachOnSide(game.away_coaches, names);
-        if (!isHome && !isAway) return;
+        if (!isHome && !isAway) {
+            return;
+        }
         coachGameIds.add(game.game_id);
         const rank = isHome ? game.home_team_rank : game.away_team_rank;
         if (game.season != null && game.week != null) {
@@ -26,7 +28,9 @@ export const trendSeasons = (seriesByTeam) => {
     const seasons = new Set();
     Object.values(seriesByTeam).forEach(({ rankPts, eloPts }) => {
         [...rankPts, ...eloPts].forEach((point) => {
-            if (point.season >= 1) seasons.add(point.season);
+            if (point.season >= 1) {
+                seasons.add(point.season);
+            }
         });
     });
     return [...seasons].sort((a, b) => b - a);
@@ -37,9 +41,13 @@ export const buildTrendLines = ({ seriesByTeam, metric, seasonView, colorFor }) 
     return Object.entries(seriesByTeam)
         .map(([team, series]) => {
             let points = (isRank ? series.rankPts : series.eloPts).filter((point) => point.season >= 1);
-            if (isRank) points = points.filter((point) => point.value >= 1 && point.value <= 25 && point.week <= 14);
-            if (seasonView !== 'alltime') points = points.filter((point) => point.season === seasonView);
-            points = points.slice().sort((a, b) => (a.season - b.season) || (a.week - b.week));
+            if (isRank) {
+                points = points.filter((point) => point.value >= 1 && point.value <= 25 && point.week <= 14);
+            }
+            if (seasonView !== 'alltime') {
+                points = points.filter((point) => point.season === seasonView);
+            }
+            points = points.slice().sort((a, b) => a.season - b.season || a.week - b.week);
             return { team, points };
         })
         .filter((line) => line.points.length > 0)
@@ -57,6 +65,8 @@ export const buildTrendLines = ({ seriesByTeam, metric, seasonView, colorFor }) 
 
 export const trendBounds = (lines, pad) => {
     const vals = lines.flatMap((line) => line.pts.map((point) => point.val));
-    if (vals.length === 0) return { yMin: 0, yMax: 1 };
+    if (vals.length === 0) {
+        return { yMin: 0, yMax: 1 };
+    }
     return { yMin: Math.min(...vals) - pad, yMax: Math.max(...vals) + pad };
 };

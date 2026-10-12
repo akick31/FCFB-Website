@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, CircularProgress, Checkbox, FormControlLabel } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
@@ -16,14 +16,20 @@ import { rankMetricEntries } from '../../utils/rankMetricEntries';
 import { rankingMetricHigherIsBetter } from '../../constants/rankingMetrics';
 import { ADJUSTED_PPG_METRIC_TYPES, adjustedMetricHigherIsBetter } from '../../constants/riceSheetAdjustedMetrics';
 import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
-import { useConferencesMap, seasonConferenceList } from '../../components/constants/conferences';
+import { useConferencesMap, seasonConferenceList } from '../../hooks/useConferencesMap';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
 
 const METRIC_TYPES = [
-    'EQUIVALENT_WINS', 'COLLEY_MATRIX', 'ASR',
-    'SCORING_OFFENSE', 'SCORING_DEFENSE', 'MARGIN_OF_VICTORY',
-    'ADJUSTED_POINTS_FOR', 'ADJUSTED_POINTS_AGAINST', 'ADJUSTED_NET_POINTS',
+    'EQUIVALENT_WINS',
+    'COLLEY_MATRIX',
+    'ASR',
+    'SCORING_OFFENSE',
+    'SCORING_DEFENSE',
+    'MARGIN_OF_VICTORY',
+    'ADJUSTED_POINTS_FOR',
+    'ADJUSTED_POINTS_AGAINST',
+    'ADJUSTED_NET_POINTS',
     'COMPOSITE',
 ];
 const MAX_TEAMS = 25;
@@ -45,13 +51,19 @@ const opponentComparators = {
     rank: (a, b) => rankValue(a.rank) - rankValue(b.rank) || byWeek(a, b),
 };
 
-const parseTeamIds = (param) => (param || '').split(',').map((id) => Number(id)).filter((id) => Number.isFinite(id)).slice(0, MAX_TEAMS);
+const parseTeamIds = (param) =>
+    (param || '')
+        .split(',')
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id))
+        .slice(0, MAX_TEAMS);
 const maxWeek = (list) => {
     const numeric = (list || []).map(Number).filter(Number.isFinite);
     return numeric.length ? Math.max(...numeric) : null;
 };
 
-const higherIsBetterFor = (type) => (type.startsWith('ADJUSTED_') ? adjustedMetricHigherIsBetter(type) : rankingMetricHigherIsBetter(type));
+const higherIsBetterFor = (type) =>
+    type.startsWith('ADJUSTED_') ? adjustedMetricHigherIsBetter(type) : rankingMetricHigherIsBetter(type);
 
 const RiceSheet = () => {
     useSeo(ROUTE_META['/rice-sheet']);
@@ -62,7 +74,9 @@ const RiceSheet = () => {
 
     const [teams, setTeams] = useState([]);
     const [seasons, setSeasons] = useState([]);
-    const [season, setSeason] = useState(() => (searchParams.get('season') ? Number(searchParams.get('season')) : null));
+    const [season, setSeason] = useState(() =>
+        searchParams.get('season') ? Number(searchParams.get('season')) : null
+    );
     const [validWeeks, setValidWeeks] = useState([]);
     const [selectedTeamIds, setSelectedTeamIds] = useState(() => parseTeamIds(searchParams.get('teams')));
     const [excludeBowls, setExcludeBowls] = useState(false);
@@ -77,6 +91,7 @@ const RiceSheet = () => {
     const [seasonConferenceByTeam, setSeasonConferenceByTeam] = useState({});
     const [opponentsByTeamId, setOpponentsByTeamId] = useState({});
     const [opponentsLoadingByTeamId, setOpponentsLoadingByTeamId] = useState({});
+    const opponentsScope = useRef(null);
 
     useEffect(() => {
         let active = true;
@@ -86,72 +101,132 @@ const RiceSheet = () => {
                     getAllTeamsIncludingInactive().catch(() => []),
                     getAllSeasons().catch(() => []),
                 ]);
-                if (!active) return;
+                if (!active) {
+                    return;
+                }
                 setTeams(allTeams || []);
-                const seasonNumbers = [...new Set((allSeasons || [])
-                    .map((entry) => entry.season_number ?? entry.seasonNumber)
-                    .filter((value) => value != null))].sort((a, b) => b - a);
+                const seasonNumbers = [
+                    ...new Set(
+                        (allSeasons || [])
+                            .map((entry) => entry.season_number ?? entry.seasonNumber)
+                            .filter((value) => value != null)
+                    ),
+                ].sort((a, b) => b - a);
                 setSeasons(seasonNumbers);
                 if (season == null) {
                     const current = await getCurrentSeasonOrLatest().catch(() => null);
-                    setSeason(seasonNumbers.includes(current) ? current : (seasonNumbers[0] ?? null));
+                    if (active) {
+                        setSeason(seasonNumbers.includes(current) ? current : (seasonNumbers[0] ?? null));
+                    }
                 }
             } finally {
-                if (active) setLoading(false);
+                if (active) {
+                    setLoading(false);
+                }
             }
         })();
-        return () => { active = false; };
+        return () => {
+            active = false;
+        };
     }, []);
 
     useEffect(() => {
-        if (season == null) return undefined;
+        if (season == null) {
+            return undefined;
+        }
         let active = true;
-        getValidRankingMetricWeeks(season).then((weeks) => {
-            if (active) setValidWeeks(weeks || []);
-        }).catch(() => { if (active) setValidWeeks([]); });
-        return () => { active = false; };
+        getValidRankingMetricWeeks(season)
+            .then((weeks) => {
+                if (active) {
+                    setValidWeeks(weeks || []);
+                }
+            })
+            .catch(() => {
+                if (active) {
+                    setValidWeeks([]);
+                }
+            });
+        return () => {
+            active = false;
+        };
     }, [season]);
 
     const week = useMemo(() => {
-        if (!validWeeks.length) return null;
+        if (!validWeeks.length) {
+            return null;
+        }
         if (excludeBowls) {
             const regularSeasonWeeks = validWeeks.filter((w) => w < BOWL_START_WEEK);
-            if (regularSeasonWeeks.length) return maxWeek(regularSeasonWeeks);
+            if (regularSeasonWeeks.length) {
+                return maxWeek(regularSeasonWeeks);
+            }
         }
         return maxWeek(validWeeks);
     }, [validWeeks, excludeBowls]);
 
     useEffect(() => {
-        if (season == null) { setSeasonConferenceByTeam({}); return undefined; }
+        if (season == null) {
+            setSeasonConferenceByTeam({});
+            return undefined;
+        }
         let active = true;
-        getTeamSeasonConference(season).then((map) => {
-            if (active) setSeasonConferenceByTeam(map || {});
-        }).catch(() => { if (active) setSeasonConferenceByTeam({}); });
-        return () => { active = false; };
+        getTeamSeasonConference(season)
+            .then((map) => {
+                if (active) {
+                    setSeasonConferenceByTeam(map || {});
+                }
+            })
+            .catch(() => {
+                if (active) {
+                    setSeasonConferenceByTeam({});
+                }
+            });
+        return () => {
+            active = false;
+        };
     }, [season]);
 
     useEffect(() => {
-        if (season == null || week == null) return undefined;
+        if (season == null || week == null) {
+            return undefined;
+        }
         let active = true;
-        Promise.all(METRIC_TYPES.map((type) => getRankingMetrics(season, week, type).catch(() => [])))
-            .then((results) => {
-                if (!active) return;
+        Promise.all(METRIC_TYPES.map((type) => getRankingMetrics(season, week, type).catch(() => []))).then(
+            (results) => {
+                if (!active) {
+                    return;
+                }
                 const next = {};
                 METRIC_TYPES.forEach((type, index) => {
                     const { rankByTeamId } = rankMetricEntries(results[index] || [], higherIsBetterFor(type));
                     const valueByTeamId = {};
-                    (results[index] || []).forEach((entry) => { valueByTeamId[entry.teamId] = entry.value; });
+                    (results[index] || []).forEach((entry) => {
+                        valueByTeamId[entry.teamId] = entry.value;
+                    });
                     next[type] = { rankByTeamId, valueByTeamId };
                 });
                 setMetricsByType(next);
+            }
+        );
+        getTeamResumeMetrics(season, week)
+            .then((rows) => {
+                if (!active) {
+                    return;
+                }
+                const byTeamId = {};
+                (rows || []).forEach((row) => {
+                    byTeamId[row.teamId] = row;
+                });
+                setResumeByTeamId(byTeamId);
+            })
+            .catch(() => {
+                if (active) {
+                    setResumeByTeamId({});
+                }
             });
-        getTeamResumeMetrics(season, week).then((rows) => {
-            if (!active) return;
-            const byTeamId = {};
-            (rows || []).forEach((row) => { byTeamId[row.teamId] = row; });
-            setResumeByTeamId(byTeamId);
-        }).catch(() => { if (active) setResumeByTeamId({}); });
-        return () => { active = false; };
+        return () => {
+            active = false;
+        };
     }, [season, week]);
 
     useEffect(() => {
@@ -159,7 +234,10 @@ const RiceSheet = () => {
         let changed = false;
         const apply = (key, value) => {
             if (value == null) {
-                if (next.has(key)) { next.delete(key); changed = true; }
+                if (next.has(key)) {
+                    next.delete(key);
+                    changed = true;
+                }
             } else if (next.get(key) !== value) {
                 next.set(key, value);
                 changed = true;
@@ -169,25 +247,31 @@ const RiceSheet = () => {
         apply('teams', selectedTeamIds.length ? selectedTeamIds.join(',') : null);
         apply('quickView', quickView || null);
         apply('sort', opponentSort !== DEFAULT_OPPONENT_SORT ? opponentSort : null);
-        if (changed) setSearchParams(next, { replace: true });
+        if (changed) {
+            setSearchParams(next, { replace: true });
+        }
     }, [season, selectedTeamIds, quickView, opponentSort]);
 
     const teamById = useMemo(() => Object.fromEntries(teams.map((team) => [team.id, team])), [teams]);
     const seasonTeams = useMemo(
         () => teams.filter((team) => seasonConferenceByTeam[team.name] != null),
-        [teams, seasonConferenceByTeam],
+        [teams, seasonConferenceByTeam]
     );
     const selectedTeams = useMemo(
         () => selectedTeamIds.map((id) => teamById[id]).filter(Boolean),
-        [selectedTeamIds, teamById],
+        [selectedTeamIds, teamById]
     );
 
     useEffect(() => {
-        if (!Object.keys(seasonConferenceByTeam).length) return;
-        setSelectedTeamIds((prev) => prev.filter((id) => {
-            const team = teamById[id];
-            return team && seasonConferenceByTeam[team.name] != null;
-        }));
+        if (!Object.keys(seasonConferenceByTeam).length) {
+            return;
+        }
+        setSelectedTeamIds((prev) =>
+            prev.filter((id) => {
+                const team = teamById[id];
+                return team && seasonConferenceByTeam[team.name] != null;
+            })
+        );
     }, [seasonConferenceByTeam, teamById]);
 
     const compositeRankByTeamId = metricsByType.COMPOSITE?.rankByTeamId || {};
@@ -195,28 +279,40 @@ const RiceSheet = () => {
 
     const seasonConferences = useMemo(
         () => seasonConferenceList([...new Set(Object.values(seasonConferenceByTeam))]),
-        [seasonConferenceByTeam, conferencesMap],
+        [seasonConferenceByTeam, conferencesMap]
     );
-    const quickViewOptions = useMemo(() => [
-        { value: '', label: 'Quick view...' },
-        ...TOP_N_QUICK_VIEWS.map((n) => ({ value: `top${n}`, label: `Top ${n}` })),
-        ...seasonConferences.map((conference) => ({ value: conference.code, label: conference.label })),
-    ], [seasonConferences]);
+    const quickViewOptions = useMemo(
+        () => [
+            { value: '', label: 'Quick view...' },
+            ...TOP_N_QUICK_VIEWS.map((n) => ({ value: `top${n}`, label: `Top ${n}` })),
+            ...seasonConferences.map((conference) => ({ value: conference.code, label: conference.label })),
+        ],
+        [seasonConferences]
+    );
 
     const applyQuickView = (value) => {
         setQuickView(value);
-        if (!value) return;
+        if (!value) {
+            return;
+        }
         const topN = TOP_N_QUICK_VIEWS.find((n) => value === `top${n}`);
-        const ids = topN != null
-            ? Object.entries(compositeRankByTeamId).filter(([, rank]) => rank <= topN).map(([teamId]) => Number(teamId))
-            : seasonTeams.filter((team) => seasonConferenceByTeam[team.name] === value).map((team) => team.id);
+        const ids =
+            topN != null
+                ? Object.entries(compositeRankByTeamId)
+                      .filter(([, rank]) => rank <= topN)
+                      .map(([teamId]) => Number(teamId))
+                : seasonTeams.filter((team) => seasonConferenceByTeam[team.name] === value).map((team) => team.id);
         ids.sort((a, b) => (compositeRankByTeamId[a] ?? Infinity) - (compositeRankByTeamId[b] ?? Infinity));
         setSelectedTeamIds(ids);
     };
 
     useEffect(() => {
-        if (!quickView || selectedTeamIds.length) return;
-        if (!seasonTeams.length || !Object.keys(compositeRankByTeamId).length) return;
+        if (!quickView || selectedTeamIds.length) {
+            return;
+        }
+        if (!seasonTeams.length || !Object.keys(compositeRankByTeamId).length) {
+            return;
+        }
         applyQuickView(quickView);
     }, [seasonTeams, compositeRankByTeamId]);
 
@@ -228,50 +324,80 @@ const RiceSheet = () => {
     }, [resumeByTeamId]);
 
     useEffect(() => {
-        if (season == null) return;
-        selectedTeams.forEach((team) => {
-            if (opponentsByTeamId[team.id] || opponentsLoadingByTeamId[team.id]) return;
-            setOpponentsLoadingByTeamId((prev) => ({ ...prev, [team.id]: true }));
-            getScheduleBySeasonAndTeam(season, team.name).then((entries) => {
-                const opponents = (entries || [])
-                    .filter((entry) => entry.home_team === team.name || entry.away_team === team.name)
-                    .map((entry) => {
-                        const isHome = entry.home_team === team.name;
-                        const opponentName = isHome ? entry.away_team : entry.home_team;
-                        const played = Boolean(entry.finished);
-                        const ownScore = isHome ? entry.home_score : entry.away_score;
-                        const oppScore = isHome ? entry.away_score : entry.home_score;
-                        const hasScore = played && ownScore != null && oppScore != null;
-                        return {
-                            week: entry.week,
-                            name: opponentName,
-                            played,
-                            won: hasScore ? ownScore > oppScore : null,
-                            score: hasScore ? `${ownScore}-${oppScore}` : null,
-                        };
-                    })
-                    .sort((a, b) => (a.week || 0) - (b.week || 0));
-                setOpponentsByTeamId((prev) => ({ ...prev, [team.id]: opponents }));
-            }).catch(() => {
-                setOpponentsByTeamId((prev) => ({ ...prev, [team.id]: [] }));
-            }).finally(() => {
-                setOpponentsLoadingByTeamId((prev) => ({ ...prev, [team.id]: false }));
-            });
-        });
-    }, [selectedTeams, season]);
+        const scope = {};
+        opponentsScope.current = scope;
+        setOpponentsByTeamId({});
+        setOpponentsLoadingByTeamId({});
+        return () => {
+            if (opponentsScope.current === scope) {
+                opponentsScope.current = null;
+            }
+        };
+    }, [season]);
 
-    const rankedOpponents = (teamId) => (opponentsByTeamId[teamId] || [])
-        .filter((opponent) => !excludeBowls || opponent.week < BOWL_START_WEEK)
-        .map((opponent) => ({
-            ...opponent,
-            rank: compositeRankByTeamId[teamIdByName[opponent.name]] ?? null,
-        }))
-        .sort(opponentComparators[opponentSort] || byWeek);
+    useEffect(() => {
+        if (season == null) {
+            return;
+        }
+        const scope = opponentsScope.current;
+        selectedTeams.forEach((team) => {
+            if (opponentsByTeamId[team.id] || opponentsLoadingByTeamId[team.id]) {
+                return;
+            }
+            setOpponentsLoadingByTeamId((prev) => ({ ...prev, [team.id]: true }));
+            getScheduleBySeasonAndTeam(season, team.name)
+                .then((entries) => {
+                    if (opponentsScope.current !== scope) {
+                        return;
+                    }
+                    const opponents = (entries || [])
+                        .filter((entry) => entry.home_team === team.name || entry.away_team === team.name)
+                        .map((entry) => {
+                            const isHome = entry.home_team === team.name;
+                            const opponentName = isHome ? entry.away_team : entry.home_team;
+                            const played = Boolean(entry.finished);
+                            const ownScore = isHome ? entry.home_score : entry.away_score;
+                            const oppScore = isHome ? entry.away_score : entry.home_score;
+                            const hasScore = played && ownScore != null && oppScore != null;
+                            return {
+                                week: entry.week,
+                                name: opponentName,
+                                played,
+                                won: hasScore ? ownScore > oppScore : null,
+                                score: hasScore ? `${ownScore}-${oppScore}` : null,
+                            };
+                        })
+                        .sort((a, b) => (a.week || 0) - (b.week || 0));
+                    setOpponentsByTeamId((prev) => ({ ...prev, [team.id]: opponents }));
+                })
+                .catch(() => {
+                    if (opponentsScope.current === scope) {
+                        setOpponentsByTeamId((prev) => ({ ...prev, [team.id]: [] }));
+                    }
+                })
+                .finally(() => {
+                    if (opponentsScope.current === scope) {
+                        setOpponentsLoadingByTeamId((prev) => ({ ...prev, [team.id]: false }));
+                    }
+                });
+        });
+    }, [selectedTeams, season, opponentsByTeamId, opponentsLoadingByTeamId]);
+
+    const rankedOpponents = (teamId) =>
+        (opponentsByTeamId[teamId] || [])
+            .filter((opponent) => !excludeBowls || opponent.week < BOWL_START_WEEK)
+            .map((opponent) => ({
+                ...opponent,
+                rank: compositeRankByTeamId[teamIdByName[opponent.name]] ?? null,
+            }))
+            .sort(opponentComparators[opponentSort] || byWeek);
 
     const teamsMap = useMemo(() => {
         const merged = { ...activeTeamsMap };
         teams.forEach((team) => {
-            if (team.name && !merged[team.name]) merged[team.name] = toEntry(team);
+            if (team.name && !merged[team.name]) {
+                merged[team.name] = toEntry(team);
+            }
         });
         return merged;
     }, [activeTeamsMap, teams]);
@@ -279,7 +405,9 @@ const RiceSheet = () => {
     const removeTeam = (teamId) => {
         setSelectedTeamIds((prev) => prev.filter((id) => id !== teamId));
         setCompactOverrides((prev) => {
-            if (!(teamId in prev)) return prev;
+            if (!(teamId in prev)) {
+                return prev;
+            }
             const next = { ...prev };
             delete next[teamId];
             return next;
@@ -287,11 +415,15 @@ const RiceSheet = () => {
     };
 
     const reorderTeams = (sourceId, targetId) => {
-        if (sourceId === targetId) return;
+        if (sourceId === targetId) {
+            return;
+        }
         setSelectedTeamIds((prev) => {
             const from = prev.indexOf(sourceId);
             const to = prev.indexOf(targetId);
-            if (from === -1 || to === -1) return prev;
+            if (from === -1 || to === -1) {
+                return prev;
+            }
             const next = [...prev];
             next.splice(from, 1);
             next.splice(to, 0, sourceId);
@@ -323,7 +455,11 @@ const RiceSheet = () => {
             </PageHeading>
 
             <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-                <TeamPicker teams={seasonTeams} selectedTeams={selectedTeams} onChange={(next) => setSelectedTeamIds(next.map((team) => team.id))} />
+                <TeamPicker
+                    teams={seasonTeams}
+                    selectedTeams={selectedTeams}
+                    onChange={(next) => setSelectedTeamIds(next.map((team) => team.id))}
+                />
                 <SelectPill
                     label="Quick view"
                     value={quickView}
@@ -339,14 +475,36 @@ const RiceSheet = () => {
                     sx={{ height: '38px', boxSizing: 'border-box' }}
                 />
                 <FormControlLabel
-                    control={<Checkbox checked={excludeBowls} onChange={(event) => setExcludeBowls(event.target.checked)} size="small" />}
+                    control={
+                        <Checkbox
+                            checked={excludeBowls}
+                            onChange={(event) => setExcludeBowls(event.target.checked)}
+                            size="small"
+                        />
+                    }
                     label="Exclude bowls"
-                    sx={{ m: 0, whiteSpace: 'nowrap', color: 'var(--text-muted)', '& .MuiFormControlLabel-label': { fontSize: '0.8rem' } }}
+                    sx={{
+                        m: 0,
+                        whiteSpace: 'nowrap',
+                        color: 'var(--text-muted)',
+                        '& .MuiFormControlLabel-label': { fontSize: '0.8rem' },
+                    }}
                 />
                 <FormControlLabel
-                    control={<Checkbox checked={compact} onChange={(event) => setAllCompact(event.target.checked)} size="small" />}
+                    control={
+                        <Checkbox
+                            checked={compact}
+                            onChange={(event) => setAllCompact(event.target.checked)}
+                            size="small"
+                        />
+                    }
                     label="Compact view"
-                    sx={{ m: 0, whiteSpace: 'nowrap', color: 'var(--text-muted)', '& .MuiFormControlLabel-label': { fontSize: '0.8rem' } }}
+                    sx={{
+                        m: 0,
+                        whiteSpace: 'nowrap',
+                        color: 'var(--text-muted)',
+                        '& .MuiFormControlLabel-label': { fontSize: '0.8rem' },
+                    }}
                 />
             </Box>
 
@@ -362,9 +520,13 @@ const RiceSheet = () => {
             </Box>
 
             {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                    <CircularProgress />
+                </Box>
             ) : !selectedTeams.length ? (
-                <Box sx={{ color: 'var(--text-muted)', textAlign: 'center', py: 8 }}>Pick a team above to get started.</Box>
+                <Box sx={{ color: 'var(--text-muted)', textAlign: 'center', py: 8 }}>
+                    Pick a team above to get started.
+                </Box>
             ) : (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2 }}>
                     {selectedTeams.map((team) => (
@@ -373,7 +535,9 @@ const RiceSheet = () => {
                             onDragOver={(event) => event.preventDefault()}
                             onDrop={(event) => {
                                 event.preventDefault();
-                                if (dragTeamId != null) reorderTeams(dragTeamId, team.id);
+                                if (dragTeamId != null) {
+                                    reorderTeams(dragTeamId, team.id);
+                                }
                                 setDragTeamId(null);
                             }}
                             sx={{

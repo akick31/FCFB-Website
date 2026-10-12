@@ -1,4 +1,4 @@
-import {Box, Container, Tab, Tabs} from "@mui/material";
+import { Box, Container, Tab, Tabs } from '@mui/material';
 import { styled } from '@mui/system';
 
 export const StyledContainer = styled(Container)(({ theme }) => ({
@@ -17,19 +17,19 @@ export const StyledTabs = styled(Tabs)(({ theme }) => ({
     backgroundColor: 'transparent',
     boxShadow: 'none',
     '& .MuiTabs-indicator': {
-        display: 'none'
+        display: 'none',
     },
     '& .MuiTab-root': {
         backgroundColor: 'transparent',
         color: theme.palette.text.primary,
         '&:hover': {
-            backgroundColor: 'rgba(0, 66, 96, 0.1)'
+            backgroundColor: 'rgba(0, 66, 96, 0.1)',
         },
         '&.Mui-selected': {
             backgroundColor: 'rgba(0, 66, 96, 0.1)',
-            color: theme.palette.primary.main
+            color: theme.palette.primary.main,
         },
-    }
+    },
 }));
 
 export const StyledTab = styled(Tab)(() => ({
@@ -42,7 +42,6 @@ export const StyledTab = styled(Tab)(() => ({
         backgroundColor: 'rgba(0, 66, 96, 0.1)',
         fontWeight: 'bold',
         borderRadius: '12px',
-
     },
     '&:hover': {
         backgroundColor: 'rgba(0, 66, 96, 0.1)',

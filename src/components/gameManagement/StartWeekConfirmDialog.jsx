@@ -12,7 +12,8 @@ const StartWeekConfirmDialog = ({ open, season, week, stats, onCancel, onConfirm
                         All games for Week {week}, Season {season} have already been started.
                     </Typography>
                     <Alert severity="info">
-                        Clicking &quot;Start Week&quot; will attempt to start any games that may have failed previously or were missed.
+                        Clicking &quot;Start Week&quot; will attempt to start any games that may have failed previously
+                        or were missed.
                     </Alert>
                 </>
             ) : (
@@ -21,14 +22,17 @@ const StartWeekConfirmDialog = ({ open, season, week, stats, onCancel, onConfirm
                         This will start all {stats.notStarted} unstarted games for Week {week}, Season {season}.
                     </Typography>
                     <Alert severity="info" sx={{ mb: 1 }}>
-                        Games will be started with smart pacing (~3s between each game, 60s cooldown every 25 games) to respect Discord rate limits.
+                        Games will be started with smart pacing (~3s between each game, 60s cooldown every 25 games) to
+                        respect Discord rate limits.
                     </Alert>
                 </>
             )}
         </DialogContent>
         <DialogActions>
             <Button onClick={onCancel}>Cancel</Button>
-            <Button variant="contained" color="success" onClick={onConfirm}>Start Week {week}</Button>
+            <Button variant="contained" color="success" onClick={onConfirm}>
+                Start Week {week}
+            </Button>
         </DialogActions>
     </Dialog>
 );

@@ -1,19 +1,40 @@
 import apiClient from './apiClient';
 
-export const getFilteredRecords = async (season = null, conference = null, recordType = null, recordName = null, page = 0, size = 20, recordScope = null, scopeValue = null) => {
+export const getFilteredRecords = async (
+    season = null,
+    conference = null,
+    recordType = null,
+    recordName = null,
+    page = 0,
+    size = 20,
+    recordScope = null,
+    scopeValue = null
+) => {
     try {
         const params = { page, size };
-        if (season) params.season = season;
-        if (conference) params.conference = conference;
-        if (recordType) params.recordType = recordType;
-        if (recordName) params.recordName = recordName;
-        if (recordScope) params.recordScope = recordScope;
-        if (scopeValue) params.scopeValue = scopeValue;
+        if (season) {
+            params.season = season;
+        }
+        if (conference) {
+            params.conference = conference;
+        }
+        if (recordType) {
+            params.recordType = recordType;
+        }
+        if (recordName) {
+            params.recordName = recordName;
+        }
+        if (recordScope) {
+            params.recordScope = recordScope;
+        }
+        if (scopeValue) {
+            params.scopeValue = scopeValue;
+        }
 
         const response = await apiClient.get('/records', { params });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch filtered records:', error);
+        console.error('Failed to fetch filtered records:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch filtered records');
         }
@@ -25,11 +46,10 @@ export const generateAllRecords = async () => {
         const response = await apiClient.post('/records/generate/all');
         return response.data;
     } catch (error) {
-        console.error('Failed to generate all records:', error);
+        console.error('Failed to generate all records:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to generate all records');
         }
         throw new Error('An unexpected error occurred while generating all records');
     }
 };
-

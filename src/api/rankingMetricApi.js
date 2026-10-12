@@ -5,7 +5,7 @@ export const getRankingMetrics = async (season, week, metricType) => {
         const response = await apiClient.get('/ranking-metric', { params: { season, week, metricType } });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch ranking metrics:', error);
+        console.error('Failed to fetch ranking metrics:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch ranking metrics');
         }
@@ -18,11 +18,37 @@ export const getRankingMetricWeeks = async (season, metricType) => {
         const response = await apiClient.get('/ranking-metric/weeks', { params: { season, metricType } });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch ranking metric weeks:', error);
+        console.error('Failed to fetch ranking metric weeks:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch ranking metric weeks');
         }
         throw new Error('An unexpected error occurred while fetching ranking metric weeks');
+    }
+};
+
+export const getTeamRankingMetrics = async (season, week, teamId) => {
+    try {
+        const response = await apiClient.get('/ranking-metric/team', { params: { season, week, teamId } });
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch team ranking metrics:');
+        if (error.response) {
+            throw new Error(error.response.data.error || 'Failed to fetch team ranking metrics');
+        }
+        throw new Error('An unexpected error occurred while fetching team ranking metrics');
+    }
+};
+
+export const getTeamRankingMetricTrends = async (season, teamId) => {
+    try {
+        const response = await apiClient.get('/ranking-metric/team/trends', { params: { season, teamId } });
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch team ranking metric trends:');
+        if (error.response) {
+            throw new Error(error.response.data.error || 'Failed to fetch team ranking metric trends');
+        }
+        throw new Error('An unexpected error occurred while fetching team ranking metric trends');
     }
 };
 
@@ -31,7 +57,7 @@ export const getRankingMetricHistory = async (season, team, metricType) => {
         const response = await apiClient.get('/ranking-metric/history', { params: { season, team, metricType } });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch ranking metric history:', error);
+        console.error('Failed to fetch ranking metric history:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch ranking metric history');
         }
@@ -44,7 +70,7 @@ export const computeRankingMetrics = async (season, week) => {
         const response = await apiClient.post('/ranking-metric/compute', null, { params: { season, week } });
         return response.data;
     } catch (error) {
-        console.error('Failed to compute ranking metrics:', error);
+        console.error('Failed to compute ranking metrics:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to compute ranking metrics');
         }
@@ -57,7 +83,7 @@ export const backfillRankingMetrics = async (season) => {
         const response = await apiClient.post('/ranking-metric/backfill', null, { params: { season } });
         return response.data;
     } catch (error) {
-        console.error('Failed to backfill ranking metrics:', error);
+        console.error('Failed to backfill ranking metrics:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to backfill ranking metrics');
         }
@@ -70,7 +96,7 @@ export const getValidRankingMetricWeeks = async (season) => {
         const response = await apiClient.get('/ranking-metric/valid-weeks', { params: { season } });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch valid weeks:', error);
+        console.error('Failed to fetch valid weeks:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch valid weeks');
         }

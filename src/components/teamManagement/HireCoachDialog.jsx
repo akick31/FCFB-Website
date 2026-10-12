@@ -1,10 +1,34 @@
 import React from 'react';
-import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControl, InputLabel, Select, MenuItem, Alert, Autocomplete, TextField } from '@mui/material';
+import {
+    Box,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Alert,
+    Autocomplete,
+    TextField,
+} from '@mui/material';
 import PropTypes from 'prop-types';
 
 const HireCoachDialog = ({
-    open, teamName, users, selectedUser, onSelectedUserChange, selectedPosition, onSelectedPositionChange,
-    processing, dialogError, onCancel, onHireInterim, onHire,
+    open,
+    teamName,
+    users,
+    selectedUser,
+    onSelectedUserChange,
+    selectedPosition,
+    onSelectedPositionChange,
+    processing,
+    dialogError,
+    onCancel,
+    onHireInterim,
+    onHire,
 }) => (
     <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
         <DialogTitle>Hire Coach for {teamName}</DialogTitle>
@@ -16,7 +40,13 @@ const HireCoachDialog = ({
                     value={selectedUser}
                     onChange={(event, newValue) => onSelectedUserChange(newValue)}
                     renderInput={(params) => (
-                        <TextField {...params} label="Select User" placeholder="Start typing to search users..." fullWidth sx={{ mb: 2 }} />
+                        <TextField
+                            {...params}
+                            label="Select User"
+                            placeholder="Start typing to search users..."
+                            fullWidth
+                            sx={{ mb: 2 }}
+                        />
                     )}
                     filterOptions={(options, { inputValue }) => {
                         const filterValue = inputValue.toLowerCase();
@@ -25,19 +55,33 @@ const HireCoachDialog = ({
                 />
                 <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel>Coach Position</InputLabel>
-                    <Select value={selectedPosition} onChange={(e) => onSelectedPositionChange(e.target.value)} label="Coach Position">
+                    <Select
+                        value={selectedPosition}
+                        onChange={(e) => onSelectedPositionChange(e.target.value)}
+                        label="Coach Position"
+                    >
                         <MenuItem value="HEAD_COACH">Head Coach</MenuItem>
                         <MenuItem value="OFFENSIVE_COORDINATOR">Offensive Coordinator</MenuItem>
                         <MenuItem value="DEFENSIVE_COORDINATOR">Defensive Coordinator</MenuItem>
                     </Select>
                 </FormControl>
-                {dialogError && <Alert severity="error" sx={{ mb: 2 }}>{dialogError}</Alert>}
+                {dialogError && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {dialogError}
+                    </Alert>
+                )}
             </Box>
         </DialogContent>
         <DialogActions>
-            <Button onClick={onCancel} disabled={processing}>Cancel</Button>
-            <Button onClick={onHireInterim} color="warning" variant="contained" disabled={processing}>Hire Interim Coach</Button>
-            <Button onClick={onHire} color="primary" variant="contained" disabled={processing}>Hire Coach</Button>
+            <Button onClick={onCancel} disabled={processing}>
+                Cancel
+            </Button>
+            <Button onClick={onHireInterim} color="warning" variant="contained" disabled={processing}>
+                Hire Interim Coach
+            </Button>
+            <Button onClick={onHire} color="primary" variant="contained" disabled={processing}>
+                Hire Coach
+            </Button>
         </DialogActions>
     </Dialog>
 );

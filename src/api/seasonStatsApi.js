@@ -1,18 +1,34 @@
 import apiClient from './apiClient';
 
-export const getFilteredSeasonStats = async (team = null, conference = null, season = null, stat = null, page = 0, size = 20, scope = 'regular') => {
+export const getFilteredSeasonStats = async (
+    team = null,
+    conference = null,
+    season = null,
+    stat = null,
+    page = 0,
+    size = 20,
+    scope = 'regular'
+) => {
     try {
         const params = { page, size };
-        if (team) params.team = team;
-        if (conference) params.conference = conference;
-        if (season) params.season = season;
-        if (stat) params.stat = stat;
+        if (team) {
+            params.team = team;
+        }
+        if (conference) {
+            params.conference = conference;
+        }
+        if (season) {
+            params.season = season;
+        }
+        if (stat) {
+            params.stat = stat;
+        }
 
         const endpoint = scope === 'postseason' ? '/season-stats/postseason' : '/season-stats';
         const response = await apiClient.get(endpoint, { params });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch filtered season stats:', error);
+        console.error('Failed to fetch filtered season stats:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch filtered season stats');
         }
@@ -23,14 +39,20 @@ export const getFilteredSeasonStats = async (team = null, conference = null, sea
 export const getLeaderboard = async (statName, season, subdivision, conference, limit = 10, ascending = false) => {
     try {
         const params = { statName, limit, ascending };
-        if (season) params.season = season;
-        if (subdivision) params.subdivision = subdivision;
-        if (conference) params.conference = conference;
-        
+        if (season) {
+            params.seasonNumber = season;
+        }
+        if (subdivision) {
+            params.subdivision = subdivision;
+        }
+        if (conference) {
+            params.conference = conference;
+        }
+
         const response = await apiClient.get('/season-stats/leaderboard', { params });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch leaderboard:', error);
+        console.error('Failed to fetch leaderboard:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch leaderboard');
         }
@@ -43,7 +65,7 @@ export const generateAllSeasonStats = async () => {
         const response = await apiClient.post('/season-stats/generate/all');
         return response.data;
     } catch (error) {
-        console.error('Failed to generate all season stats:', error);
+        console.error('Failed to generate all season stats:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to generate all season stats');
         }
@@ -57,7 +79,7 @@ export const generateSeasonStatsForTeam = async (team, seasonNumber) => {
         const response = await apiClient.post('/season-stats/generate/team-season', null, { params });
         return response.data;
     } catch (error) {
-        console.error('Failed to generate team season stats:', error);
+        console.error('Failed to generate team season stats:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to generate team season stats');
         }

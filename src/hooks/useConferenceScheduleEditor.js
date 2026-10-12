@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
     getScheduleBySeason,
     getConferenceSchedule,
@@ -8,8 +8,8 @@ import {
     deleteScheduleEntry,
     moveGame,
 } from '../api/scheduleApi';
-import { isScheduleLocked } from '../api/seasonApi';
-import { field } from '../utils/fieldHelper';
+import useScheduleLock from './useScheduleLock';
+import { camelOrSnakeField } from '../utils/fieldHelper';
 
 const DEFAULT_CONFERENCE_GAMES = 9;
 
@@ -17,7 +17,11 @@ const useConferenceScheduleEditor = ({ season, selectedConference, allTeams, tea
     const [conferenceSchedule, setConferenceSchedule] = useState([]);
     const [allSeasonSchedule, setAllSeasonSchedule] = useState([]);
     const [confLoading, setConfLoading] = useState(false);
-    const [scheduleLocked, setScheduleLocked] = useState(false);
+    const { scheduleLocked, lockError } = useScheduleLock(season, enabled);
+    const mountedRef = useRef(false);
+    const conferenceRequestRef = useRef(0);
+    const seasonRequestRef = useRef(0);
+    const loadersRef = useRef(null);
     const [numConferenceGames, setNumConferenceGames] = useState(DEFAULT_CONFERENCE_GAMES);
 
     const [addGameDialogOpen, setAddGameDialogOpen] = useState(false);
@@ -43,62 +47,112 @@ const useConferenceScheduleEditor = ({ season, selectedConference, allTeams, tea
     const closeSnackbar = useCallback(() => setSnackbar((prev) => ({ ...prev, open: false })), []);
 
     const conferenceTeams = useMemo(() => {
-        if (!selectedConference) return [];
+        if (!selectedConference) {
+            return [];
+        }
         return allTeams
             .filter((t) => t.conference === selectedConference && t.active)
             .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }, [allTeams, selectedConference]);
 
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+            conferenceRequestRef.current += 1;
+            seasonRequestRef.current += 1;
+        };
+    }, []);
+
     const fetchConferenceSchedule = useCallback(async () => {
-        if (!season || !selectedConference) return;
+        if (!mountedRef.current || !enabled || !season || !selectedConference) {
+            return;
+        }
+        const request = ++conferenceRequestRef.current;
         try {
             setConfLoading(true);
             const schedule = await getConferenceSchedule(season, selectedConference);
-            setConferenceSchedule(schedule || []);
+            if (mountedRef.current && request === conferenceRequestRef.current) {
+                setConferenceSchedule(schedule || []);
+            }
         } catch (err) {
-            console.error('Error fetching conference schedule:', err);
-            setConferenceSchedule([]);
+            if (mountedRef.current && request === conferenceRequestRef.current) {
+                console.error('Error fetching conference schedule:', err);
+                setConferenceSchedule([]);
+            }
         } finally {
-            setConfLoading(false);
+            if (mountedRef.current && request === conferenceRequestRef.current) {
+                setConfLoading(false);
+            }
         }
-    }, [season, selectedConference]);
+    }, [enabled, season, selectedConference]);
 
     const refreshAllSeasonSchedule = useCallback(async () => {
-        if (!season) return;
+        if (!mountedRef.current || !enabled || !season) {
+            return;
+        }
+        const request = ++seasonRequestRef.current;
         try {
             const schedule = await getScheduleBySeason(season);
-            setAllSeasonSchedule(schedule || []);
+            if (mountedRef.current && request === seasonRequestRef.current) {
+                setAllSeasonSchedule(schedule || []);
+            }
         } catch (err) {
-            console.error('Error refreshing full season schedule:', err);
+            if (mountedRef.current && request === seasonRequestRef.current) {
+                console.error('Error refreshing full season schedule:', err);
+            }
         }
-    }, [season]);
-
-    useEffect(() => {
-        if (!enabled) return;
-        refreshAllSeasonSchedule();
-    }, [enabled, refreshAllSeasonSchedule]);
-
-    useEffect(() => {
-        if (!enabled) return;
-        fetchConferenceSchedule();
-    }, [enabled, fetchConferenceSchedule]);
-
-    useEffect(() => {
-        if (!enabled || !season) { setScheduleLocked(false); return; }
-        let active = true;
-        isScheduleLocked(season)
-            .then((locked) => { if (active) setScheduleLocked(locked); })
-            .catch(() => { if (active) setScheduleLocked(false); });
-        return () => { active = false; };
     }, [enabled, season]);
 
     useEffect(() => {
-        if (!enabled || !selectedConference) return;
+        loadersRef.current = { refreshAllSeasonSchedule, fetchConferenceSchedule };
+    }, [refreshAllSeasonSchedule, fetchConferenceSchedule]);
+
+    useEffect(() => {
+        if (!enabled) {
+            return;
+        }
+        refreshAllSeasonSchedule();
+        return () => {
+            seasonRequestRef.current += 1;
+        };
+    }, [enabled, refreshAllSeasonSchedule]);
+
+    useEffect(() => {
+        if (!enabled) {
+            return;
+        }
+        fetchConferenceSchedule();
+        return () => {
+            conferenceRequestRef.current += 1;
+        };
+    }, [enabled, fetchConferenceSchedule]);
+
+    useEffect(() => {
+        if (lockError) {
+            showSnackbar('Unable to verify schedule lock. Editing is disabled. Reload to retry.', 'error');
+        }
+    }, [lockError, showSnackbar]);
+
+    useEffect(() => {
+        if (!enabled || !selectedConference) {
+            return;
+        }
         let active = true;
         getConferenceRules(selectedConference)
-            .then((rules) => { if (active) setNumConferenceGames(rules?.numConferenceGames || DEFAULT_CONFERENCE_GAMES); })
-            .catch(() => { if (active) setNumConferenceGames(DEFAULT_CONFERENCE_GAMES); });
-        return () => { active = false; };
+            .then((rules) => {
+                if (active) {
+                    setNumConferenceGames(rules?.numConferenceGames || DEFAULT_CONFERENCE_GAMES);
+                }
+            })
+            .catch(() => {
+                if (active) {
+                    setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
+                }
+            });
+        return () => {
+            active = false;
+        };
     }, [enabled, selectedConference]);
 
     useEffect(() => {
@@ -111,30 +165,40 @@ const useConferenceScheduleEditor = ({ season, selectedConference, allTeams, tea
     const teamWeekOccupiedAll = useMemo(() => {
         const occupied = new Set();
         allSeasonSchedule.forEach((game) => {
-            const home = field(game, 'homeTeam', 'home_team');
-            const away = field(game, 'awayTeam', 'away_team');
+            const home = camelOrSnakeField(game, 'homeTeam', 'home_team');
+            const away = camelOrSnakeField(game, 'awayTeam', 'away_team');
             const week = game.week;
-            if (home && week) occupied.add(`${home}|${week}`);
-            if (away && week) occupied.add(`${away}|${week}`);
+            if (home && week) {
+                occupied.add(`${home}|${week}`);
+            }
+            if (away && week) {
+                occupied.add(`${away}|${week}`);
+            }
         });
         return occupied;
     }, [allSeasonSchedule]);
 
     const isConferenceScheduleComplete = useMemo(() => {
-        if (conferenceTeams.length === 0) return false;
+        if (conferenceTeams.length === 0) {
+            return false;
+        }
         const gameCounts = {};
         conferenceSchedule.forEach((game) => {
-            const home = field(game, 'homeTeam', 'home_team');
-            const away = field(game, 'awayTeam', 'away_team');
-            if (home) gameCounts[home] = (gameCounts[home] || 0) + 1;
-            if (away) gameCounts[away] = (gameCounts[away] || 0) + 1;
+            const home = camelOrSnakeField(game, 'homeTeam', 'home_team');
+            const away = camelOrSnakeField(game, 'awayTeam', 'away_team');
+            if (home) {
+                gameCounts[home] = (gameCounts[home] || 0) + 1;
+            }
+            if (away) {
+                gameCounts[away] = (gameCounts[away] || 0) + 1;
+            }
         });
         return conferenceTeams.every((t) => (gameCounts[t.name] || 0) >= numConferenceGames);
     }, [conferenceTeams, conferenceSchedule, numConferenceGames]);
 
     const refreshAfterChange = () => {
-        refreshAllSeasonSchedule();
-        fetchConferenceSchedule();
+        loadersRef.current.refreshAllSeasonSchedule();
+        loadersRef.current.fetchConferenceSchedule();
     };
 
     const handleEmptyCellClick = (teamName, weekNum) => {
@@ -174,6 +238,9 @@ const useConferenceScheduleEditor = ({ season, selectedConference, allTeams, tea
     };
 
     const handleAddGame = async () => {
+        if (scheduleLocked) {
+            return;
+        }
         if (!addGameHome || !addGameAway) {
             showSnackbar('Please fill in all fields', 'error');
             return;
@@ -205,6 +272,9 @@ const useConferenceScheduleEditor = ({ season, selectedConference, allTeams, tea
     };
 
     const handleDeleteGame = async (gameId) => {
+        if (scheduleLocked) {
+            return;
+        }
         try {
             await deleteScheduleEntry(gameId);
             showSnackbar('Game removed successfully');
@@ -216,9 +286,14 @@ const useConferenceScheduleEditor = ({ season, selectedConference, allTeams, tea
     };
 
     const moveGameToWeek = async (gameData, targetWeek) => {
-        if (!gameData || !targetWeek) return;
-        const home = field(gameData, 'homeTeam', 'home_team') || gameData.opponent;
-        const away = field(gameData, 'awayTeam', 'away_team') || '';
+        if (scheduleLocked) {
+            return;
+        }
+        if (!gameData || !targetWeek) {
+            return;
+        }
+        const home = camelOrSnakeField(gameData, 'homeTeam', 'home_team') || gameData.opponent;
+        const away = camelOrSnakeField(gameData, 'awayTeam', 'away_team') || '';
         const homeOccupied = home && teamWeekOccupiedAll.has(`${home}|${targetWeek}`);
         const awayOccupied = away && teamWeekOccupiedAll.has(`${away}|${targetWeek}`);
         if ((homeOccupied || awayOccupied) && targetWeek !== gameData.week) {
@@ -236,7 +311,12 @@ const useConferenceScheduleEditor = ({ season, selectedConference, allTeams, tea
     };
 
     const handleMoveGame = async () => {
-        if (!moveGameData || !moveToWeek) return;
+        if (scheduleLocked) {
+            return;
+        }
+        if (!moveGameData || !moveToWeek) {
+            return;
+        }
         await moveGameToWeek(moveGameData, moveToWeek);
         setMoveDialogOpen(false);
         setMoveGameData(null);
@@ -249,13 +329,18 @@ const useConferenceScheduleEditor = ({ season, selectedConference, allTeams, tea
     const handleFilledCellClick = (cell, weekNum) => {
         setMoveGameData(cell);
         setMoveToWeek(weekNum);
-        setEditNeutralSite(Boolean(field(cell, 'neutralSite', 'neutral_site')));
+        setEditNeutralSite(Boolean(camelOrSnakeField(cell, 'neutralSite', 'neutral_site')));
         setEditVenue(cell.venue || '');
         setMoveDialogOpen(true);
     };
 
     const handleSaveEdits = async () => {
-        if (!moveGameData?.id) return;
+        if (scheduleLocked) {
+            return;
+        }
+        if (!moveGameData?.id) {
+            return;
+        }
         if (editNeutralSite && !editVenue.trim()) {
             showSnackbar('Venue is required for a neutral site game', 'error');
             return;
@@ -265,10 +350,10 @@ const useConferenceScheduleEditor = ({ season, selectedConference, allTeams, tea
             await updateScheduleEntry(moveGameData.id, {
                 season: moveGameData.season,
                 week: moveGameData.week,
-                subdivision: field(moveGameData, 'subdivision', 'subdivision') || 'FCFB',
-                homeTeam: field(moveGameData, 'homeTeam', 'home_team') || moveGameData.opponent,
-                awayTeam: field(moveGameData, 'awayTeam', 'away_team'),
-                gameType: field(moveGameData, 'gameType', 'game_type'),
+                subdivision: camelOrSnakeField(moveGameData, 'subdivision', 'subdivision') || 'FCFB',
+                homeTeam: camelOrSnakeField(moveGameData, 'homeTeam', 'home_team') || moveGameData.opponent,
+                awayTeam: camelOrSnakeField(moveGameData, 'awayTeam', 'away_team'),
+                gameType: camelOrSnakeField(moveGameData, 'gameType', 'game_type'),
                 playoffRound: null,
                 playoffHomeSeed: null,
                 playoffAwaySeed: null,

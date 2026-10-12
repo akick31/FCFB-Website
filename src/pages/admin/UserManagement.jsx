@@ -9,9 +9,32 @@ import LinkCell from '../../components/ui/LinkCell';
 import SelectPill from '../../components/ui/SelectPill';
 import { getAllUsers } from '../../api/userApi';
 
-const searchSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', font: 'inherit', fontSize: '0.82rem', minWidth: 210, boxSizing: 'border-box' };
+const searchSx = {
+    border: '1px solid var(--line)',
+    background: 'var(--surface)',
+    color: 'var(--text)',
+    borderRadius: 'var(--r-sm)',
+    px: '12px',
+    height: '38px',
+    font: 'inherit',
+    fontSize: '0.82rem',
+    minWidth: 210,
+    boxSizing: 'border-box',
+};
 const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
-const editBtnSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', py: '5px', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const editBtnSx = {
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text-muted)',
+    borderRadius: 'var(--r-sm)',
+    px: '10px',
+    py: '5px',
+    font: 'inherit',
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
+};
 
 const ROLE_OPTIONS = [
     { value: 'ALL', label: 'All roles' },
@@ -29,35 +52,61 @@ const UserManagement = ({ user }) => {
     const [roleFilter, setRoleFilter] = useState('ALL');
 
     useEffect(() => {
-        if (!user || !user.role) return;
-        if (user.role !== 'ADMIN' && user.role !== 'CONFERENCE_COMMISSIONER') navigate('*');
+        if (!user || !user.role) {
+            return;
+        }
+        if (user.role !== 'ADMIN' && user.role !== 'CONFERENCE_COMMISSIONER') {
+            navigate('*');
+        }
     }, [user, navigate]);
 
     useEffect(() => {
+        let active = true;
         getAllUsers()
-            .then(setUsers)
-            .catch((err) => setError(err.message || 'Failed to load users'))
-            .finally(() => setLoading(false));
+            .then((loadedUsers) => {
+                if (active) {
+                    setUsers(loadedUsers);
+                }
+            })
+            .catch((err) => {
+                if (active) {
+                    setError(err.message || 'Failed to load users');
+                }
+            })
+            .finally(() => {
+                if (active) {
+                    setLoading(false);
+                }
+            });
+        return () => {
+            active = false;
+        };
     }, []);
 
     const filteredUsers = useMemo(() => {
         let filtered = users;
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
-            filtered = filtered.filter((row) =>
-                row.username?.toLowerCase().includes(searchLower) ||
-                row.coach_name?.toLowerCase().includes(searchLower) ||
-                row.team?.toLowerCase().includes(searchLower) ||
-                row.discord_tag?.toLowerCase().includes(searchLower));
+            filtered = filtered.filter(
+                (row) =>
+                    row.username?.toLowerCase().includes(searchLower) ||
+                    row.coach_name?.toLowerCase().includes(searchLower) ||
+                    row.team?.toLowerCase().includes(searchLower) ||
+                    row.discord_tag?.toLowerCase().includes(searchLower)
+            );
         }
-        if (roleFilter !== 'ALL') filtered = filtered.filter((row) => row.role === roleFilter);
+        if (roleFilter !== 'ALL') {
+            filtered = filtered.filter((row) => row.role === roleFilter);
+        }
         return filtered;
     }, [users, searchTerm, roleFilter]);
 
     if (loading) {
         return (
             <AdminLayout title="User Management">
-                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
+                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}>
+                    <CircularProgress />
+                </Box>
             </AdminLayout>
         );
     }
@@ -65,14 +114,31 @@ const UserManagement = ({ user }) => {
     return (
         <AdminLayout
             title="User Management"
-            controls={(
+            controls={
                 <>
-                    <Box component="input" placeholder="Search username, coach, team, or discord..." aria-label="Search users" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={searchSx} />
-                    <SelectPill label="Role" value={roleFilter} onChange={setRoleFilter} options={ROLE_OPTIONS} sx={pillHeightSx} />
+                    <Box
+                        component="input"
+                        placeholder="Search username, coach, team, or discord..."
+                        aria-label="Search users"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        sx={searchSx}
+                    />
+                    <SelectPill
+                        label="Role"
+                        value={roleFilter}
+                        onChange={setRoleFilter}
+                        options={ROLE_OPTIONS}
+                        sx={pillHeightSx}
+                    />
                 </>
-            )}
+            }
         >
-            {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
+            {error && (
+                <Alert severity="error" sx={{ mb: '16px' }}>
+                    {error}
+                </Alert>
+            )}
             <Panel header="Users" more={`${filteredUsers.length} users`}>
                 <DataTable minWidth={680}>
                     <thead>
@@ -89,15 +155,29 @@ const UserManagement = ({ user }) => {
                             const userHref = `/user-details/${row.username}`;
                             return (
                                 <tr key={row.id}>
-                                    <LinkCell to={userHref} className="lft stick">@{row.username}</LinkCell>
-                                    <LinkCell to={userHref} className="lft">{row.coach_name}</LinkCell>
-                                    <LinkCell to={userHref} className="lft">{row.discord_tag}</LinkCell>
-                                    <LinkCell to={userHref} className="lft">{row.team || 'Free agent'}</LinkCell>
-                                    <LinkCell to={userHref}>
+                                    <LinkCell to={userHref} className="lft stick">
+                                        @{row.username}
+                                    </LinkCell>
+                                    <LinkCell to={userHref} className="lft">
+                                        {row.coach_name}
+                                    </LinkCell>
+                                    <LinkCell to={userHref} className="lft">
+                                        {row.discord_tag}
+                                    </LinkCell>
+                                    <LinkCell to={userHref} className="lft">
+                                        {row.team || 'Free agent'}
+                                    </LinkCell>
+                                    <LinkCell to={null}>
                                         <Box
                                             component={Link}
                                             to={`/admin/edit-coach/${row.username}`}
-                                            sx={{ ...editBtnSx, position: 'relative', zIndex: 3, display: 'inline-block', textDecoration: 'none' }}
+                                            sx={{
+                                                ...editBtnSx,
+                                                position: 'relative',
+                                                zIndex: 3,
+                                                display: 'inline-block',
+                                                textDecoration: 'none',
+                                            }}
                                         >
                                             Edit
                                         </Box>

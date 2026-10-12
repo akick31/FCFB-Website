@@ -11,7 +11,11 @@ const VARIANTS = {
     chew: { backgroundColor: 'transparent', color: 'var(--live)', border: '1px solid var(--live)' },
     upset: { backgroundColor: 'transparent', color: 'var(--gold)', border: '1px solid var(--gold)' },
     redzone: { backgroundColor: 'rgba(239,62,54,.15)', color: 'var(--live)' },
-    open: { backgroundColor: 'transparent', color: 'var(--field)', border: '1px solid color-mix(in srgb, var(--field) 55%, var(--line))' },
+    open: {
+        backgroundColor: 'transparent',
+        color: 'var(--field)',
+        border: '1px solid color-mix(in srgb, var(--field) 55%, var(--line))',
+    },
     ghost: { backgroundColor: 'var(--surface-2)', color: 'var(--text-muted)', border: '1px solid var(--line)' },
 };
 

@@ -8,13 +8,65 @@ const PreviewImage = ({ team, view, body, label }) => {
     const { url, loading, error } = useAppearancePreview(team, view, body);
 
     return (
-        <Box sx={{ flex: '1 1 130px', minWidth: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-            {error && <Alert severity="warning" sx={{ width: '100%' }}>{error}</Alert>}
-            <Box sx={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center', minHeight: 120 }}>
-                {url && <Box component="img" src={url} alt={label || view} sx={{ maxWidth: '100%', borderRadius: 'var(--r-sm)', border: '1px solid var(--line)', opacity: loading ? 0.5 : 1, transition: 'opacity 0.15s' }} />}
-                {loading && <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={24} /></Box>}
+        <Box
+            sx={{
+                flex: '1 1 130px',
+                minWidth: 120,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '6px',
+            }}
+        >
+            {error && (
+                <Alert severity="warning" sx={{ width: '100%' }}>
+                    {error}
+                </Alert>
+            )}
+            <Box
+                sx={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center', minHeight: 120 }}
+            >
+                {url && (
+                    <Box
+                        component="img"
+                        src={url}
+                        alt={label || view}
+                        sx={{
+                            maxWidth: '100%',
+                            borderRadius: 'var(--r-sm)',
+                            border: '1px solid var(--line)',
+                            opacity: loading ? 0.5 : 1,
+                            transition: 'opacity 0.15s',
+                        }}
+                    />
+                )}
+                {loading && (
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <CircularProgress size={24} />
+                    </Box>
+                )}
             </Box>
-            {label && <Box sx={{ color: 'var(--text-dim)', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</Box>}
+            {label && (
+                <Box
+                    sx={{
+                        color: 'var(--text-dim)',
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                    }}
+                >
+                    {label}
+                </Box>
+            )}
         </Box>
     );
 };
@@ -29,9 +81,23 @@ PreviewImage.propTypes = {
 const LivePreview = ({ title, team, views, body, note }) => (
     <Panel header={title}>
         <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <Box sx={{ display: 'flex', gap: '12px', alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    gap: '12px',
+                    alignItems: 'flex-start',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                }}
+            >
                 {views.map((entry) => (
-                    <PreviewImage key={entry.view} team={team} view={entry.view} body={body} label={views.length > 1 ? entry.label : null} />
+                    <PreviewImage
+                        key={entry.view}
+                        team={team}
+                        view={entry.view}
+                        body={body}
+                        label={views.length > 1 ? entry.label : null}
+                    />
                 ))}
             </Box>
             {note && <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem', textAlign: 'center' }}>{note}</Box>}

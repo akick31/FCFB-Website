@@ -22,7 +22,9 @@ const NavDropdown = ({ label, items, onNavigate }) => {
     const [anchor, setAnchor] = useState(null);
     const close = () => {
         setAnchor(null);
-        if (onNavigate) onNavigate();
+        if (onNavigate) {
+            onNavigate();
+        }
     };
 
     const isItemActive = (path) => (path === '/' ? location.pathname === '/' : location.pathname.startsWith(path));
@@ -30,9 +32,16 @@ const NavDropdown = ({ label, items, onNavigate }) => {
 
     return (
         <>
-            <Button onClick={(e) => setAnchor(e.currentTarget)} aria-haspopup="true" disableRipple sx={navButtonSx(isActive)}>
+            <Button
+                onClick={(e) => setAnchor(e.currentTarget)}
+                aria-haspopup="true"
+                disableRipple
+                sx={navButtonSx(isActive)}
+            >
                 {label}
-                <Box component="span" sx={{ ml: '4px', fontSize: '0.6rem' }}>▾</Box>
+                <Box component="span" sx={{ ml: '4px', fontSize: '0.6rem' }}>
+                    ▾
+                </Box>
             </Button>
             <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={close}>
                 {items.map((item) => (
@@ -47,7 +56,8 @@ const NavDropdown = ({ label, items, onNavigate }) => {
 
 NavDropdown.propTypes = {
     label: PropTypes.node.isRequired,
-    items: PropTypes.arrayOf(PropTypes.shape({ label: PropTypes.string.isRequired, path: PropTypes.string.isRequired })).isRequired,
+    items: PropTypes.arrayOf(PropTypes.shape({ label: PropTypes.string.isRequired, path: PropTypes.string.isRequired }))
+        .isRequired,
     onNavigate: PropTypes.func,
 };
 

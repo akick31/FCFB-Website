@@ -4,18 +4,17 @@ export const getUserById = async (userId) => {
     if (!userId) {
         return {};
     }
-    
+
     try {
         const response = await apiClient.get('/user', { params: { userId } });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch user by ID:", error);
-        console.error("Error response:", error.response);
+        console.error('Failed to fetch user by ID:');
 
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch user by ID");
+            throw new Error(error.response.data.error || 'Failed to fetch user by ID');
         }
-        throw new Error("An unexpected error occurred while fetching user by ID");
+        throw new Error('An unexpected error occurred while fetching user by ID');
     }
 };
 
@@ -32,11 +31,11 @@ export const getAllUsers = async () => {
             return 0;
         });
     } catch (error) {
-        console.error("Failed to fetch all users:", error);
+        console.error('Failed to fetch all users:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch all users");
+            throw new Error(error.response.data.error || 'Failed to fetch all users');
         }
-        throw new Error("An unexpected error occurred while fetching all users");
+        throw new Error('An unexpected error occurred while fetching all users');
     }
 };
 
@@ -69,7 +68,7 @@ export const updateUser = async (user) => {
         const response = await apiClient.put('/user/update', body);
         return response.data;
     } catch (error) {
-        console.error('Failed to update user:', error);
+        console.error('Failed to update user:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to update user');
         }
@@ -79,7 +78,7 @@ export const updateUser = async (user) => {
 
 export const validateUser = async (formData) => {
     try {
-        const response = await apiClient.post("/user/validate", {
+        const response = await apiClient.post('/user/validate', {
             discord_id: formData.discord_id,
             discord_tag: formData.discord_tag,
             username: formData.username,
@@ -87,13 +86,13 @@ export const validateUser = async (formData) => {
         });
         return response.data;
     } catch (error) {
-        console.error("Error validating user fields:", error);
+        console.error('Error validating user fields:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Error validating user");
+            throw new Error(error.response.data.error || 'Error validating user');
         }
-        throw new Error("An unexpected error occurred while validating user");
+        throw new Error('An unexpected error occurred while validating user');
     }
-}
+};
 
 export const getFreeAgents = async () => {
     try {
@@ -101,22 +100,22 @@ export const getFreeAgents = async () => {
         return response.data;
     } catch (error) {
         if (error.response) {
-            if (error.response.data.error.includes("No free agents found")) {
+            if (error.response.data.error.includes('No free agents found')) {
                 return [];
             }
-            throw new Error(error.response.data.error || "Failed to fetch free agents");
+            throw new Error(error.response.data.error || 'Failed to fetch free agents');
         }
-        console.error("Failed to fetch free agents:", error);
-        throw new Error("An unexpected error occurred while fetching free agents");
+        console.error('Failed to fetch free agents:');
+        throw new Error('An unexpected error occurred while fetching free agents');
     }
-}
+};
 
 export const generateApiKey = async () => {
     try {
         const response = await apiClient.post('/user/api-key');
         return response.data.apiKey;
     } catch (error) {
-        console.error('Failed to generate API key:', error);
+        console.error('Failed to generate API key:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to generate API key');
         }
@@ -128,7 +127,7 @@ export const revokeApiKey = async () => {
     try {
         await apiClient.post('/user/api-key/revoke');
     } catch (error) {
-        console.error('Failed to revoke API key:', error);
+        console.error('Failed to revoke API key:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to revoke API key');
         }
@@ -137,7 +136,9 @@ export const revokeApiKey = async () => {
 };
 
 export const updateScoutingReportHiddenColumns = async (userId, hiddenColumns) => {
-    if (!userId) throw new Error("User ID is required");
+    if (!userId) {
+        throw new Error('User ID is required');
+    }
 
     try {
         const response = await apiClient.put('/user/scouting-report-columns', hiddenColumns, {
@@ -145,16 +146,18 @@ export const updateScoutingReportHiddenColumns = async (userId, hiddenColumns) =
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to update scouting report columns:", error);
+        console.error('Failed to update scouting report columns:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to update scouting report columns");
+            throw new Error(error.response.data.error || 'Failed to update scouting report columns');
         }
-        throw new Error("An unexpected error occurred while updating scouting report columns");
+        throw new Error('An unexpected error occurred while updating scouting report columns');
     }
 };
 
 export const updateUsername = async (userId, newUsername) => {
-    if (!userId) throw new Error("User ID is required");
+    if (!userId) {
+        throw new Error('User ID is required');
+    }
 
     try {
         const response = await apiClient.put('/user/update/username', null, {
@@ -162,30 +165,34 @@ export const updateUsername = async (userId, newUsername) => {
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to update username:", error);
+        console.error('Failed to update username:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to update username");
+            throw new Error(error.response.data.error || 'Failed to update username');
         }
-        throw new Error("An unexpected error occurred while updating username");
+        throw new Error('An unexpected error occurred while updating username');
     }
 };
 
 export const getUsernameHistory = async (userId) => {
-    if (!userId) throw new Error("User ID is required");
+    if (!userId) {
+        throw new Error('User ID is required');
+    }
 
     try {
         const response = await apiClient.get('/user/username-history', {
             params: { userId },
         });
         return response.data;
-    } catch (error) {
-        console.error("Failed to fetch username history:", error);
+    } catch {
+        console.error('Failed to fetch username history:');
         return [];
     }
 };
 
 export const addHistoricalUsername = async (userId, username) => {
-    if (!userId || !username) throw new Error("User ID and username are required");
+    if (!userId || !username) {
+        throw new Error('User ID and username are required');
+    }
 
     try {
         const response = await apiClient.post('/user/username-history', null, {
@@ -193,16 +200,18 @@ export const addHistoricalUsername = async (userId, username) => {
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to add historical username:", error);
+        console.error('Failed to add historical username:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to add historical username");
+            throw new Error(error.response.data.error || 'Failed to add historical username');
         }
-        throw new Error("An unexpected error occurred while adding historical username");
+        throw new Error('An unexpected error occurred while adding historical username');
     }
 };
 
 export const updateEmail = async (userId, newEmail) => {
-    if (!userId) throw new Error("User ID is required");
+    if (!userId) {
+        throw new Error('User ID is required');
+    }
 
     try {
         const response = await apiClient.put('/user/update/email', null, {
@@ -210,16 +219,18 @@ export const updateEmail = async (userId, newEmail) => {
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to update email:", error);
+        console.error('Failed to update email:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to update email");
+            throw new Error(error.response.data.error || 'Failed to update email');
         }
-        throw new Error("An unexpected error occurred while updating email");
+        throw new Error('An unexpected error occurred while updating email');
     }
 };
 
 export const updatePassword = async (userId, currentPassword, newPassword) => {
-    if (!userId) throw new Error("User ID is required");
+    if (!userId) {
+        throw new Error('User ID is required');
+    }
 
     try {
         const response = await apiClient.put('/user/update/password', null, {
@@ -227,10 +238,10 @@ export const updatePassword = async (userId, currentPassword, newPassword) => {
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to update password:", error);
+        console.error('Failed to update password:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to update password");
+            throw new Error(error.response.data.error || 'Failed to update password');
         }
-        throw new Error("An unexpected error occurred while updating password");
+        throw new Error('An unexpected error occurred while updating password');
     }
 };

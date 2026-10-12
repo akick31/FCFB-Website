@@ -58,10 +58,12 @@ const SegTabs = ({ value, onChange, options, ariaLabel, buttonSx }) => {
 SegTabs.propTypes = {
     value: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
-    options: PropTypes.arrayOf(PropTypes.shape({
-        value: PropTypes.string.isRequired,
-        label: PropTypes.node.isRequired,
-    })).isRequired,
+    options: PropTypes.arrayOf(
+        PropTypes.shape({
+            value: PropTypes.string.isRequired,
+            label: PropTypes.node.isRequired,
+        })
+    ).isRequired,
     ariaLabel: PropTypes.string,
     buttonSx: PropTypes.object,
 };

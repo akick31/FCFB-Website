@@ -3,7 +3,9 @@ const SHORT_STINT_MS = 14 * 24 * 60 * 60 * 1000;
 const matchesCoach = (entry, names, discordId) => {
     if (discordId) {
         const discordIds = Array.isArray(entry.coach_discord_ids) ? entry.coach_discord_ids : [entry.coach_discord_ids];
-        if (discordIds.includes(discordId)) return true;
+        if (discordIds.includes(discordId)) {
+            return true;
+        }
     }
     const coaches = Array.isArray(entry.coach) ? entry.coach : [entry.coach];
     return coaches.some((coach) => names.includes(coach));
@@ -41,11 +43,16 @@ export const buildCoachStints = (transactions, currentTeam) => {
     Object.values(open).forEach((stint) => stints.push({ ...stint, endDate: null }));
 
     if (currentTeam?.team && !stints.some((stint) => stint.team === currentTeam.team && !stint.endDate)) {
-        stints.push({ team: currentTeam.team, position: currentTeam.position || 'HEAD_COACH', startDate: null, endDate: null });
+        stints.push({
+            team: currentTeam.team,
+            position: currentTeam.position || 'HEAD_COACH',
+            startDate: null,
+            endDate: null,
+        });
     }
 
     return stints
-        .filter((stint) => !stint.endDate || (timeOf(stint.endDate) - timeOf(stint.startDate)) >= SHORT_STINT_MS)
+        .filter((stint) => !stint.endDate || timeOf(stint.endDate) - timeOf(stint.startDate) >= SHORT_STINT_MS)
         .sort((a, b) => {
             const activeDiff = (b.endDate ? 0 : 1) - (a.endDate ? 0 : 1);
             return activeDiff !== 0 ? activeDiff : timeOf(b.startDate) - timeOf(a.startDate);
@@ -63,11 +70,15 @@ export const buildTeamCoachHistory = (transactions, teamName, discordIdToUsernam
         const position = entry.position || 'HEAD_COACH';
         const date = entry.transaction_date || '';
         const coaches = Array.isArray(entry.coach) ? entry.coach : [entry.coach];
-        const coachDiscordIds = Array.isArray(entry.coach_discord_ids) ? entry.coach_discord_ids : [entry.coach_discord_ids];
+        const coachDiscordIds = Array.isArray(entry.coach_discord_ids)
+            ? entry.coach_discord_ids
+            : [entry.coach_discord_ids];
         const coachDiscordId = coachDiscordIds.filter(Boolean)[0] || null;
         const loggedCoach = coaches.filter(Boolean)[0] || null;
         const coach = (coachDiscordId && discordIdToUsername?.[coachDiscordId]) || loggedCoach;
-        if (!coach) return;
+        if (!coach) {
+            return;
+        }
 
         if (type === 'HIRED' || type === 'HIRED_INTERIM') {
             open[position] = { coach, coachDiscordId, position, startDate: date };
@@ -80,7 +91,7 @@ export const buildTeamCoachHistory = (transactions, teamName, discordIdToUsernam
     Object.values(open).forEach((stint) => stints.push({ ...stint, endDate: null }));
 
     return stints
-        .filter((stint) => !stint.endDate || (timeOf(stint.endDate) - timeOf(stint.startDate)) >= SHORT_STINT_MS)
+        .filter((stint) => !stint.endDate || timeOf(stint.endDate) - timeOf(stint.startDate) >= SHORT_STINT_MS)
         .sort((a, b) => {
             const activeDiff = (b.endDate ? 0 : 1) - (a.endDate ? 0 : 1);
             return activeDiff !== 0 ? activeDiff : timeOf(b.startDate) - timeOf(a.startDate);
@@ -96,12 +107,18 @@ export const currentRosterByTeam = (transactions) => {
         const type = (entry.transaction || '').toUpperCase();
         const position = entry.position || 'HEAD_COACH';
         const coaches = Array.isArray(entry.coach) ? entry.coach : [entry.coach];
-        if (!roster[team]) roster[team] = {};
+        if (!roster[team]) {
+            roster[team] = {};
+        }
 
         if (type === 'HIRED' || type === 'HIRED_INTERIM') {
-            coaches.forEach((username) => { roster[team][username] = { position }; });
+            coaches.forEach((username) => {
+                roster[team][username] = { position };
+            });
         } else if (type === 'FIRED') {
-            coaches.forEach((username) => { delete roster[team][username]; });
+            coaches.forEach((username) => {
+                delete roster[team][username];
+            });
         }
     });
 
@@ -109,8 +126,12 @@ export const currentRosterByTeam = (transactions) => {
 };
 
 export const formatStintDate = (dateStr) => {
-    if (!dateStr) return 'Present';
+    if (!dateStr) {
+        return 'Present';
+    }
     const parsed = new Date(dateStr);
-    if (Number.isNaN(parsed.getTime())) return dateStr;
+    if (Number.isNaN(parsed.getTime())) {
+        return dateStr;
+    }
     return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };

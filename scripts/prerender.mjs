@@ -8,16 +8,10 @@ const ssrDir = path.join(root, 'dist-ssr');
 
 const template = fs.readFileSync(path.join(buildDir, 'index.html'), 'utf-8');
 
-const { render, routeList, SITE_URL } = await import(
-    pathToFileURL(path.join(ssrDir, 'entry-server.mjs')).href
-);
+const { render, routeList, SITE_URL } = await import(pathToFileURL(path.join(ssrDir, 'entry-server.mjs')).href);
 
 function escapeHtml(str) {
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 const jsonLd = JSON.stringify({

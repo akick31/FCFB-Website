@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -21,31 +21,62 @@ const GameAppearance = () => {
     const [colors, setColors] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const loadScopeRef = useRef(null);
 
     useEffect(() => {
-        let cancelled = false;
+        const scope = { active: true };
+        loadScopeRef.current = scope;
         setLoading(true);
+        setError(null);
+        setGame(null);
+        setField(null);
+        setColors(null);
         getGameById(gameId)
             .then((loadedGame) => {
-                if (cancelled) return null;
+                if (!scope.active) {
+                    return null;
+                }
                 setGame(loadedGame);
                 return Promise.all([getGameField(gameId), getTeamColors(loadedGame.home_team).catch(() => null)]);
             })
             .then((loaded) => {
-                if (cancelled || !loaded) return;
+                if (!scope.active || !loaded) {
+                    return;
+                }
                 setField(loaded[0]);
                 setColors(loaded[1]);
             })
-            .catch((err) => { if (!cancelled) setError(err.message || 'Failed to load game appearance'); })
-            .finally(() => { if (!cancelled) setLoading(false); });
-        return () => { cancelled = true; };
+            .catch((err) => {
+                if (scope.active) {
+                    setError(err.message || 'Failed to load game appearance');
+                }
+            })
+            .finally(() => {
+                if (scope.active) {
+                    setLoading(false);
+                }
+            });
+        return () => {
+            scope.active = false;
+        };
     }, [gameId]);
 
     if (loading) {
-        return <PageWrap><Box sx={{ display: 'flex', justifyContent: 'center', p: '40px' }}><CircularProgress /></Box></PageWrap>;
+        return (
+            <PageWrap>
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: '40px' }}>
+                    <CircularProgress />
+                </Box>
+            </PageWrap>
+        );
     }
     if (error || !game) {
-        return <PageWrap><BackButton onBack={() => navigate(-1)} /><Alert severity="error">{error || 'Game not found.'}</Alert></PageWrap>;
+        return (
+            <PageWrap>
+                <BackButton onBack={() => navigate(-1)} />
+                <Alert severity="error">{error || 'Game not found.'}</Alert>
+            </PageWrap>
+        );
     }
 
     const isFinal = game.game_status === 'FINAL';
@@ -55,8 +86,16 @@ const GameAppearance = () => {
         <PageWrap>
             <BackButton onBack={() => navigate(`/game-details/${gameId}`)} />
             <PageHeading eyebrow={`${game.away_team} at ${game.home_team}`} title="Game appearance" />
-            {isFinal && <Alert severity="info" sx={{ mb: '16px' }}>This game is final. Its field is frozen and can no longer be changed.</Alert>}
-            {!isAdmin && <Alert severity="info" sx={{ mb: '16px' }}>Only admins or commissioners can change a game&apos;s field.</Alert>}
+            {isFinal && (
+                <Alert severity="info" sx={{ mb: '16px' }}>
+                    This game is final. Its field is frozen and can no longer be changed.
+                </Alert>
+            )}
+            {!isAdmin && (
+                <Alert severity="info" sx={{ mb: '16px' }}>
+                    Only admins or commissioners can change a game&apos;s field.
+                </Alert>
+            )}
             {field && (
                 <AppearanceEditor
                     team={game.home_team}
@@ -67,7 +106,14 @@ const GameAppearance = () => {
                     teamColors={colors}
                     wallTextDefault={game.home_team}
                     canEdit={canEdit}
-                    onSave={async (payload) => { setField(await updateGameField(gameId, payload)); }}
+                    onSave={async (payload) => {
+                        const scope = loadScopeRef.current;
+                        const savedField = await updateGameField(gameId, payload);
+                        if (scope.active) {
+                            setField(savedField);
+                        }
+                        return savedField;
+                    }}
                 />
             )}
         </PageWrap>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
@@ -9,12 +9,58 @@ import { uploadRankings } from '../../api/rankingApi';
 import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
 import { weekLabel } from '../../utils/formatText';
 
-const labelSx = { display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, color: 'var(--text-dim)', mb: '5px' };
-const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '12px', py: '10px', font: 'inherit', fontSize: '0.85rem' };
-const selectSx = { ...inputSx, cursor: 'pointer', '& option': { background: 'var(--surface-2)', color: 'var(--text)' } };
+const labelSx = {
+    display: 'block',
+    fontSize: '0.68rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    fontWeight: 800,
+    color: 'var(--text-dim)',
+    mb: '5px',
+};
+const inputSx = {
+    width: '100%',
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text)',
+    borderRadius: 'var(--r-sm)',
+    px: '12px',
+    py: '10px',
+    font: 'inherit',
+    fontSize: '0.85rem',
+};
+const selectSx = {
+    ...inputSx,
+    cursor: 'pointer',
+    '& option': { background: 'var(--surface-2)', color: 'var(--text)' },
+};
 const textareaSx = { ...inputSx, fontFamily: 'monospace', resize: 'vertical' };
-const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '18px', py: '10px', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', '&:disabled': { opacity: 0.6, cursor: 'default' } };
-const btnGhostSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '16px', py: '10px', font: 'inherit', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
+const btnPrimarySx = {
+    border: 0,
+    background: 'var(--brand-deep)',
+    color: '#fff',
+    borderRadius: 'var(--r-sm)',
+    px: '18px',
+    py: '10px',
+    font: 'inherit',
+    fontSize: '0.85rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    '&:disabled': { opacity: 0.6, cursor: 'default' },
+};
+const btnGhostSx = {
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text-muted)',
+    borderRadius: 'var(--r-sm)',
+    px: '16px',
+    py: '10px',
+    font: 'inherit',
+    fontSize: '0.82rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
+};
 
 const POLL_TYPES = [
     { value: 'COACHES_POLL', label: 'Coaches Poll' },
@@ -27,15 +73,22 @@ const WEEK_OPTIONS = [
 ];
 
 const parseCsvToNames = (text) => {
-    const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    const lines = text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
     const parsed = [];
     lines.forEach((line, index) => {
         const columns = line.split(',').map((column) => column.trim());
-        if (index === 0 && /team|rank/i.test(line) && !/^\d/.test(columns[0])) return;
+        if (index === 0 && /team|rank/i.test(line) && !/^\d/.test(columns[0])) {
+            return;
+        }
         if (columns.length >= 2) {
             const rank = parseInt(columns[0], 10);
             const team = columns.slice(1).join(',').trim();
-            if (team) parsed.push({ rank: Number.isNaN(rank) ? null : rank, team });
+            if (team) {
+                parsed.push({ rank: Number.isNaN(rank) ? null : rank, team });
+            }
         } else if (columns[0]) {
             parsed.push({ rank: null, team: columns[0] });
         }
@@ -56,32 +109,109 @@ const RankingsManagement = () => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [result, setResult] = useState(null);
+    const scopeRef = useRef(null);
+    const paramsRef = useRef(searchParams);
+    const editedDefaultsRef = useRef({ season: false, week: false });
+    const csvReaderRef = useRef(null);
+    const uploadScopeRef = useRef(null);
 
-    const updateParam = (key, value) => {
-        const next = new URLSearchParams(searchParams);
-        if (value === '' || value == null) next.delete(key); else next.set(key, String(value));
-        setSearchParams(next, { replace: true });
+    const cancelCsvRead = () => {
+        const reader = csvReaderRef.current;
+        csvReaderRef.current = null;
+        if (reader) {
+            reader.onload = null;
+            if (reader.readyState === FileReader.LOADING) {
+                reader.abort();
+            }
+        }
     };
-    const setSeason = (value) => { setSeasonState(value); updateParam('season', value); };
-    const setWeek = (value) => { setWeekState(value); updateParam('week', value); };
-    const setPollType = (value) => { setPollTypeState(value); updateParam('pollType', value); };
-    const setTab = (value) => { setTabState(value); updateParam('tab', value); };
 
     useEffect(() => {
-        Promise.all([
-            getCurrentSeasonOrLatest().catch(() => ''),
-            getCurrentWeekOrLatest().catch(() => 1),
-        ]).then(([currentSeason, currentWeek]) => {
-            if (!searchParams.get('season')) setSeason(currentSeason);
-            if (!searchParams.get('week') && currentWeek) setWeek(currentWeek > 14 ? 14 : currentWeek);
-        });
+        paramsRef.current = searchParams;
+    }, [searchParams]);
+
+    useEffect(() => {
+        const scope = { active: true };
+        uploadScopeRef.current = scope;
+        setSubmitting(false);
+        setError('');
+        setResult(null);
+        return () => {
+            scope.active = false;
+        };
+    }, [season, week, pollType]);
+
+    const updateParam = (key, value) => {
+        const next = new URLSearchParams(paramsRef.current);
+        if (value === '' || value == null) {
+            next.delete(key);
+        } else {
+            next.set(key, String(value));
+        }
+        paramsRef.current = next;
+        setSearchParams(next, { replace: true });
+    };
+    const setSeason = (value) => {
+        editedDefaultsRef.current.season = true;
+        setSeasonState(value);
+        updateParam('season', value);
+    };
+    const setWeek = (value) => {
+        editedDefaultsRef.current.week = true;
+        setWeekState(value);
+        updateParam('week', value);
+    };
+    const setPollType = (value) => {
+        setPollTypeState(value);
+        updateParam('pollType', value);
+    };
+    const setTab = (value) => {
+        setTabState(value);
+        updateParam('tab', value);
+    };
+
+    useEffect(() => {
+        const scope = { active: true };
+        scopeRef.current = scope;
+        Promise.all([getCurrentSeasonOrLatest().catch(() => ''), getCurrentWeekOrLatest().catch(() => 1)]).then(
+            ([currentSeason, currentWeek]) => {
+                if (!scope.active) {
+                    return;
+                }
+                if (!editedDefaultsRef.current.season && !paramsRef.current.get('season')) {
+                    setSeason(currentSeason);
+                }
+                if (!editedDefaultsRef.current.week && !paramsRef.current.get('week') && currentWeek) {
+                    setWeek(currentWeek > 14 ? 14 : currentWeek);
+                }
+            }
+        );
+        return () => {
+            scope.active = false;
+            cancelCsvRead();
+        };
     }, []);
+
+    const handleNamesChange = (value) => {
+        cancelCsvRead();
+        setNamesText(value);
+    };
 
     const handleCsvUpload = (event) => {
         const file = event.target.files?.[0];
-        if (!file) return;
+        if (!file) {
+            return;
+        }
+        cancelCsvRead();
+        const scope = scopeRef.current;
         const reader = new FileReader();
-        reader.onload = () => setNamesText(parseCsvToNames(String(reader.result)).join('\n'));
+        csvReaderRef.current = reader;
+        reader.onload = () => {
+            if (scope.active && csvReaderRef.current === reader) {
+                csvReaderRef.current = null;
+                setNamesText(parseCsvToNames(String(reader.result)).join('\n'));
+            }
+        };
         reader.readAsText(file);
         event.target.value = '';
     };
@@ -100,19 +230,29 @@ const RankingsManagement = () => {
     const handleSubmit = async () => {
         setError('');
         setResult(null);
-        const teams = namesText.split(/\r?\n/).map((name) => name.trim()).filter(Boolean);
+        const teams = namesText
+            .split(/\r?\n/)
+            .map((name) => name.trim())
+            .filter(Boolean);
         if (!season || teams.length === 0) {
             setError('Provide a season and at least one team.');
             return;
         }
+        const scope = uploadScopeRef.current;
         setSubmitting(true);
         try {
             const uploaded = await uploadRankings({ season: Number(season), week: Number(week), pollType, teams });
-            setResult(uploaded);
+            if (scope.active) {
+                setResult(uploaded);
+            }
         } catch (submitError) {
-            setError(submitError.message);
+            if (scope.active) {
+                setError(submitError.message);
+            }
         } finally {
-            setSubmitting(false);
+            if (scope.active) {
+                setSubmitting(false);
+            }
         }
     };
 
@@ -139,41 +279,93 @@ const RankingsManagement = () => {
                 <Panel header="Upload rankings">
                     <Box sx={{ p: '18px', maxWidth: 640 }}>
                         <Box sx={{ color: 'var(--text-muted)', fontSize: '0.82rem', mb: '18px' }}>
-                            Paste the teams in ranked order (one per line, rank = line number), or upload a CSV. Uploading replaces
-                            that week&apos;s poll and updates each team&apos;s current ranking.
+                            Paste the teams in ranked order (one per line, rank = line number), or upload a CSV.
+                            Uploading replaces that week&apos;s poll and updates each team&apos;s current ranking.
                         </Box>
 
-                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px', mb: '14px' }}>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                                gap: '14px',
+                                mb: '14px',
+                            }}
+                        >
                             <Box>
                                 <Box sx={labelSx}>Season</Box>
-                                <Box component="input" type="number" value={season} onChange={(e) => setSeason(e.target.value)} sx={inputSx} />
+                                <Box
+                                    component="input"
+                                    type="number"
+                                    value={season}
+                                    onChange={(e) => setSeason(e.target.value)}
+                                    sx={inputSx}
+                                />
                             </Box>
                             <Box>
                                 <Box sx={labelSx}>Week</Box>
-                                <Box component="select" value={week} onChange={(e) => setWeek(e.target.value)} sx={selectSx}>
-                                    {WEEK_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                <Box
+                                    component="select"
+                                    value={week}
+                                    onChange={(e) => setWeek(e.target.value)}
+                                    sx={selectSx}
+                                >
+                                    {WEEK_OPTIONS.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
                                 </Box>
                             </Box>
                             <Box>
                                 <Box sx={labelSx}>Poll</Box>
-                                <Box component="select" value={pollType} onChange={(e) => setPollType(e.target.value)} sx={selectSx}>
-                                    {POLL_TYPES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                <Box
+                                    component="select"
+                                    value={pollType}
+                                    onChange={(e) => setPollType(e.target.value)}
+                                    sx={selectSx}
+                                >
+                                    {POLL_TYPES.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
                                 </Box>
                             </Box>
                         </Box>
 
                         <Box sx={{ mb: '14px' }}>
                             <Box sx={labelSx}>Teams (ranked order, one per line)</Box>
-                            <Box component="textarea" rows={10} value={namesText} onChange={(e) => setNamesText(e.target.value)} placeholder={'Georgia\nOhio State\nMichigan\n...'} sx={textareaSx} />
+                            <Box
+                                component="textarea"
+                                rows={10}
+                                value={namesText}
+                                onChange={(e) => handleNamesChange(e.target.value)}
+                                placeholder={'Georgia\nOhio State\nMichigan\n...'}
+                                sx={textareaSx}
+                            />
                         </Box>
 
                         <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', mb: '14px' }}>
-                            <Box component="button" type="button" onClick={downloadTemplate} sx={btnGhostSx}>&darr; CSV template</Box>
+                            <Box component="button" type="button" onClick={downloadTemplate} sx={btnGhostSx}>
+                                &darr; CSV template
+                            </Box>
                             <Box component="label" sx={{ ...btnGhostSx, display: 'inline-flex', alignItems: 'center' }}>
                                 &uarr; Upload CSV
-                                <Box component="input" type="file" accept=".csv,text/csv" onChange={handleCsvUpload} sx={{ display: 'none' }} />
+                                <Box
+                                    component="input"
+                                    type="file"
+                                    accept=".csv,text/csv"
+                                    onChange={handleCsvUpload}
+                                    sx={{ display: 'none' }}
+                                />
                             </Box>
-                            <Box component="button" type="button" onClick={handleSubmit} disabled={submitting} sx={{ ...btnPrimarySx, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                            <Box
+                                component="button"
+                                type="button"
+                                onClick={handleSubmit}
+                                disabled={submitting}
+                                sx={{ ...btnPrimarySx, display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                            >
                                 {submitting && <CircularProgress size={16} sx={{ color: '#fff' }} />}
                                 Upload {pollLabel}, {weekLabel}
                             </Box>

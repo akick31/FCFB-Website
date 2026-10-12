@@ -11,7 +11,8 @@ export const ADJUSTED_PPG_METRIC_TYPES = [
         shortLabel: 'aPPa',
         label: 'Adjusted Points Against',
         higherIsBetter: false,
-        description: 'Schedule-adjusted points allowed per game (defense-only split of the ASR methodology). Lower is better.',
+        description:
+            'Schedule-adjusted points allowed per game (defense-only split of the ASR methodology). Lower is better.',
     },
     {
         value: 'ADJUSTED_NET_POINTS',
@@ -22,6 +23,8 @@ export const ADJUSTED_PPG_METRIC_TYPES = [
     },
 ];
 
-export const adjustedMetricShortLabel = (value) => ADJUSTED_PPG_METRIC_TYPES.find((m) => m.value === value)?.shortLabel || value;
+export const adjustedMetricShortLabel = (value) =>
+    ADJUSTED_PPG_METRIC_TYPES.find((m) => m.value === value)?.shortLabel || value;
 
-export const adjustedMetricHigherIsBetter = (value) => ADJUSTED_PPG_METRIC_TYPES.find((m) => m.value === value)?.higherIsBetter ?? true;
+export const adjustedMetricHigherIsBetter = (value) =>
+    ADJUSTED_PPG_METRIC_TYPES.find((m) => m.value === value)?.higherIsBetter ?? true;

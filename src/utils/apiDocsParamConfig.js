@@ -1,9 +1,24 @@
 import { humanizeEnumValue, humanizeParamName } from './humanize';
 import { STAT_CATALOG } from './statsCatalog';
-import { field } from './fieldHelper';
+import { camelOrSnakeField } from './fieldHelper';
 
-const YES_NO_OPTIONS = [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }];
-export const PLAY_CALL_VALUES = ['RUN', 'PASS', 'SPIKE', 'KNEEL', 'FIELD_GOAL', 'PAT', 'TWO_POINT', 'KICKOFF_NORMAL', 'KICKOFF_ONSIDE', 'KICKOFF_SQUIB', 'PUNT'];
+const YES_NO_OPTIONS = [
+    { value: 'true', label: 'Yes' },
+    { value: 'false', label: 'No' },
+];
+export const PLAY_CALL_VALUES = [
+    'RUN',
+    'PASS',
+    'SPIKE',
+    'KNEEL',
+    'FIELD_GOAL',
+    'PAT',
+    'TWO_POINT',
+    'KICKOFF_NORMAL',
+    'KICKOFF_ONSIDE',
+    'KICKOFF_SQUIB',
+    'PUNT',
+];
 const POLL_TYPE_VALUES = ['COACHES_POLL', 'PLAYOFF_COMMITTEE'];
 const SUBDIVISION_VALUES = ['FCFB', 'FBS', 'FCS', 'FAKE'];
 const LIMIT_PRESETS = [5, 10, 25, 50, 100];
@@ -46,7 +61,9 @@ const PAGEABLE_SORT_FIELDS_BY_SUFFIX = {
 const NO_PAGEABLE_SORT_SUFFIXES = ['/game', '/scorebug/filtered'];
 
 const sortFieldsForPath = (path) => {
-    if (NO_PAGEABLE_SORT_SUFFIXES.some((suffix) => path.endsWith(suffix))) return null;
+    if (NO_PAGEABLE_SORT_SUFFIXES.some((suffix) => path.endsWith(suffix))) {
+        return null;
+    }
     const suffix = Object.keys(PAGEABLE_SORT_FIELDS_BY_SUFFIX).find((key) => path.endsWith(key));
     return suffix ? PAGEABLE_SORT_FIELDS_BY_SUFFIX[suffix] : ['id'];
 };
@@ -91,12 +108,17 @@ export const paramConfig = (param, lookups, siblingValues, operationPath) => {
         return {
             uiType: 'pageable',
             label: 'Pagination',
-            sortFieldOptions: sortFields ? sortFields.map((value) => ({ value, label: humanizeParamName(value) })) : null,
+            sortFieldOptions: sortFields
+                ? sortFields.map((value) => ({ value, label: humanizeParamName(value) }))
+                : null,
         };
     }
 
     if (param.schema?.enum) {
-        return { uiType: 'select', options: param.schema.enum.map((value) => ({ value, label: humanizeEnumValue(value) })) };
+        return {
+            uiType: 'select',
+            options: param.schema.enum.map((value) => ({ value, label: humanizeEnumValue(value) })),
+        };
     }
 
     if (param.schema?.type === 'boolean') {
@@ -104,7 +126,10 @@ export const paramConfig = (param, lookups, siblingValues, operationPath) => {
     }
 
     if (param.schema?.type === 'array' && param.schema.items?.enum) {
-        return { uiType: 'multiselect', options: param.schema.items.enum.map((value) => ({ value, label: humanizeEnumValue(value) })) };
+        return {
+            uiType: 'multiselect',
+            options: param.schema.items.enum.map((value) => ({ value, label: humanizeEnumValue(value) })),
+        };
     }
 
     if (isLimitParam(name)) {
@@ -112,7 +137,10 @@ export const paramConfig = (param, lookups, siblingValues, operationPath) => {
     }
 
     if (isSeasonParam(name)) {
-        return { uiType: 'select', options: lookups.seasons.map((number) => ({ value: number, label: `Season ${number}` })) };
+        return {
+            uiType: 'select',
+            options: lookups.seasons.map((number) => ({ value: number, label: `Season ${number}` })),
+        };
     }
 
     if (isWeekParam(name)) {
@@ -124,19 +152,34 @@ export const paramConfig = (param, lookups, siblingValues, operationPath) => {
     }
 
     if (isConferenceParam(name)) {
-        return { uiType: 'select', label: 'Conference', options: lookups.conferences.map((conference) => ({ value: conference.code, label: conference.label })) };
+        return {
+            uiType: 'select',
+            label: 'Conference',
+            options: lookups.conferences.map((conference) => ({ value: conference.code, label: conference.label })),
+        };
     }
 
     if (isWriteupPlayCallParam(name)) {
-        return { uiType: 'select', options: PLAY_CALL_VALUES.map((value) => ({ value, label: humanizeEnumValue(value) })) };
+        return {
+            uiType: 'select',
+            options: PLAY_CALL_VALUES.map((value) => ({ value, label: humanizeEnumValue(value) })),
+        };
     }
 
     if (isPollTypeParam(name)) {
-        return { uiType: 'select', label: 'Poll Type', options: POLL_TYPE_VALUES.map((value) => ({ value, label: humanizeEnumValue(value) })) };
+        return {
+            uiType: 'select',
+            label: 'Poll Type',
+            options: POLL_TYPE_VALUES.map((value) => ({ value, label: humanizeEnumValue(value) })),
+        };
     }
 
     if (isSubdivisionParam(name)) {
-        return { uiType: 'select', label: 'Subdivision', options: SUBDIVISION_VALUES.map((value) => ({ value, label: humanizeEnumValue(value) })) };
+        return {
+            uiType: 'select',
+            label: 'Subdivision',
+            options: SUBDIVISION_VALUES.map((value) => ({ value, label: humanizeEnumValue(value) })),
+        };
     }
 
     if (isScenarioParam(name)) {
@@ -152,11 +195,18 @@ export const paramConfig = (param, lookups, siblingValues, operationPath) => {
     if (isScopeValueParam(name)) {
         const scope = (siblingValues.recordScope || '').toUpperCase();
         if (scope === 'CONFERENCE') {
-            return { uiType: 'select', label: 'Conference', options: lookups.conferences.map((conference) => ({ value: conference.code, label: conference.label })) };
+            return {
+                uiType: 'select',
+                label: 'Conference',
+                options: lookups.conferences.map((conference) => ({ value: conference.code, label: conference.label })),
+            };
         }
         if (scope === 'TEAM') {
             const teams = [...lookups.rawTeams].sort((a, b) => a.name.localeCompare(b.name));
-            return searchConfig(teams.map((team) => ({ value: team.name, label: team.name })), 'Team');
+            return searchConfig(
+                teams.map((team) => ({ value: team.name, label: team.name })),
+                'Team'
+            );
         }
         return { uiType: 'text', label: 'Scope Value (not needed for League scope)' };
     }
@@ -170,15 +220,20 @@ export const paramConfig = (param, lookups, siblingValues, operationPath) => {
     }
 
     if (isChannelParam(name)) {
-        const options = lookups.ongoingGames.flatMap((game) => [
-            { value: game.home_platform_id, label: `${gameLabel(game)} (Home channel)` },
-            { value: game.away_platform_id, label: `${gameLabel(game)} (Away channel)` },
-        ].filter((option) => option.value != null));
+        const options = lookups.ongoingGames.flatMap((game) =>
+            [
+                { value: game.home_platform_id, label: `${gameLabel(game)} (Home channel)` },
+                { value: game.away_platform_id, label: `${gameLabel(game)} (Away channel)` },
+            ].filter((option) => option.value != null)
+        );
         return searchConfig(options, 'Game Channel');
     }
 
     if (isNewSignupParam(name)) {
-        const options = lookups.newSignups.map((signup) => ({ value: signup.id, label: `${signup.coach_name || signup.username}` }));
+        const options = lookups.newSignups.map((signup) => ({
+            value: signup.id,
+            label: `${signup.coach_name || signup.username}`,
+        }));
         return searchConfig(options, 'New Signup');
     }
 
@@ -216,7 +271,7 @@ export const paramConfig = (param, lookups, siblingValues, operationPath) => {
     if (isScheduleEntryIdParam(name, operationPath)) {
         const options = lookups.scheduleEntries.map((entry) => ({
             value: entry.id,
-            label: `S${field(entry, 'season', 'season')} Wk${field(entry, 'week', 'week')}: ${field(entry, 'awayTeam', 'away_team')} @ ${field(entry, 'homeTeam', 'home_team')} (#${entry.id})`,
+            label: `S${camelOrSnakeField(entry, 'season', 'season')} Wk${camelOrSnakeField(entry, 'week', 'week')}: ${camelOrSnakeField(entry, 'awayTeam', 'away_team')} @ ${camelOrSnakeField(entry, 'homeTeam', 'home_team')} (#${entry.id})`,
         }));
         return searchConfig(options, 'Schedule Entry');
     }

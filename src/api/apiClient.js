@@ -1,6 +1,6 @@
 import axios from 'axios';
-
-const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1/arceus';
+import { expireUnauthorizedSession } from '../utils/session';
+import { baseURL } from '../config/api';
 
 const apiClient = axios.create({
     baseURL: baseURL,
@@ -10,22 +10,18 @@ const apiClient = axios.create({
     },
 });
 
-apiClient.interceptors.request.use(config => {
+apiClient.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && !config.headers.has('Authorization')) {
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
 });
 
 apiClient.interceptors.response.use(
-    response => response,
-    error => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('userId');
-            localStorage.removeItem('role');
-        }
+    (response) => response,
+    (error) => {
+        expireUnauthorizedSession(error);
         return Promise.reject(error);
     }
 );

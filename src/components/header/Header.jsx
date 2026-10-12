@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { logout } from '../../api/authApi';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
-import { useConferencesMap } from '../constants/conferences';
+import { useConferencesMap } from '../../hooks/useConferencesMap';
 import CommandBar from './CommandBar';
 import LiveTicker from './LiveTicker';
 import MobileNavDrawer from './MobileNavDrawer';
@@ -16,13 +16,17 @@ const Header = ({ isAuthenticated, isAdmin, user, setIsAuthenticated, setUser, s
     useConferencesMap();
 
     useEffect(() => {
-        if (user?.team) ensureTeam(user.team);
+        if (user?.team) {
+            ensureTeam(user.team);
+        }
     }, [user?.team]);
 
     const team = user?.team ? teamsMap[user.team] : null;
 
     const handleLogout = () => {
-        logout(setIsAuthenticated, setUser, setIsAdmin);
+        logout(setIsAuthenticated, setUser, setIsAdmin).catch(() => {
+            console.error('Remote logout failed. The local session was cleared.');
+        });
         localStorage.removeItem('role');
         localStorage.removeItem('token');
         localStorage.removeItem('userId');

@@ -1,39 +1,120 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Box, Alert, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
+import {
+    Box,
+    Alert,
+    CircularProgress,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    Typography,
+} from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
 import StatTile, { TileGrid } from '../../components/ui/StatTile';
 import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
-import { getScheduleBySeasonAndWeek, startGameWeek, getGameWeekJobStatus, retryFailedGames } from '../../api/scheduleApi';
+import {
+    getScheduleBySeasonAndWeek,
+    startGameWeek,
+    getGameWeekJobStatus,
+    retryFailedGames,
+} from '../../api/scheduleApi';
 import { weekLabel } from '../../utils/formatText';
+import { startPolling as startPoller } from '../../utils/polling';
 
 const POLL_INTERVAL_MS = 3000;
 
-const selectSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', cursor: 'pointer', '& option': { background: 'var(--surface-2)', color: 'var(--text)' } };
-const btnPrimarySx = { border: 0, background: 'var(--field)', color: '#04231a', borderRadius: 'var(--r-sm)', px: '16px', py: '11px', font: 'inherit', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', width: '100%', '&:disabled': { opacity: 0.6, cursor: 'default' } };
-const btnGhostSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--gold)', borderRadius: 'var(--r-sm)', px: '14px', py: '9px', font: 'inherit', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', width: '100%', '&:disabled': { opacity: 0.6, cursor: 'default' } };
-const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', px: '8px', py: '3px', borderRadius: 'var(--r-sm)', lineHeight: 1 };
+const selectSx = {
+    width: '100%',
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text)',
+    borderRadius: 'var(--r-sm)',
+    px: '10px',
+    height: '38px',
+    boxSizing: 'border-box',
+    font: 'inherit',
+    fontSize: '0.82rem',
+    cursor: 'pointer',
+    '& option': { background: 'var(--surface-2)', color: 'var(--text)' },
+};
+const btnPrimarySx = {
+    border: 0,
+    background: 'var(--field)',
+    color: '#04231a',
+    borderRadius: 'var(--r-sm)',
+    px: '16px',
+    py: '11px',
+    font: 'inherit',
+    fontSize: '0.88rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    width: '100%',
+    '&:disabled': { opacity: 0.6, cursor: 'default' },
+};
+const btnGhostSx = {
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--gold)',
+    borderRadius: 'var(--r-sm)',
+    px: '14px',
+    py: '9px',
+    font: 'inherit',
+    fontSize: '0.82rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    width: '100%',
+    '&:disabled': { opacity: 0.6, cursor: 'default' },
+};
+const pillSx = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '5px',
+    fontSize: '0.62rem',
+    fontWeight: 800,
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    px: '8px',
+    py: '3px',
+    borderRadius: 'var(--r-sm)',
+    lineHeight: 1,
+};
 
 const statusColor = (status) => {
-    if (status === 'COMPLETED') return 'var(--field)';
-    if (status === 'IN_PROGRESS') return 'var(--brand)';
-    if (status === 'FAILED') return 'var(--live)';
+    if (status === 'COMPLETED') {
+        return 'var(--field)';
+    }
+    if (status === 'IN_PROGRESS') {
+        return 'var(--brand)';
+    }
+    if (status === 'FAILED') {
+        return 'var(--live)';
+    }
     return 'var(--text-muted)';
 };
 
 const gameStatusInfo = (game) => {
-    if (game.finished) return { label: 'Finished', color: 'var(--text-muted)' };
-    if (game.started) return { label: 'In Progress', color: 'var(--field)' };
+    if (game.finished) {
+        return { label: 'Finished', color: 'var(--text-muted)' };
+    }
+    if (game.started) {
+        return { label: 'In Progress', color: 'var(--field)' };
+    }
     return { label: 'Not Started', color: 'var(--gold)' };
 };
 
 const GameWeek = () => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const [season, setSeason] = useState(() => (searchParams.get('season') ? Number(searchParams.get('season')) : null));
+    const [season, setSeason] = useState(() =>
+        searchParams.get('season') ? Number(searchParams.get('season')) : null
+    );
     const [week, setWeek] = useState(() => (searchParams.get('week') ? Number(searchParams.get('week')) : null));
-    const [selectedWeek, setSelectedWeek] = useState(() => (searchParams.get('selectedWeek') ? Number(searchParams.get('selectedWeek')) : null));
+    const [selectedWeek, setSelectedWeek] = useState(() =>
+        searchParams.get('selectedWeek') ? Number(searchParams.get('selectedWeek')) : null
+    );
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [weekSchedule, setWeekSchedule] = useState([]);
@@ -46,57 +127,110 @@ const GameWeek = () => {
     const [rankingsWarning, setRankingsWarning] = useState(null);
 
     const logContainerRef = useRef(null);
-    const pollIntervalRef = useRef(null);
+    const stopPollingRef = useRef(null);
+    const mountedRef = useRef(false);
+    const scheduleRequestRef = useRef(0);
+    const jobRequestRef = useRef(0);
+    const loadScheduleRef = useRef(null);
 
     useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+            scheduleRequestRef.current += 1;
+            jobRequestRef.current += 1;
+            stopPollingRef.current?.();
+        };
+    }, []);
+
+    useEffect(() => {
+        let active = true;
         const init = async () => {
             try {
                 setLoading(true);
-                const [currentSeason, currentWeek] = await Promise.all([getCurrentSeasonOrLatest(), getCurrentWeekOrLatest()]);
+                const [currentSeason, currentWeek] = await Promise.all([
+                    getCurrentSeasonOrLatest(),
+                    getCurrentWeekOrLatest(),
+                ]);
+                if (!active) {
+                    return;
+                }
                 const resolvedSeason = searchParams.get('season') ? Number(searchParams.get('season')) : currentSeason;
                 const resolvedWeek = searchParams.get('week') ? Number(searchParams.get('week')) : currentWeek;
-                const resolvedSelectedWeek = searchParams.get('selectedWeek') ? Number(searchParams.get('selectedWeek')) : currentWeek;
+                const resolvedSelectedWeek = searchParams.get('selectedWeek')
+                    ? Number(searchParams.get('selectedWeek'))
+                    : currentWeek;
                 setSeason(resolvedSeason);
                 setWeek(resolvedWeek);
                 setSelectedWeek(resolvedSelectedWeek);
-                setSearchParams({
-                    season: String(resolvedSeason),
-                    week: String(resolvedWeek),
-                    selectedWeek: String(resolvedSelectedWeek),
-                }, { replace: true });
+                setSearchParams(
+                    {
+                        season: String(resolvedSeason),
+                        week: String(resolvedWeek),
+                        selectedWeek: String(resolvedSelectedWeek),
+                    },
+                    { replace: true }
+                );
             } catch (err) {
+                if (!active) {
+                    return;
+                }
                 console.error('Error initializing game week page:', err);
                 setError(err.message || 'Failed to load current season and week');
             } finally {
-                setLoading(false);
+                if (active) {
+                    setLoading(false);
+                }
             }
         };
         init();
+        return () => {
+            active = false;
+        };
     }, []);
 
-    const fetchWeekSchedule = useCallback(async () => {
-        try {
-            setScheduleLoading(true);
-            const schedule = await getScheduleBySeasonAndWeek(season, selectedWeek);
-            setWeekSchedule(schedule || []);
-        } catch (err) {
-            console.error('Error fetching week schedule:', err);
-            setError(err.message || 'Failed to load week schedule');
-            setWeekSchedule([]);
-        } finally {
-            setScheduleLoading(false);
-        }
-    }, [season, selectedWeek]);
+    const fetchWeekSchedule = useCallback(
+        async (signal) => {
+            if (!mountedRef.current || signal?.aborted) {
+                return;
+            }
+            const request = ++scheduleRequestRef.current;
+            try {
+                setScheduleLoading(true);
+                const schedule = await getScheduleBySeasonAndWeek(season, selectedWeek);
+                if (mountedRef.current && request === scheduleRequestRef.current && !signal?.aborted) {
+                    setWeekSchedule(schedule || []);
+                }
+            } catch (err) {
+                if (mountedRef.current && request === scheduleRequestRef.current && !signal?.aborted) {
+                    console.error('Error fetching week schedule:', err);
+                    setError(err.message || 'Failed to load week schedule');
+                    setWeekSchedule([]);
+                }
+            } finally {
+                if (mountedRef.current && request === scheduleRequestRef.current) {
+                    setScheduleLoading(false);
+                }
+            }
+        },
+        [season, selectedWeek]
+    );
 
     useEffect(() => {
-        if (season && selectedWeek) fetchWeekSchedule();
+        loadScheduleRef.current = fetchWeekSchedule;
+        if (season && selectedWeek) {
+            fetchWeekSchedule();
+        }
+        return () => {
+            scheduleRequestRef.current += 1;
+        };
     }, [season, selectedWeek, fetchWeekSchedule]);
 
     useEffect(() => {
-        if (logContainerRef.current) logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+        if (logContainerRef.current) {
+            logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+        }
     }, [jobData?.logs?.length]);
-
-    useEffect(() => () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); }, []);
 
     const getGameStats = () => {
         const total = weekSchedule.length;
@@ -106,37 +240,43 @@ const GameWeek = () => {
     };
 
     const startPolling = useCallback((jobId) => {
-        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-
-        const poll = async () => {
-            try {
+        stopPollingRef.current?.();
+        stopPollingRef.current = startPoller(
+            async (signal) => {
                 const status = await getGameWeekJobStatus(jobId);
+                if (signal.aborted) {
+                    return;
+                }
                 setJobData(status);
                 if (status.status === 'COMPLETED' || status.status === 'FAILED') {
-                    clearInterval(pollIntervalRef.current);
-                    pollIntervalRef.current = null;
                     setIsStarting(false);
-                    await fetchWeekSchedule();
+                    await loadScheduleRef.current(signal);
+                    return false;
                 }
-            } catch (err) {
-                console.error('Error polling job status:', err);
-            }
-        };
-
-        poll();
-        pollIntervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
-    }, [fetchWeekSchedule]);
+            },
+            POLL_INTERVAL_MS,
+            (err) => console.error('Error polling job status:', err)
+        );
+    }, []);
 
     const handleStartWeek = async () => {
+        const request = ++jobRequestRef.current;
+        stopPollingRef.current?.();
         setConfirmDialogOpen(false);
         setIsStarting(true);
         setJobData(null);
 
         try {
             const startResult = await startGameWeek(season, selectedWeek);
+            if (!mountedRef.current || request !== jobRequestRef.current) {
+                return;
+            }
             setActiveJobId(startResult.jobId);
             startPolling(startResult.jobId);
         } catch (err) {
+            if (!mountedRef.current || request !== jobRequestRef.current) {
+                return;
+            }
             console.error('Error starting week:', err);
             setIsStarting(false);
             if (err.status === 409) {
@@ -145,7 +285,16 @@ const GameWeek = () => {
             }
             setJobData({
                 status: 'FAILED',
-                logs: [{ homeTeam: '', awayTeam: '', status: 'FAILED', message: `Failed to start week: ${err.message}`, timestamp: new Date().toLocaleTimeString(), index: 0 }],
+                logs: [
+                    {
+                        homeTeam: '',
+                        awayTeam: '',
+                        status: 'FAILED',
+                        message: `Failed to start week: ${err.message}`,
+                        timestamp: new Date().toLocaleTimeString(),
+                        index: 0,
+                    },
+                ],
                 totalGames: 0,
                 startedGames: 0,
                 failedGames: 0,
@@ -154,14 +303,24 @@ const GameWeek = () => {
     };
 
     const handleRetryFailed = async () => {
-        if (!activeJobId) return;
+        if (!activeJobId) {
+            return;
+        }
+        const request = ++jobRequestRef.current;
+        stopPollingRef.current?.();
         setIsStarting(true);
         try {
             const retryResult = await retryFailedGames(activeJobId);
+            if (!mountedRef.current || request !== jobRequestRef.current) {
+                return;
+            }
             setActiveJobId(retryResult.jobId);
             setJobData(null);
             startPolling(retryResult.jobId);
         } catch (err) {
+            if (!mountedRef.current || request !== jobRequestRef.current) {
+                return;
+            }
             console.error('Error retrying failed games:', err);
             setIsStarting(false);
         }
@@ -169,31 +328,60 @@ const GameWeek = () => {
 
     const stats = getGameStats();
     const isJobComplete = jobData && (jobData.status === 'COMPLETED' || jobData.status === 'FAILED');
+    const unfinishedGames = jobData ? jobData.totalGames - jobData.startedGames - jobData.failedGames : 0;
+    const isJobInterrupted = jobData?.status === 'FAILED' && unfinishedGames > 0;
     const hasFailedGames = jobData && jobData.failedGames > 0 && isJobComplete;
-    const progressPercent = jobData && jobData.totalGames > 0 ? Math.round((jobData.currentIndex / jobData.totalGames) * 100) : 0;
+    const progressPercent =
+        jobData && jobData.totalGames > 0 ? Math.round((jobData.currentIndex / jobData.totalGames) * 100) : 0;
 
     if (loading) {
         return (
             <AdminLayout title="Game Week">
-                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
+                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}>
+                    <CircularProgress />
+                </Box>
             </AdminLayout>
         );
     }
 
     return (
         <AdminLayout title="Game Week">
-            {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
+            {error && (
+                <Alert severity="error" sx={{ mb: '16px' }}>
+                    {error}
+                </Alert>
+            )}
             <TileGrid minTile={190} sx={{ mb: '16px' }}>
                 <StatTile label="Current season" value={season || '-'} />
-                <Box sx={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', px: '15px', py: '14px' }}>
-                    <Box component="small" sx={{ color: 'var(--text-dim)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800, display: 'block', mb: '8px' }}>
+                <Box
+                    sx={{
+                        background: 'var(--surface)',
+                        border: '1px solid var(--line)',
+                        borderRadius: 'var(--r)',
+                        px: '15px',
+                        py: '14px',
+                    }}
+                >
+                    <Box
+                        component="small"
+                        sx={{
+                            color: 'var(--text-dim)',
+                            fontSize: '0.62rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em',
+                            fontWeight: 800,
+                            display: 'block',
+                            mb: '8px',
+                        }}
+                    >
                         Viewing week {week ? `(current: ${week})` : ''}
                     </Box>
                     <Box
                         component="select"
                         value={selectedWeek || ''}
                         onChange={(e) => {
-                            if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
+                            stopPollingRef.current?.();
+                            jobRequestRef.current += 1;
                             const nextWeek = Number(e.target.value);
                             setSelectedWeek(nextWeek);
                             setJobData(null);
@@ -208,17 +396,52 @@ const GameWeek = () => {
                         sx={selectSx}
                     >
                         {Array.from({ length: 18 }, (_, i) => i + 1).map((w) => (
-                            <option key={w} value={w}>{weekLabel(w)}{w === week ? ' (current)' : ''}</option>
+                            <option key={w} value={w}>
+                                {weekLabel(w)}
+                                {w === week ? ' (current)' : ''}
+                            </option>
                         ))}
                     </Box>
                 </Box>
-                <StatTile label="Total games" value={stats.total} caption={`${stats.notStarted} pending, ${stats.started} started`} />
-                <Box sx={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r)', px: '15px', py: '14px', display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center' }}>
-                    <Box component="button" type="button" onClick={() => setConfirmDialogOpen(true)} disabled={isStarting || stats.notStarted === 0} sx={btnPrimarySx}>
-                        {isStarting ? 'Starting...' : stats.notStarted === 0 ? 'All games started' : `Start week ${selectedWeek}`}
+                <StatTile
+                    label="Total games"
+                    value={stats.total}
+                    caption={`${stats.notStarted} pending, ${stats.started} started`}
+                />
+                <Box
+                    sx={{
+                        background: 'var(--surface)',
+                        border: '1px solid var(--line)',
+                        borderRadius: 'var(--r)',
+                        px: '15px',
+                        py: '14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={() => setConfirmDialogOpen(true)}
+                        disabled={isStarting || stats.notStarted === 0}
+                        sx={btnPrimarySx}
+                    >
+                        {isStarting
+                            ? 'Starting...'
+                            : stats.notStarted === 0
+                              ? 'All games started'
+                              : `Start week ${selectedWeek}`}
                     </Box>
                     {hasFailedGames && (
-                        <Box component="button" type="button" onClick={handleRetryFailed} disabled={isStarting} sx={btnGhostSx}>
+                        <Box
+                            component="button"
+                            type="button"
+                            onClick={handleRetryFailed}
+                            disabled={isStarting}
+                            sx={btnGhostSx}
+                        >
                             Retry {jobData.failedGames} failed
                         </Box>
                     )}
@@ -228,25 +451,71 @@ const GameWeek = () => {
             {jobData && (
                 <Panel header="Game start progress" sx={{ mb: '16px' }}>
                     <Box sx={{ p: '16px' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                            <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: statusColor(jobData.status) }}>{jobData.status}</Box>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                mb: '12px',
+                                flexWrap: 'wrap',
+                                gap: '8px',
+                            }}
+                        >
+                            <Box
+                                component="span"
+                                sx={{ ...pillSx, background: 'var(--surface-2)', color: statusColor(jobData.status) }}
+                            >
+                                {jobData.status}
+                            </Box>
                             {jobData.totalGames > 0 && (
                                 <Box sx={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontFamily: 'monospace' }}>
-                                    {jobData.startedGames} started / {jobData.failedGames} failed / {jobData.totalGames} total
+                                    {jobData.startedGames} started / {jobData.failedGames} failed / {jobData.totalGames}{' '}
+                                    total
                                 </Box>
                             )}
                         </Box>
 
                         {jobData.status === 'IN_PROGRESS' && (
                             <Box sx={{ mb: '14px' }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '4px', fontSize: '0.72rem', color: 'var(--text-dim)' }}>
-                                    <span>Processing game {jobData.currentIndex} of {jobData.totalGames}</span>
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        mb: '4px',
+                                        fontSize: '0.72rem',
+                                        color: 'var(--text-dim)',
+                                    }}
+                                >
+                                    <span>
+                                        Processing game {jobData.currentIndex} of {jobData.totalGames}
+                                    </span>
                                     <span>{progressPercent}%</span>
                                 </Box>
-                                <Box sx={{ height: 8, borderRadius: 4, background: 'var(--surface-2)', overflow: 'hidden' }}>
-                                    <Box sx={{ height: '100%', width: `${progressPercent}%`, background: 'var(--brand)', transition: 'width 0.3s' }} />
+                                <Box
+                                    sx={{
+                                        height: 8,
+                                        borderRadius: 4,
+                                        background: 'var(--surface-2)',
+                                        overflow: 'hidden',
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            height: '100%',
+                                            width: `${progressPercent}%`,
+                                            background: 'var(--brand)',
+                                            transition: 'width 0.3s',
+                                        }}
+                                    />
                                 </Box>
                             </Box>
+                        )}
+
+                        {isJobInterrupted && (
+                            <Alert severity="warning" sx={{ mb: '14px' }}>
+                                Processing stopped with {unfinishedGames} games unfinished. Check the schedule and
+                                existing game threads before restarting remaining games.
+                            </Alert>
                         )}
 
                         {isJobComplete && jobData.status === 'COMPLETED' && (
@@ -257,21 +526,54 @@ const GameWeek = () => {
                             </Alert>
                         )}
 
-                        <Box ref={logContainerRef} sx={{ maxHeight: 400, overflow: 'auto', p: '14px', background: 'var(--brand-ink, #08151f)', borderRadius: 'var(--r-sm)', border: '1px solid var(--line)', fontFamily: 'monospace' }}>
-                            {jobData.logs && jobData.logs.map((log, idx) => (
-                                <Box key={idx} sx={{ fontFamily: 'monospace', fontSize: '0.78rem', color: log.status === 'SUCCESS' ? '#4ade80' : log.status === 'FAILED' ? '#f87171' : '#94a3b8', mb: '3px', lineHeight: 1.6 }}>
-                                    <Box component="span" sx={{ color: '#64748b', mr: '8px' }}>[{log.timestamp}]</Box>
-                                    <Box component="span" sx={{ color: '#818cf8', mr: '8px' }}>[{log.index}/{jobData.totalGames}]</Box>
-                                    {log.status === 'SUCCESS' ? '[OK]' : '[FAIL]'} {log.homeTeam} vs {log.awayTeam}: {log.message}
-                                </Box>
-                            ))}
+                        <Box
+                            ref={logContainerRef}
+                            sx={{
+                                maxHeight: 400,
+                                overflow: 'auto',
+                                p: '14px',
+                                background: 'var(--brand-ink, #08151f)',
+                                borderRadius: 'var(--r-sm)',
+                                border: '1px solid var(--line)',
+                                fontFamily: 'monospace',
+                            }}
+                        >
+                            {jobData.logs &&
+                                jobData.logs.map((log, idx) => (
+                                    <Box
+                                        key={idx}
+                                        sx={{
+                                            fontFamily: 'monospace',
+                                            fontSize: '0.78rem',
+                                            color:
+                                                log.status === 'SUCCESS'
+                                                    ? '#4ade80'
+                                                    : log.status === 'FAILED'
+                                                      ? '#f87171'
+                                                      : '#94a3b8',
+                                            mb: '3px',
+                                            lineHeight: 1.6,
+                                        }}
+                                    >
+                                        <Box component="span" sx={{ color: '#64748b', mr: '8px' }}>
+                                            [{log.timestamp}]
+                                        </Box>
+                                        <Box component="span" sx={{ color: '#818cf8', mr: '8px' }}>
+                                            [{log.index}/{jobData.totalGames}]
+                                        </Box>
+                                        {log.status === 'SUCCESS' ? '[OK]' : '[FAIL]'} {log.homeTeam} vs {log.awayTeam}:{' '}
+                                        {log.message}
+                                    </Box>
+                                ))}
                             {jobData.status === 'IN_PROGRESS' && (
                                 <Box sx={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#94a3b8', mt: '4px' }}>
                                     Processing... (updates every {POLL_INTERVAL_MS / 1000}s)
                                 </Box>
                             )}
                             {jobData.logs?.length === 0 && jobData.status === 'PENDING' && (
-                                <Box sx={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#94a3b8' }}>Job queued, waiting to start...</Box>
+                                <Box sx={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#94a3b8' }}>
+                                    Job queued, waiting to start...
+                                </Box>
                             )}
                         </Box>
                     </Box>
@@ -280,9 +582,13 @@ const GameWeek = () => {
 
             <Panel header={`Week ${selectedWeek} games`}>
                 {scheduleLoading ? (
-                    <Box sx={{ py: 4, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
+                    <Box sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
+                        <CircularProgress />
+                    </Box>
                 ) : weekSchedule.length === 0 ? (
-                    <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No games scheduled for Week {selectedWeek}.</Box>
+                    <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>
+                        No games scheduled for Week {selectedWeek}.
+                    </Box>
                 ) : (
                     <DataTable minWidth={560}>
                         <thead>
@@ -294,23 +600,38 @@ const GameWeek = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {[...weekSchedule].sort((a, b) => {
-                                if (a.started !== b.started) return a.started ? 1 : -1;
-                                if (a.finished !== b.finished) return a.finished ? 1 : -1;
-                                return 0;
-                            }).map((game, idx) => {
-                                const status = gameStatusInfo(game);
-                                return (
-                                    <tr key={game.id || idx}>
-                                        <td className="lft stick">{game.homeTeam || game.home_team}</td>
-                                        <td className="lft">{game.awayTeam || game.away_team}</td>
-                                        <td className="lft">{game.gameType || game.game_type || '-'}</td>
-                                        <td>
-                                            <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: status.color }}>{status.label}</Box>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                            {[...weekSchedule]
+                                .sort((a, b) => {
+                                    if (a.started !== b.started) {
+                                        return a.started ? 1 : -1;
+                                    }
+                                    if (a.finished !== b.finished) {
+                                        return a.finished ? 1 : -1;
+                                    }
+                                    return 0;
+                                })
+                                .map((game, idx) => {
+                                    const status = gameStatusInfo(game);
+                                    return (
+                                        <tr key={game.id || idx}>
+                                            <td className="lft stick">{game.homeTeam || game.home_team}</td>
+                                            <td className="lft">{game.awayTeam || game.away_team}</td>
+                                            <td className="lft">{game.gameType || game.game_type || '-'}</td>
+                                            <td>
+                                                <Box
+                                                    component="span"
+                                                    sx={{
+                                                        ...pillSx,
+                                                        background: 'var(--surface-2)',
+                                                        color: status.color,
+                                                    }}
+                                                >
+                                                    {status.label}
+                                                </Box>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                         </tbody>
                     </DataTable>
                 )}
@@ -323,7 +644,8 @@ const GameWeek = () => {
                         This will start all {stats.notStarted} unstarted games for Week {selectedWeek}, Season {season}.
                     </Typography>
                     <Alert severity="info" sx={{ mb: 1 }}>
-                        Games will be started with smart pacing (~3s between each game, 60s cooldown every 25 games) to respect Discord rate limits.
+                        Games will be started with smart pacing (~3s between each game, 60s cooldown every 25 games) to
+                        respect Discord rate limits.
                     </Alert>
                     <Alert severity="success">
                         You can track progress in real-time and retry any failed games after completion.
@@ -331,18 +653,29 @@ const GameWeek = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-                    <Button variant="contained" color="success" onClick={handleStartWeek}>Start Week {selectedWeek}</Button>
+                    <Button variant="contained" color="success" onClick={handleStartWeek}>
+                        Start Week {selectedWeek}
+                    </Button>
                 </DialogActions>
             </Dialog>
 
             <Dialog open={Boolean(rankingsWarning)} onClose={() => setRankingsWarning(null)}>
                 <DialogTitle>Rankings not uploaded</DialogTitle>
                 <DialogContent>
-                    <Alert severity="warning" sx={{ mt: 1 }}>{rankingsWarning}</Alert>
+                    <Alert severity="warning" sx={{ mt: 1 }}>
+                        {rankingsWarning}
+                    </Alert>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setRankingsWarning(null)}>Cancel</Button>
-                    <Button variant="contained" onClick={() => { window.location.href = '/admin/rankings'; }}>Upload Rankings</Button>
+                    <Button
+                        variant="contained"
+                        onClick={() => {
+                            window.location.href = '/admin/rankings';
+                        }}
+                    >
+                        Upload Rankings
+                    </Button>
                 </DialogActions>
             </Dialog>
         </AdminLayout>

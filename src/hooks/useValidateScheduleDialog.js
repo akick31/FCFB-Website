@@ -23,8 +23,10 @@ const useValidateScheduleDialog = ({ season, showSnackbar }) => {
     };
 
     return {
-        validateDialogOpen, setValidateDialogOpen,
-        validating, validationResult,
+        validateDialogOpen,
+        setValidateDialogOpen,
+        validating,
+        validationResult,
         handleValidateSchedule,
     };
 };

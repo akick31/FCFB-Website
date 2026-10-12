@@ -13,13 +13,37 @@ const CoachlessName = ({ mark, name, rank, record, align, teamId }) => (
     <Box
         component={teamId ? Link : 'div'}
         to={teamId ? `/team-details/${teamId}` : undefined}
-        sx={{ cursor: teamId ? 'pointer' : 'default', textAlign: align, minWidth: 0, textDecoration: 'none', color: 'inherit', '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' } }}
+        sx={{
+            cursor: teamId ? 'pointer' : 'default',
+            textAlign: align,
+            minWidth: 0,
+            textDecoration: 'none',
+            color: 'inherit',
+            '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' },
+        }}
     >
-        <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, textTransform: 'uppercase', fontSize: { xs: '0.85rem', md: '1.25rem' }, lineHeight: 1.05, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {rank > 0 && rank <= 25 && <Box component="span" sx={{ color: 'var(--gold)', fontSize: '0.72em', mr: 0.5 }}>{rank}</Box>}
+        <Box
+            sx={{
+                fontFamily: 'var(--cond)',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                fontSize: { xs: '0.85rem', md: '1.25rem' },
+                lineHeight: 1.05,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+            }}
+        >
+            {rank > 0 && rank <= 25 && (
+                <Box component="span" sx={{ color: 'var(--gold)', fontSize: '0.72em', mr: 0.5 }}>
+                    {rank}
+                </Box>
+            )}
             {mark?.name || name}
         </Box>
-        {record && <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem', fontWeight: 600, mt: '2px' }}>{record}</Box>}
+        {record && (
+            <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem', fontWeight: 600, mt: '2px' }}>{record}</Box>
+        )}
     </Box>
 );
 
@@ -35,45 +59,138 @@ CoachlessName.propTypes = {
 const Score = ({ value, dimmed, winner, side }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
         {winner && side === 'away' && null}
-        {winner && side === 'home' && <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, color: 'var(--text)', fontSize: '1.6rem', lineHeight: 1 }}>▸</Box>}
-        <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, fontVariantNumeric: 'tabular-nums', fontSize: { xs: '1.8rem', md: '2.9rem' }, lineHeight: 0.9, color: dimmed ? 'var(--text-dim)' : 'var(--text)' }}>{value}</Box>
-        {winner && side === 'away' && <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, color: 'var(--text)', fontSize: '1.6rem', lineHeight: 1 }}>◂</Box>}
+        {winner && side === 'home' && (
+            <Box
+                component="span"
+                sx={{ display: { xs: 'none', md: 'inline' }, color: 'var(--text)', fontSize: '1.6rem', lineHeight: 1 }}
+            >
+                ▸
+            </Box>
+        )}
+        <Box
+            sx={{
+                fontFamily: 'var(--cond)',
+                fontWeight: 800,
+                fontVariantNumeric: 'tabular-nums',
+                fontSize: { xs: '1.8rem', md: '2.9rem' },
+                lineHeight: 0.9,
+                color: dimmed ? 'var(--text-dim)' : 'var(--text)',
+            }}
+        >
+            {value}
+        </Box>
+        {winner && side === 'away' && (
+            <Box
+                component="span"
+                sx={{ display: { xs: 'none', md: 'inline' }, color: 'var(--text)', fontSize: '1.6rem', lineHeight: 1 }}
+            >
+                ◂
+            </Box>
+        )}
     </Box>
 );
 
 Score.propTypes = { value: PropTypes.number, dimmed: PropTypes.bool, winner: PropTypes.bool, side: PropTypes.string };
 
-const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor, spreadText, venueText, threadLink, columns, awayQuarters, homeQuarters, showQuarters }) => {
+const GameScorebug = ({
+    game,
+    awayMark,
+    homeMark,
+    homeTeam,
+    awayColor,
+    homeColor,
+    spreadText,
+    venueText,
+    threadLink,
+    columns,
+    awayQuarters,
+    homeQuarters,
+    showQuarters,
+}) => {
     const homeWin = game.home_score > game.away_score;
     const overtime = game.quarter > 4;
-    const finalLabel = game.game_status === 'FINAL'
-        ? `Final${overtime ? ' / OT' : ''}`
-        : formatScoreboardStatus(game.game_status);
+    const finalLabel =
+        game.game_status === 'FINAL' ? `Final${overtime ? ' / OT' : ''}` : formatScoreboardStatus(game.game_status);
     const inPlay = (game.game_status === 'IN_PROGRESS' || game.game_status === 'OVERTIME') && game.quarter > 0;
     const possessionMark = game.possession === 'HOME' ? homeMark : awayMark;
-    const situationText = inPlay && game.down
-        ? `${formatDownAndDistance(game.down, game.yards_to_go)} · ${formatBallLocationWithTeam(game.ball_location, game.possession, game.home_team, game.away_team, homeMark, awayMark)}`
-        : null;
+    const situationText =
+        inPlay && game.down
+            ? `${formatDownAndDistance(game.down, game.yards_to_go)} · ${formatBallLocationWithTeam(game.ball_location, game.possession, game.home_team, game.away_team, homeMark, awayMark)}`
+            : null;
     const awayRecord = `${game.away_wins || 0}-${game.away_losses || 0}`;
     const homeRecord = `${game.home_wins || 0}-${game.home_losses || 0}`;
     const quarterCols = [...columns, 'T'];
-    const quarterGridCols = { xs: `26px repeat(${quarterCols.length}, 15px)`, md: `34px repeat(${quarterCols.length}, 22px)` };
+    const quarterGridCols = {
+        xs: `26px repeat(${quarterCols.length}, 15px)`,
+        md: `34px repeat(${quarterCols.length}, 22px)`,
+    };
     const quarterRow = (abbr, quarters, total) => (
         <Box sx={{ display: 'grid', gridTemplateColumns: quarterGridCols, alignItems: 'center', fontSize: '0.72rem' }}>
-            <Box sx={{ color: 'var(--text-dim)', fontWeight: 800, fontSize: '0.6rem', overflow: 'hidden', whiteSpace: 'nowrap' }}>{abbr}</Box>
-            {quarters.map((value, i) => <Box key={i} sx={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums', color: 'var(--text-muted)' }}>{value ?? '-'}</Box>)}
+            <Box
+                sx={{
+                    color: 'var(--text-dim)',
+                    fontWeight: 800,
+                    fontSize: '0.6rem',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                {abbr}
+            </Box>
+            {quarters.map((value, i) => (
+                <Box
+                    key={i}
+                    sx={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums', color: 'var(--text-muted)' }}
+                >
+                    {value ?? '-'}
+                </Box>
+            ))}
             <Box sx={{ textAlign: 'center', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{total}</Box>
         </Box>
     );
 
     return (
-        <Box sx={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', px: 2, py: 1.1, background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, flexWrap: 'wrap' }}>
+        <Box
+            sx={{
+                background: 'var(--surface)',
+                border: '1px solid var(--line)',
+                borderRadius: 'var(--r-lg)',
+                overflow: 'hidden',
+            }}
+        >
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    px: 2,
+                    py: 1.1,
+                    background: 'var(--surface-2)',
+                    borderBottom: '1px solid var(--line)',
+                    fontSize: '0.72rem',
+                    color: 'var(--text-muted)',
+                    fontWeight: 600,
+                    flexWrap: 'wrap',
+                }}
+            >
                 <GameTypeLabel game={game} homeTeam={homeTeam} />
                 <Box sx={{ ml: 'auto', display: 'flex', gap: '14px', alignItems: 'center' }}>
                     {spreadText && (
                         <Box component="span">
-                            <Box component="span" sx={{ color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.58rem', letterSpacing: '0.04em', mr: 0.6 }}>Spread</Box>{spreadText}
+                            <Box
+                                component="span"
+                                sx={{
+                                    color: 'var(--text-dim)',
+                                    fontWeight: 800,
+                                    textTransform: 'uppercase',
+                                    fontSize: '0.58rem',
+                                    letterSpacing: '0.04em',
+                                    mr: 0.6,
+                                }}
+                            >
+                                Spread
+                            </Box>
+                            {spreadText}
                         </Box>
                     )}
                     {game.tv_channel && <TvLogo channel={game.tv_channel} height={15} />}
@@ -96,12 +213,44 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
                     py: '18px',
                 }}
             >
-                <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '26%', background: `linear-gradient(90deg, ${awayColor}, transparent)`, opacity: 0.16, pointerEvents: 'none' }} />
-                <Box sx={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '26%', background: `linear-gradient(270deg, ${homeColor}, transparent)`, opacity: 0.16, pointerEvents: 'none' }} />
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: '26%',
+                        background: `linear-gradient(90deg, ${awayColor}, transparent)`,
+                        opacity: 0.16,
+                        pointerEvents: 'none',
+                    }}
+                />
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: '26%',
+                        background: `linear-gradient(270deg, ${homeColor}, transparent)`,
+                        opacity: 0.16,
+                        pointerEvents: 'none',
+                    }}
+                />
 
-                <TeamMark team={awayMark} sx={{ gridArea: 'awaylogo', zIndex: 1, width: { xs: 44, md: 64 }, height: { xs: 44, md: 64 } }} />
+                <TeamMark
+                    team={awayMark}
+                    sx={{ gridArea: 'awaylogo', zIndex: 1, width: { xs: 44, md: 64 }, height: { xs: 44, md: 64 } }}
+                />
                 <Box sx={{ gridArea: 'awayname', minWidth: 0, zIndex: 1, display: { xs: 'none', md: 'block' } }}>
-                    <CoachlessName mark={awayMark} name={game.away_team} rank={game.away_team_rank} record={awayRecord} align="right" teamId={awayMark?.id} />
+                    <CoachlessName
+                        mark={awayMark}
+                        name={game.away_team}
+                        rank={game.away_team_rank}
+                        record={awayRecord}
+                        align="right"
+                        teamId={awayMark?.id}
+                    />
                 </Box>
                 <Box sx={{ gridArea: 'awayscore', zIndex: 1 }}>
                     <Score value={game.away_score} dimmed={homeWin} winner={!homeWin} side="away" />
@@ -110,17 +259,36 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
                 <Box sx={{ gridArea: 'status', zIndex: 1, textAlign: 'center' }}>
                     {inPlay ? (
                         <>
-                            <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, color: 'var(--brand)', fontSize: { xs: '0.8rem', md: '0.95rem' }, whiteSpace: 'nowrap' }}>
+                            <Box
+                                sx={{
+                                    fontFamily: 'var(--cond)',
+                                    fontWeight: 800,
+                                    color: 'var(--brand)',
+                                    fontSize: { xs: '0.8rem', md: '0.95rem' },
+                                    whiteSpace: 'nowrap',
+                                }}
+                            >
                                 {formatScoreboardQuarter(game.quarter)}
                             </Box>
                             {game.clock && (
-                                <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: 'var(--text)', fontSize: { xs: '0.9rem', md: '1.1rem' }, lineHeight: 1.1 }}>
+                                <Box
+                                    sx={{
+                                        fontFamily: 'var(--cond)',
+                                        fontWeight: 800,
+                                        fontVariantNumeric: 'tabular-nums',
+                                        color: 'var(--text)',
+                                        fontSize: { xs: '0.9rem', md: '1.1rem' },
+                                        lineHeight: 1.1,
+                                    }}
+                                >
                                     {game.clock}
                                 </Box>
                             )}
                         </>
                     ) : (
-                        <Box sx={{ fontFamily: 'var(--cond)', color: 'var(--text-dim)', fontSize: '0.8rem' }}>{finalLabel.toUpperCase()}</Box>
+                        <Box sx={{ fontFamily: 'var(--cond)', color: 'var(--text-dim)', fontSize: '0.8rem' }}>
+                            {finalLabel.toUpperCase()}
+                        </Box>
                     )}
                 </Box>
 
@@ -128,15 +296,37 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
                     <Score value={game.home_score} dimmed={!homeWin} winner={homeWin} side="home" />
                 </Box>
                 <Box sx={{ gridArea: 'homename', minWidth: 0, zIndex: 1, display: { xs: 'none', md: 'block' } }}>
-                    <CoachlessName mark={homeMark} name={game.home_team} rank={game.home_team_rank} record={homeRecord} align="left" teamId={homeMark?.id} />
+                    <CoachlessName
+                        mark={homeMark}
+                        name={game.home_team}
+                        rank={game.home_team_rank}
+                        record={homeRecord}
+                        align="left"
+                        teamId={homeMark?.id}
+                    />
                 </Box>
-                <TeamMark team={homeMark} sx={{ gridArea: 'homelogo', zIndex: 1, width: { xs: 44, md: 64 }, height: { xs: 44, md: 64 } }} />
+                <TeamMark
+                    team={homeMark}
+                    sx={{ gridArea: 'homelogo', zIndex: 1, width: { xs: 44, md: 64 }, height: { xs: 44, md: 64 } }}
+                />
 
                 {showQuarters && (
                     <Box sx={{ gridArea: 'quarters', zIndex: 1, justifySelf: 'center', mt: '4px' }}>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: quarterGridCols, fontSize: '0.58rem', color: 'var(--text-dim)', fontWeight: 800 }}>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: quarterGridCols,
+                                fontSize: '0.58rem',
+                                color: 'var(--text-dim)',
+                                fontWeight: 800,
+                            }}
+                        >
                             <span />
-                            {quarterCols.map((label) => <Box key={label} sx={{ textAlign: 'center' }}>{label}</Box>)}
+                            {quarterCols.map((label) => (
+                                <Box key={label} sx={{ textAlign: 'center' }}>
+                                    {label}
+                                </Box>
+                            ))}
                         </Box>
                         {quarterRow(awayMark?.abbreviation, awayQuarters, game.away_score)}
                         {quarterRow(homeMark?.abbreviation, homeQuarters, game.home_score)}
@@ -145,10 +335,35 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
             </Box>
 
             {situationText && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, px: 2, py: 0.8, background: 'var(--surface-2)', borderTop: '1px solid var(--line-soft)', borderBottom: '1px solid var(--line-soft)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: 1,
+                        px: 2,
+                        py: 0.8,
+                        background: 'var(--surface-2)',
+                        borderTop: '1px solid var(--line-soft)',
+                        borderBottom: '1px solid var(--line-soft)',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        color: 'var(--text-muted)',
+                        flexWrap: 'wrap',
+                    }}
+                >
                     <Box component="span">{situationText}</Box>
                     {possessionMark?.name && (
-                        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, color: 'var(--text-dim)', fontSize: '0.7rem' }}>
+                        <Box
+                            component="span"
+                            sx={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                                color: 'var(--text-dim)',
+                                fontSize: '0.7rem',
+                            }}
+                        >
                             <SportsFootballIcon sx={{ fontSize: 13, color: 'var(--text)' }} />
                             {possessionMark.name} ball
                         </Box>
@@ -157,14 +372,39 @@ const GameScorebug = ({ game, awayMark, homeMark, homeTeam, awayColor, homeColor
             )}
 
             {venueText && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', pb: threadLink ? 0.75 : 1.25, fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        pb: threadLink ? 0.75 : 1.25,
+                        fontSize: '0.72rem',
+                        color: 'var(--text-dim)',
+                        fontWeight: 600,
+                    }}
+                >
                     {venueText}
                 </Box>
             )}
 
             {threadLink && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', pb: 1.25, borderTop: '1px solid var(--line-soft)', pt: 1 }}>
-                    <Box component="a" href={threadLink} target="_blank" rel="noopener noreferrer" sx={{ color: 'var(--brand)', fontWeight: 700, fontSize: '0.75rem', textDecoration: 'none' }}>Open game thread in Discord ↗</Box>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        pb: 1.25,
+                        borderTop: '1px solid var(--line-soft)',
+                        pt: 1,
+                    }}
+                >
+                    <Box
+                        component="a"
+                        href={threadLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ color: 'var(--brand)', fontWeight: 700, fontSize: '0.75rem', textDecoration: 'none' }}
+                    >
+                        Open game thread in Discord ↗
+                    </Box>
                 </Box>
             )}
         </Box>

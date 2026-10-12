@@ -1,8 +1,27 @@
 import React from 'react';
-import { Box, TextField, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions, Button, CircularProgress } from '@mui/material';
+import {
+    Box,
+    TextField,
+    Autocomplete,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    CircularProgress,
+} from '@mui/material';
 import PropTypes from 'prop-types';
 
-const ScrimmageDialog = ({ open, availableTeams, scrimmageTeams, onHomeTeamChange, onAwayTeamChange, onCancel, onSubmit, loading }) => (
+const ScrimmageDialog = ({
+    open,
+    availableTeams,
+    scrimmageTeams,
+    onHomeTeamChange,
+    onAwayTeamChange,
+    onCancel,
+    onSubmit,
+    loading,
+}) => (
     <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
         <DialogTitle>Start Scrimmage</DialogTitle>
         <DialogContent>
@@ -27,7 +46,11 @@ const ScrimmageDialog = ({ open, availableTeams, scrimmageTeams, onHomeTeamChang
         </DialogContent>
         <DialogActions>
             <Button onClick={onCancel}>Cancel</Button>
-            <Button onClick={onSubmit} variant="contained" disabled={loading || !scrimmageTeams.homeTeam || !scrimmageTeams.awayTeam}>
+            <Button
+                onClick={onSubmit}
+                variant="contained"
+                disabled={loading || !scrimmageTeams.homeTeam || !scrimmageTeams.awayTeam}
+            >
                 {loading ? <CircularProgress size={20} /> : 'Start Scrimmage'}
             </Button>
         </DialogActions>

@@ -1,21 +1,35 @@
 export const ordinal = (n) => {
-    if (n == null) return '-';
+    if (n == null) {
+        return '-';
+    }
     const mod100 = n % 100;
-    if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
+    if (mod100 >= 11 && mod100 <= 13) {
+        return `${n}th`;
+    }
     switch (n % 10) {
-        case 1: return `${n}st`;
-        case 2: return `${n}nd`;
-        case 3: return `${n}rd`;
-        default: return `${n}th`;
+        case 1:
+            return `${n}st`;
+        case 2:
+            return `${n}nd`;
+        case 3:
+            return `${n}rd`;
+        default:
+            return `${n}th`;
     }
 };
 
 export const rankAmong = (items, valueFn, keyFn = (item) => item.name) => {
     const withValues = items.map((item) => ({ key: keyFn(item), value: valueFn(item) }));
     const sorted = [...withValues].sort((a, b) => {
-        if (a.value == null && b.value == null) return 0;
-        if (a.value == null) return 1;
-        if (b.value == null) return -1;
+        if (a.value == null && b.value == null) {
+            return 0;
+        }
+        if (a.value == null) {
+            return 1;
+        }
+        if (b.value == null) {
+            return -1;
+        }
         return b.value - a.value;
     });
     const result = new Map();
@@ -43,24 +57,38 @@ export const computePollWeeks = (rankedGames, teamName) => {
     (rankedGames || []).forEach((game) => {
         const isHome = game.home_team === teamName;
         const isAway = game.away_team === teamName;
-        if (!isHome && !isAway) return;
+        if (!isHome && !isAway) {
+            return;
+        }
         const rank = isHome ? game.home_team_rank : game.away_team_rank;
-        if (rank == null || rank < 1 || rank > 25) return;
+        if (rank == null || rank < 1 || rank > 25) {
+            return;
+        }
         const key = `${game.season}-${game.week}`;
         weeks.add(key);
-        if (rank === 1) weeksAtOne.add(key);
+        if (rank === 1) {
+            weeksAtOne.add(key);
+        }
     });
     return { weeksRanked: weeks.size, weeksAtOne: weeksAtOne.size };
 };
 
 export const buildTeamRankings = (teams, rankedGames) => {
-    const winPctRank = rankAmong(teams, (t) => ((t.overall_wins ?? 0) + (t.overall_losses ?? 0) > 0 ? (t.overall_wins ?? 0) / ((t.overall_wins ?? 0) + (t.overall_losses ?? 0)) : null));
+    const winPctRank = rankAmong(teams, (t) =>
+        (t.overall_wins ?? 0) + (t.overall_losses ?? 0) > 0
+            ? (t.overall_wins ?? 0) / ((t.overall_wins ?? 0) + (t.overall_losses ?? 0))
+            : null
+    );
     const natChampRank = rankAmong(teams, (t) => t.national_championship_wins ?? 0);
     const confChampRank = rankAmong(teams, (t) => t.conference_championship_wins ?? 0);
     const bowlGamesRank = rankAmong(teams, (t) => (t.bowl_wins ?? 0) + (t.bowl_losses ?? 0));
     const winsRank = rankAmong(teams, (t) => t.overall_wins ?? 0);
     const lossesRank = rankAmong(teams, (t) => t.overall_losses ?? 0);
-    const bowlWinPctRank = rankAmong(teams, (t) => ((t.bowl_wins ?? 0) + (t.bowl_losses ?? 0) > 0 ? (t.bowl_wins ?? 0) / ((t.bowl_wins ?? 0) + (t.bowl_losses ?? 0)) : null));
+    const bowlWinPctRank = rankAmong(teams, (t) =>
+        (t.bowl_wins ?? 0) + (t.bowl_losses ?? 0) > 0
+            ? (t.bowl_wins ?? 0) / ((t.bowl_wins ?? 0) + (t.bowl_losses ?? 0))
+            : null
+    );
 
     const pollByTeam = new Map(teams.map((t) => [t.name, computePollWeeks(rankedGames, t.name)]));
     const weeksRankedRank = rankAmong(teams, (t) => pollByTeam.get(t.name)?.weeksRanked ?? 0);
@@ -92,12 +120,18 @@ export const computeCoachPollWeeks = (rankedGames, discordId) => {
     (rankedGames || []).forEach((game) => {
         const isHome = (game.home_coach_discord_ids || []).includes(discordId);
         const isAway = (game.away_coach_discord_ids || []).includes(discordId);
-        if (!isHome && !isAway) return;
+        if (!isHome && !isAway) {
+            return;
+        }
         const rank = isHome ? game.home_team_rank : game.away_team_rank;
-        if (rank == null || rank < 1 || rank > 25) return;
+        if (rank == null || rank < 1 || rank > 25) {
+            return;
+        }
         const key = `${game.season}-${game.week}`;
         weeks.add(key);
-        if (rank === 1) weeksAtOne.add(key);
+        if (rank === 1) {
+            weeksAtOne.add(key);
+        }
     });
     return { weeksRanked: weeks.size, weeksAtOne: weeksAtOne.size };
 };
@@ -106,13 +140,24 @@ export const buildCoachRankings = (users, rankedGames) => {
     const coaches = (users || []).filter((user) => user.discord_id);
     const keyFn = (coach) => coach.discord_id;
 
-    const winPctRank = rankAmong(coaches, (c) => ((c.wins ?? 0) + (c.losses ?? 0) > 0 ? (c.wins ?? 0) / ((c.wins ?? 0) + (c.losses ?? 0)) : null), keyFn);
+    const winPctRank = rankAmong(
+        coaches,
+        (c) => ((c.wins ?? 0) + (c.losses ?? 0) > 0 ? (c.wins ?? 0) / ((c.wins ?? 0) + (c.losses ?? 0)) : null),
+        keyFn
+    );
     const natChampRank = rankAmong(coaches, (c) => c.national_championship_wins ?? 0, keyFn);
     const confChampRank = rankAmong(coaches, (c) => c.conference_championship_wins ?? 0, keyFn);
     const bowlGamesRank = rankAmong(coaches, (c) => (c.bowl_wins ?? 0) + (c.bowl_losses ?? 0), keyFn);
     const winsRank = rankAmong(coaches, (c) => c.wins ?? 0, keyFn);
     const lossesRank = rankAmong(coaches, (c) => c.losses ?? 0, keyFn);
-    const bowlWinPctRank = rankAmong(coaches, (c) => ((c.bowl_wins ?? 0) + (c.bowl_losses ?? 0) > 0 ? (c.bowl_wins ?? 0) / ((c.bowl_wins ?? 0) + (c.bowl_losses ?? 0)) : null), keyFn);
+    const bowlWinPctRank = rankAmong(
+        coaches,
+        (c) =>
+            (c.bowl_wins ?? 0) + (c.bowl_losses ?? 0) > 0
+                ? (c.bowl_wins ?? 0) / ((c.bowl_wins ?? 0) + (c.bowl_losses ?? 0))
+                : null,
+        keyFn
+    );
 
     const pollByCoach = new Map(coaches.map((c) => [c.discord_id, computeCoachPollWeeks(rankedGames, c.discord_id)]));
     const weeksRankedRank = rankAmong(coaches, (c) => pollByCoach.get(c.discord_id)?.weeksRanked ?? 0, keyFn);

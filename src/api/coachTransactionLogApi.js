@@ -5,10 +5,10 @@ export const getEntireCoachTransactionLog = async () => {
         const response = await apiClient.get('/coach_transaction_log');
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch coach transaction log:", error);
+        console.error('Failed to fetch coach transaction log:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch coach transaction log");
+            throw new Error(error.response.data.error || 'Failed to fetch coach transaction log');
         }
-        throw new Error("An unexpected error occurred while fetching coach transaction log");
+        throw new Error('An unexpected error occurred while fetching coach transaction log');
     }
 };

@@ -5,7 +5,7 @@ export const getTeamResumeMetrics = async (season, week) => {
         const response = await apiClient.get('/team-resume-metric', { params: { season, week } });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch team resume metrics:', error);
+        console.error('Failed to fetch team resume metrics:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch team resume metrics');
         }

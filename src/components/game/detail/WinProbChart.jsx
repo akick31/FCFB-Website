@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
 import { pickChartColor } from '../../../utils/chartColor';
 import { TOKENS } from '../../../styles/tokens';
-import { useColorMode } from '../../../theme/ColorModeContext';
+import { useColorMode } from '../../../context/ColorModeContext';
 
 const W = 440;
 const H = 214;
@@ -13,7 +13,7 @@ const PAD_R = 10;
 const PAD_T = 10;
 const PAD_B = 22;
 
-const xOf = (index, count) => PAD_L + index * (W - PAD_L - PAD_R) / (count - 1 || 1);
+const xOf = (index, count) => PAD_L + (index * (W - PAD_L - PAD_R)) / (count - 1 || 1);
 const yOf = (value) => PAD_T + (value / 100) * (H - PAD_T - PAD_B);
 const sideOf = (value) => (value >= 50 ? 1 : 0);
 
@@ -33,7 +33,13 @@ const buildSegments = (series) => {
             const crossX = prevX + (x - prevX) * t;
             current.points.push([crossX, 50]);
             segments.push(current);
-            current = { side, points: [[crossX, 50], [x, value]] };
+            current = {
+                side,
+                points: [
+                    [crossX, 50],
+                    [x, value],
+                ],
+            };
         }
     }
     segments.push(current);
@@ -45,9 +51,21 @@ const WinProbChart = ({ series, homeColor, awayColor, homeMark, awayMark, quarte
     const { mode } = useColorMode();
     const background = TOKENS[mode].surface;
     const fallback = mode === 'dark' ? '#ffffff' : TOKENS.light.text;
-    const homePlotColor = pickChartColor(homeMark?.primaryColor || homeColor, homeMark?.secondaryColor, background, fallback);
-    const awayPlotColor = pickChartColor(awayMark?.primaryColor || awayColor, awayMark?.secondaryColor, background, fallback);
-    if (series.length < 2) return null;
+    const homePlotColor = pickChartColor(
+        homeMark?.primaryColor || homeColor,
+        homeMark?.secondaryColor,
+        background,
+        fallback
+    );
+    const awayPlotColor = pickChartColor(
+        awayMark?.primaryColor || awayColor,
+        awayMark?.secondaryColor,
+        background,
+        fallback
+    );
+    if (series.length < 2) {
+        return null;
+    }
 
     const count = series.length;
     const segments = buildSegments(series);
@@ -70,16 +88,54 @@ const WinProbChart = ({ series, homeColor, awayColor, homeMark, awayMark, quarte
     const point = hover ? series[hover.index] : null;
 
     return (
-        <Box sx={{ position: 'relative' }} onMouseMove={onMove} onMouseLeave={() => setHover(null)} onTouchMove={onMove}>
-            <Box sx={{ position: 'absolute', top: 4, left: 2, display: 'flex', alignItems: 'center', gap: '3px', pointerEvents: 'none' }}>
-                <TeamMark team={awayMark} size={16} /><Box component="span" sx={{ fontSize: '0.6rem', color: 'var(--text-dim)', fontWeight: 700 }}>100%</Box>
+        <Box
+            sx={{ position: 'relative' }}
+            onMouseMove={onMove}
+            onMouseLeave={() => setHover(null)}
+            onTouchMove={onMove}
+        >
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: 4,
+                    left: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    pointerEvents: 'none',
+                }}
+            >
+                <TeamMark team={awayMark} size={16} />
+                <Box component="span" sx={{ fontSize: '0.6rem', color: 'var(--text-dim)', fontWeight: 700 }}>
+                    100%
+                </Box>
             </Box>
-            <Box sx={{ position: 'absolute', bottom: 22, left: 2, display: 'flex', alignItems: 'center', gap: '3px', pointerEvents: 'none' }}>
-                <TeamMark team={homeMark} size={16} /><Box component="span" sx={{ fontSize: '0.6rem', color: 'var(--text-dim)', fontWeight: 700 }}>100%</Box>
+            <Box
+                sx={{
+                    position: 'absolute',
+                    bottom: 22,
+                    left: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    pointerEvents: 'none',
+                }}
+            >
+                <TeamMark team={homeMark} size={16} />
+                <Box component="span" sx={{ fontSize: '0.6rem', color: 'var(--text-dim)', fontWeight: 700 }}>
+                    100%
+                </Box>
             </Box>
-            <Box component="svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" sx={{ width: '100%', height: 200, display: 'block' }}>
+            <Box
+                component="svg"
+                viewBox={`0 0 ${W} ${H}`}
+                preserveAspectRatio="none"
+                sx={{ width: '100%', height: 200, display: 'block' }}
+            >
                 {segments.map((segment, i) => {
-                    const linePoints = segment.points.map((p) => `${p[0].toFixed(1)},${yOf(p[1]).toFixed(1)}`).join(' ');
+                    const linePoints = segment.points
+                        .map((p) => `${p[0].toFixed(1)},${yOf(p[1]).toFixed(1)}`)
+                        .join(' ');
                     const first = segment.points[0];
                     const last = segment.points[segment.points.length - 1];
                     return (
@@ -96,22 +152,77 @@ const WinProbChart = ({ series, homeColor, awayColor, homeMark, awayMark, quarte
                     const x = xOf(mark.index, count);
                     return (
                         <g key={mark.index}>
-                            <line x1={x.toFixed(1)} x2={x.toFixed(1)} y1={PAD_T} y2={H - PAD_B} stroke="var(--line)" strokeDasharray="3 3" opacity="0.6" />
-                            <text x={x.toFixed(1)} y={H - 6} textAnchor="middle" fill="var(--text-dim)" fontSize="9" fontWeight="700">{mark.label}</text>
+                            <line
+                                x1={x.toFixed(1)}
+                                x2={x.toFixed(1)}
+                                y1={PAD_T}
+                                y2={H - PAD_B}
+                                stroke="var(--line)"
+                                strokeDasharray="3 3"
+                                opacity="0.6"
+                            />
+                            <text
+                                x={x.toFixed(1)}
+                                y={H - 6}
+                                textAnchor="middle"
+                                fill="var(--text-dim)"
+                                fontSize="9"
+                                fontWeight="700"
+                            >
+                                {mark.label}
+                            </text>
                         </g>
                     );
                 })}
                 {segments.map((segment, i) => (
-                    <polyline key={i} points={segment.points.map((p) => `${p[0].toFixed(1)},${yOf(p[1]).toFixed(1)}`).join(' ')} fill="none" stroke={segment.side === 1 ? homePlotColor : awayPlotColor} strokeWidth="2.6" />
+                    <polyline
+                        key={i}
+                        points={segment.points.map((p) => `${p[0].toFixed(1)},${yOf(p[1]).toFixed(1)}`).join(' ')}
+                        fill="none"
+                        stroke={segment.side === 1 ? homePlotColor : awayPlotColor}
+                        strokeWidth="2.6"
+                    />
                 ))}
             </Box>
             {point && (
                 <>
-                    <Box sx={{ position: 'absolute', top: 8, bottom: 26, width: '1px', background: 'var(--brand)', left: `${hover.left}px`, pointerEvents: 'none' }} />
-                    <Box sx={{ position: 'absolute', top: 4, left: `${Math.min(hover.left + 10, hover.width - 130)}px`, background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 'var(--r-sm)', px: 1, py: 0.75, fontSize: '0.66rem', lineHeight: 1.4, pointerEvents: 'none', whiteSpace: 'nowrap', boxShadow: 'var(--shadow)', color: 'var(--text)' }}>
-                        <b>Q{point.quarter} {point.clock}</b><br />
-                        {awayAbbr} {point.awayScore} - {point.homeScore} {homeAbbr}<br />
-                        Win Prob: {Math.max(point.homeWinProb, 100 - point.homeWinProb)}% {point.homeWinProb >= 50 ? homeAbbr : awayAbbr}
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: 8,
+                            bottom: 26,
+                            width: '1px',
+                            background: 'var(--brand)',
+                            left: `${hover.left}px`,
+                            pointerEvents: 'none',
+                        }}
+                    />
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: 4,
+                            left: `${Math.min(hover.left + 10, hover.width - 130)}px`,
+                            background: 'var(--surface-2)',
+                            border: '1px solid var(--line)',
+                            borderRadius: 'var(--r-sm)',
+                            px: 1,
+                            py: 0.75,
+                            fontSize: '0.66rem',
+                            lineHeight: 1.4,
+                            pointerEvents: 'none',
+                            whiteSpace: 'nowrap',
+                            boxShadow: 'var(--shadow)',
+                            color: 'var(--text)',
+                        }}
+                    >
+                        <b>
+                            Q{point.quarter} {point.clock}
+                        </b>
+                        <br />
+                        {awayAbbr} {point.awayScore} - {point.homeScore} {homeAbbr}
+                        <br />
+                        Win Prob: {Math.max(point.homeWinProb, 100 - point.homeWinProb)}%{' '}
+                        {point.homeWinProb >= 50 ? homeAbbr : awayAbbr}
                     </Box>
                 </>
             )}

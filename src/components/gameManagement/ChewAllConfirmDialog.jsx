@@ -7,15 +7,21 @@ const ChewAllConfirmDialog = ({ open, processing, onCancel, onConfirm }) => (
         <DialogTitle>Put every ongoing game in chew mode?</DialogTitle>
         <DialogContent>
             <Typography variant="body1" sx={{ mb: 2 }}>
-                Every remaining play in every ongoing game will burn 30 seconds off the clock instead of the offense&apos;s normal runoff.
+                Every remaining play in every ongoing game will burn 30 seconds off the clock instead of the
+                offense&apos;s normal runoff.
             </Typography>
             <Alert severity="warning">
-                This ignores the filters on this page and applies to all ongoing games. Each change is recorded against your account and announced in that game&apos;s thread.
+                This ignores the filters on this page and applies to all ongoing games. Each change is recorded against
+                your account and announced in that game&apos;s thread.
             </Alert>
         </DialogContent>
         <DialogActions>
-            <Button onClick={onCancel} disabled={processing}>Cancel</Button>
-            <Button onClick={onConfirm} color="warning" variant="contained" disabled={processing}>Chew all games</Button>
+            <Button onClick={onCancel} disabled={processing}>
+                Cancel
+            </Button>
+            <Button onClick={onConfirm} color="warning" variant="contained" disabled={processing}>
+                Chew all games
+            </Button>
         </DialogActions>
     </Dialog>
 );

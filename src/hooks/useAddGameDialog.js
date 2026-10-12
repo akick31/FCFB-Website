@@ -1,10 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createScheduleEntry, getBowl } from '../api/scheduleApi';
 import { uploadPostseasonLogo } from '../api/uploadApi';
-import { getConference } from '../components/constants/conferences';
+import { getConference } from './useConferencesMap';
 import { resolveLogoUrl } from '../utils/logoUrl';
+import { POSTSEASON_GAME_TYPES } from '../constants/gameEnums';
 
-const useAddGameDialog = ({ season, teamMap, onSuccess, showSnackbar }) => {
+const discardLogoPreview = (upload) => {
+    const reader = upload?.reader;
+    if (reader) {
+        reader.onloadend = null;
+        if (reader.readyState === 1) {
+            reader.abort();
+        }
+    }
+};
+
+const useAddGameDialog = ({ season, scheduleLocked, teamMap, onSuccess, showSnackbar }) => {
     const [addGameDialogOpen, setAddGameDialogOpen] = useState(false);
     const [addGameWeek, setAddGameWeek] = useState(1);
     const [addGameHome, setAddGameHome] = useState(null);
@@ -20,6 +31,28 @@ const useAddGameDialog = ({ season, teamMap, onSuccess, showSnackbar }) => {
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [addGameNeutralSite, setAddGameNeutralSite] = useState(false);
     const [addGameVenue, setAddGameVenue] = useState('');
+    const dialogScopeRef = useRef(null);
+    const bowlRequestRef = useRef(null);
+    const logoUploadRef = useRef(null);
+    const draftRef = useRef(null);
+
+    useEffect(() => {
+        const scope = { active: true, season, onSuccess };
+        dialogScopeRef.current = scope;
+        setUploadingLogo(false);
+        return () => {
+            scope.active = false;
+            discardLogoPreview(logoUploadRef.current);
+        };
+    }, [addGameDialogOpen, season, addGameType]);
+
+    useEffect(() => {
+        dialogScopeRef.current.onSuccess = onSuccess;
+    }, [onSuccess]);
+
+    useEffect(() => {
+        draftRef.current = { name: addGameBowlName.trim(), venue: addGameVenue, logo: addGameLogo };
+    }, [addGameBowlName, addGameVenue, addGameLogo]);
 
     useEffect(() => {
         if (addGameDialogOpen) {
@@ -42,20 +75,35 @@ const useAddGameDialog = ({ season, teamMap, onSuccess, showSnackbar }) => {
     }, [addGameDialogOpen]);
 
     useEffect(() => {
-        if (addGameType !== 'CONFERENCE_CHAMPIONSHIP' || !addGameHome?.conference) return;
+        if (addGameType !== 'CONFERENCE_CHAMPIONSHIP' || !addGameHome?.conference) {
+            return;
+        }
         const venue = getConference(addGameHome.conference)?.championship_venue;
-        if (venue) setAddGameVenue(venue);
+        if (venue) {
+            setAddGameVenue(venue);
+        }
     }, [addGameType, addGameHome]);
 
-    const isImplicitNeutralSite = addGameType === 'BOWL' || addGameType === 'PLAYOFFS' || addGameType === 'CONFERENCE_CHAMPIONSHIP' || addGameType === 'NATIONAL_CHAMPIONSHIP';
+    const isImplicitNeutralSite = POSTSEASON_GAME_TYPES.includes(addGameType);
     const isNeutralSite = isImplicitNeutralSite || addGameNeutralSite;
 
     const handleBowlNameBlur = () => {
         const name = addGameBowlName.trim();
-        if (!name) return;
+        if (!name) {
+            return;
+        }
+        const scope = dialogScopeRef.current;
+        const request = { name, venue: addGameVenue };
+        bowlRequestRef.current = request;
         getBowl(name).then((bowl) => {
-            if (bowl?.last_venue) setAddGameVenue(bowl.last_venue);
-            if (bowl?.logo && !addGameLogo) {
+            const draft = draftRef.current;
+            if (!scope.active || bowlRequestRef.current !== request || draft.name !== name) {
+                return;
+            }
+            if (bowl?.last_venue && draft.venue === request.venue) {
+                setAddGameVenue(bowl.last_venue);
+            }
+            if (bowl?.logo && !draft.logo) {
                 setAddGameLogo(bowl.logo);
                 setAddGameLogoPreview(resolveLogoUrl(bowl.logo));
             }
@@ -95,7 +143,9 @@ const useAddGameDialog = ({ season, teamMap, onSuccess, showSnackbar }) => {
         setAddGameType('CONFERENCE_GAME');
         setAddGameHome(team);
         setAddGameAway(null);
-        if (weekNum) setAddGameWeek(weekNum);
+        if (weekNum) {
+            setAddGameWeek(weekNum);
+        }
         setAddGameAnchorTeam(team?.name || null);
         setAddGameDialogOpen(true);
     };
@@ -112,23 +162,41 @@ const useAddGameDialog = ({ season, teamMap, onSuccess, showSnackbar }) => {
     };
 
     const handleUploadLogo = async (file) => {
+        const scope = dialogScopeRef.current;
+        discardLogoPreview(logoUploadRef.current);
+        const upload = { reader: null };
+        logoUploadRef.current = upload;
+        const isCurrent = () => scope.active && logoUploadRef.current === upload;
         setUploadingLogo(true);
         try {
             const result = await uploadPostseasonLogo(file);
+            if (!isCurrent()) {
+                return;
+            }
             setAddGameLogo(result.url);
             const reader = new FileReader();
+            upload.reader = reader;
             reader.onloadend = () => {
-                setAddGameLogoPreview(reader.result);
+                if (isCurrent()) {
+                    setAddGameLogoPreview(reader.result);
+                }
             };
             reader.readAsDataURL(file);
         } catch (err) {
-            showSnackbar('Failed to upload logo: ' + err.message, 'error');
+            if (isCurrent()) {
+                showSnackbar('Failed to upload logo: ' + err.message, 'error');
+            }
         } finally {
-            setUploadingLogo(false);
+            if (isCurrent()) {
+                setUploadingLogo(false);
+            }
         }
     };
 
     const handleAddGame = async () => {
+        if (scheduleLocked && !POSTSEASON_GAME_TYPES.includes(addGameType)) {
+            return;
+        }
         if (!addGameHome || !addGameAway) {
             showSnackbar('Please fill in all fields', 'error');
             return;
@@ -163,6 +231,7 @@ const useAddGameDialog = ({ season, teamMap, onSuccess, showSnackbar }) => {
             return;
         }
 
+        const scope = dialogScopeRef.current;
         try {
             await createScheduleEntry({
                 season,
@@ -175,10 +244,23 @@ const useAddGameDialog = ({ season, teamMap, onSuccess, showSnackbar }) => {
                 playoffHomeSeed: addGameHomeSeed,
                 playoffAwaySeed: addGameAwaySeed,
                 postseasonGameName: addGameType === 'BOWL' ? addGameBowlName : null,
-                postseasonGameLogo: (addGameType === 'BOWL' || addGameType === 'PLAYOFFS' || addGameType === 'CONFERENCE_CHAMPIONSHIP' || addGameType === 'NATIONAL_CHAMPIONSHIP') ? addGameLogo : null,
+                postseasonGameLogo:
+                    addGameType === 'BOWL' ||
+                    addGameType === 'PLAYOFFS' ||
+                    addGameType === 'CONFERENCE_CHAMPIONSHIP' ||
+                    addGameType === 'NATIONAL_CHAMPIONSHIP'
+                        ? addGameLogo
+                        : null,
                 neutralSite: isNeutralSite,
                 venue: isNeutralSite ? addGameVenue.trim() : null,
             });
+            if (!scope.active) {
+                const currentScope = dialogScopeRef.current;
+                if (currentScope.active && currentScope.season === season) {
+                    currentScope.onSuccess();
+                }
+                return;
+            }
             showSnackbar('Game added successfully');
             setAddGameDialogOpen(false);
             setAddGameHome(null);
@@ -189,33 +271,52 @@ const useAddGameDialog = ({ season, teamMap, onSuccess, showSnackbar }) => {
             setAddGameBowlName('');
             setAddGameLogo(null);
             setAddGameLogoPreview(null);
-            onSuccess();
+            scope.onSuccess();
         } catch (err) {
-            console.error('Error adding game:', err);
-            showSnackbar('Failed to add game: ' + err.message, 'error');
+            if (scope.active) {
+                console.error('Error adding game');
+                showSnackbar('Failed to add game: ' + err.message, 'error');
+            }
         }
     };
 
     return {
-        addGameDialogOpen, setAddGameDialogOpen,
-        addGameWeek, setAddGameWeek,
-        addGameHome, addGameAway,
-        addGameType, setAddGameType,
-        addGamePlayoffRound, setAddGamePlayoffRound,
-        addGameHomeSeed, setAddGameHomeSeed,
-        addGameAwaySeed, setAddGameAwaySeed,
-        addGameBowlName, setAddGameBowlName,
-        addGameLogo, setAddGameLogo,
-        addGameLogoPreview, setAddGameLogoPreview,
+        addGameDialogOpen,
+        setAddGameDialogOpen,
+        addGameWeek,
+        setAddGameWeek,
+        addGameHome,
+        addGameAway,
+        addGameType,
+        setAddGameType,
+        addGamePlayoffRound,
+        setAddGamePlayoffRound,
+        addGameHomeSeed,
+        setAddGameHomeSeed,
+        addGameAwaySeed,
+        setAddGameAwaySeed,
+        addGameBowlName,
+        setAddGameBowlName,
+        addGameLogo,
+        setAddGameLogo,
+        addGameLogoPreview,
+        setAddGameLogoPreview,
         uploadingLogo,
-        addGameNeutralSite, setAddGameNeutralSite,
-        addGameVenue, setAddGameVenue,
-        isImplicitNeutralSite, isNeutralSite,
+        addGameNeutralSite,
+        setAddGameNeutralSite,
+        addGameVenue,
+        setAddGameVenue,
+        isImplicitNeutralSite,
+        isNeutralSite,
         handleBowlNameBlur,
-        handleHomeChange, handleAwayChange,
+        handleHomeChange,
+        handleAwayChange,
         handleUploadLogo,
         handleAddGame,
-        openForCell, openManually, openForTeam, openForPostseason,
+        openForCell,
+        openManually,
+        openForTeam,
+        openForPostseason,
     };
 };
 

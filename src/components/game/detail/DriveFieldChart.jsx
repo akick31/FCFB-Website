@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useColorMode } from '../../../theme/ColorModeContext';
+import { useColorMode } from '../../../context/ColorModeContext';
 import { ordinalDown, formatDownDistanceSpot, describePlay } from '../../../utils/formatPlay';
 import { formatClock } from '../../../utils/gameDetail';
 
@@ -30,9 +30,13 @@ const END_ZONE_LOGO_GAP = 6;
 const ROW_TEXT_WIDTH_FACTOR = 0.54;
 
 const endZoneLabel = (mark, name, fontSize, availableHeight) => {
-    if (!name) return name;
+    if (!name) {
+        return name;
+    }
     const estimatedWidth = name.length * fontSize * AVG_CHAR_WIDTH_FACTOR;
-    if (estimatedWidth <= availableHeight - END_ZONE_LABEL_MARGIN) return name;
+    if (estimatedWidth <= availableHeight - END_ZONE_LABEL_MARGIN) {
+        return name;
+    }
     return mark?.abbreviation || name;
 };
 
@@ -54,9 +58,16 @@ const resolveLogo = (mark, mode) => {
 };
 
 const luminance = (hex) => {
-    if (!hex) return 1;
+    if (!hex) {
+        return 1;
+    }
     let value = String(hex).replace('#', '');
-    if (value.length === 3) value = value.split('').map((c) => c + c).join('');
+    if (value.length === 3) {
+        value = value
+            .split('')
+            .map((c) => c + c)
+            .join('');
+    }
     const r = parseInt(value.slice(0, 2), 16);
     const g = parseInt(value.slice(2, 4), 16);
     const b = parseInt(value.slice(4, 6), 16);
@@ -66,15 +77,21 @@ const luminance = (hex) => {
 const endZoneFill = (mark) => {
     const primary = mark?.primaryColor;
     const secondary = mark?.secondaryColor;
-    if (primary && luminance(primary) < 0.88) return primary;
-    if (secondary && luminance(secondary) < 0.88) return secondary;
+    if (primary && luminance(primary) < 0.88) {
+        return primary;
+    }
+    if (secondary && luminance(secondary) < 0.88) {
+        return secondary;
+    }
     return primary || secondary || '#2a2a2a';
 };
 
 const DriveFieldChart = ({ drive = null, homeMark, awayMark, homeColor, awayColor }) => {
     const { mode } = useColorMode();
     const [hoverIndex, setHoverIndex] = useState(null);
-    if (!drive || drive.plays.length === 0) return null;
+    if (!drive || drive.plays.length === 0) {
+        return null;
+    }
 
     const homeTeam = homeMark?.name;
     const awayTeam = awayMark?.name;
@@ -116,12 +133,38 @@ const DriveFieldChart = ({ drive = null, homeMark, awayMark, homeColor, awayColo
                 component="svg"
                 viewBox={`0 0 ${W} ${H}`}
                 preserveAspectRatio="none"
-                sx={{ width: '100%', height: 'auto', display: 'block', background: '#1a5c2a', borderRadius: 'var(--r-sm)' }}
+                sx={{
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    background: '#1a5c2a',
+                    borderRadius: 'var(--r-sm)',
+                }}
             >
                 <rect x={PAD_SIDE} y={0} width={END_ZONE_WIDTH} height={H} fill={endZoneFill(offenseMark)} />
-                <rect x={W - PAD_SIDE - END_ZONE_WIDTH} y={0} width={END_ZONE_WIDTH} height={H} fill={endZoneFill(defenseMark)} />
-                <line x1={PAD_SIDE + END_ZONE_WIDTH} x2={PAD_SIDE + END_ZONE_WIDTH} y1={0} y2={H} stroke="#fff" strokeWidth="2" />
-                <line x1={W - PAD_SIDE - END_ZONE_WIDTH} x2={W - PAD_SIDE - END_ZONE_WIDTH} y1={0} y2={H} stroke="#fff" strokeWidth="2" />
+                <rect
+                    x={W - PAD_SIDE - END_ZONE_WIDTH}
+                    y={0}
+                    width={END_ZONE_WIDTH}
+                    height={H}
+                    fill={endZoneFill(defenseMark)}
+                />
+                <line
+                    x1={PAD_SIDE + END_ZONE_WIDTH}
+                    x2={PAD_SIDE + END_ZONE_WIDTH}
+                    y1={0}
+                    y2={H}
+                    stroke="#fff"
+                    strokeWidth="2"
+                />
+                <line
+                    x1={W - PAD_SIDE - END_ZONE_WIDTH}
+                    x2={W - PAD_SIDE - END_ZONE_WIDTH}
+                    y1={0}
+                    y2={H}
+                    stroke="#fff"
+                    strokeWidth="2"
+                />
                 <line x1={PAD_SIDE} x2={PAD_SIDE} y1={0} y2={H} stroke="#fff" strokeWidth="3" />
                 <line x1={W - PAD_SIDE} x2={W - PAD_SIDE} y1={0} y2={H} stroke="#fff" strokeWidth="3" />
                 <line x1={PAD_SIDE} x2={W - PAD_SIDE} y1={0} y2={0} stroke="#fff" strokeWidth="3" />
@@ -191,7 +234,9 @@ const DriveFieldChart = ({ drive = null, homeMark, awayMark, homeColor, awayColo
 
                 {MINOR_YARD_TICKS.map((pct) => {
                     const x = fieldX(pct);
-                    return <line key={pct} x1={x} x2={x} y1={0} y2={H} stroke="rgba(255,255,255,0.18)" strokeWidth="1" />;
+                    return (
+                        <line key={pct} x1={x} x2={x} y1={0} y2={H} stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+                    );
                 })}
 
                 {YARD_MARKS.map((mark, index) => {
@@ -217,9 +262,11 @@ const DriveFieldChart = ({ drive = null, homeMark, awayMark, homeColor, awayColo
                             </text>
                             {!isMidfield && (
                                 <polygon
-                                    points={isLeftHalf
-                                        ? `${x - 16},${NUMBER_CENTER_Y - 5} ${x - 16},${NUMBER_CENTER_Y + 5} ${x - 23},${NUMBER_CENTER_Y}`
-                                        : `${x + 16},${NUMBER_CENTER_Y - 5} ${x + 16},${NUMBER_CENTER_Y + 5} ${x + 23},${NUMBER_CENTER_Y}`}
+                                    points={
+                                        isLeftHalf
+                                            ? `${x - 16},${NUMBER_CENTER_Y - 5} ${x - 16},${NUMBER_CENTER_Y + 5} ${x - 23},${NUMBER_CENTER_Y}`
+                                            : `${x + 16},${NUMBER_CENTER_Y - 5} ${x + 16},${NUMBER_CENTER_Y + 5} ${x + 23},${NUMBER_CENTER_Y}`
+                                    }
                                     fill="rgba(255,255,255,0.5)"
                                 />
                             )}
@@ -238,7 +285,9 @@ const DriveFieldChart = ({ drive = null, homeMark, awayMark, homeColor, awayColo
                     const isScore = isLast && isTouchdownDrive;
                     const barColor = isScore ? '#5fd97a' : driveColor;
                     const clockText = formatClock(row.play.clock);
-                    const downDistanceText = row.play.down ? `${ordinalDown(row.play.down)} & ${row.play.yards_to_go}` : '';
+                    const downDistanceText = row.play.down
+                        ? `${ordinalDown(row.play.down)} & ${row.play.yards_to_go}`
+                        : '';
                     const label = [clockText, downDistanceText].filter(Boolean).join(' - ');
                     const resultText = describePlay(row.play, { homeName: homeTeam, awayName: awayTeam });
                     const barX = Math.min(x1, x2);
@@ -249,9 +298,35 @@ const DriveFieldChart = ({ drive = null, homeMark, awayMark, homeColor, awayColo
                             onMouseLeave={() => setHoverIndex((prev) => (prev === index ? null : prev))}
                             style={{ cursor: 'pointer' }}
                         >
-                            <text x={fitRowTextX(barX, label, 11)} y={labelY} fontSize="11" fontWeight="800" fill="rgba(255,255,255,0.92)">{label}</text>
-                            <text x={fitRowTextX(barX, resultText, 10)} y={resultY} fontSize="10" fontWeight="600" fill={isScore ? '#5fd97a' : 'rgba(255,255,255,0.78)'}>{resultText}</text>
-                            <rect x={barX} y={barY} width={Math.max(3, Math.abs(x2 - x1))} height={BAR_HEIGHT} rx={4} fill={barColor} opacity={hoverIndex === index ? 1 : 0.9} stroke={hoverIndex === index ? '#fff' : 'none'} strokeWidth="1.5" />
+                            <text
+                                x={fitRowTextX(barX, label, 11)}
+                                y={labelY}
+                                fontSize="11"
+                                fontWeight="800"
+                                fill="rgba(255,255,255,0.92)"
+                            >
+                                {label}
+                            </text>
+                            <text
+                                x={fitRowTextX(barX, resultText, 10)}
+                                y={resultY}
+                                fontSize="10"
+                                fontWeight="600"
+                                fill={isScore ? '#5fd97a' : 'rgba(255,255,255,0.78)'}
+                            >
+                                {resultText}
+                            </text>
+                            <rect
+                                x={barX}
+                                y={barY}
+                                width={Math.max(3, Math.abs(x2 - x1))}
+                                height={BAR_HEIGHT}
+                                rx={4}
+                                fill={barColor}
+                                opacity={hoverIndex === index ? 1 : 0.9}
+                                stroke={hoverIndex === index ? '#fff' : 'none'}
+                                strokeWidth="1.5"
+                            />
                         </g>
                     );
                 })}

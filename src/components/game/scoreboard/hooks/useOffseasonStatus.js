@@ -10,13 +10,19 @@ export const useOffseasonStatus = () => {
 
         getCurrentOffseason()
             .then((offseason) => {
-                if (!cancelled) setIsOffseason(!!offseason?.start_date);
+                if (!cancelled) {
+                    setIsOffseason(!!offseason?.start_date);
+                }
             })
             .catch(() => {
-                if (!cancelled) setIsOffseason(false);
+                if (!cancelled) {
+                    setIsOffseason(false);
+                }
             })
             .finally(() => {
-                if (!cancelled) setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                }
             });
 
         return () => {

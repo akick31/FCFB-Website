@@ -15,7 +15,9 @@ import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
 
 const coachStatus = (user) => {
-    if (user.position === 'RETIRED') return 'retired';
+    if (user.position === 'RETIRED') {
+        return 'retired';
+    }
     return user.team ? 'active' : 'free_agent';
 };
 
@@ -34,7 +36,21 @@ const SORTS = {
 const StatusPill = ({ status }) => {
     const meta = STATUS_META[status];
     return (
-        <Box component="span" sx={{ display: 'inline-flex', fontSize: '0.56rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: meta.color, border: `1px solid color-mix(in srgb, ${meta.color} 55%, var(--line))`, borderRadius: 'var(--r-sm)', px: '6px', py: '2px' }}>
+        <Box
+            component="span"
+            sx={{
+                display: 'inline-flex',
+                fontSize: '0.56rem',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                color: meta.color,
+                border: `1px solid color-mix(in srgb, ${meta.color} 55%, var(--line))`,
+                borderRadius: 'var(--r-sm)',
+                px: '6px',
+                py: '2px',
+            }}
+        >
             {meta.label}
         </Box>
     );
@@ -57,20 +73,52 @@ const Coaches = () => {
 
     const updateParam = (key, value, defaultValue) => {
         const next = new URLSearchParams(searchParams);
-        if (!value || value === defaultValue) next.delete(key); else next.set(key, value);
+        if (!value || value === defaultValue) {
+            next.delete(key);
+        } else {
+            next.set(key, value);
+        }
         setSearchParams(next, { replace: true });
     };
 
-    const changeSearch = (value) => { setSearch(value); updateParam('search', value, ''); };
-    const changeStatus = (value) => { setStatus(value); updateParam('status', value, 'all'); };
-    const changePosition = (value) => { setPosition(value); updateParam('position', value, 'all'); };
-    const changeSort = (value) => { setSort(value); updateParam('sort', value, 'name'); };
+    const changeSearch = (value) => {
+        setSearch(value);
+        updateParam('search', value, '');
+    };
+    const changeStatus = (value) => {
+        setStatus(value);
+        updateParam('status', value, 'all');
+    };
+    const changePosition = (value) => {
+        setPosition(value);
+        updateParam('position', value, 'all');
+    };
+    const changeSort = (value) => {
+        setSort(value);
+        updateParam('sort', value, 'name');
+    };
 
     useEffect(() => {
+        let active = true;
         getAllUsers()
-            .then((data) => setUsers(data || []))
-            .catch(() => setError('Failed to load coaches. Please try again.'))
-            .finally(() => setLoading(false));
+            .then((data) => {
+                if (active) {
+                    setUsers(data || []);
+                }
+            })
+            .catch(() => {
+                if (active) {
+                    setError('Failed to load coaches. Please try again.');
+                }
+            })
+            .finally(() => {
+                if (active) {
+                    setLoading(false);
+                }
+            });
+        return () => {
+            active = false;
+        };
     }, []);
 
     const activeCount = useMemo(() => users.filter((user) => coachStatus(user) === 'active').length, [users]);
@@ -80,19 +128,32 @@ const Coaches = () => {
         return users
             .filter((user) => status === 'all' || coachStatus(user) === status)
             .filter((user) => position === 'all' || user.position === position)
-            .filter((user) => !query
-                || (user.coach_name || '').toLowerCase().includes(query)
-                || (user.username || '').toLowerCase().includes(query)
-                || (user.discord_tag || '').toLowerCase().includes(query)
-                || (user.team || '').toLowerCase().includes(query))
+            .filter(
+                (user) =>
+                    !query ||
+                    (user.coach_name || '').toLowerCase().includes(query) ||
+                    (user.username || '').toLowerCase().includes(query) ||
+                    (user.discord_tag || '').toLowerCase().includes(query) ||
+                    (user.team || '').toLowerCase().includes(query)
+            )
             .sort(SORTS[sort]);
     }, [users, status, position, search, sort]);
 
     if (loading) {
-        return <PageWrap><Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box></PageWrap>;
+        return (
+            <PageWrap>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+                    <CircularProgress />
+                </Box>
+            </PageWrap>
+        );
     }
     if (error) {
-        return <PageWrap><Alert severity="error">{error}</Alert></PageWrap>;
+        return (
+            <PageWrap>
+                <Alert severity="error">{error}</Alert>
+            </PageWrap>
+        );
     }
 
     return (
@@ -104,7 +165,18 @@ const Coaches = () => {
                     aria-label="Search coaches"
                     value={search}
                     onChange={(event) => changeSearch(event.target.value)}
-                    sx={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', padding: '6px 10px', font: 'inherit', fontSize: '0.8rem', fontWeight: 700, minWidth: 210, '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 } }}
+                    sx={{
+                        border: '1px solid var(--line)',
+                        background: 'var(--surface)',
+                        color: 'var(--text)',
+                        borderRadius: 'var(--r-sm)',
+                        padding: '6px 10px',
+                        font: 'inherit',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        minWidth: 210,
+                        '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 },
+                    }}
                 />
                 <SelectPill
                     label="Status"
@@ -132,7 +204,11 @@ const Coaches = () => {
                     label="Sort"
                     value={sort}
                     onChange={changeSort}
-                    options={[{ value: 'name', label: 'Name' }, { value: 'wins', label: 'Wins' }, { value: 'winpct', label: 'Win Pct' }]}
+                    options={[
+                        { value: 'name', label: 'Name' },
+                        { value: 'wins', label: 'Wins' },
+                        { value: 'winpct', label: 'Win Pct' },
+                    ]}
                 />
             </PageHeading>
 
@@ -157,13 +233,19 @@ const Coaches = () => {
                                     <Box sx={{ fontWeight: 700 }}>{user.coach_name || user.username}</Box>
                                     <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem' }}>@{user.username}</Box>
                                 </LinkCell>
-                                <LinkCell to={userHref} className="lft">
+                                <LinkCell to={user.team && teamId != null ? null : userHref} className="lft">
                                     {user.team && teamId != null ? (
                                         <Box
                                             component={Link}
                                             to={`/team-details/${teamId}`}
                                             className="teamcell"
-                                            sx={{ position: 'relative', zIndex: 3, cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}
+                                            sx={{
+                                                position: 'relative',
+                                                zIndex: 3,
+                                                cursor: 'pointer',
+                                                textDecoration: 'none',
+                                                color: 'inherit',
+                                            }}
                                         >
                                             <TeamMark team={teamsMap[user.team]} size={22} />
                                             <span className="nm">{user.team}</span>
@@ -177,10 +259,18 @@ const Coaches = () => {
                                         <Box sx={{ color: 'var(--text-dim)' }}>-</Box>
                                     )}
                                 </LinkCell>
-                                <LinkCell to={userHref} className="lft">{formatPosition(user.position)}</LinkCell>
-                                <LinkCell to={userHref} className="num">{user.wins || 0}-{user.losses || 0}</LinkCell>
-                                <LinkCell to={userHref} className="num">{formatWinPct(user.win_percentage)}</LinkCell>
-                                <LinkCell to={userHref} className="lft"><StatusPill status={coachStatus(user)} /></LinkCell>
+                                <LinkCell to={userHref} className="lft">
+                                    {formatPosition(user.position)}
+                                </LinkCell>
+                                <LinkCell to={userHref} className="num">
+                                    {user.wins || 0}-{user.losses || 0}
+                                </LinkCell>
+                                <LinkCell to={userHref} className="num">
+                                    {formatWinPct(user.win_percentage)}
+                                </LinkCell>
+                                <LinkCell to={userHref} className="lft">
+                                    <StatusPill status={coachStatus(user)} />
+                                </LinkCell>
                             </tr>
                         );
                     })}

@@ -7,19 +7,9 @@ import SegTabs from '../../components/ui/SegTabs';
 import { getAllTeams } from '../../api/teamApi';
 import { getAllVenues } from '../../api/venueApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
-import {
-    getScheduleBySeasonAndTeam,
-    getScheduleBySeason,
-    getConferenceSchedule,
-    getPostseasonSchedule,
-    generateConferenceSchedule,
-    saveConferenceRules,
-    getConferenceRules,
-} from '../../api/scheduleApi';
-import { getCurrentSeasonOrUpcoming, getAllSeasons, isScheduleLocked, lockSchedule, unlockSchedule } from '../../api/seasonApi';
-import { useConferencesMap, activeConferenceList } from '../../components/constants/conferences';
-import { formatConference } from '../../utils/formatText';
-import { field } from '../../utils/fieldHelper';
+import { getCurrentSeasonOrUpcoming, getAllSeasons, lockSchedule, unlockSchedule } from '../../api/seasonApi';
+import { useConferencesMap, activeConferenceList } from '../../hooks/useConferencesMap';
+import { camelOrSnakeField } from '../../utils/fieldHelper';
 import PostseasonAdminTab from '../../components/scheduling/PostseasonAdminTab';
 import ConferenceScheduleAdminTab from '../../components/scheduling/ConferenceScheduleAdminTab';
 import TeamScheduleAdminTab from '../../components/scheduling/TeamScheduleAdminTab';
@@ -34,21 +24,60 @@ import useMoveGameDialog from '../../hooks/useMoveGameDialog';
 import useSeasonCreationJob from '../../hooks/useSeasonCreationJob';
 import useOocScheduleDialog from '../../hooks/useOocScheduleDialog';
 import useValidateScheduleDialog from '../../hooks/useValidateScheduleDialog';
-
-const DEFAULT_CONFERENCE_GAMES = 9;
-
+import useScheduleLock from '../../hooks/useScheduleLock';
+import useAdminScheduleData from '../../hooks/useAdminScheduleData';
+import useConferenceGeneration from '../../hooks/useConferenceGeneration';
+import useConferenceRuleActions from '../../hooks/useConferenceRuleActions';
 const EXCLUDED_ADMIN_CONFERENCES = ['FBS_INDEPENDENT'];
 
-const selectSx = { border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', cursor: 'pointer', '& option': { background: 'var(--surface)', color: 'var(--text)' } };
-const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
-const ctrlLockedSx = { ...ctrlSx, color: 'var(--live)', borderColor: 'color-mix(in srgb, var(--live) 40%, var(--line))' };
-const ctrlUnlockedSx = { ...ctrlSx, color: 'var(--field)', borderColor: 'color-mix(in srgb, var(--field) 40%, var(--line))' };
+const selectSx = {
+    border: '1px solid var(--line)',
+    background: 'var(--surface)',
+    color: 'var(--text)',
+    borderRadius: 'var(--r-sm)',
+    px: '10px',
+    height: '38px',
+    boxSizing: 'border-box',
+    font: 'inherit',
+    fontSize: '0.82rem',
+    cursor: 'pointer',
+    '& option': { background: 'var(--surface)', color: 'var(--text)' },
+};
+const ctrlSx = {
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text-muted)',
+    borderRadius: 'var(--r-sm)',
+    px: '12px',
+    height: '38px',
+    boxSizing: 'border-box',
+    font: 'inherit',
+    fontSize: '0.78rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
+};
+const ctrlLockedSx = {
+    ...ctrlSx,
+    color: 'var(--live)',
+    borderColor: 'color-mix(in srgb, var(--live) 40%, var(--line))',
+};
+const ctrlUnlockedSx = {
+    ...ctrlSx,
+    color: 'var(--field)',
+    borderColor: 'color-mix(in srgb, var(--field) 40%, var(--line))',
+};
 
 const Scheduling = () => {
     useConferencesMap();
     const isMountedRef = useRef(true);
     useEffect(() => {
-        return () => { isMountedRef.current = false; };
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
     }, []);
 
     const [searchParams, setSearchParams] = useSearchParams();
@@ -67,52 +96,97 @@ const Scheduling = () => {
 
     const [season, setSeason] = useState(null);
     const [allSeasons, setAllSeasons] = useState([]);
-    const [scheduleLocked, setScheduleLocked] = useState(false);
+    const { scheduleLocked, lockStatusKnown, lockError, setScheduleLocked } = useScheduleLock(season);
     const [allTeams, setAllTeams] = useState([]);
     const [venueNames, setVenueNames] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const [allSeasonSchedule, setAllSeasonSchedule] = useState([]);
-
-    const [conferenceSchedule, setConferenceSchedule] = useState([]);
     const [conferenceTeams, setConferenceTeams] = useState([]);
-    const [confLoading, setConfLoading] = useState(false);
 
-    const [numConferenceGames, setNumConferenceGames] = useState(DEFAULT_CONFERENCE_GAMES);
-    const [protectedRivalries, setProtectedRivalries] = useState([]);
-    const [divisions, setDivisions] = useState([]);
-    const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
     const [selectedTeamState, setSelectedTeamState] = useState(null);
-    const [teamFullSchedule, setTeamFullSchedule] = useState([]);
-    const [teamLoading, setTeamLoading] = useState(false);
 
     const selectedTeam = selectedTeamState;
-    const setSelectedTeam = (team) => {
-        setSelectedTeamState(team);
-        const next = new URLSearchParams(searchParams);
-        if (team?.name) next.set('team', team.name); else next.delete('team');
-        setSearchParams(next, { replace: true });
-    };
-
-    useEffect(() => {
-        if (allTeams.length === 0 || selectedTeamState) return;
-        const urlTeamName = searchParams.get('team');
-        if (!urlTeamName) return;
-        const found = allTeams.find((t) => t.name === urlTeamName);
-        if (found) setSelectedTeamState(found);
-    }, [allTeams]);
-
-    const [postseasonSchedule, setPostseasonSchedule] = useState([]);
-    const [postseasonLoading, setPostseasonLoading] = useState(false);
+    const {
+        allSeasonSchedule,
+        conferenceSchedule,
+        confLoading: conferenceLoading,
+        teamFullSchedule,
+        teamLoading,
+        postseasonSchedule,
+        postseasonLoading,
+        numConferenceGames,
+        setNumConferenceGames,
+        protectedRivalries,
+        setProtectedRivalries,
+        divisions,
+        setDivisions,
+        refreshAllSeasonSchedule,
+        fetchConferenceSchedule,
+        fetchTeamSchedule,
+        fetchPostseasonSchedule,
+    } = useAdminScheduleData({ season, selectedConference, selectedTeam, tab });
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const showSnackbar = (message, severity = 'success') => {
         setSnackbar({ open: true, message, severity });
     };
 
+    const { generateDialogOpen, setGenerateDialogOpen, generationLoading, handleGenerateConferenceSchedule } =
+        useConferenceGeneration({
+            season,
+            selectedConference,
+            scheduleLocked,
+            conferenceTeams,
+            numConferenceGames,
+            protectedRivalries,
+            divisions,
+            showSnackbar,
+            fetchConferenceSchedule,
+            refreshAllSeasonSchedule,
+            isMountedRef,
+        });
+    const { addRivalry, removeRivalry, updateRivalry, toggleDivisions, updateDivision, handleSaveConferenceRules } =
+        useConferenceRuleActions({
+            selectedConference,
+            numConferenceGames,
+            protectedRivalries,
+            setProtectedRivalries,
+            divisions,
+            setDivisions,
+            showSnackbar,
+        });
+
+    const confLoading = conferenceLoading || generationLoading;
+
+    const setSelectedTeam = (team) => {
+        setSelectedTeamState(team);
+        const next = new URLSearchParams(searchParams);
+        if (team?.name) {
+            next.set('team', team.name);
+        } else {
+            next.delete('team');
+        }
+        setSearchParams(next, { replace: true });
+    };
+
+    useEffect(() => {
+        if (allTeams.length === 0 || selectedTeamState) {
+            return;
+        }
+        const urlTeamName = searchParams.get('team');
+        if (!urlTeamName) {
+            return;
+        }
+        const found = allTeams.find((t) => t.name === urlTeamName);
+        if (found) {
+            setSelectedTeamState(found);
+        }
+    }, [allTeams]);
+
     const teamMap = useTeamsMap();
 
     useEffect(() => {
+        let active = true;
         const init = async () => {
             try {
                 setLoading(true);
@@ -120,38 +194,48 @@ const Scheduling = () => {
                     getAllTeams(),
                     getCurrentSeasonOrUpcoming(),
                     getAllSeasons(),
-                    getAllVenues().catch(() => [])
+                    getAllVenues().catch(() => []),
                 ]);
+                if (!active) {
+                    return;
+                }
                 setAllTeams(teamsData);
                 setVenueNames(venuesData.map((v) => v.name).filter(Boolean));
-                const seasonNumbers = seasonsData.map(s => s.season_number || s.seasonNumber);
+                const seasonNumbers = seasonsData.map((s) => s.season_number || s.seasonNumber);
                 setAllSeasons(seasonNumbers);
                 setSeason(currentSeason);
             } catch (err) {
+                if (!active) {
+                    return;
+                }
                 console.error('Error initializing scheduling page:', err);
                 showSnackbar('Failed to load data', 'error');
             } finally {
-                setLoading(false);
+                if (active) {
+                    setLoading(false);
+                }
             }
         };
         init();
+        return () => {
+            active = false;
+        };
     }, []);
 
     useEffect(() => {
-        const checkLock = async () => {
-            if (!season) return;
-            try {
-                const locked = await isScheduleLocked(season);
-                setScheduleLocked(locked);
-            } catch (err) {
-                console.error('Error checking schedule lock:', err);
-                setScheduleLocked(false);
-            }
-        };
-        checkLock();
-    }, [season]);
+        if (lockError) {
+            setSnackbar({
+                open: true,
+                message: 'Unable to verify schedule lock. Editing is disabled. Reload to retry.',
+                severity: 'error',
+            });
+        }
+    }, [lockError]);
 
     const handleToggleLock = async () => {
+        if (!lockStatusKnown) {
+            return;
+        }
         try {
             if (scheduleLocked) {
                 await unlockSchedule(season);
@@ -170,173 +254,89 @@ const Scheduling = () => {
 
     useEffect(() => {
         if (allTeams.length > 0 && selectedConference) {
-            const filtered = allTeams.filter(
-                t => t.conference === selectedConference && t.active
-            ).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            const filtered = allTeams
+                .filter((t) => t.conference === selectedConference && t.active)
+                .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
             setConferenceTeams(filtered);
         }
     }, [allTeams, selectedConference]);
 
-    useEffect(() => {
-        if (season) {
-            const fetchAll = async () => {
-                try {
-                    const schedule = await getScheduleBySeason(season);
-                    setAllSeasonSchedule(schedule || []);
-                } catch (err) {
-                    console.error('Error fetching full season schedule:', err);
-                    setAllSeasonSchedule([]);
-                }
-            };
-            fetchAll();
-        }
-    }, [season]);
-
-    useEffect(() => {
-        if (season && selectedConference && tab === 'conference') {
-            fetchConferenceSchedule();
-            loadConferenceRules();
-        }
-    }, [season, selectedConference, tab]);
-
-    const loadConferenceRules = async () => {
-        if (!selectedConference) return;
-        try {
-            const rules = await getConferenceRules(selectedConference);
-            if (rules) {
-                setNumConferenceGames(rules.numConferenceGames || DEFAULT_CONFERENCE_GAMES);
-                setProtectedRivalries(rules.protectedRivalries || []);
-                setDivisions(rules.divisions || []);
-            } else {
-                setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
-                setProtectedRivalries([]);
-                setDivisions([]);
-            }
-        } catch (err) {
-            console.error('Error loading conference rules:', err);
-            setNumConferenceGames(DEFAULT_CONFERENCE_GAMES);
-            setProtectedRivalries([]);
-            setDivisions([]);
-        }
-    };
-
-    useEffect(() => {
-        if (season && selectedTeam && tab === 'team') {
-            fetchTeamSchedule();
-        }
-    }, [season, selectedTeam, tab]);
-
-    useEffect(() => {
-        if (season && tab === 'postseason') {
-            fetchPostseasonSchedule();
-        }
-    }, [season, tab]);
-
-    const refreshAllSeasonSchedule = async () => {
-        try {
-            const schedule = await getScheduleBySeason(season);
-            setAllSeasonSchedule(schedule || []);
-        } catch (err) {
-            console.error('Error refreshing full season schedule:', err);
-        }
-    };
-
-    const fetchConferenceSchedule = async () => {
-        try {
-            setConfLoading(true);
-            const schedule = await getConferenceSchedule(season, selectedConference);
-            setConferenceSchedule(schedule || []);
-        } catch (err) {
-            console.error('Error fetching conference schedule:', err);
-            setConferenceSchedule([]);
-        } finally {
-            setConfLoading(false);
-        }
-    };
-
-    const fetchTeamSchedule = async () => {
-        try {
-            setTeamLoading(true);
-            const schedule = await getScheduleBySeasonAndTeam(season, selectedTeam.name);
-            setTeamFullSchedule((schedule || []).sort((a, b) => (a.week || 0) - (b.week || 0)));
-        } catch (err) {
-            console.error('Error fetching schedule:', err);
-            setTeamFullSchedule([]);
-        } finally {
-            setTeamLoading(false);
-        }
-    };
-
-    const fetchPostseasonSchedule = async () => {
-        try {
-            setPostseasonLoading(true);
-            const schedule = await getPostseasonSchedule(season);
-            setPostseasonSchedule(schedule || []);
-        } catch (err) {
-            console.error('Error fetching postseason schedule:', err);
-            setPostseasonSchedule([]);
-        } finally {
-            setPostseasonLoading(false);
-        }
-    };
-
     const refreshAfterScheduleChange = () => {
         refreshAllSeasonSchedule();
-        if (tab === 'conference') fetchConferenceSchedule();
-        else if (tab === 'team' && selectedTeam) fetchTeamSchedule();
-        else if (tab === 'postseason') fetchPostseasonSchedule();
+        if (tab === 'conference') {
+            fetchConferenceSchedule();
+        } else if (tab === 'team' && selectedTeam) {
+            fetchTeamSchedule();
+        } else if (tab === 'postseason') {
+            fetchPostseasonSchedule();
+        }
     };
 
     const teamWeekOccupiedAll = useMemo(() => {
         const occupied = new Set();
-        allSeasonSchedule.forEach(game => {
-            const home = field(game, 'homeTeam', 'home_team');
-            const away = field(game, 'awayTeam', 'away_team');
+        allSeasonSchedule.forEach((game) => {
+            const home = camelOrSnakeField(game, 'homeTeam', 'home_team');
+            const away = camelOrSnakeField(game, 'awayTeam', 'away_team');
             const week = game.week;
-            if (home && week) occupied.add(`${home}|${week}`);
-            if (away && week) occupied.add(`${away}|${week}`);
+            if (home && week) {
+                occupied.add(`${home}|${week}`);
+            }
+            if (away && week) {
+                occupied.add(`${away}|${week}`);
+            }
         });
         return occupied;
     }, [allSeasonSchedule]);
 
     const isConferenceScheduleComplete = useMemo(() => {
-        if (conferenceTeams.length === 0) return false;
+        if (conferenceTeams.length === 0) {
+            return false;
+        }
         const gameCounts = {};
-        conferenceSchedule.forEach(game => {
-            const home = field(game, 'homeTeam', 'home_team');
-            const away = field(game, 'awayTeam', 'away_team');
-            if (home) gameCounts[home] = (gameCounts[home] || 0) + 1;
-            if (away) gameCounts[away] = (gameCounts[away] || 0) + 1;
+        conferenceSchedule.forEach((game) => {
+            const home = camelOrSnakeField(game, 'homeTeam', 'home_team');
+            const away = camelOrSnakeField(game, 'awayTeam', 'away_team');
+            if (home) {
+                gameCounts[home] = (gameCounts[home] || 0) + 1;
+            }
+            if (away) {
+                gameCounts[away] = (gameCounts[away] || 0) + 1;
+            }
         });
-        return conferenceTeams.every(t => (gameCounts[t.name] || 0) >= numConferenceGames);
+        return conferenceTeams.every((t) => (gameCounts[t.name] || 0) >= numConferenceGames);
     }, [conferenceTeams, conferenceSchedule, numConferenceGames]);
 
     const hasGamesPlayed = useMemo(() => {
-        return allSeasonSchedule.some(game => {
-            const started = field(game, 'started', 'started');
-            const finished = field(game, 'finished', 'finished');
+        return allSeasonSchedule.some((game) => {
+            const started = camelOrSnakeField(game, 'started', 'started');
+            const finished = camelOrSnakeField(game, 'finished', 'finished');
             return started || finished;
         });
     }, [allSeasonSchedule]);
 
     const adminConferences = useMemo(() => {
-        return activeConferenceList().filter(c => !EXCLUDED_ADMIN_CONFERENCES.includes(c.code));
+        return activeConferenceList().filter((c) => !EXCLUDED_ADMIN_CONFERENCES.includes(c.code));
     }, []);
 
     const handleSeasonCreated = async (num) => {
         const seasonsData = await getAllSeasons();
-        if (!isMountedRef.current) return;
-        const seasonNumbers = seasonsData.map(s => s.season_number || s.seasonNumber);
+        if (!isMountedRef.current) {
+            return;
+        }
+        const seasonNumbers = seasonsData.map((s) => s.season_number || s.seasonNumber);
         setAllSeasons(seasonNumbers);
         setSeason(num);
     };
 
     const handleOocGenerated = async () => {
         await refreshAllSeasonSchedule();
-        if (selectedTeam && tab === 'team') fetchTeamSchedule();
+        if (selectedTeam && tab === 'team') {
+            fetchTeamSchedule();
+        }
     };
 
     const addGameDialog = useAddGameDialog({
+        scheduleLocked,
         season,
         teamMap,
         onSuccess: refreshAfterScheduleChange,
@@ -344,6 +344,7 @@ const Scheduling = () => {
     });
 
     const moveDialog = useMoveGameDialog({
+        scheduleLocked,
         teamWeekOccupiedAll,
         onSuccess: refreshAfterScheduleChange,
         showSnackbar,
@@ -356,6 +357,7 @@ const Scheduling = () => {
     });
 
     const oocDialog = useOocScheduleDialog({
+        scheduleLocked,
         season,
         onSuccess: handleOocGenerated,
         showSnackbar,
@@ -368,101 +370,11 @@ const Scheduling = () => {
             showSnackbar(`${teamName} already has a game scheduled in Week ${weekNum}`, 'warning');
             return;
         }
-        addGameDialog.openForCell(teamName, weekNum, isConferenceScheduleComplete ? 'OUT_OF_CONFERENCE' : 'CONFERENCE_GAME');
-    };
-
-    const handleGenerateConferenceSchedule = async () => {
-        const incompleteRivalries = protectedRivalries.filter(r => (r.team1 && !r.team2) || (!r.team1 && r.team2));
-        if (incompleteRivalries.length > 0) {
-            showSnackbar('All protected rivalries must have both teams set before generating', 'error');
-            return;
-        }
-
-        try {
-            setConfLoading(true);
-            const request = {
-                season,
-                conference: selectedConference,
-                subdivision: conferenceTeams[0]?.subdivision || 'FBS',
-                numConferenceGames,
-                protectedRivalries: protectedRivalries.filter(r => r.team1 && r.team2),
-                startWeek: 1,
-                divisions: divisions.filter(Boolean),
-            };
-            await generateConferenceSchedule(request);
-            showSnackbar('Conference schedule generated successfully!');
-            setGenerateDialogOpen(false);
-            await fetchConferenceSchedule();
-            refreshAllSeasonSchedule();
-        } catch (err) {
-            console.error('Error generating schedule:', err);
-            showSnackbar('Failed to generate schedule: ' + err.message, 'error');
-        } finally {
-            setConfLoading(false);
-        }
-    };
-
-    const addRivalry = () => {
-        setProtectedRivalries([...protectedRivalries, { team1: '', team2: '', week: null }]);
-    };
-
-    const removeRivalry = async (index) => {
-        const rivalry = protectedRivalries[index];
-        const updated = protectedRivalries.filter((_, i) => i !== index);
-
-        if (!rivalry.team1 && !rivalry.team2) {
-            setProtectedRivalries(updated);
-            return;
-        }
-
-        try {
-            await saveConferenceRules(selectedConference, numConferenceGames, updated);
-            setProtectedRivalries(updated);
-            showSnackbar('Rivalry removed');
-        } catch (err) {
-            console.error('Error removing rivalry:', err);
-            showSnackbar('Failed to remove rivalry: ' + err.message, 'error');
-        }
-    };
-
-    const updateRivalry = (index, fieldName, value) => {
-        const updated = [...protectedRivalries];
-        updated[index] = { ...updated[index], [fieldName]: value };
-        setProtectedRivalries(updated);
-    };
-
-    const toggleDivisions = async (enabled) => {
-        const updated = enabled ? ['', ''] : [];
-
-        if (!enabled && divisions.some(Boolean)) {
-            try {
-                await saveConferenceRules(selectedConference, numConferenceGames, protectedRivalries, updated);
-                setDivisions(updated);
-                showSnackbar('Divisions disabled');
-            } catch (err) {
-                console.error('Error disabling divisions:', err);
-                showSnackbar('Failed to disable divisions: ' + err.message, 'error');
-            }
-            return;
-        }
-
-        setDivisions(updated);
-    };
-
-    const updateDivision = (index, value) => {
-        const updated = [...divisions];
-        updated[index] = value;
-        setDivisions(updated);
-    };
-
-    const handleSaveConferenceRules = async (conference, numGames, rivalries, divisionList) => {
-        try {
-            await saveConferenceRules(conference, numGames, rivalries, divisionList);
-            showSnackbar(`Conference rules saved for ${formatConference(conference)}`);
-        } catch (err) {
-            console.error('Error saving conference rules:', err);
-            showSnackbar('Failed to save conference rules: ' + err.message, 'error');
-        }
+        addGameDialog.openForCell(
+            teamName,
+            weekNum,
+            isConferenceScheduleComplete ? 'OUT_OF_CONFERENCE' : 'CONFERENCE_GAME'
+        );
     };
 
     if (loading) {
@@ -478,30 +390,75 @@ const Scheduling = () => {
     return (
         <AdminLayout
             title="Scheduling"
-            controls={(
+            controls={
                 <>
-                    <Box component="select" value={season || ''} onChange={(e) => setSeason(Number(e.target.value))} sx={selectSx}>
-                        {allSeasons.map((s) => <option key={s} value={s}>Season {s}</option>)}
+                    <Box
+                        component="select"
+                        value={season || ''}
+                        onChange={(e) => setSeason(Number(e.target.value))}
+                        sx={selectSx}
+                    >
+                        {allSeasons.map((s) => (
+                            <option key={s} value={s}>
+                                Season {s}
+                            </option>
+                        ))}
                     </Box>
-                    <Box component="button" type="button" onClick={() => {
-                        const maxSeason = allSeasons.length > 0 ? Math.max(...allSeasons) : 0;
-                        seasonCreationJob.openDialog(maxSeason + 1);
-                    }} sx={ctrlSx}>
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={() => {
+                            const maxSeason = allSeasons.length > 0 ? Math.max(...allSeasons) : 0;
+                            seasonCreationJob.openDialog(maxSeason + 1);
+                        }}
+                        sx={ctrlSx}
+                    >
                         + New season
                     </Box>
-                    <Box component="button" type="button" onClick={handleToggleLock} title={scheduleLocked ? 'Schedule is locked (click to unlock)' : 'Schedule is unlocked (click to lock)'} sx={{ ...(scheduleLocked ? ctrlLockedSx : ctrlUnlockedSx), display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={handleToggleLock}
+                        disabled={!lockStatusKnown}
+                        title={
+                            scheduleLocked
+                                ? 'Schedule is locked (click to unlock)'
+                                : 'Schedule is unlocked (click to lock)'
+                        }
+                        sx={{
+                            ...(scheduleLocked ? ctrlLockedSx : ctrlUnlockedSx),
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                        }}
+                    >
                         {scheduleLocked ? <LockIcon sx={{ fontSize: 15 }} /> : <LockOpenIcon sx={{ fontSize: 15 }} />}
                         {scheduleLocked ? 'Locked' : 'Unlocked'}
                     </Box>
-                    <Box component="button" type="button" disabled={scheduleLocked} onClick={oocDialog.openDialog} sx={{ ...ctrlSx, opacity: scheduleLocked ? 0.6 : 1, cursor: scheduleLocked ? 'default' : 'pointer' }}>
+                    <Box
+                        component="button"
+                        type="button"
+                        disabled={scheduleLocked}
+                        onClick={oocDialog.openDialog}
+                        sx={{
+                            ...ctrlSx,
+                            opacity: scheduleLocked ? 0.6 : 1,
+                            cursor: scheduleLocked ? 'default' : 'pointer',
+                        }}
+                    >
                         Auto-generate OOC schedule
                     </Box>
-                    <Box component="button" type="button" onClick={validateDialog.handleValidateSchedule} sx={{ ...ctrlSx, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={validateDialog.handleValidateSchedule}
+                        sx={{ ...ctrlSx, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
                         <FactCheckIcon sx={{ fontSize: 15 }} />
                         Validate schedule
                     </Box>
                 </>
-            )}
+            }
         >
             <Box sx={{ color: 'var(--text-muted)', fontSize: '0.85rem', mb: '16px' }}>
                 Season {season}: manage conference, team, and postseason schedules
@@ -509,7 +466,8 @@ const Scheduling = () => {
 
             {scheduleLocked && (
                 <Alert severity="warning" sx={{ mb: '16px' }}>
-                    The schedule for Season {season} is locked. Unlock it to make changes. Postseason entries are exempt from schedule lock.
+                    The schedule for Season {season} is locked. Unlock it to make changes. Postseason entries are exempt
+                    from schedule lock.
                 </Alert>
             )}
 
@@ -537,7 +495,11 @@ const Scheduling = () => {
                     teamMap={teamMap}
                     allSeasonSchedule={allSeasonSchedule}
                     teamWeekOccupiedAll={teamWeekOccupiedAll}
-                    onAddGameManually={() => addGameDialog.openManually(isConferenceScheduleComplete ? 'OUT_OF_CONFERENCE' : 'CONFERENCE_GAME')}
+                    onAddGameManually={() =>
+                        addGameDialog.openManually(
+                            isConferenceScheduleComplete ? 'OUT_OF_CONFERENCE' : 'CONFERENCE_GAME'
+                        )
+                    }
                     onGenerateSchedule={() => setGenerateDialogOpen(true)}
                     onEmptyCellClick={handleEmptyCellClick}
                     onFilledCellClick={(cell, weekNum) => moveDialog.openForCell(cell, weekNum)}

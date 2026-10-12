@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -13,7 +13,14 @@ import LogosEditor from '../../components/team/appearance/LogosEditor';
 import { UNIFORM_SECTIONS, TEAM_FIELD_SECTIONS } from '../../components/team/appearance/appearanceSections';
 import { getTeamById } from '../../api/teamApi';
 import {
-    getTeamUniform, updateTeamUniform, getTeamField, updateTeamField, getTeamColors, updateTeamColors, getTeamLogos, updateTeamLogos,
+    getTeamUniform,
+    updateTeamUniform,
+    getTeamField,
+    updateTeamField,
+    getTeamColors,
+    updateTeamColors,
+    getTeamLogos,
+    updateTeamLogos,
 } from '../../api/teamAppearanceApi';
 import { checkIfUserIsAdmin } from '../../utils/utils';
 
@@ -33,23 +40,40 @@ const TeamAppearance = ({ user }) => {
     const tab = TAB_VALUES.includes(tabParam) ? tabParam : 'uniform';
     const setTab = (value) => navigate(`/team-appearance/${teamId}/${value}`, { replace: true });
     const [dirtyTabs, setDirtyTabs] = useState({});
+    const loadScopeRef = useRef(null);
     const hasUnsaved = Object.values(dirtyTabs).some(Boolean);
-    const setTabDirty = (key) => (isDirty) => setDirtyTabs((current) => (current[key] === isDirty ? current : { ...current, [key]: isDirty }));
+    const setTabDirty = (key) => {
+        const scope = loadScopeRef.current;
+        return (isDirty) => {
+            if (scope.active) {
+                setDirtyTabs((current) => (current[key] === isDirty ? current : { ...current, [key]: isDirty }));
+            }
+        };
+    };
 
     useEffect(() => {
-        if (!TAB_VALUES.includes(tabParam)) navigate(`/team-appearance/${teamId}/uniform`, { replace: true });
+        if (!TAB_VALUES.includes(tabParam)) {
+            navigate(`/team-appearance/${teamId}/uniform`, { replace: true });
+        }
     }, [tabParam, teamId, navigate]);
 
     useEffect(() => {
-        if (!hasUnsaved) return undefined;
-        const handler = (event) => { event.preventDefault(); event.returnValue = UNSAVED_MESSAGE; return UNSAVED_MESSAGE; };
+        if (!hasUnsaved) {
+            return undefined;
+        }
+        const handler = (event) => {
+            event.preventDefault();
+            event.returnValue = UNSAVED_MESSAGE;
+            return UNSAVED_MESSAGE;
+        };
         window.addEventListener('beforeunload', handler);
         return () => window.removeEventListener('beforeunload', handler);
     }, [hasUnsaved]);
 
     const leave = () => {
-        // eslint-disable-next-line no-alert
-        if (!hasUnsaved || window.confirm(UNSAVED_MESSAGE)) navigate(-1);
+        if (!hasUnsaved || window.confirm(UNSAVED_MESSAGE)) {
+            navigate(-1);
+        }
     };
     const [team, setTeam] = useState(null);
     const [uniform, setUniform] = useState(null);
@@ -62,38 +86,76 @@ const TeamAppearance = ({ user }) => {
     const teamName = team?.name;
 
     useEffect(() => {
-        let cancelled = false;
+        const scope = { active: true };
+        loadScopeRef.current = scope;
         setLoading(true);
+        setError(null);
+        setTeam(null);
+        setUniform(null);
+        setField(null);
+        setColors(null);
+        setLogos(null);
+        setDirtyTabs({});
         getTeamById(teamId)
             .then((loadedTeam) => {
-                if (cancelled) return null;
+                if (!scope.active) {
+                    return null;
+                }
                 setTeam(loadedTeam);
                 const name = loadedTeam?.name;
-                if (!name) throw new Error('Team not found');
+                if (!name) {
+                    throw new Error('Team not found');
+                }
                 return Promise.all([getTeamUniform(name), getTeamField(name), getTeamColors(name), getTeamLogos(name)]);
             })
             .then((loaded) => {
-                if (cancelled || !loaded) return;
+                if (!scope.active || !loaded) {
+                    return;
+                }
                 const [loadedUniform, loadedField, loadedColors, loadedLogos] = loaded;
                 setUniform(loadedUniform);
                 setField(loadedField);
                 setColors(loadedColors);
                 setLogos(loadedLogos);
             })
-            .catch((err) => { if (!cancelled) setError(err.message || 'Failed to load team appearance'); })
-            .finally(() => { if (!cancelled) setLoading(false); });
-        return () => { cancelled = true; };
+            .catch((err) => {
+                if (scope.active) {
+                    setError(err.message || 'Failed to load team appearance');
+                }
+            })
+            .finally(() => {
+                if (scope.active) {
+                    setLoading(false);
+                }
+            });
+        return () => {
+            scope.active = false;
+        };
     }, [teamId]);
 
     const isAdmin = useMemo(() => checkIfUserIsAdmin(), []);
     const tabs = useMemo(() => (isAdmin ? [...BASE_TABS, { value: 'logos', label: 'Logos' }] : BASE_TABS), [isAdmin]);
-    const canEdit = useMemo(() => isAdmin || (!!user?.team && !!teamName && user.team === teamName), [isAdmin, user, teamName]);
+    const canEdit = useMemo(
+        () => isAdmin || (!!user?.team && !!teamName && user.team === teamName),
+        [isAdmin, user, teamName]
+    );
 
     if (loading) {
-        return <PageWrap><Box sx={{ display: 'flex', justifyContent: 'center', p: '40px' }}><CircularProgress /></Box></PageWrap>;
+        return (
+            <PageWrap>
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: '40px' }}>
+                    <CircularProgress />
+                </Box>
+            </PageWrap>
+        );
     }
     if (error || !teamName) {
-        return <PageWrap><BackButton onBack={() => navigate(-1)} /><Alert severity="error">{error || 'Team not found.'}</Alert></PageWrap>;
+        return (
+            <PageWrap>
+                <BackButton onBack={() => navigate(-1)} />
+                <Alert severity="error">{error || 'Team not found.'}</Alert>
+            </PageWrap>
+        );
     }
 
     const panel = (key) => ({ sx: { display: tab === key ? 'block' : 'none' } });
@@ -102,10 +164,19 @@ const TeamAppearance = ({ user }) => {
         <PageWrap>
             <BackButton onBack={leave} />
             <PageHeading
-                eyebrow={<Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><TeamMark team={team} size={20} />{teamName}</Box>}
+                eyebrow={
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                        <TeamMark team={team} size={20} />
+                        {teamName}
+                    </Box>
+                }
                 title="Team appearance"
             />
-            {!canEdit && <Alert severity="info" sx={{ mb: '16px' }}>You can only edit your own team&apos;s appearance. This is a read-only preview.</Alert>}
+            {!canEdit && (
+                <Alert severity="info" sx={{ mb: '16px' }}>
+                    You can only edit your own team&apos;s appearance. This is a read-only preview.
+                </Alert>
+            )}
             <Box sx={{ mb: '16px' }}>
                 <SegTabs value={tab} onChange={setTab} options={tabs} ariaLabel="Appearance section" />
             </Box>
@@ -123,10 +194,21 @@ const TeamAppearance = ({ user }) => {
                             { title: 'Primary helmet', views: [{ view: 'HELMET' }] },
                             { title: 'Home jersey', views: [{ view: 'JERSEY' }] },
                             { title: 'Away jersey', views: [{ view: 'AWAY_JERSEY' }] },
-                            { title: 'Secondary helmet', views: [{ view: 'SECONDARY_HELMET' }], note: 'Worn by the away team when both shells clash.' },
+                            {
+                                title: 'Secondary helmet',
+                                views: [{ view: 'SECONDARY_HELMET' }],
+                                note: 'Worn by the away team when both shells clash.',
+                            },
                         ]}
                         onDirtyChange={setTabDirty('uniform')}
-                        onSave={async (payload) => { setUniform(await updateTeamUniform(teamName, payload)); }}
+                        onSave={async (payload) => {
+                            const scope = loadScopeRef.current;
+                            const savedUniform = await updateTeamUniform(teamName, payload);
+                            if (scope.active) {
+                                setUniform(savedUniform);
+                            }
+                            return savedUniform;
+                        }}
                     />
                 </Box>
             )}
@@ -142,7 +224,14 @@ const TeamAppearance = ({ user }) => {
                         wallTextDefault={teamName}
                         canEdit={canEdit}
                         onDirtyChange={setTabDirty('field')}
-                        onSave={async (payload) => { setField(await updateTeamField(teamName, payload)); }}
+                        onSave={async (payload) => {
+                            const scope = loadScopeRef.current;
+                            const savedField = await updateTeamField(teamName, payload);
+                            if (scope.active) {
+                                setField(savedField);
+                            }
+                            return savedField;
+                        }}
                     />
                 </Box>
             )}
@@ -154,7 +243,14 @@ const TeamAppearance = ({ user }) => {
                         isAdmin={isAdmin}
                         canEditTertiary={canEdit}
                         onDirtyChange={setTabDirty('colors')}
-                        onSave={async (payload) => { setColors(await updateTeamColors(teamName, payload)); }}
+                        onSave={async (payload) => {
+                            const scope = loadScopeRef.current;
+                            const savedColors = await updateTeamColors(teamName, payload);
+                            if (scope.active) {
+                                setColors(savedColors);
+                            }
+                            return savedColors;
+                        }}
                     />
                 </Box>
             )}
@@ -165,7 +261,14 @@ const TeamAppearance = ({ user }) => {
                         source={logos}
                         canEdit={isAdmin}
                         onDirtyChange={setTabDirty('logos')}
-                        onSave={async (payload) => { setLogos(await updateTeamLogos(teamName, payload)); }}
+                        onSave={async (payload) => {
+                            const scope = loadScopeRef.current;
+                            const savedLogos = await updateTeamLogos(teamName, payload);
+                            if (scope.active) {
+                                setLogos(savedLogos);
+                            }
+                            return savedLogos;
+                        }}
                     />
                 </Box>
             )}

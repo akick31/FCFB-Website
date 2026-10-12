@@ -5,7 +5,7 @@ export const getVegasOdds = async (homeTeamName, awayTeamName) => {
         const response = await apiClient.get('/vegas-odds', { params: { homeTeamName, awayTeamName } });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch vegas odds:', error);
+        console.error('Failed to fetch vegas odds:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch vegas odds');
         }

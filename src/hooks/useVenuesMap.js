@@ -8,12 +8,16 @@ const listeners = new Set();
 const notify = () => listeners.forEach((listener) => listener());
 
 const loadBulk = () => {
-    if (bulk || bulkInflight) return;
+    if (bulk || bulkInflight) {
+        return;
+    }
     bulkInflight = getAllVenues()
         .then((venues) => {
             const map = {};
             for (const venue of venues || []) {
-                if (venue?.name) map[venue.name] = venue;
+                if (venue?.name) {
+                    map[venue.name] = venue;
+                }
             }
             bulk = map;
             notify();

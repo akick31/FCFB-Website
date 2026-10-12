@@ -10,6 +10,7 @@ import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
 import { isGameOngoing } from '../game/scoreboard/utils/scoreboardFormatters';
 import { formatScoreboardQuarter } from '../../utils/gameUtils';
 import TeamMark from '../ui/TeamMark';
+import { startPolling } from '../../utils/polling';
 
 const POLL_MS = 30000;
 const REGULAR_SEASON_MAX_WEEK = 13;
@@ -19,11 +20,15 @@ const loadGames = async () => {
         getCurrentSeasonOrLatest().catch(() => null),
         getCurrentWeekOrLatest().catch(() => null),
     ]);
-    if (season == null) return [];
+    if (season == null) {
+        return [];
+    }
 
     if (week != null && week <= REGULAR_SEASON_MAX_WEEK) {
         const [ongoing, past] = await Promise.all([
-            getFilteredGames({ category: 'ONGOING', season, week, sort: 'CLOSEST_TO_END', page: 0, size: 50 }).catch(() => null),
+            getFilteredGames({ category: 'ONGOING', season, week, sort: 'CLOSEST_TO_END', page: 0, size: 50 }).catch(
+                () => null
+            ),
             getFilteredGames({ category: 'PAST', season, week, sort: 'NEWEST', page: 0, size: 50 }).catch(() => null),
         ]);
         return [...(ongoing?.content || []), ...(past?.content || [])].filter((game) => game.game_type !== 'SCRIMMAGE');
@@ -36,7 +41,9 @@ const loadGames = async () => {
 };
 
 const statusLabel = (game) => {
-    if (!isGameOngoing(game.game_status)) return 'FINAL';
+    if (!isGameOngoing(game.game_status)) {
+        return 'FINAL';
+    }
     const quarter = formatScoreboardQuarter(game.quarter);
     return game.clock ? `${quarter} ${game.clock}` : quarter;
 };
@@ -46,8 +53,12 @@ const TickerItem = ({ game, teamsMap }) => {
     const away = teamsMap[game.away_team];
 
     useEffect(() => {
-        if (!home) ensureTeam(game.home_team);
-        if (!away) ensureTeam(game.away_team);
+        if (!home) {
+            ensureTeam(game.home_team);
+        }
+        if (!away) {
+            ensureTeam(game.away_team);
+        }
     }, [game.home_team, game.away_team, home, away]);
 
     const homeTeam = home || { abbreviation: game.home_team };
@@ -75,13 +86,39 @@ const TickerItem = ({ game, teamsMap }) => {
                 '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' },
             }}
         >
-            <Box component="span" sx={{ fontSize: '0.56rem', fontWeight: 800, letterSpacing: '0.04em', color: isGameOngoing(game.game_status) ? 'var(--live)' : 'var(--text-dim)' }}>
+            <Box
+                component="span"
+                sx={{
+                    fontSize: '0.56rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.04em',
+                    color: isGameOngoing(game.game_status) ? 'var(--live)' : 'var(--text-dim)',
+                }}
+            >
                 {statusLabel(game)}
             </Box>
             <TeamMark team={awayTeam} size={16} />
-            <Box component="b" sx={{ fontWeight: 800, color: homeWon ? 'var(--text-dim)' : 'var(--text)', fontVariantNumeric: 'tabular-nums' }}>{game.away_score}</Box>
+            <Box
+                component="b"
+                sx={{
+                    fontWeight: 800,
+                    color: homeWon ? 'var(--text-dim)' : 'var(--text)',
+                    fontVariantNumeric: 'tabular-nums',
+                }}
+            >
+                {game.away_score}
+            </Box>
             <TeamMark team={homeTeam} size={16} />
-            <Box component="b" sx={{ fontWeight: 800, color: homeWon ? 'var(--text)' : 'var(--text-dim)', fontVariantNumeric: 'tabular-nums' }}>{game.home_score}</Box>
+            <Box
+                component="b"
+                sx={{
+                    fontWeight: 800,
+                    color: homeWon ? 'var(--text)' : 'var(--text-dim)',
+                    fontVariantNumeric: 'tabular-nums',
+                }}
+            >
+                {game.home_score}
+            </Box>
         </Box>
     );
 };
@@ -96,36 +133,89 @@ const LiveTicker = () => {
     const [games, setGames] = useState([]);
     const trackRef = useRef(null);
 
-    useEffect(() => {
-        let active = true;
-        const refresh = () => loadGames().then((next) => { if (active) setGames(next); }).catch(() => {});
-        refresh();
-        const timer = setInterval(refresh, POLL_MS);
-        return () => {
-            active = false;
-            clearInterval(timer);
-        };
-    }, []);
+    useEffect(
+        () =>
+            startPolling(
+                async (signal) => {
+                    const next = await loadGames();
+                    if (!signal.aborted) {
+                        setGames(next);
+                    }
+                },
+                POLL_MS,
+                () => {}
+            ),
+        []
+    );
 
     const anyLive = games.some((game) => isGameOngoing(game.game_status));
     const scrollBy = (dir) => trackRef.current?.scrollBy({ left: dir * 280, behavior: 'smooth' });
 
-    if (games.length === 0) return null;
+    if (games.length === 0) {
+        return null;
+    }
 
     return (
-        <Box sx={{ display: 'flex', alignItems: 'stretch', backgroundColor: 'var(--brand-ink)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', px: '14px', fontFamily: 'var(--cond)', fontSize: '0.72rem', letterSpacing: '0.06em', color: '#cfe3ee', backgroundColor: 'var(--brand-deep)', borderRight: '1px solid var(--line)' }}>
+        <Box
+            sx={{
+                display: 'flex',
+                alignItems: 'stretch',
+                backgroundColor: 'var(--brand-ink)',
+                borderTop: '1px solid var(--line)',
+                borderBottom: '1px solid var(--line)',
+            }}
+        >
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    px: '14px',
+                    fontFamily: 'var(--cond)',
+                    fontSize: '0.72rem',
+                    letterSpacing: '0.06em',
+                    color: '#cfe3ee',
+                    backgroundColor: 'var(--brand-deep)',
+                    borderRight: '1px solid var(--line)',
+                }}
+            >
                 {anyLive ? 'LIVE' : 'SCORES'}
             </Box>
-            <IconButton onClick={() => scrollBy(-1)} aria-label="Scroll scores left" sx={{ borderRadius: 0, color: 'var(--text-muted)', borderRight: '1px solid var(--line-soft)', '&:hover': { color: 'var(--text)', backgroundColor: 'var(--surface)' } }}>
+            <IconButton
+                onClick={() => scrollBy(-1)}
+                aria-label="Scroll scores left"
+                sx={{
+                    borderRadius: 0,
+                    color: 'var(--text-muted)',
+                    borderRight: '1px solid var(--line-soft)',
+                    '&:hover': { color: 'var(--text)', backgroundColor: 'var(--surface)' },
+                }}
+            >
                 <ChevronLeft fontSize="small" />
             </IconButton>
-            <Box ref={trackRef} sx={{ display: 'flex', overflowX: 'auto', flex: 1, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+            <Box
+                ref={trackRef}
+                sx={{
+                    display: 'flex',
+                    overflowX: 'auto',
+                    flex: 1,
+                    scrollbarWidth: 'none',
+                    '&::-webkit-scrollbar': { display: 'none' },
+                }}
+            >
                 {games.map((game) => (
                     <TickerItem key={game.game_id} game={game} teamsMap={teamsMap} />
                 ))}
             </Box>
-            <IconButton onClick={() => scrollBy(1)} aria-label="Scroll scores right" sx={{ borderRadius: 0, color: 'var(--text-muted)', borderLeft: '1px solid var(--line-soft)', '&:hover': { color: 'var(--text)', backgroundColor: 'var(--surface)' } }}>
+            <IconButton
+                onClick={() => scrollBy(1)}
+                aria-label="Scroll scores right"
+                sx={{
+                    borderRadius: 0,
+                    color: 'var(--text-muted)',
+                    borderLeft: '1px solid var(--line-soft)',
+                    '&:hover': { color: 'var(--text)', backgroundColor: 'var(--surface)' },
+                }}
+            >
                 <ChevronRight fontSize="small" />
             </IconButton>
         </Box>

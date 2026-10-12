@@ -4,8 +4,8 @@ export const getBowl = async (name) => {
     try {
         const response = await apiClient.get('/schedule/bowl', { params: { name } });
         return response.data;
-    } catch (error) {
-        console.error("Failed to fetch bowl:", error);
+    } catch {
+        console.error('Failed to fetch bowl:');
         return null;
     }
 };
@@ -13,15 +13,15 @@ export const getBowl = async (name) => {
 export const getScheduleBySeasonAndTeam = async (season, team) => {
     try {
         const response = await apiClient.get('/schedule/season', {
-            params: { season, team }
+            params: { season, team },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch schedule:", error);
+        console.error('Failed to fetch schedule:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch schedule");
+            throw new Error(error.response.data.error || 'Failed to fetch schedule');
         }
-        throw new Error("An unexpected error occurred while fetching schedule");
+        throw new Error('An unexpected error occurred while fetching schedule');
     }
 };
 
@@ -30,11 +30,11 @@ export const getScheduleBySeason = async (season) => {
         const response = await apiClient.get('/schedule/season', { params: { season } });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch season schedule:", error);
+        console.error('Failed to fetch season schedule:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch season schedule");
+            throw new Error(error.response.data.error || 'Failed to fetch season schedule');
         }
-        throw new Error("An unexpected error occurred while fetching season schedule");
+        throw new Error('An unexpected error occurred while fetching season schedule');
     }
 };
 
@@ -43,11 +43,11 @@ export const getScheduleBySeasonAndWeek = async (season, week) => {
         const response = await apiClient.get('/schedule/season/week', { params: { season, week } });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch week schedule:", error);
+        console.error('Failed to fetch week schedule:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch week schedule");
+            throw new Error(error.response.data.error || 'Failed to fetch week schedule');
         }
-        throw new Error("An unexpected error occurred while fetching week schedule");
+        throw new Error('An unexpected error occurred while fetching week schedule');
     }
 };
 
@@ -56,26 +56,26 @@ export const validateSchedule = async (season) => {
         const response = await apiClient.get('/schedule/season/validate', { params: { season } });
         return response.data;
     } catch (error) {
-        console.error("Failed to validate schedule:", error);
+        console.error('Failed to validate schedule:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to validate schedule");
+            throw new Error(error.response.data.error || 'Failed to validate schedule');
         }
-        throw new Error("An unexpected error occurred while validating schedule");
+        throw new Error('An unexpected error occurred while validating schedule');
     }
 };
 
 export const getConferenceSchedule = async (season, conference) => {
     try {
         const response = await apiClient.get('/schedule/conference', {
-            params: { season, conference }
+            params: { season, conference },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch conference schedule:", error);
+        console.error('Failed to fetch conference schedule:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch conference schedule");
+            throw new Error(error.response.data.error || 'Failed to fetch conference schedule');
         }
-        throw new Error("An unexpected error occurred while fetching conference schedule");
+        throw new Error('An unexpected error occurred while fetching conference schedule');
     }
 };
 
@@ -84,26 +84,26 @@ export const getScheduleById = async (id) => {
         const response = await apiClient.get('/schedule', { params: { id } });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch schedule entry:", error);
+        console.error('Failed to fetch schedule entry:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch schedule entry");
+            throw new Error(error.response.data.error || 'Failed to fetch schedule entry');
         }
-        throw new Error("An unexpected error occurred while fetching schedule entry");
+        throw new Error('An unexpected error occurred while fetching schedule entry');
     }
 };
 
 export const isTeamAvailable = async (season, week, team) => {
     try {
         const response = await apiClient.get('/schedule/team-available', {
-            params: { season, week, team }
+            params: { season, week, team },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to check team availability:", error);
+        console.error('Failed to check team availability:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to check team availability");
+            throw new Error(error.response.data.error || 'Failed to check team availability');
         }
-        throw new Error("An unexpected error occurred while checking team availability");
+        throw new Error('An unexpected error occurred while checking team availability');
     }
 };
 
@@ -112,11 +112,11 @@ export const createScheduleEntry = async (entry) => {
         const response = await apiClient.post('/schedule', entry);
         return response.data;
     } catch (error) {
-        console.error("Failed to create schedule entry:", error);
+        console.error('Failed to create schedule entry:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to create schedule entry");
+            throw new Error(error.response.data.error || 'Failed to create schedule entry');
         }
-        throw new Error("An unexpected error occurred while creating schedule entry");
+        throw new Error('An unexpected error occurred while creating schedule entry');
     }
 };
 
@@ -125,11 +125,11 @@ export const createBulkScheduleEntries = async (entries) => {
         const response = await apiClient.post('/schedule/bulk', { entries });
         return response.data;
     } catch (error) {
-        console.error("Failed to create bulk schedule entries:", error);
+        console.error('Failed to create bulk schedule entries:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to create bulk schedule entries");
+            throw new Error(error.response.data.error || 'Failed to create bulk schedule entries');
         }
-        throw new Error("An unexpected error occurred while creating bulk schedule entries");
+        throw new Error('An unexpected error occurred while creating bulk schedule entries');
     }
 };
 
@@ -140,24 +140,24 @@ export const generateConferenceSchedule = async (request) => {
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to generate conference schedule:", error);
+        console.error('Failed to generate conference schedule:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to generate conference schedule");
+            throw new Error(error.response.data.error || 'Failed to generate conference schedule');
         }
-        throw new Error("An unexpected error occurred while generating conference schedule");
+        throw new Error('An unexpected error occurred while generating conference schedule');
     }
 };
 
 export const generateAllConferenceSchedules = async (season) => {
     try {
-        const response = await apiClient.post('/schedule/generate-all-conferences', null, { params: { season } });
+        const response = await apiClient.post('/conference-schedule-generation-job', null, { params: { season } });
         return response.data;
     } catch (error) {
-        console.error("Failed to start all conference schedule generation:", error);
+        console.error('Failed to start all conference schedule generation:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to start schedule generation");
+            throw new Error(error.response.data.error || 'Failed to start schedule generation');
         }
-        throw new Error("An unexpected error occurred while starting schedule generation");
+        throw new Error('An unexpected error occurred while starting schedule generation');
     }
 };
 
@@ -169,80 +169,80 @@ export const generateOutOfConferenceSchedule = async (season) => {
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to generate out-of-conference schedule:", error);
+        console.error('Failed to generate out-of-conference schedule:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to generate out-of-conference schedule");
+            throw new Error(error.response.data.error || 'Failed to generate out-of-conference schedule');
         }
-        throw new Error("An unexpected error occurred while generating out-of-conference schedule");
+        throw new Error('An unexpected error occurred while generating out-of-conference schedule');
     }
 };
 
 export const pollScheduleGenJobStatus = async (jobId) => {
     try {
-        const response = await apiClient.get('/schedule/generate-all-conferences/status', { params: { jobId } });
+        const response = await apiClient.get('/conference-schedule-generation-job/status', { params: { jobId } });
         return response.data;
     } catch (error) {
-        console.error("Failed to poll schedule generation status:", error);
+        console.error('Failed to poll schedule generation status:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to poll schedule generation status");
+            throw new Error(error.response.data.error || 'Failed to poll schedule generation status');
         }
-        throw new Error("An unexpected error occurred while polling schedule generation status");
+        throw new Error('An unexpected error occurred while polling schedule generation status');
     }
 };
 
 export const startGameWeek = async (season, week) => {
     try {
-        const response = await apiClient.post('/game/week', null, {
+        const response = await apiClient.post('/start-game-week-job', null, {
             params: { season, week },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to start game week:", error);
+        console.error('Failed to start game week:');
         if (error.response) {
-            const startError = new Error(error.response.data.error || "Failed to start game week");
+            const startError = new Error(error.response.data.error || 'Failed to start game week');
             startError.status = error.response.status;
             throw startError;
         }
-        throw new Error("An unexpected error occurred while starting game week");
+        throw new Error('An unexpected error occurred while starting game week');
     }
 };
 
 export const getGameWeekJobStatus = async (jobId) => {
     try {
-        const response = await apiClient.get('/game/week/status', { params: { jobId } });
+        const response = await apiClient.get('/start-game-week-job/status', { params: { jobId } });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch job status:", error);
+        console.error('Failed to fetch job status:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch job status");
+            throw new Error(error.response.data.error || 'Failed to fetch job status');
         }
-        throw new Error("An unexpected error occurred while fetching job status");
+        throw new Error('An unexpected error occurred while fetching job status');
     }
 };
 
 export const getAllGameWeekJobs = async () => {
     try {
-        const response = await apiClient.get('/game/week/jobs');
+        const response = await apiClient.get('/start-game-week-job/jobs');
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch game week jobs:", error);
+        console.error('Failed to fetch game week jobs:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch game week jobs");
+            throw new Error(error.response.data.error || 'Failed to fetch game week jobs');
         }
-        throw new Error("An unexpected error occurred while fetching game week jobs");
+        throw new Error('An unexpected error occurred while fetching game week jobs');
     }
 };
 
 export const retryFailedGames = async (jobId) => {
     try {
-        const response = await apiClient.post('/game/week/retry', null, { params: { jobId } });
+        const response = await apiClient.post('/start-game-week-job/retry', null, { params: { jobId } });
         return response.data;
     } catch (error) {
-        console.error("Failed to retry failed games:", error);
+        console.error('Failed to retry failed games:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to retry failed games");
+            throw new Error(error.response.data.error || 'Failed to retry failed games');
         }
-        throw new Error("An unexpected error occurred while retrying failed games");
+        throw new Error('An unexpected error occurred while retrying failed games');
     }
 };
 
@@ -251,11 +251,11 @@ export const getPostseasonSchedule = async (season) => {
         const response = await apiClient.get('/schedule/postseason', { params: { season } });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch postseason schedule:", error);
+        console.error('Failed to fetch postseason schedule:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch postseason schedule");
+            throw new Error(error.response.data.error || 'Failed to fetch postseason schedule');
         }
-        throw new Error("An unexpected error occurred while fetching postseason schedule");
+        throw new Error('An unexpected error occurred while fetching postseason schedule');
     }
 };
 
@@ -264,34 +264,34 @@ export const saveConferenceRules = async (conference, numConferenceGames, protec
         const response = await apiClient.post('/schedule/conference-rules', {
             conference,
             numConferenceGames,
-            protectedRivalries: protectedRivalries.filter(r => r.team1 && r.team2),
-            divisions: divisions.filter(d => d && d.trim()),
+            protectedRivalries: protectedRivalries.filter((r) => r.team1 && r.team2),
+            divisions: divisions.filter((d) => d && d.trim()),
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to save conference rules:", error);
+        console.error('Failed to save conference rules:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to save conference rules");
+            throw new Error(error.response.data.error || 'Failed to save conference rules');
         }
-        throw new Error("An unexpected error occurred while saving conference rules");
+        throw new Error('An unexpected error occurred while saving conference rules');
     }
 };
 
 export const getConferenceRules = async (conference) => {
     try {
         const response = await apiClient.get('/schedule/conference-rules', {
-            params: { conference }
+            params: { conference },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch conference rules:", error);
+        console.error('Failed to fetch conference rules:');
         if (error.response) {
             if (error.response.status === 404) {
                 return null;
             }
-            throw new Error(error.response.data.error || "Failed to fetch conference rules");
+            throw new Error(error.response.data.error || 'Failed to fetch conference rules');
         }
-        throw new Error("An unexpected error occurred while fetching conference rules");
+        throw new Error('An unexpected error occurred while fetching conference rules');
     }
 };
 
@@ -300,11 +300,11 @@ export const updateScheduleEntry = async (id, entry) => {
         const response = await apiClient.put('/schedule', entry, { params: { id } });
         return response.data;
     } catch (error) {
-        console.error("Failed to update schedule entry:", error);
+        console.error('Failed to update schedule entry:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to update schedule entry");
+            throw new Error(error.response.data.error || 'Failed to update schedule entry');
         }
-        throw new Error("An unexpected error occurred while updating schedule entry");
+        throw new Error('An unexpected error occurred while updating schedule entry');
     }
 };
 
@@ -313,11 +313,11 @@ export const moveGame = async (scheduleId, newWeek) => {
         const response = await apiClient.put('/schedule/move', { scheduleId, newWeek });
         return response.data;
     } catch (error) {
-        console.error("Failed to move game:", error);
+        console.error('Failed to move game:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to move game");
+            throw new Error(error.response.data.error || 'Failed to move game');
         }
-        throw new Error("An unexpected error occurred while moving game");
+        throw new Error('An unexpected error occurred while moving game');
     }
 };
 
@@ -326,11 +326,11 @@ export const deleteScheduleEntry = async (id) => {
         await apiClient.delete('/schedule', { params: { id } });
         return true;
     } catch (error) {
-        console.error("Failed to delete schedule entry:", error);
+        console.error('Failed to delete schedule entry:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to delete schedule entry");
+            throw new Error(error.response.data.error || 'Failed to delete schedule entry');
         }
-        throw new Error("An unexpected error occurred while deleting schedule entry");
+        throw new Error('An unexpected error occurred while deleting schedule entry');
     }
 };
 
@@ -339,10 +339,10 @@ export const deleteScheduleBySeason = async (season) => {
         await apiClient.delete('/schedule/season', { params: { season } });
         return true;
     } catch (error) {
-        console.error("Failed to delete season schedule:", error);
+        console.error('Failed to delete season schedule:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to delete season schedule");
+            throw new Error(error.response.data.error || 'Failed to delete season schedule');
         }
-        throw new Error("An unexpected error occurred while deleting season schedule");
+        throw new Error('An unexpected error occurred while deleting season schedule');
     }
 };

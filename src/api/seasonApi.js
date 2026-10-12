@@ -5,24 +5,24 @@ export const getCurrentWeek = async () => {
         const response = await apiClient.get(`/season/current/week`);
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch current week:", error);
+        console.error('Failed to fetch current week:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch current week");
+            throw new Error(error.response.data.error || 'Failed to fetch current week');
         }
-        throw new Error("An unexpected error occurred while fetching current week");
+        throw new Error('An unexpected error occurred while fetching current week');
     }
 };
 
 export const getCurrentSeason = async () => {
     try {
         const response = await apiClient.get(`/season/current`);
-        return response.data["season_number"];
+        return response.data['season_number'];
     } catch (error) {
-        console.error("Failed to fetch current season:", error);
+        console.error('Failed to fetch current season:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch current season");
+            throw new Error(error.response.data.error || 'Failed to fetch current season');
         }
-        throw new Error("An unexpected error occurred while fetching current season");
+        throw new Error('An unexpected error occurred while fetching current season');
     }
 };
 
@@ -31,11 +31,11 @@ export const getAllSeasons = async () => {
         const response = await apiClient.get(`/season/all`);
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch all seasons:", error);
+        console.error('Failed to fetch all seasons:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch all seasons");
+            throw new Error(error.response.data.error || 'Failed to fetch all seasons');
         }
-        throw new Error("An unexpected error occurred while fetching all seasons");
+        throw new Error('An unexpected error occurred while fetching all seasons');
     }
 };
 
@@ -45,7 +45,9 @@ export const getCurrentSeasonOrLatest = async () => {
     } catch (error) {
         const latestCompleted = await getLatestCompletedSeason();
         const seasonNumber = latestCompleted?.season_number ?? latestCompleted?.seasonNumber;
-        if (seasonNumber == null) throw error;
+        if (seasonNumber == null) {
+            throw error;
+        }
         return seasonNumber;
     }
 };
@@ -56,7 +58,9 @@ export const getCurrentWeekOrLatest = async () => {
     } catch (error) {
         const latestCompleted = await getLatestCompletedSeason();
         const week = latestCompleted?.current_week ?? latestCompleted?.currentWeek;
-        if (week == null) throw error;
+        if (week == null) {
+            throw error;
+        }
         return week;
     }
 };
@@ -67,7 +71,9 @@ export const getCurrentSeasonOrUpcoming = async () => {
     } catch (error) {
         const upcoming = await getUpcomingSeason();
         const seasonNumber = upcoming?.season_number ?? upcoming?.seasonNumber;
-        if (seasonNumber == null) throw error;
+        if (seasonNumber == null) {
+            throw error;
+        }
         return seasonNumber;
     }
 };
@@ -77,11 +83,11 @@ export const getUpcomingSeason = async () => {
         const response = await apiClient.get(`/season/upcoming`);
         return response.data || null;
     } catch (error) {
-        console.error("Failed to fetch upcoming season:", error);
+        console.error('Failed to fetch upcoming season:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch upcoming season");
+            throw new Error(error.response.data.error || 'Failed to fetch upcoming season');
         }
-        throw new Error("An unexpected error occurred while fetching upcoming season");
+        throw new Error('An unexpected error occurred while fetching upcoming season');
     }
 };
 
@@ -90,11 +96,11 @@ export const getLatestCompletedSeason = async () => {
         const response = await apiClient.get(`/season/latest-completed`);
         return response.data || null;
     } catch (error) {
-        console.error("Failed to fetch latest completed season:", error);
+        console.error('Failed to fetch latest completed season:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch latest completed season");
+            throw new Error(error.response.data.error || 'Failed to fetch latest completed season');
         }
-        throw new Error("An unexpected error occurred while fetching latest completed season");
+        throw new Error('An unexpected error occurred while fetching latest completed season');
     }
 };
 
@@ -103,11 +109,11 @@ export const getSeasonByNumber = async (seasonNumber) => {
         const response = await apiClient.get('/season', { params: { seasonNumber } });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch season:", error);
+        console.error('Failed to fetch season:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch season");
+            throw new Error(error.response.data.error || 'Failed to fetch season');
         }
-        throw new Error("An unexpected error occurred while fetching season");
+        throw new Error('An unexpected error occurred while fetching season');
     }
 };
 
@@ -116,11 +122,11 @@ export const isScheduleLocked = async (seasonNumber) => {
         const response = await apiClient.get('/season/schedule-locked', { params: { seasonNumber } });
         return response.data;
     } catch (error) {
-        console.error("Failed to check schedule lock:", error);
+        console.error('Failed to check schedule lock:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to check schedule lock");
+            throw new Error(error.response.data.error || 'Failed to check schedule lock');
         }
-        throw new Error("An unexpected error occurred while checking schedule lock");
+        throw new Error('An unexpected error occurred while checking schedule lock');
     }
 };
 
@@ -129,11 +135,11 @@ export const lockSchedule = async (seasonNumber) => {
         const response = await apiClient.put('/season/lock-schedule', null, { params: { seasonNumber } });
         return response.data;
     } catch (error) {
-        console.error("Failed to lock schedule:", error);
+        console.error('Failed to lock schedule:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to lock schedule");
+            throw new Error(error.response.data.error || 'Failed to lock schedule');
         }
-        throw new Error("An unexpected error occurred while locking schedule");
+        throw new Error('An unexpected error occurred while locking schedule');
     }
 };
 
@@ -142,11 +148,11 @@ export const unlockSchedule = async (seasonNumber) => {
         const response = await apiClient.put('/season/unlock-schedule', null, { params: { seasonNumber } });
         return response.data;
     } catch (error) {
-        console.error("Failed to unlock schedule:", error);
+        console.error('Failed to unlock schedule:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to unlock schedule");
+            throw new Error(error.response.data.error || 'Failed to unlock schedule');
         }
-        throw new Error("An unexpected error occurred while unlocking schedule");
+        throw new Error('An unexpected error occurred while unlocking schedule');
     }
 };
 
@@ -155,13 +161,13 @@ export const startSeason = async () => {
         const response = await apiClient.post('/season');
         return response.data;
     } catch (error) {
-        console.error("Failed to start season:", error);
+        console.error('Failed to start season:');
         if (error.response) {
-            const startError = new Error(error.response.data.error || "Failed to start season");
+            const startError = new Error(error.response.data.error || 'Failed to start season');
             startError.status = error.response.status;
             throw startError;
         }
-        throw new Error("An unexpected error occurred while starting season");
+        throw new Error('An unexpected error occurred while starting season');
     }
 };
 
@@ -170,11 +176,11 @@ export const endSeason = async () => {
         const response = await apiClient.post('/season/end');
         return response.data;
     } catch (error) {
-        console.error("Failed to end season:", error);
+        console.error('Failed to end season:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to end season");
+            throw new Error(error.response.data.error || 'Failed to end season');
         }
-        throw new Error("An unexpected error occurred while ending season");
+        throw new Error('An unexpected error occurred while ending season');
     }
 };
 
@@ -183,11 +189,11 @@ export const setCurrentSeason = async (seasonNumber) => {
         const response = await apiClient.put('/season/set-current', null, { params: { seasonNumber } });
         return response.data;
     } catch (error) {
-        console.error("Failed to set current season:", error);
+        console.error('Failed to set current season:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to set current season");
+            throw new Error(error.response.data.error || 'Failed to set current season');
         }
-        throw new Error("An unexpected error occurred while setting current season");
+        throw new Error('An unexpected error occurred while setting current season');
     }
 };
 
@@ -196,11 +202,11 @@ export const updateCurrentWeek = async (seasonNumber, week) => {
         const response = await apiClient.put('/season/week', null, { params: { seasonNumber, week } });
         return response.data;
     } catch (error) {
-        console.error("Failed to update current week:", error);
+        console.error('Failed to update current week:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to update current week");
+            throw new Error(error.response.data.error || 'Failed to update current week');
         }
-        throw new Error("An unexpected error occurred while updating current week");
+        throw new Error('An unexpected error occurred while updating current week');
     }
 };
 
@@ -209,10 +215,10 @@ export const createSeasonForScheduling = async (seasonNumber) => {
         const response = await apiClient.post('/season', null, { params: { seasonNumber } });
         return response.data;
     } catch (error) {
-        console.error("Failed to create season:", error);
+        console.error('Failed to create season:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to create season");
+            throw new Error(error.response.data.error || 'Failed to create season');
         }
-        throw new Error("An unexpected error occurred while creating season");
+        throw new Error('An unexpected error occurred while creating season');
     }
 };

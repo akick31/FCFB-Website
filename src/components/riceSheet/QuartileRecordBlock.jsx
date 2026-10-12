@@ -18,7 +18,9 @@ const TOP_N_ENTRIES = [
 
 const EntryCell = ({ label, winsKey, lossesKey, resume }) => (
     <Box sx={{ textAlign: 'center' }}>
-        <Box sx={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 700, textTransform: 'uppercase' }}>{label}</Box>
+        <Box sx={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 700, textTransform: 'uppercase' }}>
+            {label}
+        </Box>
         <Box className="num" sx={{ fontSize: '0.8rem', fontWeight: 700 }}>
             {resume ? record(resume[winsKey], resume[lossesKey]) : '-'}
         </Box>
@@ -35,10 +37,14 @@ EntryCell.propTypes = {
 const QuartileRecordBlock = ({ resume }) => (
     <Box sx={{ py: 1 }}>
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>
-            {QUARTILE_ENTRIES.map((entry) => <EntryCell key={entry.label} {...entry} resume={resume} />)}
+            {QUARTILE_ENTRIES.map((entry) => (
+                <EntryCell key={entry.label} {...entry} resume={resume} />
+            ))}
         </Box>
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, mt: 1 }}>
-            {TOP_N_ENTRIES.map((entry) => <EntryCell key={entry.label} {...entry} resume={resume} />)}
+            {TOP_N_ENTRIES.map((entry) => (
+                <EntryCell key={entry.label} {...entry} resume={resume} />
+            ))}
         </Box>
     </Box>
 );

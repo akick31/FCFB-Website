@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { generateOutOfConferenceSchedule } from '../api/scheduleApi';
 
-const useOocScheduleDialog = ({ season, onSuccess, showSnackbar }) => {
+const useOocScheduleDialog = ({ season, scheduleLocked, onSuccess, showSnackbar }) => {
     const [oocDialogOpen, setOocDialogOpen] = useState(false);
     const [oocLoading, setOocLoading] = useState(false);
     const [oocResult, setOocResult] = useState(null);
@@ -12,12 +12,18 @@ const useOocScheduleDialog = ({ season, onSuccess, showSnackbar }) => {
     };
 
     const handleGenerateOocSchedule = async () => {
+        if (scheduleLocked) {
+            return;
+        }
         try {
             setOocLoading(true);
             const result = await generateOutOfConferenceSchedule(season);
             setOocResult(result);
             if (result.unmatchedSlots?.length > 0) {
-                showSnackbar(`Scheduled ${result.gamesScheduled} OOC games, ${result.unmatchedSlots.length} slots left open`, 'warning');
+                showSnackbar(
+                    `Scheduled ${result.gamesScheduled} OOC games, ${result.unmatchedSlots.length} slots left open`,
+                    'warning'
+                );
             } else {
                 showSnackbar(`Scheduled ${result.gamesScheduled} OOC games. Every team's schedule is full!`);
             }
@@ -31,9 +37,12 @@ const useOocScheduleDialog = ({ season, onSuccess, showSnackbar }) => {
     };
 
     return {
-        oocDialogOpen, setOocDialogOpen,
-        oocLoading, oocResult,
-        openDialog, handleGenerateOocSchedule,
+        oocDialogOpen,
+        setOocDialogOpen,
+        oocLoading,
+        oocResult,
+        openDialog,
+        handleGenerateOocSchedule,
     };
 };
 

@@ -1,32 +1,36 @@
 import apiClient from './apiClient';
 
 export const getTeamByName = async (teamName) => {
-    if (!teamName) return {};
+    if (!teamName) {
+        return {};
+    }
 
     try {
         const response = await apiClient.get('/team/name', { params: { name: teamName } });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch team by name:", error);
+        console.error('Failed to fetch team by name:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch team by name");
+            throw new Error(error.response.data.error || 'Failed to fetch team by name');
         }
-        throw new Error("An unexpected error occurred while fetching team by name");
+        throw new Error('An unexpected error occurred while fetching team by name');
     }
 };
 
 export const getTeamById = async (id) => {
-    if (!id) return {};
+    if (!id) {
+        return {};
+    }
 
     try {
         const response = await apiClient.get('/team', { params: { teamId: id } });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch team by id:", error);
+        console.error('Failed to fetch team by id:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch team by id");
+            throw new Error(error.response.data.error || 'Failed to fetch team by id');
         }
-        throw new Error("An unexpected error occurred while fetching team by id");
+        throw new Error('An unexpected error occurred while fetching team by id');
     }
 };
 
@@ -44,11 +48,11 @@ export const getAllTeams = async () => {
             return 0;
         });
     } catch (error) {
-        console.error("Failed to fetch all teams:", error);
+        console.error('Failed to fetch all teams:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch all teams");
+            throw new Error(error.response.data.error || 'Failed to fetch all teams');
         }
-        throw new Error("An unexpected error occurred while fetching all teams");
+        throw new Error('An unexpected error occurred while fetching all teams');
     }
 };
 
@@ -66,11 +70,11 @@ export const getAllTeamsIncludingInactive = async () => {
             return 0;
         });
     } catch (error) {
-        console.error("Failed to fetch all teams including inactive:", error);
+        console.error('Failed to fetch all teams including inactive:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch all teams including inactive");
+            throw new Error(error.response.data.error || 'Failed to fetch all teams including inactive');
         }
-        throw new Error("An unexpected error occurred while fetching all teams including inactive");
+        throw new Error('An unexpected error occurred while fetching all teams including inactive');
     }
 };
 
@@ -88,11 +92,11 @@ export const getOpenTeams = async () => {
             return 0;
         });
     } catch (error) {
-        console.error("Failed to fetch open teams:", error);
+        console.error('Failed to fetch open teams:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch open teams");
+            throw new Error(error.response.data.error || 'Failed to fetch open teams');
         }
-        throw new Error("An unexpected error occurred while fetching open teams");
+        throw new Error('An unexpected error occurred while fetching open teams');
     }
 };
 
@@ -101,17 +105,17 @@ export const updateTeam = async (team) => {
         const response = await apiClient.put('/team', team);
         return response.data;
     } catch (error) {
-        console.error("Failed to update team:", error);
+        console.error('Failed to update team:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to update team");
+            throw new Error(error.response.data.error || 'Failed to update team');
         }
-        throw new Error("An unexpected error occurred while updating team");
+        throw new Error('An unexpected error occurred while updating team');
     }
 };
 
 export const hireCoach = async ({ team = null, discordId, coachPosition, processedBy }) => {
     if (!discordId || !coachPosition || !processedBy) {
-        throw new Error("Missing required parameters: discordId, coachPosition, and processedBy are required.");
+        throw new Error('Missing required parameters: discordId, coachPosition, and processedBy are required.');
     }
 
     try {
@@ -120,25 +124,25 @@ export const hireCoach = async ({ team = null, discordId, coachPosition, process
                 team,
                 discordId,
                 coachPosition,
-                processedBy
-            }
+                processedBy,
+            },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to hire coach:", error);
+        console.error('Failed to hire coach:');
         if (error.response) {
-            if (error.response.data.error.includes("User not found with Discord ID")) {
-                throw new Error("User not found with Discord ID, please ensure the user has been verified");
+            if (error.response.data.error.includes('User not found with Discord ID')) {
+                throw new Error('User not found with Discord ID, please ensure the user has been verified');
             }
-            throw new Error(error.response.data.error || "Failed to hire coach");
+            throw new Error(error.response.data.error || 'Failed to hire coach');
         }
-        throw new Error("An unexpected error occurred while hiring coach");
+        throw new Error('An unexpected error occurred while hiring coach');
     }
 };
 
 export const hireInterimCoach = async ({ team = null, discordId, processedBy }) => {
     if (!discordId || !processedBy) {
-        throw new Error("Missing required parameters: discordId and processedBy are required.");
+        throw new Error('Missing required parameters: discordId and processedBy are required.');
     }
 
     try {
@@ -146,44 +150,44 @@ export const hireInterimCoach = async ({ team = null, discordId, processedBy }) 
             params: {
                 team,
                 discordId,
-                processedBy
-            }
+                processedBy,
+            },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to hire interim coach:", error);
+        console.error('Failed to hire interim coach:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to hire interim coach");
+            throw new Error(error.response.data.error || 'Failed to hire interim coach');
         }
-        throw new Error("An unexpected error occurred while hiring interim coach");
+        throw new Error('An unexpected error occurred while hiring interim coach');
     }
-}
+};
 
 export const fireCoach = async ({ team = null, processedBy }) => {
     if (!team || !processedBy) {
-        throw new Error("Missing required parameters: team and processedBy is required.");
+        throw new Error('Missing required parameters: team and processedBy is required.');
     }
 
     try {
         const response = await apiClient.post('/team/fire', null, {
             params: {
                 team,
-                processedBy
-            }
+                processedBy,
+            },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to fire coach:", error);
+        console.error('Failed to fire coach:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fire coach");
+            throw new Error(error.response.data.error || 'Failed to fire coach');
         }
-        throw new Error("An unexpected error occurred while firing coach");
+        throw new Error('An unexpected error occurred while firing coach');
     }
 };
 
 export const fireSingleCoach = async ({ team, discordId, coachPosition, processedBy }) => {
     if (!team || !discordId || !coachPosition || !processedBy) {
-        throw new Error("Missing required parameters: team, discordId, coachPosition, and processedBy are required.");
+        throw new Error('Missing required parameters: team, discordId, coachPosition, and processedBy are required.');
     }
 
     try {
@@ -192,16 +196,16 @@ export const fireSingleCoach = async ({ team, discordId, coachPosition, processe
                 team,
                 discordId,
                 coachPosition,
-                processedBy
-            }
+                processedBy,
+            },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to fire coach:", error);
+        console.error('Failed to fire coach:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fire coach");
+            throw new Error(error.response.data.error || 'Failed to fire coach');
         }
-        throw new Error("An unexpected error occurred while firing coach");
+        throw new Error('An unexpected error occurred while firing coach');
     }
 };
 
@@ -210,10 +214,10 @@ export const createTeam = async (team) => {
         const response = await apiClient.post('/team', team);
         return response.data;
     } catch (error) {
-        console.error("Failed to create team:", error);
+        console.error('Failed to create team:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to create team");
+            throw new Error(error.response.data.error || 'Failed to create team');
         }
-        throw new Error("An unexpected error occurred while creating team");
+        throw new Error('An unexpected error occurred while creating team');
     }
 };

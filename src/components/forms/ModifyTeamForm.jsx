@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { useConferencesMap, allConferenceList } from "../constants/conferences";
-import { offensivePlaybooks } from "../constants/offensivePlaybooks";
-import { defensivePlaybooks } from "../constants/defensivePlaybooks";
+import React, { useEffect, useRef, useState } from 'react';
+import { useConferencesMap, allConferenceList } from '../../hooks/useConferencesMap';
+import { offensivePlaybooks } from '../../constants/offensivePlaybooks';
+import { defensivePlaybooks } from '../../constants/defensivePlaybooks';
 import {
     Box,
     Button,
@@ -14,20 +14,25 @@ import {
     TextField,
     Alert,
     useTheme,
-} from "@mui/material";
+} from '@mui/material';
 import { updateTeam } from '../../api/teamApi';
-import {Header} from "../../styles/GamesStyles";
+import { Header } from '../../styles/GamesStyles';
 
 const ModifyTeamForm = ({ team }) => {
     useConferencesMap();
     const conferences = allConferenceList();
     const theme = useTheme();
     const [validation, setValidation] = useState({ errorMessage: null });
-    const [formData, setFormData] = useState({
-        ...team,
-        primary_color: team.primary_color,
-        secondary_color: team.secondary_color,
-    });
+    const [formData, setFormData] = useState(team);
+    const scopeRef = useRef(null);
+
+    useEffect(() => {
+        const scope = { active: true };
+        scopeRef.current = scope;
+        return () => {
+            scope.active = false;
+        };
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -39,9 +44,13 @@ const ModifyTeamForm = ({ team }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const scope = scopeRef.current;
+        const request = {};
+        scope.request = request;
+        setValidation({ errorMessage: null });
 
         if (!formData.name || !formData.abbreviation) {
-            setValidation({ errorMessage: "Team name and abbreviation are required." });
+            setValidation({ errorMessage: 'Team name and abbreviation are required.' });
             return;
         }
 
@@ -52,9 +61,13 @@ const ModifyTeamForm = ({ team }) => {
 
         try {
             await updateTeam(updatedTeamData);
-            alert("Team updated successfully!");
-        } catch (error) {
-            setValidation({ errorMessage: "Failed to modify team. Please try again." });
+            if (scope.active && scope.request === request) {
+                alert('Team updated successfully!');
+            }
+        } catch {
+            if (scope.active && scope.request === request) {
+                setValidation({ errorMessage: 'Failed to modify team. Please try again.' });
+            }
         }
     };
 
@@ -68,7 +81,7 @@ const ModifyTeamForm = ({ team }) => {
                 </Header>
 
                 <form onSubmit={handleSubmit}>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         <TextField
                             label="Team Name"
                             name="name"
@@ -126,13 +139,14 @@ const ModifyTeamForm = ({ team }) => {
                             <Select
                                 labelId="conference-label"
                                 name="conference"
-                                value={formData.conference || ""}
+                                value={formData.conference || ''}
                                 onChange={handleChange}
                                 label="Conference"
                             >
                                 {conferences.map((conference) => (
                                     <MenuItem key={conference.code} value={conference.code}>
-                                        {conference.label}{!conference.active ? ' (inactive)' : ''}
+                                        {conference.label}
+                                        {!conference.active ? ' (inactive)' : ''}
                                     </MenuItem>
                                 ))}
                             </Select>
@@ -144,14 +158,7 @@ const ModifyTeamForm = ({ team }) => {
                             </Alert>
                         )}
 
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            color="primary"
-                            size="large"
-                            fullWidth
-                            sx={{ mt: 2 }}
-                        >
+                        <Button type="submit" variant="contained" color="primary" size="large" fullWidth sx={{ mt: 2 }}>
                             Modify Team
                         </Button>
                     </Box>

@@ -3,77 +3,81 @@ import apiClient from './apiClient';
 export const getAllPlaysByGameId = async (gameId) => {
     try {
         const response = await apiClient.get('/play/all', {
-            params: { gameId }
+            params: { gameId },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch plays for game:", error);
+        console.error('Failed to fetch plays for game:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch plays for game");
+            throw new Error(error.response.data.error || 'Failed to fetch plays for game');
         }
-        throw new Error("An unexpected error occurred while fetching plays for game");
+        throw new Error('An unexpected error occurred while fetching plays for game');
     }
 };
 
 export const getCurrentPlay = async (gameId) => {
     try {
         const response = await apiClient.get('/play/current', {
-            params: { gameId }
+            params: { gameId },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch current play:", error);
+        console.error('Failed to fetch current play:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch current play");
+            throw new Error(error.response.data.error || 'Failed to fetch current play');
         }
-        throw new Error("An unexpected error occurred while fetching current play");
+        throw new Error('An unexpected error occurred while fetching current play');
     }
 };
 
 export const getPreviousPlay = async (gameId) => {
     try {
         const response = await apiClient.get('/play/previous', {
-            params: { gameId }
+            params: { gameId },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch previous play:", error);
+        console.error('Failed to fetch previous play:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch previous play");
+            throw new Error(error.response.data.error || 'Failed to fetch previous play');
         }
-        throw new Error("An unexpected error occurred while fetching previous play");
+        throw new Error('An unexpected error occurred while fetching previous play');
     }
 };
 
 export const getAllPlaysByDiscordId = async (discordId) => {
     try {
         const response = await apiClient.get('/play/all/user', {
-            params: { discordId }
+            params: { discordId },
         });
         return response.data;
     } catch (error) {
-        if (error.response?.status === 404) return [];
-        console.error("Failed to fetch plays for coach:", error);
-        if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch plays for coach");
+        if (error.response?.status === 404) {
+            return [];
         }
-        throw new Error("An unexpected error occurred while fetching plays for coach");
+        console.error('Failed to fetch plays for coach:');
+        if (error.response) {
+            throw new Error(error.response.data.error || 'Failed to fetch plays for coach');
+        }
+        throw new Error('An unexpected error occurred while fetching plays for coach');
     }
 };
 
 export const getAllPlaysByTeam = async (team) => {
     try {
         const response = await apiClient.get('/play/all/team', {
-            params: { team }
+            params: { team },
         });
         return response.data;
     } catch (error) {
-        if (error.response?.status === 404) return [];
-        console.error("Failed to fetch plays for team:", error);
-        if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch plays for team");
+        if (error.response?.status === 404) {
+            return [];
         }
-        throw new Error("An unexpected error occurred while fetching plays for team");
+        console.error('Failed to fetch plays for team:');
+        if (error.response) {
+            throw new Error(error.response.data.error || 'Failed to fetch plays for team');
+        }
+        throw new Error('An unexpected error occurred while fetching plays for team');
     }
 };
 
@@ -82,26 +86,28 @@ export const rollbackPlay = async (gameId) => {
         const response = await apiClient.put(`/play/rollback?gameId=${gameId}`);
         return response.data;
     } catch (error) {
-        console.error("Failed to rollback play:", error);
+        console.error('Failed to rollback play:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to rollback play");
+            throw new Error(error.response.data.error || 'Failed to rollback play');
         }
-        throw new Error("An unexpected error occurred while rolling back play");
+        throw new Error('An unexpected error occurred while rolling back play');
     }
 };
 
 export const getUserDelayOfGameInstances = async (season, week) => {
     try {
         const response = await apiClient.get('/play/delay-of-game/users', {
-            params: week == null ? { season } : { season, week }
+            params: week == null ? { season } : { season, week },
         });
         return response.data;
     } catch (error) {
-        if (error.response?.status === 404) return [];
-        console.error("Failed to fetch user delay of game instances:", error);
-        if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch user delay of game instances");
+        if (error.response?.status === 404) {
+            return [];
         }
-        throw new Error("An unexpected error occurred while fetching user delay of game instances");
+        console.error('Failed to fetch user delay of game instances:');
+        if (error.response) {
+            throw new Error(error.response.data.error || 'Failed to fetch user delay of game instances');
+        }
+        throw new Error('An unexpected error occurred while fetching user delay of game instances');
     }
 };

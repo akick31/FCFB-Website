@@ -23,10 +23,61 @@ import useGameWeekStarter from '../../hooks/useGameWeekStarter';
 import { GAME_TYPES, GAME_STATUSES, GAME_TYPE_DESCRIPTIONS, GAME_STATUS_DESCRIPTIONS } from '../../constants/gameEnums';
 import { weekLabel } from '../../utils/formatText';
 
-const selectSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', cursor: 'pointer', '& option': { background: 'var(--surface-2)', color: 'var(--text)' } };
-const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', py: '11px', font: 'inherit', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', width: '100%', '&:disabled': { opacity: 0.6, cursor: 'default' } };
-const btnGhostSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '14px', py: '10px', font: 'inherit', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', width: '100%', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' }, '&:disabled': { opacity: 0.6, cursor: 'default' } };
-const pillSx = { display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', px: '8px', py: '3px', borderRadius: 'var(--r-sm)', lineHeight: 1 };
+const selectSx = {
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text)',
+    borderRadius: 'var(--r-sm)',
+    px: '10px',
+    height: '38px',
+    boxSizing: 'border-box',
+    font: 'inherit',
+    fontSize: '0.82rem',
+    cursor: 'pointer',
+    '& option': { background: 'var(--surface-2)', color: 'var(--text)' },
+};
+const btnPrimarySx = {
+    border: 0,
+    background: 'var(--brand-deep)',
+    color: '#fff',
+    borderRadius: 'var(--r-sm)',
+    px: '16px',
+    py: '11px',
+    font: 'inherit',
+    fontSize: '0.85rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    width: '100%',
+    '&:disabled': { opacity: 0.6, cursor: 'default' },
+};
+const btnGhostSx = {
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text-muted)',
+    borderRadius: 'var(--r-sm)',
+    px: '14px',
+    py: '10px',
+    font: 'inherit',
+    fontSize: '0.82rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    width: '100%',
+    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
+    '&:disabled': { opacity: 0.6, cursor: 'default' },
+};
+const pillSx = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '5px',
+    fontSize: '0.62rem',
+    fontWeight: 800,
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    px: '8px',
+    py: '3px',
+    borderRadius: 'var(--r-sm)',
+    lineHeight: 1,
+};
 const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
 
 const GameManagement = () => {
@@ -43,32 +94,66 @@ const GameManagement = () => {
     const [availableTeams, setAvailableTeams] = useState([]);
     const [startGameDialogOpen, setStartGameDialogOpen] = useState(false);
     const [chewAllDialogOpen, setChewAllDialogOpen] = useState(false);
-    const [startGameData, setStartGameData] = useState({ subdivision: 'FCFB', homeTeam: '', awayTeam: '', tvChannel: 'ABC', gameType: 'Out of Conference' });
+    const [startGameData, setStartGameData] = useState({
+        subdivision: 'FCFB',
+        homeTeam: '',
+        awayTeam: '',
+        tvChannel: 'ABC',
+        gameType: 'Out of Conference',
+    });
 
     const {
-        filters, filteredGames, gamesLoading, currentPage, totalGames, pageSize, pageCount,
-        handleFilterChange, handlePageChange, refetch: refetchGames,
+        filters,
+        filteredGames,
+        gamesLoading,
+        currentPage,
+        totalGames,
+        pageSize,
+        pageCount,
+        handleFilterChange,
+        handlePageChange,
+        refetch: refetchGames,
     } = useFilteredGames(initSeason, initWeek, setError);
 
     const {
-        selectedStartSeason, setSelectedStartSeason, selectedStartWeek, setSelectedStartWeek,
-        jobData, isStarting, confirmDialogOpen, setConfirmDialogOpen, stats,
-        handleStartWeek, handleStartWeekSelectionChange, handleRetryFailed,
+        selectedStartSeason,
+        setSelectedStartSeason,
+        selectedStartWeek,
+        setSelectedStartWeek,
+        jobData,
+        isStarting,
+        confirmDialogOpen,
+        setConfirmDialogOpen,
+        stats,
+        handleStartWeek,
+        handleStartWeekSelectionChange,
+        handleRetryFailed,
     } = useGameWeekStarter(initSeason, initWeek, setError);
 
     useEffect(() => {
+        let active = true;
         const initDefaults = async () => {
+            const allSeasonsPromise = getAllSeasons().catch(() => []);
             let season;
             let week;
             try {
                 [season, week] = await Promise.all([getCurrentSeasonOrLatest(), getCurrentWeekOrLatest()]);
             } catch (err) {
+                if (!active) {
+                    return;
+                }
                 console.error('Failed to fetch current season/week:', err);
-                season = 11;
-                week = 1;
+                setError('Failed to load current season/week');
+                return;
+            }
+            if (!active) {
+                return;
             }
 
-            const allSeasons = await getAllSeasons().catch(() => []);
+            const allSeasons = await allSeasonsPromise;
+            if (!active) {
+                return;
+            }
             const seasonNumbers = allSeasons
                 .map((entry) => entry.season_number ?? entry.seasonNumber)
                 .filter((value) => value != null)
@@ -79,12 +164,29 @@ const GameManagement = () => {
             setInitWeek(week);
         };
         initDefaults();
+        return () => {
+            active = false;
+        };
     }, []);
 
     useEffect(() => {
+        let active = true;
         getAllTeams()
-            .then((teams) => setAvailableTeams(teams.filter(isRealTeam)))
-            .catch((err) => { console.error('Failed to load teams:', err); setError('Failed to load teams'); });
+            .then((teams) => {
+                if (active) {
+                    setAvailableTeams(teams.filter(isRealTeam));
+                }
+            })
+            .catch((err) => {
+                if (!active) {
+                    return;
+                }
+                console.error('Failed to load teams:', err);
+                setError('Failed to load teams');
+            });
+        return () => {
+            active = false;
+        };
     }, []);
 
     const openStartGameDialog = async () => {
@@ -153,7 +255,13 @@ const GameManagement = () => {
     };
 
     const handleStartGameCancel = () => {
-        setStartGameData({ subdivision: 'FCFB', homeTeam: '', awayTeam: '', tvChannel: 'ABC', gameType: 'Out of Conference' });
+        setStartGameData({
+            subdivision: 'FCFB',
+            homeTeam: '',
+            awayTeam: '',
+            tvChannel: 'ABC',
+            gameType: 'Out of Conference',
+        });
         setStartGameDialogOpen(false);
     };
 
@@ -171,7 +279,13 @@ const GameManagement = () => {
         try {
             await startGame({ ...startGameData });
             setSuccess('Game started successfully!');
-            setStartGameData({ subdivision: 'FCFB', homeTeam: '', awayTeam: '', tvChannel: 'ABC', gameType: 'Out of Conference' });
+            setStartGameData({
+                subdivision: 'FCFB',
+                homeTeam: '',
+                awayTeam: '',
+                tvChannel: 'ABC',
+                gameType: 'Out of Conference',
+            });
             setStartGameDialogOpen(false);
         } catch (err) {
             setError(`Failed to start game: ${err.message}`);
@@ -195,7 +309,10 @@ const GameManagement = () => {
     };
 
     const handleEndAllGames = async () => {
-        if (filteredGames.length === 0) { setError('No games to end'); return; }
+        if (filteredGames.length === 0) {
+            setError('No games to end');
+            return;
+        }
         setLoading(true);
         setError(null);
         try {
@@ -210,47 +327,153 @@ const GameManagement = () => {
 
     return (
         <AdminLayout title="Game Management">
-            {error && <Alert severity="error" sx={{ mb: '16px' }} onClose={() => setError(null)}>{error}</Alert>}
-            {success && <Alert severity="success" sx={{ mb: '16px' }} onClose={() => setSuccess(null)}>{success}</Alert>}
+            {error && (
+                <Alert severity="error" sx={{ mb: '16px' }} onClose={() => setError(null)}>
+                    {error}
+                </Alert>
+            )}
+            {success && (
+                <Alert severity="success" sx={{ mb: '16px' }} onClose={() => setSuccess(null)}>
+                    {success}
+                </Alert>
+            )}
 
             {selectedStartSeason && selectedStartWeek && (
                 <Panel header="Start game week" sx={{ mb: '16px' }}>
                     <Box sx={{ p: '16px' }}>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between', mb: '14px' }}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '16px',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                mb: '14px',
+                            }}
+                        >
                             <Box sx={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                <Box component="select" value={selectedStartSeason || ''} onChange={(e) => { setSelectedStartSeason(Number(e.target.value)); handleStartWeekSelectionChange(Number(e.target.value), selectedStartWeek); }} sx={selectSx}>
-                                    {Array.from({ length: initSeason || 1 }, (_, i) => i + 1).map((s) => <option key={s} value={s}>Season {s}</option>)}
+                                <Box
+                                    component="select"
+                                    value={selectedStartSeason || ''}
+                                    onChange={(e) => {
+                                        setSelectedStartSeason(Number(e.target.value));
+                                        handleStartWeekSelectionChange(Number(e.target.value), selectedStartWeek);
+                                    }}
+                                    sx={selectSx}
+                                >
+                                    {Array.from({ length: initSeason || 1 }, (_, i) => i + 1).map((s) => (
+                                        <option key={s} value={s}>
+                                            Season {s}
+                                        </option>
+                                    ))}
                                 </Box>
-                                <Box component="select" value={selectedStartWeek || ''} onChange={(e) => { setSelectedStartWeek(Number(e.target.value)); handleStartWeekSelectionChange(selectedStartSeason, Number(e.target.value)); }} sx={selectSx}>
-                                    {Array.from({ length: initWeek || 18 }, (_, i) => i + 1).map((w) => <option key={w} value={w}>{weekLabel(w)}</option>)}
+                                <Box
+                                    component="select"
+                                    value={selectedStartWeek || ''}
+                                    onChange={(e) => {
+                                        setSelectedStartWeek(Number(e.target.value));
+                                        handleStartWeekSelectionChange(selectedStartSeason, Number(e.target.value));
+                                    }}
+                                    sx={selectSx}
+                                >
+                                    {Array.from({ length: initWeek || 18 }, (_, i) => i + 1).map((w) => (
+                                        <option key={w} value={w}>
+                                            {weekLabel(w)}
+                                        </option>
+                                    ))}
                                 </Box>
                             </Box>
                             <Box sx={{ display: 'flex', gap: '8px' }}>
-                                <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: 'var(--text-muted)' }}>{stats.total} total</Box>
-                                <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: 'var(--field)' }}>{stats.started} started</Box>
-                                <Box component="span" sx={{ ...pillSx, background: 'var(--surface-2)', color: 'var(--gold)' }}>{stats.notStarted} not started</Box>
+                                <Box
+                                    component="span"
+                                    sx={{ ...pillSx, background: 'var(--surface-2)', color: 'var(--text-muted)' }}
+                                >
+                                    {stats.total} total
+                                </Box>
+                                <Box
+                                    component="span"
+                                    sx={{ ...pillSx, background: 'var(--surface-2)', color: 'var(--field)' }}
+                                >
+                                    {stats.started} started
+                                </Box>
+                                <Box
+                                    component="span"
+                                    sx={{ ...pillSx, background: 'var(--surface-2)', color: 'var(--gold)' }}
+                                >
+                                    {stats.notStarted} not started
+                                </Box>
                             </Box>
                         </Box>
 
                         <Box sx={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                            <Box component="button" type="button" onClick={() => setConfirmDialogOpen(true)} disabled={isStarting} sx={{ ...btnPrimarySx, width: 'auto', minWidth: 200, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                            <Box
+                                component="button"
+                                type="button"
+                                onClick={() => setConfirmDialogOpen(true)}
+                                disabled={isStarting}
+                                sx={{
+                                    ...btnPrimarySx,
+                                    width: 'auto',
+                                    minWidth: 200,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                }}
+                            >
                                 {isStarting && <CircularProgress size={16} sx={{ color: '#fff' }} />}
                                 {isStarting ? 'Starting...' : `Start Week ${selectedStartWeek}`}
                             </Box>
                             {stats.notStarted === 0 && stats.total > 0 && (
-                                <Box component="span" sx={{ ...pillSx, background: 'transparent', color: 'var(--field)', border: '1px solid color-mix(in srgb, var(--field) 55%, var(--line))' }}>All games started</Box>
-                            )}
-                            {jobData && jobData.failedGames > 0 && (jobData.status === 'COMPLETED' || jobData.status === 'FAILED') && (
-                                <Box component="button" type="button" onClick={handleRetryFailed} disabled={isStarting} sx={{ ...btnGhostSx, width: 'auto', color: 'var(--gold)' }}>
-                                    Retry {jobData.failedGames} failed
+                                <Box
+                                    component="span"
+                                    sx={{
+                                        ...pillSx,
+                                        background: 'transparent',
+                                        color: 'var(--field)',
+                                        border: '1px solid color-mix(in srgb, var(--field) 55%, var(--line))',
+                                    }}
+                                >
+                                    All games started
                                 </Box>
                             )}
+                            {jobData &&
+                                jobData.failedGames > 0 &&
+                                (jobData.status === 'COMPLETED' || jobData.status === 'FAILED') && (
+                                    <Box
+                                        component="button"
+                                        type="button"
+                                        onClick={handleRetryFailed}
+                                        disabled={isStarting}
+                                        sx={{ ...btnGhostSx, width: 'auto', color: 'var(--gold)' }}
+                                    >
+                                        Retry {jobData.failedGames} failed
+                                    </Box>
+                                )}
                         </Box>
 
                         {jobData && jobData.logs && jobData.logs.length > 0 && (
-                            <Box sx={{ mt: '14px', maxHeight: 200, overflow: 'auto', background: 'var(--brand-ink, #08151f)', border: '1px solid var(--line)', borderRadius: 'var(--r-sm)', p: '10px' }}>
+                            <Box
+                                sx={{
+                                    mt: '14px',
+                                    maxHeight: 200,
+                                    overflow: 'auto',
+                                    background: 'var(--brand-ink, #08151f)',
+                                    border: '1px solid var(--line)',
+                                    borderRadius: 'var(--r-sm)',
+                                    p: '10px',
+                                }}
+                            >
                                 {jobData.logs.slice(-10).map((log, idx) => (
-                                    <Box key={idx} sx={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                                    <Box
+                                        key={idx}
+                                        sx={{
+                                            fontFamily: 'monospace',
+                                            fontSize: '0.72rem',
+                                            color: '#94a3b8',
+                                            lineHeight: 1.6,
+                                        }}
+                                    >
                                         [{log.timestamp}] {log.homeTeam} vs {log.awayTeam}: {log.status} - {log.message}
                                     </Box>
                                 ))}
@@ -263,29 +486,114 @@ const GameManagement = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '16px', mb: '16px' }}>
                 <Panel header="Create new game">
                     <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <Box component="button" type="button" onClick={openStartGameDialog} disabled={loading} sx={btnPrimarySx}>Start game</Box>
-                        <Box component="button" type="button" onClick={() => openScrimmageDialog('Standard')} disabled={loading} sx={btnPrimarySx}>Start scrimmage</Box>
-                        <Box component="button" type="button" onClick={() => openScrimmageDialog('Overtime')} disabled={loading} sx={btnPrimarySx}>Start overtime scrimmage</Box>
+                        <Box
+                            component="button"
+                            type="button"
+                            onClick={openStartGameDialog}
+                            disabled={loading}
+                            sx={btnPrimarySx}
+                        >
+                            Start game
+                        </Box>
+                        <Box
+                            component="button"
+                            type="button"
+                            onClick={() => openScrimmageDialog('Standard')}
+                            disabled={loading}
+                            sx={btnPrimarySx}
+                        >
+                            Start scrimmage
+                        </Box>
+                        <Box
+                            component="button"
+                            type="button"
+                            onClick={() => openScrimmageDialog('Overtime')}
+                            disabled={loading}
+                            sx={btnPrimarySx}
+                        >
+                            Start overtime scrimmage
+                        </Box>
                     </Box>
                 </Panel>
 
                 <Panel header="Quick actions">
                     <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <Box component="button" type="button" onClick={refetchGames} disabled={gamesLoading} sx={btnGhostSx}>&#8635; Refresh games</Box>
-                        <Box component="button" type="button" onClick={() => setChewAllDialogOpen(true)} disabled={loading} sx={btnGhostSx}>Put all games in chew mode</Box>
-                        <Box component="button" type="button" onClick={handleEndAllGames} disabled={loading} sx={{ ...btnGhostSx, color: 'var(--live)' }}>End all ongoing games</Box>
+                        <Box
+                            component="button"
+                            type="button"
+                            onClick={refetchGames}
+                            disabled={gamesLoading}
+                            sx={btnGhostSx}
+                        >
+                            &#8635; Refresh games
+                        </Box>
+                        <Box
+                            component="button"
+                            type="button"
+                            onClick={() => setChewAllDialogOpen(true)}
+                            disabled={loading}
+                            sx={btnGhostSx}
+                        >
+                            Put all games in chew mode
+                        </Box>
+                        <Box
+                            component="button"
+                            type="button"
+                            onClick={handleEndAllGames}
+                            disabled={loading}
+                            sx={{ ...btnGhostSx, color: 'var(--live)' }}
+                        >
+                            End all ongoing games
+                        </Box>
                     </Box>
                 </Panel>
             </Box>
 
-            <Panel
-                header={`Games (${filteredGames.length})`}
-            >
+            <Panel header={`Games (${filteredGames.length})`}>
                 <Box sx={{ p: '16px 16px 0', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    <SelectPill label="Season" value={filters.season || ''} onChange={(v) => handleFilterChange('season', v ? Number(v) : '')} options={[{ value: '', label: 'All seasons' }, ...filterSeasons.map((s) => ({ value: s, label: `Season ${s}` }))]} sx={pillHeightSx} />
-                    <SelectPill label="Week" value={filters.week || ''} onChange={(v) => handleFilterChange('week', v ? Number(v) : '')} options={[{ value: '', label: 'All weeks' }, ...Array.from({ length: initWeek || 18 }, (_, i) => ({ value: i + 1, label: weekLabel(i + 1) }))]} sx={pillHeightSx} />
-                    <SelectPill label="Type" value={filters.gameType || 'ALL'} onChange={(v) => handleFilterChange('gameType', v)} options={[{ value: 'ALL', label: 'All types' }, ...GAME_TYPES.map((t) => ({ value: t, label: GAME_TYPE_DESCRIPTIONS[t] }))]} sx={pillHeightSx} />
-                    <SelectPill label="Status" value={filters.gameStatus || 'ALL'} onChange={(v) => handleFilterChange('gameStatus', v)} options={[{ value: 'ALL', label: 'All statuses' }, ...GAME_STATUSES.map((s) => ({ value: s, label: GAME_STATUS_DESCRIPTIONS[s] }))]} sx={pillHeightSx} />
+                    <SelectPill
+                        label="Season"
+                        value={filters.season || ''}
+                        onChange={(v) => handleFilterChange('season', v ? Number(v) : '')}
+                        options={[
+                            { value: '', label: 'All seasons' },
+                            ...filterSeasons.map((s) => ({ value: s, label: `Season ${s}` })),
+                        ]}
+                        sx={pillHeightSx}
+                    />
+                    <SelectPill
+                        label="Week"
+                        value={filters.week || ''}
+                        onChange={(v) => handleFilterChange('week', v ? Number(v) : '')}
+                        options={[
+                            { value: '', label: 'All weeks' },
+                            ...Array.from({ length: initWeek || 18 }, (_, i) => ({
+                                value: i + 1,
+                                label: weekLabel(i + 1),
+                            })),
+                        ]}
+                        sx={pillHeightSx}
+                    />
+                    <SelectPill
+                        label="Type"
+                        value={filters.gameType || 'ALL'}
+                        onChange={(v) => handleFilterChange('gameType', v)}
+                        options={[
+                            { value: 'ALL', label: 'All types' },
+                            ...GAME_TYPES.map((t) => ({ value: t, label: GAME_TYPE_DESCRIPTIONS[t] })),
+                        ]}
+                        sx={pillHeightSx}
+                    />
+                    <SelectPill
+                        label="Status"
+                        value={filters.gameStatus || 'ALL'}
+                        onChange={(v) => handleFilterChange('gameStatus', v)}
+                        options={[
+                            { value: 'ALL', label: 'All statuses' },
+                            ...GAME_STATUSES.map((s) => ({ value: s, label: GAME_STATUS_DESCRIPTIONS[s] })),
+                        ]}
+                        sx={pillHeightSx}
+                    />
                 </Box>
 
                 <GamesTable

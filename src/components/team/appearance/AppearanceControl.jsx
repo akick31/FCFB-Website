@@ -6,10 +6,57 @@ import LogoUrlField from '../../admin/LogoUrlField';
 import ConferenceColorsControl from './ConferenceColorsControl';
 import FontControl from './FontControl';
 
-const inputSx = { width: '100%', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.85rem' };
-const clearSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '10px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
-const pickSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '8px', height: '26px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.66rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.03em', cursor: 'pointer', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' }, '&:disabled': { opacity: 0.4, cursor: 'default' } };
-const swatchSx = (color) => ({ width: 12, height: 12, borderRadius: 2, border: '1px solid var(--line)', background: color || 'transparent', flexShrink: 0 });
+const inputSx = {
+    width: '100%',
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text)',
+    borderRadius: 'var(--r-sm)',
+    px: '10px',
+    height: '38px',
+    boxSizing: 'border-box',
+    font: 'inherit',
+    fontSize: '0.85rem',
+};
+const clearSx = {
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text-muted)',
+    borderRadius: 'var(--r-sm)',
+    px: '10px',
+    height: '38px',
+    boxSizing: 'border-box',
+    font: 'inherit',
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
+};
+const pickSx = {
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text-muted)',
+    borderRadius: 'var(--r-sm)',
+    px: '8px',
+    height: '26px',
+    boxSizing: 'border-box',
+    font: 'inherit',
+    fontSize: '0.66rem',
+    fontWeight: 800,
+    textTransform: 'uppercase',
+    letterSpacing: '0.03em',
+    cursor: 'pointer',
+    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
+    '&:disabled': { opacity: 0.4, cursor: 'default' },
+};
+const swatchSx = (color) => ({
+    width: 12,
+    height: 12,
+    borderRadius: 2,
+    border: '1px solid var(--line)',
+    background: color || 'transparent',
+    flexShrink: 0,
+});
 
 const TEAM_COLOR_PICKS = [
     { label: 'Primary', key: 'primary_color' },
@@ -27,11 +74,29 @@ const ColorControl = ({ value, onChange, clearable, disabled, teamColors, resetC
                 disabled={disabled}
                 value={value || '#000000'}
                 onChange={(event) => onChange(event.target.value.toUpperCase())}
-                sx={{ width: 42, height: 38, p: '2px', border: '1px solid var(--line)', borderRadius: 'var(--r-sm)', background: 'var(--surface-2)', cursor: disabled ? 'default' : 'pointer', opacity: value ? 1 : 0.35 }}
+                sx={{
+                    width: 42,
+                    height: 38,
+                    p: '2px',
+                    border: '1px solid var(--line)',
+                    borderRadius: 'var(--r-sm)',
+                    background: 'var(--surface-2)',
+                    cursor: disabled ? 'default' : 'pointer',
+                    opacity: value ? 1 : 0.35,
+                }}
             />
-            <Box component="input" disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} placeholder={clearable ? 'Not set' : '#RRGGBB'} sx={inputSx} />
+            <Box
+                component="input"
+                disabled={disabled}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                placeholder={clearable ? 'Not set' : '#RRGGBB'}
+                sx={inputSx}
+            />
             {clearable && value && !disabled && (
-                <Box component="button" type="button" onClick={() => onChange('')} sx={clearSx}>Clear</Box>
+                <Box component="button" type="button" onClick={() => onChange('')} sx={clearSx}>
+                    Clear
+                </Box>
             )}
         </Box>
         {teamColors && (
@@ -45,15 +110,30 @@ const ColorControl = ({ value, onChange, clearable, disabled, teamColors, resetC
                         onClick={() => onChange((teamColors[pick.key] || '').toUpperCase())}
                         sx={{ ...pickSx, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                     >
-                        <Box sx={swatchSx(teamColors[pick.key])} />{pick.label}
+                        <Box sx={swatchSx(teamColors[pick.key])} />
+                        {pick.label}
                     </Box>
                 ))}
-                <Box component="button" type="button" disabled={disabled} onClick={() => onChange(WHITE)} sx={{ ...pickSx, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                    <Box sx={swatchSx(WHITE)} />White
+                <Box
+                    component="button"
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onChange(WHITE)}
+                    sx={{ ...pickSx, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                >
+                    <Box sx={swatchSx(WHITE)} />
+                    White
                 </Box>
                 {resetColor && (
-                    <Box component="button" type="button" disabled={disabled} onClick={() => onChange(resetColor.toUpperCase())} sx={{ ...pickSx, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                        <Box sx={swatchSx(resetColor)} />Default
+                    <Box
+                        component="button"
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => onChange(resetColor.toUpperCase())}
+                        sx={{ ...pickSx, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                    >
+                        <Box sx={swatchSx(resetColor)} />
+                        Default
                     </Box>
                 )}
             </Box>
@@ -83,7 +163,18 @@ const ScaleControl = ({ definition, value, onChange, disabled }) => (
             onChange={(event) => onChange(Number(event.target.value))}
             sx={{ flex: 1, accentColor: 'var(--brand)' }}
         />
-        <Box sx={{ width: 48, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{Number(value).toFixed(definition.decimals ?? 2)}{definition.unit ?? 'x'}</Box>
+        <Box
+            sx={{
+                width: 48,
+                textAlign: 'right',
+                fontVariantNumeric: 'tabular-nums',
+                fontSize: '0.8rem',
+                color: 'var(--text-muted)',
+            }}
+        >
+            {Number(value).toFixed(definition.decimals ?? 2)}
+            {definition.unit ?? 'x'}
+        </Box>
     </Box>
 );
 
@@ -97,18 +188,43 @@ ScaleControl.propTypes = {
 const AppearanceControl = ({ definition, value, onChange, disabled, teamColors, team }) => {
     switch (definition.type) {
         case 'color':
-            return <ColorControl value={value} onChange={onChange} disabled={disabled} teamColors={teamColors} resetColor={definition.resetColor} />;
+            return (
+                <ColorControl
+                    value={value}
+                    onChange={onChange}
+                    disabled={disabled}
+                    teamColors={teamColors}
+                    resetColor={definition.resetColor}
+                />
+            );
         case 'optionalColor':
-            return <ColorControl value={value} onChange={onChange} clearable disabled={disabled} teamColors={teamColors} resetColor={definition.resetColor} />;
+            return (
+                <ColorControl
+                    value={value}
+                    onChange={onChange}
+                    clearable
+                    disabled={disabled}
+                    teamColors={teamColors}
+                    resetColor={definition.resetColor}
+                />
+            );
         case 'scale':
             return <ScaleControl definition={definition} value={value} onChange={onChange} disabled={disabled} />;
         case 'select':
         case 'graphic':
         case 'stripe':
             return (
-                <Box component="select" disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} sx={inputSx}>
+                <Box
+                    component="select"
+                    disabled={disabled}
+                    value={value}
+                    onChange={(event) => onChange(event.target.value)}
+                    sx={inputSx}
+                >
                     {definition.options.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
                     ))}
                 </Box>
             );
@@ -117,11 +233,36 @@ const AppearanceControl = ({ definition, value, onChange, disabled, teamColors, 
         case 'logo':
             return <LogoUrlField label="" value={value} onChange={(event) => onChange(event.target.value)} />;
         case 'conferenceColors':
-            return <ConferenceColorsControl team={team} value={value} onChange={onChange} disabled={disabled} teamColors={teamColors} />;
+            return (
+                <ConferenceColorsControl
+                    team={team}
+                    value={value}
+                    onChange={onChange}
+                    disabled={disabled}
+                    teamColors={teamColors}
+                />
+            );
         case 'font':
-            return <FontControl value={value} onChange={onChange} disabled={disabled} allowDefault={definition.allowDefault} />;
+            return (
+                <FontControl
+                    value={value}
+                    onChange={onChange}
+                    disabled={disabled}
+                    allowDefault={definition.allowDefault}
+                />
+            );
         default:
-            return <Box component="input" disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} placeholder={definition.placeholder} maxLength={definition.maxLength} sx={inputSx} />;
+            return (
+                <Box
+                    component="input"
+                    disabled={disabled}
+                    value={value}
+                    onChange={(event) => onChange(event.target.value)}
+                    placeholder={definition.placeholder}
+                    maxLength={definition.maxLength}
+                    sx={inputSx}
+                />
+            );
     }
 };
 

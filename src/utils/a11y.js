@@ -10,7 +10,11 @@ export const clickableProps = (onClick) => ({
     role: 'button',
 });
 
-export const slugId = (label) => String(label).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+export const slugId = (label) =>
+    String(label)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
 
 export const clickableRowProps = (onClick) => ({
     onClick,

@@ -6,4 +6,4 @@ export { default as Rankings } from './Rankings';
 export { default as RiceSheet } from './RiceSheet';
 export { default as Schedule } from './Schedule';
 export { default as Error } from './Error';
-export { default as NotFound } from './NotFound'; 
+export { default as NotFound } from './NotFound';

@@ -2,8 +2,8 @@ import React from 'react';
 import { Button, useTheme } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const StyledButton = ({ 
-    children, 
+const StyledButton = ({
+    children,
     variant = 'contained',
     size = 'medium',
     color = 'primary',
@@ -14,7 +14,7 @@ const StyledButton = ({
     onClick,
     href,
     sx = {},
-    ...props 
+    ...props
 }) => {
     const theme = useTheme();
 
@@ -29,19 +29,21 @@ const StyledButton = ({
         if (variant === 'contained') {
             return {
                 ...baseStyles,
-                background: color === 'primary' 
-                    ? theme.custom?.gradients?.primary 
-                    : color === 'secondary'
-                    ? theme.custom?.gradients?.secondary
-                    : theme.palette[color]?.main,
+                background:
+                    color === 'primary'
+                        ? theme.custom?.gradients?.primary
+                        : color === 'secondary'
+                          ? theme.custom?.gradients?.secondary
+                          : theme.palette[color]?.main,
                 color: 'white',
                 boxShadow: theme.shadows[4],
                 '&:hover': {
-                    background: color === 'primary' 
-                        ? theme.custom?.gradients?.primary 
-                        : color === 'secondary'
-                        ? theme.custom?.gradients?.secondary
-                        : theme.palette[color]?.dark,
+                    background:
+                        color === 'primary'
+                            ? theme.custom?.gradients?.primary
+                            : color === 'secondary'
+                              ? theme.custom?.gradients?.secondary
+                              : theme.palette[color]?.dark,
                     transform: 'translateY(-2px)',
                     boxShadow: theme.shadows[8],
                 },
@@ -129,4 +131,4 @@ StyledButton.propTypes = {
     sx: PropTypes.object,
 };
 
-export default StyledButton; 
+export default StyledButton;

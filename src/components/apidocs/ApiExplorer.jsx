@@ -19,7 +19,9 @@ const fileFieldOf = (operation) => {
 
 const isBinaryResponse = (operation) => {
     const responseContent = operation.responses?.['200']?.content || {};
-    return Object.values(responseContent).some((media) => media.schema?.items?.format === 'byte' || media.schema?.format === 'binary');
+    return Object.values(responseContent).some(
+        (media) => media.schema?.items?.format === 'byte' || media.schema?.format === 'binary'
+    );
 };
 
 const buildOperations = (spec) => {
@@ -27,7 +29,9 @@ const buildOperations = (spec) => {
     Object.entries(spec?.paths || {}).forEach(([path, pathItem]) => {
         HTTP_METHODS.forEach((method) => {
             const operation = pathItem[method];
-            if (!operation) return;
+            if (!operation) {
+                return;
+            }
             const fileField = fileFieldOf(operation);
             operations.push({
                 id: `${method}-${path}`,
@@ -60,20 +64,43 @@ const ApiExplorer = ({ specKind }) => {
     };
 
     useEffect(() => {
+        let active = true;
         const fetchSpec = specKind === 'admin' ? getAdminApiSpec : getPublicApiSpec;
         setLoading(true);
         fetchSpec()
-            .then(setSpec)
-            .catch((err) => setError(err.message))
-            .finally(() => setLoading(false));
+            .then((loadedSpec) => {
+                if (active) {
+                    setSpec(loadedSpec);
+                }
+            })
+            .catch((err) => {
+                if (active) {
+                    setError(err.message);
+                }
+            })
+            .finally(() => {
+                if (active) {
+                    setLoading(false);
+                }
+            });
+        return () => {
+            active = false;
+        };
     }, [specKind]);
 
     const operations = useMemo(() => buildOperations(spec), [spec]);
 
     const filtered = useMemo(() => {
-        if (!query) return operations;
+        if (!query) {
+            return operations;
+        }
         const q = query.toLowerCase();
-        return operations.filter((op) => op.path.toLowerCase().includes(q) || op.summary.toLowerCase().includes(q) || op.tag.toLowerCase().includes(q));
+        return operations.filter(
+            (op) =>
+                op.path.toLowerCase().includes(q) ||
+                op.summary.toLowerCase().includes(q) ||
+                op.tag.toLowerCase().includes(q)
+        );
     }, [operations, query]);
 
     const grouped = useMemo(() => {
@@ -92,21 +119,42 @@ const ApiExplorer = ({ specKind }) => {
             <ApiKeyBar apiKey={apiKey} onChange={updateApiKey} isLoggedIn={isLoggedIn} />
             {loading ? (
                 <Panel>
-                    <Box sx={{ p: 3, textAlign: 'center' }}><CircularProgress size={24} /></Box>
+                    <Box sx={{ p: 3, textAlign: 'center' }}>
+                        <CircularProgress size={24} />
+                    </Box>
                 </Panel>
             ) : error ? (
                 <Panel>
-                    <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>
+                    <Alert severity="error" sx={{ m: 2 }}>
+                        {error}
+                    </Alert>
                 </Panel>
             ) : (
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '320px 1fr' }, gap: '16px', alignItems: 'flex-start' }}>
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', md: '320px 1fr' },
+                        gap: '16px',
+                        alignItems: 'flex-start',
+                    }}
+                >
                     <Panel header="Endpoints" more={`${filtered.length}`}>
-                        <OperationList groups={grouped} query={query} onQueryChange={setQuery} selectedId={selectedId} onSelect={setSelectedId} />
+                        <OperationList
+                            groups={grouped}
+                            query={query}
+                            onQueryChange={setQuery}
+                            selectedId={selectedId}
+                            onSelect={setSelectedId}
+                        />
                     </Panel>
                     <Panel header={selected ? selected.summary : 'Select an endpoint'}>
-                        {selected
-                            ? <OperationDetail operation={selected} apiKey={apiKey} />
-                            : <Box sx={{ p: 3, color: 'var(--text-muted)', fontSize: '0.85rem' }}>Choose an endpoint on the left to see details and try it live.</Box>}
+                        {selected ? (
+                            <OperationDetail operation={selected} apiKey={apiKey} />
+                        ) : (
+                            <Box sx={{ p: 3, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                Choose an endpoint on the left to see details and try it live.
+                            </Box>
+                        )}
                     </Panel>
                 </Box>
             )}

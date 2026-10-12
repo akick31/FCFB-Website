@@ -18,10 +18,27 @@ import { getFilteredLeagueStats } from '../../api/leagueStatsApi';
 import { getFilteredConferenceStats } from '../../api/conferenceStatsApi';
 import { getFilteredPlaybookStats } from '../../api/playbookStatsApi';
 import { getAllSeasons } from '../../api/seasonApi';
-import { useConferencesMap, useSeasonConferenceCodes, seasonConferenceList, activeConferenceList, conferenceLabel } from '../../components/constants/conferences';
+import {
+    useConferencesMap,
+    useSeasonConferenceCodes,
+    seasonConferenceList,
+    activeConferenceList,
+    conferenceLabel,
+} from '../../hooks/useConferencesMap';
 import { formatOffensivePlaybook } from '../../utils/formatText';
 import { averageFromTotals } from '../../utils/statAggregation';
-import { STAT_CATALOG, STAT_BY_KEY, buildLeaderboard, seasonHasStarted, formatValue, LEAGUE_STAT_GROUPS, CONFERENCE_COLUMNS, aggregateAllTimeStats, aggregateStatRows, aggregateStatRowsByKey } from '../../utils/statsCatalog';
+import {
+    STAT_CATALOG,
+    STAT_BY_KEY,
+    buildLeaderboard,
+    seasonHasStarted,
+    formatValue,
+    LEAGUE_STAT_GROUPS,
+    CONFERENCE_COLUMNS,
+    aggregateAllTimeStats,
+    aggregateStatRows,
+    aggregateStatRowsByKey,
+} from '../../utils/statsCatalog';
 import { useSeo } from '../../hooks/useSeo';
 
 const SUB_TABS = [
@@ -39,39 +56,75 @@ const CARDS_PER_PAGE = 9;
 
 const LEAGUE_FIELD_AGGS = {
     total_teams: 'latest',
-    total_yards: { agg: 'sum' }, pass_yards: { agg: 'sum' }, rush_yards: { agg: 'sum' },
-    pass_touchdowns: { agg: 'sum' }, rush_touchdowns: { agg: 'sum' }, first_downs: { agg: 'sum' },
+    total_yards: { agg: 'sum' },
+    pass_yards: { agg: 'sum' },
+    rush_yards: { agg: 'sum' },
+    pass_touchdowns: { agg: 'sum' },
+    rush_touchdowns: { agg: 'sum' },
+    first_downs: { agg: 'sum' },
     average_yards_per_play: { agg: 'ratio', num: 'offensive_play_yards', den: 'offensive_play_count' },
-    pass_attempts: { agg: 'sum' }, pass_completions: { agg: 'sum' }, pass_completion_percentage: { agg: 'rate', num: 'pass_completions', den: 'pass_attempts' },
-    pass_successes: { agg: 'sum' }, pass_success_percentage: { agg: 'rate', num: 'pass_successes', den: 'pass_attempts' },
-    pass_interceptions: { agg: 'sum' }, longest_pass: { agg: 'max' },
-    rush_attempts: { agg: 'sum' }, rush_successes: { agg: 'sum' }, rush_success_percentage: { agg: 'rate', num: 'rush_successes', den: 'rush_attempts' }, longest_run: { agg: 'max' },
-    sacks_forced: { agg: 'sum' }, sacks_allowed: { agg: 'sum' }, interceptions_forced: { agg: 'sum' },
-    fumbles_forced: { agg: 'sum' }, fumbles_recovered: { agg: 'sum' }, defensive_touchdowns: { agg: 'sum' },
-    field_goals_made: { agg: 'sum' }, field_goals_attempted: { agg: 'sum' }, field_goal_percentage: { agg: 'rate', num: 'field_goals_made', den: 'field_goals_attempted' },
-    longest_field_goal: { agg: 'max' }, punts: { agg: 'sum' }, longest_punt: { agg: 'max' },
-    kickoff_return_touchdowns: { agg: 'sum' }, punt_return_touchdowns: { agg: 'sum' },
-    average_offensive_diff: { agg: 'mean' }, average_defensive_diff: { agg: 'mean' },
-    average_offensive_special_teams_diff: { agg: 'mean' }, average_defensive_special_teams_diff: { agg: 'mean' },
-    average_diff: { agg: 'mean' }, average_response_speed: { agg: 'mean' },
+    pass_attempts: { agg: 'sum' },
+    pass_completions: { agg: 'sum' },
+    pass_completion_percentage: { agg: 'rate', num: 'pass_completions', den: 'pass_attempts' },
+    pass_successes: { agg: 'sum' },
+    pass_success_percentage: { agg: 'rate', num: 'pass_successes', den: 'pass_attempts' },
+    pass_interceptions: { agg: 'sum' },
+    longest_pass: { agg: 'max' },
+    rush_attempts: { agg: 'sum' },
+    rush_successes: { agg: 'sum' },
+    rush_success_percentage: { agg: 'rate', num: 'rush_successes', den: 'rush_attempts' },
+    longest_run: { agg: 'max' },
+    sacks_forced: { agg: 'sum' },
+    sacks_allowed: { agg: 'sum' },
+    interceptions_forced: { agg: 'sum' },
+    fumbles_forced: { agg: 'sum' },
+    fumbles_recovered: { agg: 'sum' },
+    defensive_touchdowns: { agg: 'sum' },
+    field_goals_made: { agg: 'sum' },
+    field_goals_attempted: { agg: 'sum' },
+    field_goal_percentage: { agg: 'rate', num: 'field_goals_made', den: 'field_goals_attempted' },
+    longest_field_goal: { agg: 'max' },
+    punts: { agg: 'sum' },
+    longest_punt: { agg: 'max' },
+    kickoff_return_touchdowns: { agg: 'sum' },
+    punt_return_touchdowns: { agg: 'sum' },
+    average_offensive_diff: { agg: 'mean' },
+    average_defensive_diff: { agg: 'mean' },
+    average_offensive_special_teams_diff: { agg: 'mean' },
+    average_defensive_special_teams_diff: { agg: 'mean' },
+    average_diff: { agg: 'mean' },
+    average_response_speed: { agg: 'mean' },
 };
 
 const CONFERENCE_FIELD_AGGS = {
     total_teams: 'latest',
-    total_yards: { agg: 'sum' }, average_yards_per_play: { agg: 'ratio', num: 'offensive_play_yards', den: 'offensive_play_count' },
-    pass_touchdowns: { agg: 'sum' }, rush_touchdowns: { agg: 'sum' }, first_downs: { agg: 'sum' },
-    third_down_conversion_percentage: { agg: 'rate', num: 'third_down_conversion_success', den: 'third_down_conversion_attempts' },
+    total_yards: { agg: 'sum' },
+    average_yards_per_play: { agg: 'ratio', num: 'offensive_play_yards', den: 'offensive_play_count' },
+    pass_touchdowns: { agg: 'sum' },
+    rush_touchdowns: { agg: 'sum' },
+    first_downs: { agg: 'sum' },
+    third_down_conversion_percentage: {
+        agg: 'rate',
+        num: 'third_down_conversion_success',
+        den: 'third_down_conversion_attempts',
+    },
     red_zone_success_percentage: { agg: 'rate', num: 'red_zone_successes', den: 'red_zone_attempts' },
-    sacks_forced: { agg: 'sum' }, interceptions_forced: { agg: 'sum' }, turnover_differential: { agg: 'sum' },
-    longest_field_goal: { agg: 'max' }, average_punt_length: { agg: 'ratio', num: 'punt_yards', den: 'punt_count' },
-    average_response_speed: { agg: 'mean' }, average_offensive_diff: { agg: 'mean' }, average_defensive_diff: { agg: 'mean' },
+    sacks_forced: { agg: 'sum' },
+    interceptions_forced: { agg: 'sum' },
+    turnover_differential: { agg: 'sum' },
+    longest_field_goal: { agg: 'max' },
+    average_punt_length: { agg: 'ratio', num: 'punt_yards', den: 'punt_count' },
+    average_response_speed: { agg: 'mean' },
+    average_offensive_diff: { agg: 'mean' },
+    average_defensive_diff: { agg: 'mean' },
 };
 
 const fmt = (value) => (value == null ? '-' : Number(value).toLocaleString());
 const dec = (value, places = 2) => (value == null ? '-' : Number(value).toFixed(places));
 
 const confValue = (conference) => (typeof conference === 'string' ? conference : conference?.name);
-const unwrapContent = (result) => (Array.isArray(result?.content) ? result.content : Array.isArray(result) ? result : []);
+const unwrapContent = (result) =>
+    Array.isArray(result?.content) ? result.content : Array.isArray(result) ? result : [];
 
 const Stats = () => {
     const { sub, statKey } = useParams();
@@ -87,7 +140,9 @@ const Stats = () => {
     const [season, setSeason] = useState(seasonParam ? (seasonParam === 'all' ? 'all' : Number(seasonParam)) : null);
     const [statFilter, setStatFilter] = useState(searchParams.get('statFilter') || '');
     const [cardPage, setCardPage] = useState(0);
-    const [count, setCount] = useState(countParam === 'all' ? 'all' : (Number.isFinite(parsedCountParam) && parsedCountParam > 0 ? parsedCountParam : 5));
+    const [count, setCount] = useState(
+        countParam === 'all' ? 'all' : Number.isFinite(parsedCountParam) && parsedCountParam > 0 ? parsedCountParam : 5
+    );
     const scope = searchParams.get('scope') === 'postseason' ? 'postseason' : 'regular';
     const conferenceFilter = searchParams.get('conference')?.toUpperCase() || 'ALL';
     useConferencesMap();
@@ -96,8 +151,11 @@ const Stats = () => {
     const updateParams = (updates) => {
         const next = new URLSearchParams(searchParams);
         Object.entries(updates).forEach(([key, value]) => {
-            if (value === null || value === undefined || value === '') next.delete(key);
-            else next.set(key, String(value));
+            if (value === null || value === undefined || value === '') {
+                next.delete(key);
+            } else {
+                next.set(key, String(value));
+            }
         });
         setSearchParams(next, { replace: true });
     };
@@ -141,10 +199,15 @@ const Stats = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    useSeo({ title: 'Stats | FCFB', description: 'League leaderboards, records, and conference and playbook statistics in Fake College Football.' });
+    useSeo({
+        title: 'Stats | FCFB',
+        description: 'League leaderboards, records, and conference and playbook statistics in Fake College Football.',
+    });
 
     useEffect(() => {
-        if (!sub) navigate({ pathname: '/stats/leaderboard', search: searchParams.toString() }, { replace: true });
+        if (!sub) {
+            navigate({ pathname: '/stats/leaderboard', search: searchParams.toString() }, { replace: true });
+        }
     }, [sub, navigate]);
 
     useEffect(() => {
@@ -152,76 +215,140 @@ const Stats = () => {
         (async () => {
             try {
                 const all = await getAllSeasons();
-                if (!active) return;
-                const started = all.filter(seasonHasStarted).map((entry) => entry.season_number ?? entry.seasonNumber).filter((value) => value != null).sort((a, b) => b - a);
+                if (!active) {
+                    return;
+                }
+                const started = all
+                    .filter(seasonHasStarted)
+                    .map((entry) => entry.season_number ?? entry.seasonNumber)
+                    .filter((value) => value != null)
+                    .sort((a, b) => b - a);
                 setSeasons(started);
-                if (season == null) setSeason(started[0] ?? 11);
+                if (season == null) {
+                    setSeason(started[0] ?? 11);
+                }
             } catch {
-                if (active && season == null) setSeason(11);
+                if (active && season == null) {
+                    setSeason(11);
+                }
             }
         })();
-        return () => { active = false; };
+        return () => {
+            active = false;
+        };
     }, []);
 
     useEffect(() => {
-        if (season == null) return;
+        if (season == null) {
+            return;
+        }
         let active = true;
         (async () => {
             try {
                 setLoading(true);
                 setError('');
                 if (activeSub === 'leaderboard' && season === 'all') {
-                    const perSeason = await Promise.all(seasons.map((number) => getFilteredSeasonStats(null, null, number, null, 0, 1000, scope)));
+                    const perSeason = await Promise.all(
+                        seasons.map((number) => getFilteredSeasonStats(null, null, number, null, 0, 1000, scope))
+                    );
                     const rows = perSeason.flatMap((result) => unwrapContent(result));
-                    if (active) setSeasonStatRows(aggregateAllTimeStats(rows));
+                    if (active) {
+                        setSeasonStatRows(aggregateAllTimeStats(rows));
+                    }
                 } else if (activeSub === 'leaderboard') {
                     const rows = unwrapContent(await getFilteredSeasonStats(null, null, season, null, 0, 1000, scope));
-                    if (active) setSeasonStatRows(rows);
+                    if (active) {
+                        setSeasonStatRows(rows);
+                    }
                 } else if (activeSub === 'league' && season === 'all') {
-                    const perSeason = await Promise.all(seasons.map((number) => getFilteredLeagueStats(null, number, 0, 1000, scope)));
+                    const perSeason = await Promise.all(
+                        seasons.map((number) => getFilteredLeagueStats(null, number, 0, 1000, scope))
+                    );
                     const rows = perSeason.flatMap((result) => unwrapContent(result));
-                    if (active) setLeague(rows.length ? aggregateStatRows(rows, LEAGUE_FIELD_AGGS) : null);
+                    if (active) {
+                        setLeague(rows.length ? aggregateStatRows(rows, LEAGUE_FIELD_AGGS) : null);
+                    }
                 } else if (activeSub === 'league') {
                     const rows = unwrapContent(await getFilteredLeagueStats(null, season, 0, 1000, scope));
-                    if (active) setLeague(rows[0] || null);
+                    if (active) {
+                        setLeague(rows[0] || null);
+                    }
                 } else if (activeSub === 'conference' && season === 'all') {
-                    const perSeason = await Promise.all(seasons.map((number) => getFilteredConferenceStats(null, number, null, 0, 1000, scope)));
+                    const perSeason = await Promise.all(
+                        seasons.map((number) => getFilteredConferenceStats(null, number, null, 0, 1000, scope))
+                    );
                     const rows = perSeason.flatMap((result) => unwrapContent(result));
-                    if (active) setConferences(aggregateStatRowsByKey(rows, 'conference', CONFERENCE_FIELD_AGGS));
+                    if (active) {
+                        setConferences(aggregateStatRowsByKey(rows, 'conference', CONFERENCE_FIELD_AGGS));
+                    }
                 } else if (activeSub === 'conference') {
                     const rows = unwrapContent(await getFilteredConferenceStats(null, season, null, 0, 1000, scope));
-                    if (active) setConferences(rows);
+                    if (active) {
+                        setConferences(rows);
+                    }
                 } else if (activeSub === 'playbooks' && season === 'all') {
-                    const perSeason = await Promise.all(seasons.map((number) => getFilteredPlaybookStats(null, null, number, 0, 1000, scope)));
+                    const perSeason = await Promise.all(
+                        seasons.map((number) => getFilteredPlaybookStats(null, null, number, 0, 1000, scope))
+                    );
                     const rows = perSeason.flatMap((result) => unwrapContent(result));
-                    if (active) setPlaybooks(rows);
+                    if (active) {
+                        setPlaybooks(rows);
+                    }
                 } else if (activeSub === 'playbooks') {
                     const rows = unwrapContent(await getFilteredPlaybookStats(null, null, season, 0, 1000, scope));
-                    if (active) setPlaybooks(rows);
+                    if (active) {
+                        setPlaybooks(rows);
+                    }
                 }
             } catch {
-                if (active) setError('Failed to load stats. Please try again.');
+                if (active) {
+                    setError('Failed to load stats. Please try again.');
+                }
             } finally {
-                if (active) setLoading(false);
+                if (active) {
+                    setLoading(false);
+                }
             }
         })();
-        return () => { active = false; };
+        return () => {
+            active = false;
+        };
     }, [activeSub, season, seasons, scope]);
 
-    useEffect(() => { setCardPage(0); }, [statFilter, season, conferenceFilter]);
+    useEffect(() => {
+        setCardPage(0);
+    }, [statFilter, season, conferenceFilter]);
 
-    const filteredCatalog = useMemo(() => (statFilter && STAT_BY_KEY[statFilter] ? [STAT_BY_KEY[statFilter]] : STAT_CATALOG), [statFilter]);
+    const filteredCatalog = useMemo(
+        () => (statFilter && STAT_BY_KEY[statFilter] ? [STAT_BY_KEY[statFilter]] : STAT_CATALOG),
+        [statFilter]
+    );
 
     const leaderboardRows = useMemo(
-        () => (conferenceFilter === 'ALL' ? seasonStatRows : seasonStatRows.filter((row) => row.conference === conferenceFilter)),
-        [seasonStatRows, conferenceFilter],
+        () =>
+            conferenceFilter === 'ALL'
+                ? seasonStatRows
+                : seasonStatRows.filter((row) => row.conference === conferenceFilter),
+        [seasonStatRows, conferenceFilter]
     );
 
     const aggregatedPlaybooks = useMemo(() => {
         const byPlaybook = new Map();
         playbooks.forEach((row) => {
             const key = row.offensive_playbook;
-            const current = byPlaybook.get(key) || { offensive_playbook: key, total_teams: 0, total_games: 0, total_yards: 0, pass_yards: 0, rush_yards: 0, pass_touchdowns: 0, rush_touchdowns: 0, diffWeight: 0, diffSum: 0, statRows: [] };
+            const current = byPlaybook.get(key) || {
+                offensive_playbook: key,
+                total_teams: 0,
+                total_games: 0,
+                total_yards: 0,
+                pass_yards: 0,
+                rush_yards: 0,
+                pass_touchdowns: 0,
+                rush_touchdowns: 0,
+                diffWeight: 0,
+                diffSum: 0,
+                statRows: [],
+            };
             current.statRows.push(row);
             current.total_teams += row.total_teams || 0;
             current.total_games += row.total_games || 0;
@@ -237,12 +364,22 @@ const Stats = () => {
             byPlaybook.set(key, current);
         });
         return [...byPlaybook.values()]
-            .map((row) => ({ ...row, yards_per_play: averageFromTotals(row.statRows, 'offensive_play_yards', 'offensive_play_count'), average_offensive_diff: row.diffWeight ? row.diffSum / row.diffWeight : null }))
+            .map((row) => ({
+                ...row,
+                yards_per_play: averageFromTotals(row.statRows, 'offensive_play_yards', 'offensive_play_count'),
+                average_offensive_diff: row.diffWeight ? row.diffSum / row.diffWeight : null,
+            }))
             .sort((a, b) => b.total_yards - a.total_yards);
     }, [playbooks]);
 
-    const maxPlaybookYards = useMemo(() => Math.max(1, ...aggregatedPlaybooks.map((row) => row.total_yards)), [aggregatedPlaybooks]);
-    const sortedConferences = useMemo(() => [...conferences].sort((a, b) => (b.average_offensive_diff || 0) - (a.average_offensive_diff || 0)), [conferences]);
+    const maxPlaybookYards = useMemo(
+        () => Math.max(1, ...aggregatedPlaybooks.map((row) => row.total_yards)),
+        [aggregatedPlaybooks]
+    );
+    const sortedConferences = useMemo(
+        () => [...conferences].sort((a, b) => (b.average_offensive_diff || 0) - (a.average_offensive_diff || 0)),
+        [conferences]
+    );
 
     const controlSx = { flex: '1 1 200px', minWidth: 180, height: 38 };
     const seasonOptions = [
@@ -258,27 +395,77 @@ const Stats = () => {
 
     const renderLeaderboard = () => {
         if (detailStat) {
-            return <StatLeaderboardDetail stat={detailStat} rows={buildLeaderboard(leaderboardRows, detailStat)} onBack={() => navigate({ pathname: '/stats/leaderboard', search: searchParams.toString() })} />;
+            return (
+                <StatLeaderboardDetail
+                    stat={detailStat}
+                    rows={buildLeaderboard(leaderboardRows, detailStat)}
+                    onBack={() => navigate({ pathname: '/stats/leaderboard', search: searchParams.toString() })}
+                />
+            );
         }
         const pageCount = Math.max(1, Math.ceil(filteredCatalog.length / CARDS_PER_PAGE));
         const page = Math.min(cardPage, pageCount - 1);
         const visible = filteredCatalog.slice(page * CARDS_PER_PAGE, page * CARDS_PER_PAGE + CARDS_PER_PAGE);
-        const statOptions = [{ value: '', label: 'All stats' }, ...STAT_CATALOG.map((stat) => ({ value: stat.key, label: stat.label }))];
-        const seasonScopedConferences = season === 'all' ? activeConferenceList() : seasonConferenceList(seasonConferenceCodes);
-        const conferenceOptions = [{ value: 'ALL', label: 'All conferences' }, ...seasonScopedConferences.map((entry) => ({ value: entry.code, label: entry.label }))];
+        const statOptions = [
+            { value: '', label: 'All stats' },
+            ...STAT_CATALOG.map((stat) => ({ value: stat.key, label: stat.label })),
+        ];
+        const seasonScopedConferences =
+            season === 'all' ? activeConferenceList() : seasonConferenceList(seasonConferenceCodes);
+        const conferenceOptions = [
+            { value: 'ALL', label: 'All conferences' },
+            ...seasonScopedConferences.map((entry) => ({ value: entry.code, label: entry.label })),
+        ];
         return (
             <>
                 <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
                     {scopeControl}
                     {seasonControl}
-                    <SelectPill label="Conference" value={conferenceFilter} onChange={changeConferenceFilter} options={conferenceOptions} sx={controlSx} ariaLabel="Filter by conference" />
-                    <SelectPill label="Stat" value={statFilter} onChange={changeStatFilter} options={statOptions} sx={controlSx} ariaLabel="Choose a stat" />
-                    <SelectPill label="Show" value={count} onChange={changeCount} options={[{ value: 5, label: 'Top 5' }, { value: 10, label: 'Top 10' }, { value: 25, label: 'Top 25' }, { value: 'all', label: 'All teams' }]} sx={{ height: 38 }} />
+                    <SelectPill
+                        label="Conference"
+                        value={conferenceFilter}
+                        onChange={changeConferenceFilter}
+                        options={conferenceOptions}
+                        sx={controlSx}
+                        ariaLabel="Filter by conference"
+                    />
+                    <SelectPill
+                        label="Stat"
+                        value={statFilter}
+                        onChange={changeStatFilter}
+                        options={statOptions}
+                        sx={controlSx}
+                        ariaLabel="Choose a stat"
+                    />
+                    <SelectPill
+                        label="Show"
+                        value={count}
+                        onChange={changeCount}
+                        options={[
+                            { value: 5, label: 'Top 5' },
+                            { value: 10, label: 'Top 10' },
+                            { value: 25, label: 'Top 25' },
+                            { value: 'all', label: 'All teams' },
+                        ]}
+                        sx={{ height: 38 }}
+                    />
                 </Box>
-                <Box sx={{ color: 'var(--text-muted)', fontSize: '0.8rem', mb: 2 }}>Click a stat title to open its full leaderboard.</Box>
-                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+                <Box sx={{ color: 'var(--text-muted)', fontSize: '0.8rem', mb: 2 }}>
+                    Click a stat title to open its full leaderboard.
+                </Box>
+                <Box
+                    sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}
+                >
                     {visible.map((stat) => (
-                        <StatLeaderboardCard key={stat.key} title={stat.label} statKey={stat.key} rows={buildLeaderboard(leaderboardRows, stat)} count={count} format={stat.format} to={{ pathname: `/stats/leaderboard/${stat.key}`, search: searchParams.toString() }} />
+                        <StatLeaderboardCard
+                            key={stat.key}
+                            title={stat.label}
+                            statKey={stat.key}
+                            rows={buildLeaderboard(leaderboardRows, stat)}
+                            count={count}
+                            format={stat.format}
+                            to={{ pathname: `/stats/leaderboard/${stat.key}`, search: searchParams.toString() }}
+                        />
                     ))}
                 </Box>
                 <Pager page={page} pageCount={pageCount} onChange={setCardPage} />
@@ -287,24 +474,47 @@ const Stats = () => {
     };
 
     const leagueStatRow = (key, label, type) => (
-        <Box key={key} sx={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 1, px: 1.75, py: 0.9, borderBottom: '1px solid var(--line-soft)', fontSize: '0.84rem' }}>
-            <Box component="span" sx={{ color: 'var(--text-muted)' }}>{label}</Box>
-            <Box component="span" className="num" sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{formatValue(league[key], type)}</Box>
+        <Box
+            key={key}
+            sx={{
+                display: 'grid',
+                gridTemplateColumns: '1fr auto',
+                gap: 1,
+                px: 1.75,
+                py: 0.9,
+                borderBottom: '1px solid var(--line-soft)',
+                fontSize: '0.84rem',
+            }}
+        >
+            <Box component="span" sx={{ color: 'var(--text-muted)' }}>
+                {label}
+            </Box>
+            <Box component="span" className="num" sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                {formatValue(league[key], type)}
+            </Box>
         </Box>
     );
 
     const renderLeague = () => {
-        if (!league) return <Box sx={{ color: 'var(--text-muted)', py: 4, textAlign: 'center' }}>No league data available.</Box>;
+        if (!league) {
+            return <Box sx={{ color: 'var(--text-muted)', py: 4, textAlign: 'center' }}>No league data available.</Box>;
+        }
         return (
             <>
-                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>{scopeControl}{seasonControl}</Box>
+                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                    {scopeControl}
+                    {seasonControl}
+                </Box>
                 <TileGrid sx={{ mb: '16px' }}>
                     <StatTile label="Teams" value={fmt(league.total_teams)} />
                     <StatTile label="Total yards" value={fmt(league.total_yards)} />
                     <StatTile label="Yards / play" value={dec(league.average_yards_per_play)} />
                     <StatTile label="Passing yards" value={fmt(league.pass_yards)} />
                     <StatTile label="Rushing yards" value={fmt(league.rush_yards)} />
-                    <StatTile label="Average response time" value={formatValue(league.average_response_speed, 'time')} />
+                    <StatTile
+                        label="Average response time"
+                        value={formatValue(league.average_response_speed, 'time')}
+                    />
                 </TileGrid>
                 {LEAGUE_STAT_GROUPS.filter(([group]) => group === 'Ratings & pace').map(([group, rows]) => (
                     <Box key={group} sx={{ mb: '16px' }}>
@@ -330,12 +540,17 @@ const Stats = () => {
 
     const renderConference = () => (
         <>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>{scopeControl}{seasonControl}</Box>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                {scopeControl}
+                {seasonControl}
+            </Box>
             <DataTable minWidth={1100}>
                 <thead>
                     <tr>
                         <th className="lft stick">Conference</th>
-                        {CONFERENCE_COLUMNS.map(([key, label]) => <th key={key}>{label}</th>)}
+                        {CONFERENCE_COLUMNS.map(([key, label]) => (
+                            <th key={key}>{label}</th>
+                        ))}
                     </tr>
                 </thead>
                 <tbody>
@@ -344,9 +559,16 @@ const Stats = () => {
                         return (
                             <tr key={value}>
                                 <td className="lft stick">
-                                    <div className="teamcell"><ConferenceMark conference={value} size={20} /><span className="nm">{conferenceLabel(value)}</span></div>
+                                    <div className="teamcell">
+                                        <ConferenceMark conference={value} size={20} />
+                                        <span className="nm">{conferenceLabel(value)}</span>
+                                    </div>
                                 </td>
-                                {CONFERENCE_COLUMNS.map(([key, , type]) => <td key={key} className="num">{formatValue(row[key], type)}</td>)}
+                                {CONFERENCE_COLUMNS.map(([key, , type]) => (
+                                    <td key={key} className="num">
+                                        {formatValue(row[key], type)}
+                                    </td>
+                                ))}
                             </tr>
                         );
                     })}
@@ -357,18 +579,31 @@ const Stats = () => {
 
     const renderPlaybooks = () => (
         <>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>{scopeControl}{seasonControl}</Box>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                {scopeControl}
+                {seasonControl}
+            </Box>
             <DataTable minWidth={760}>
                 <thead>
                     <tr>
                         <th className="lft stick">Offensive Playbook</th>
-                        <th>Teams</th><th>Games</th><th>Total Yds</th><th>Pass Yds</th><th>Rush Yds</th><th>Yds/Play</th><th>Pass TD</th><th>Rush TD</th><th>Off Diff</th>
+                        <th>Teams</th>
+                        <th>Games</th>
+                        <th>Total Yds</th>
+                        <th>Pass Yds</th>
+                        <th>Rush Yds</th>
+                        <th>Yds/Play</th>
+                        <th>Pass TD</th>
+                        <th>Rush TD</th>
+                        <th>Off Diff</th>
                     </tr>
                 </thead>
                 <tbody>
                     {aggregatedPlaybooks.map((row) => (
                         <tr key={row.offensive_playbook}>
-                            <td className="lft stick"><span className="nm">{formatOffensivePlaybook(row.offensive_playbook)}</span></td>
+                            <td className="lft stick">
+                                <span className="nm">{formatOffensivePlaybook(row.offensive_playbook)}</span>
+                            </td>
                             <td className="num">{fmt(row.total_teams)}</td>
                             <td className="num">{fmt(row.total_games)}</td>
                             <td className="num">{fmt(row.total_yards)}</td>
@@ -386,12 +621,47 @@ const Stats = () => {
             <Panel>
                 <Box sx={{ p: 2 }}>
                     {aggregatedPlaybooks.map((row) => (
-                        <Box key={row.offensive_playbook} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px 1fr 50px', sm: '170px 1fr 66px' }, alignItems: 'center', gap: 1.25, py: 0.75, fontSize: '0.8rem' }}>
-                            <Box component="span" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatOffensivePlaybook(row.offensive_playbook)}</Box>
-                            <Box sx={{ height: 16, background: 'var(--surface-2)', borderRadius: '3px', overflow: 'hidden' }}>
-                                <Box sx={{ height: '100%', borderRadius: '3px', width: `${(row.total_yards / maxPlaybookYards) * 100}%`, background: 'var(--brand)' }} />
+                        <Box
+                            key={row.offensive_playbook}
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: { xs: '110px 1fr 50px', sm: '170px 1fr 66px' },
+                                alignItems: 'center',
+                                gap: 1.25,
+                                py: 0.75,
+                                fontSize: '0.8rem',
+                            }}
+                        >
+                            <Box
+                                component="span"
+                                sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                            >
+                                {formatOffensivePlaybook(row.offensive_playbook)}
                             </Box>
-                            <Box component="span" className="num" sx={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{(row.total_yards / 1000).toFixed(1)}k</Box>
+                            <Box
+                                sx={{
+                                    height: 16,
+                                    background: 'var(--surface-2)',
+                                    borderRadius: '3px',
+                                    overflow: 'hidden',
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        height: '100%',
+                                        borderRadius: '3px',
+                                        width: `${(row.total_yards / maxPlaybookYards) * 100}%`,
+                                        background: 'var(--brand)',
+                                    }}
+                                />
+                            </Box>
+                            <Box
+                                component="span"
+                                className="num"
+                                sx={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                            >
+                                {(row.total_yards / 1000).toFixed(1)}k
+                            </Box>
                         </Box>
                     ))}
                 </Box>
@@ -402,13 +672,24 @@ const Stats = () => {
     return (
         <PageWrap>
             <PageHeading title="Stats">
-                <SegTabs value={activeSub} onChange={(value) => navigate({ pathname: `/stats/${value}`, search: searchParams.toString() })} options={SUB_TABS} ariaLabel="Stats view" />
+                <SegTabs
+                    value={activeSub}
+                    onChange={(value) => navigate({ pathname: `/stats/${value}`, search: searchParams.toString() })}
+                    options={SUB_TABS}
+                    ariaLabel="Stats view"
+                />
             </PageHeading>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                </Alert>
+            )}
 
             {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                    <CircularProgress />
+                </Box>
             ) : (
                 <>
                     {activeSub === 'leaderboard' && renderLeaderboard()}

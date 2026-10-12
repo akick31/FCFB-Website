@@ -1,11 +1,7 @@
 import apiClient from './apiClient';
 
 export const getFonts = async () => {
-    try {
-        return (await apiClient.get('/font')).data;
-    } catch (error) {
-        return [];
-    }
+    return (await apiClient.get('/font')).data;
 };
 
 export const addFont = async (label, url, acknowledged) => {

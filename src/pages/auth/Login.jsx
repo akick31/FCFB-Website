@@ -5,7 +5,10 @@ import LoginForm from '../../components/forms/LoginForm';
 import { useSeo } from '../../hooks/useSeo';
 
 const Login = ({ setIsAuthenticated, setUser, setIsAdmin }) => {
-    useSeo({ title: 'Log in | Fake College Football', description: 'Sign in to your Fake College Football coach account.' });
+    useSeo({
+        title: 'Log in | Fake College Football',
+        description: 'Sign in to your Fake College Football coach account.',
+    });
 
     return (
         <PageWrap>

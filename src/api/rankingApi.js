@@ -5,7 +5,7 @@ export const getRankings = async (season, week, pollType) => {
         const response = await apiClient.get('/ranking', { params: { season, week, pollType } });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch rankings:', error);
+        console.error('Failed to fetch rankings:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch rankings');
         }
@@ -18,7 +18,7 @@ export const getTeamRankings = async (teamId, pollType) => {
         const response = await apiClient.get('/ranking/team', { params: { teamId, pollType } });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch team rankings:', error);
+        console.error('Failed to fetch team rankings:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch team rankings');
         }
@@ -32,7 +32,7 @@ export const getRankedGames = async (team, season = null) => {
         const response = await apiClient.get('/ranking/games', { params });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch ranked games:', error);
+        console.error('Failed to fetch ranked games:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch ranked games');
         }
@@ -45,7 +45,7 @@ export const getLatestRankings = async (pollType) => {
         const response = await apiClient.get('/ranking/latest', { params: { pollType } });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch latest rankings:', error);
+        console.error('Failed to fetch latest rankings:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch latest rankings');
         }
@@ -58,7 +58,7 @@ export const getRankingWeeks = async (season, pollType) => {
         const response = await apiClient.get('/ranking/weeks', { params: { season, pollType } });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch ranking weeks:', error);
+        console.error('Failed to fetch ranking weeks:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch ranking weeks');
         }
@@ -71,7 +71,7 @@ export const uploadRankings = async ({ season, week, pollType, teams }) => {
         const response = await apiClient.post('/ranking', { season, week, pollType, teams });
         return response.data;
     } catch (error) {
-        console.error('Failed to upload rankings:', error);
+        console.error('Failed to upload rankings:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to upload rankings');
         }

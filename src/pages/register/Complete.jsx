@@ -4,7 +4,10 @@ import PageWrap from '../../components/layout/PageWrap';
 import { useSeo } from '../../hooks/useSeo';
 
 const Complete = () => {
-    useSeo({ title: 'Complete registration | Fake College Football', description: 'Finish setting up your Fake College Football coach account.' });
+    useSeo({
+        title: 'Complete registration | Fake College Football',
+        description: 'Finish setting up your Fake College Football coach account.',
+    });
 
     return (
         <PageWrap>

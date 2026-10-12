@@ -2,13 +2,49 @@ import React from 'react';
 import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const ctrlSx = { border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text-muted)', borderRadius: 'var(--r-sm)', px: '12px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' } };
-const btnPrimarySx = { border: 0, background: 'var(--brand-deep)', color: '#fff', borderRadius: 'var(--r-sm)', px: '16px', height: '38px', boxSizing: 'border-box', font: 'inherit', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:disabled': { opacity: 0.6, cursor: 'default' } };
+const ctrlSx = {
+    border: '1px solid var(--line)',
+    background: 'var(--surface-2)',
+    color: 'var(--text-muted)',
+    borderRadius: 'var(--r-sm)',
+    px: '12px',
+    height: '38px',
+    boxSizing: 'border-box',
+    font: 'inherit',
+    fontSize: '0.78rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
+};
+const btnPrimarySx = {
+    border: 0,
+    background: 'var(--brand-deep)',
+    color: '#fff',
+    borderRadius: 'var(--r-sm)',
+    px: '16px',
+    height: '38px',
+    boxSizing: 'border-box',
+    font: 'inherit',
+    fontSize: '0.82rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    '&:disabled': { opacity: 0.6, cursor: 'default' },
+};
 const dialogPaperSx = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)' };
 const dialogTitleSx = { color: 'var(--text)', fontWeight: 800, fontSize: '1.05rem' };
 
 const OocScheduleDialog = ({ open, onClose, season, oocLoading, oocResult, onGenerate }) => (
-    <Dialog open={open} onClose={() => !oocLoading && onClose()} maxWidth="sm" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+    <Dialog
+        open={open}
+        onClose={() => !oocLoading && onClose()}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: dialogPaperSx }}
+    >
         <DialogTitle sx={dialogTitleSx}>Auto-Generate Out-of-Conference Schedule</DialogTitle>
         <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '6px' }}>
@@ -32,9 +68,27 @@ const OocScheduleDialog = ({ open, onClose, season, oocLoading, oocResult, onGen
                                 : ' Every team’s schedule is full.'}
                         </Alert>
                         {oocResult.unmatchedSlots?.length > 0 && (
-                            <Box sx={{ maxHeight: 240, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 'var(--r-sm)' }}>
+                            <Box
+                                sx={{
+                                    maxHeight: 240,
+                                    overflowY: 'auto',
+                                    border: '1px solid var(--line)',
+                                    borderRadius: 'var(--r-sm)',
+                                }}
+                            >
                                 {oocResult.unmatchedSlots.map((slot, i) => (
-                                    <Box key={`${slot.team}-${slot.week}-${i}`} sx={{ display: 'flex', justifyContent: 'space-between', px: '12px', py: '8px', fontSize: '0.82rem', borderBottom: '1px solid var(--line-soft)', '&:last-of-type': { borderBottom: 0 } }}>
+                                    <Box
+                                        key={`${slot.team}-${slot.week}-${i}`}
+                                        sx={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            px: '12px',
+                                            py: '8px',
+                                            fontSize: '0.82rem',
+                                            borderBottom: '1px solid var(--line-soft)',
+                                            '&:last-of-type': { borderBottom: 0 },
+                                        }}
+                                    >
                                         <Box>{slot.team}</Box>
                                         <Box sx={{ color: 'var(--text-dim)' }}>Week {slot.week}</Box>
                                     </Box>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import SelectPill from '../ui/SelectPill';
-import { conferenceLabel } from '../constants/conferences';
+import { conferenceLabel } from '../../hooks/useConferencesMap';
 
 const ConferenceTabs = ({ conferences, value, onChange }) => (
     <>

@@ -1,17 +1,30 @@
 import apiClient from './apiClient';
 
-export const getFilteredPlaybookStats = async (offensivePlaybook = null, defensivePlaybook = null, season = null, page = 0, size = 20, scope = 'regular') => {
+export const getFilteredPlaybookStats = async (
+    offensivePlaybook = null,
+    defensivePlaybook = null,
+    season = null,
+    page = 0,
+    size = 20,
+    scope = 'regular'
+) => {
     try {
         const params = { page, size };
-        if (offensivePlaybook) params.offensivePlaybook = offensivePlaybook;
-        if (defensivePlaybook) params.defensivePlaybook = defensivePlaybook;
-        if (season) params.season = season;
+        if (offensivePlaybook) {
+            params.offensivePlaybook = offensivePlaybook;
+        }
+        if (defensivePlaybook) {
+            params.defensivePlaybook = defensivePlaybook;
+        }
+        if (season) {
+            params.season = season;
+        }
 
         const endpoint = scope === 'postseason' ? '/playbook-stats/postseason' : '/playbook-stats';
         const response = await apiClient.get(endpoint, { params });
         return response.data;
     } catch (error) {
-        console.error('Failed to fetch filtered playbook stats:', error);
+        console.error('Failed to fetch filtered playbook stats:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to fetch filtered playbook stats');
         }
@@ -23,11 +36,10 @@ export const generateAllPlaybookStats = async () => {
         const response = await apiClient.post('/playbook-stats/generate/all');
         return response.data;
     } catch (error) {
-        console.error('Failed to generate all playbook stats:', error);
+        console.error('Failed to generate all playbook stats:');
         if (error.response) {
             throw new Error(error.response.data.error || 'Failed to generate all playbook stats');
         }
         throw new Error('An unexpected error occurred while generating all playbook stats');
     }
 };
-

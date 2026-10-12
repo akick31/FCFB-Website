@@ -10,7 +10,9 @@ const FitTeamName = ({ fullName, abbreviation, sx }) => {
     useEffect(() => {
         const wrap = wrapRef.current;
         const measure = measureRef.current;
-        if (!wrap || !measure || typeof ResizeObserver === 'undefined') return undefined;
+        if (!wrap || !measure || typeof ResizeObserver === 'undefined') {
+            return undefined;
+        }
 
         const check = () => setUseAbbreviation(measure.scrollWidth > wrap.clientWidth);
         check();
@@ -22,11 +24,18 @@ const FitTeamName = ({ fullName, abbreviation, sx }) => {
 
     return (
         <Box ref={wrapRef} sx={{ position: 'relative', minWidth: 0, flex: '1 1 0%', overflow: 'hidden' }}>
-            <Box ref={measureRef} aria-hidden="true" sx={{ position: 'absolute', visibility: 'hidden', whiteSpace: 'nowrap', pointerEvents: 'none', ...sx }}>
+            <Box
+                ref={measureRef}
+                aria-hidden="true"
+                sx={{ position: 'absolute', visibility: 'hidden', whiteSpace: 'nowrap', pointerEvents: 'none', ...sx }}
+            >
                 {fullName}
             </Box>
-            <Box component="span" sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...sx }}>
-                {useAbbreviation ? (abbreviation || fullName) : fullName}
+            <Box
+                component="span"
+                sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...sx }}
+            >
+                {useAbbreviation ? abbreviation || fullName : fullName}
             </Box>
         </Box>
     );

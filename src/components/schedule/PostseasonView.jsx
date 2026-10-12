@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
@@ -8,34 +8,84 @@ import StatusPill from '../ui/StatusPill';
 import TeamMark from '../ui/TeamMark';
 import ConferenceMark from '../ui/ConferenceMark';
 import PlayoffBracket from './PlayoffBracket';
-import { conferenceLabel } from '../constants/conferences';
+import { conferenceLabel } from '../../hooks/useConferencesMap';
 import { ensureTeam } from '../../hooks/useTeamsMap';
 
 const PostseasonRow = ({ game, label, teamsMap }) => {
+    useEffect(() => {
+        ensureTeam(game.home_team);
+        ensureTeam(game.away_team);
+    }, [game.home_team, game.away_team]);
+
     const homeWin = game.home_score > game.away_score;
     const markFor = (name) => {
-        if (!name) return { name };
-        if (!teamsMap[name]) ensureTeam(name);
+        if (!name) {
+            return { name };
+        }
         return teamsMap[name] || { name };
     };
     const side = (name, score, isWinner) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.84rem', color: game.finished && !isWinner ? 'var(--text-dim)' : 'var(--text)' }}>
+        <Box
+            sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '0.84rem',
+                color: game.finished && !isWinner ? 'var(--text-dim)' : 'var(--text)',
+            }}
+        >
             <TeamMark team={markFor(name)} size={20} />
-            <Box component="span" sx={{ fontWeight: 700, width: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</Box>
-            <Box component="span" sx={{ fontFamily: 'var(--cond)', fontWeight: 800, fontSize: '1.05rem', width: 28, textAlign: 'right' }}>{game.finished ? score : ''}</Box>
+            <Box
+                component="span"
+                sx={{ fontWeight: 700, width: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            >
+                {name}
+            </Box>
+            <Box
+                component="span"
+                sx={{ fontFamily: 'var(--cond)', fontWeight: 800, fontSize: '1.05rem', width: 28, textAlign: 'right' }}
+            >
+                {game.finished ? score : ''}
+            </Box>
         </Box>
     );
     return (
         <Box
             component={game.game_id ? Link : 'div'}
             to={game.game_id ? `/game-details/${game.game_id}` : undefined}
-            sx={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '14px', alignItems: 'center', px: 1.75, py: 1.1, borderBottom: '1px solid var(--line-soft)', cursor: 'pointer', textDecoration: 'none', color: 'inherit', '&:hover': { background: 'var(--surface-2)' }, '&:last-of-type': { borderBottom: 'none' }, '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' } }}
+            sx={{
+                display: 'grid',
+                gridTemplateColumns: '1fr auto auto',
+                gap: '14px',
+                alignItems: 'center',
+                px: 1.75,
+                py: 1.1,
+                borderBottom: '1px solid var(--line-soft)',
+                cursor: 'pointer',
+                textDecoration: 'none',
+                color: 'inherit',
+                '&:hover': { background: 'var(--surface-2)' },
+                '&:last-of-type': { borderBottom: 'none' },
+                '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '-2px' },
+            }}
         >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0 }}>
                 {side(game.away_team, game.away_score, game.away_score > game.home_score)}
                 {side(game.home_team, game.home_score, homeWin)}
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-dim)', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', textAlign: 'right', whiteSpace: 'nowrap' }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: 'var(--text-dim)',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    textAlign: 'right',
+                    whiteSpace: 'nowrap',
+                }}
+            >
                 {label}
             </Box>
             <StatusPill variant={game.finished ? 'final' : 'ghost'}>{game.finished ? 'Final' : 'Upcoming'}</StatusPill>
@@ -51,7 +101,9 @@ PostseasonRow.propTypes = {
 
 const bowlLabel = (game) => (
     <>
-        {game.postseason_game_logo && <img src={game.postseason_game_logo} alt="" style={{ height: 20, width: 'auto', objectFit: 'contain' }} />}
+        {game.postseason_game_logo && (
+            <img src={game.postseason_game_logo} alt="" style={{ height: 20, width: 'auto', objectFit: 'contain' }} />
+        )}
         {game.postseason_game_name || 'Bowl'}
     </>
 );
@@ -64,7 +116,9 @@ const PostseasonView = ({ postseasonSchedule, teamsMap, loading }) => {
         let maxSeed = 0;
         for (const game of postseasonSchedule) {
             if (game.playoff_round != null) {
-                if (!roundMap[game.playoff_round]) roundMap[game.playoff_round] = [];
+                if (!roundMap[game.playoff_round]) {
+                    roundMap[game.playoff_round] = [];
+                }
                 roundMap[game.playoff_round].push(game);
                 maxSeed = Math.max(maxSeed, game.playoff_home_seed || 0, game.playoff_away_seed || 0);
             } else if (game.game_type === 'CONFERENCE_CHAMPIONSHIP') {
@@ -77,7 +131,11 @@ const PostseasonView = ({ postseasonSchedule, teamsMap, loading }) => {
     }, [postseasonSchedule]);
 
     if (loading) {
-        return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>;
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                <CircularProgress />
+            </Box>
+        );
     }
 
     return (
@@ -94,7 +152,12 @@ const PostseasonView = ({ postseasonSchedule, teamsMap, loading }) => {
                     <SectionTitle title="Bowls" note={`${bowls.length} games`} />
                     <Panel>
                         {bowls.map((game) => (
-                            <PostseasonRow key={game.game_id || game.id} game={game} teamsMap={teamsMap} label={bowlLabel(game)} />
+                            <PostseasonRow
+                                key={game.game_id || game.id}
+                                game={game}
+                                teamsMap={teamsMap}
+                                label={bowlLabel(game)}
+                            />
                         ))}
                     </Panel>
                 </>
@@ -111,10 +174,14 @@ const PostseasonView = ({ postseasonSchedule, teamsMap, loading }) => {
                                     key={game.game_id || game.id}
                                     game={game}
                                     teamsMap={teamsMap}
-                                    label={<>
-                                        <ConferenceMark conference={conference} size={18} />
-                                        {conference ? `${conferenceLabel(conference)} Championship` : 'Conference Championship'}
-                                    </>}
+                                    label={
+                                        <>
+                                            <ConferenceMark conference={conference} size={18} />
+                                            {conference
+                                                ? `${conferenceLabel(conference)} Championship`
+                                                : 'Conference Championship'}
+                                        </>
+                                    }
                                 />
                             );
                         })}

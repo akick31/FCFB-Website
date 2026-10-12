@@ -14,25 +14,49 @@ const PlaybooksGraphTab = ({ season, scope }) => {
         let active = true;
         setLoading(true);
         getFilteredPlaybookStats(null, null, season, 0, 1000, scope)
-            .then((res) => { if (active) setRows(res?.content || []); })
-            .catch(() => { if (active) setRows([]); })
-            .finally(() => { if (active) setLoading(false); });
-        return () => { active = false; };
+            .then((res) => {
+                if (active) {
+                    setRows(res?.content || []);
+                }
+            })
+            .catch(() => {
+                if (active) {
+                    setRows([]);
+                }
+            })
+            .finally(() => {
+                if (active) {
+                    setLoading(false);
+                }
+            });
+        return () => {
+            active = false;
+        };
     }, [season, scope]);
 
     const playbooks = useMemo(() => {
         const byPlaybook = new Map();
         rows.forEach((row) => {
             const key = row.offensive_playbook;
-            if (!key) return;
-            const current = byPlaybook.get(key) || { offensive_playbook: key, total_games: 0, total_yards: 0, statRows: [] };
+            if (!key) {
+                return;
+            }
+            const current = byPlaybook.get(key) || {
+                offensive_playbook: key,
+                total_games: 0,
+                total_yards: 0,
+                statRows: [],
+            };
             current.statRows.push(row);
             current.total_games += row.total_games || 0;
             current.total_yards += row.total_yards || 0;
             byPlaybook.set(key, current);
         });
         return [...byPlaybook.values()]
-            .map((row) => ({ ...row, ypp: averageFromTotals(row.statRows, 'offensive_play_yards', 'offensive_play_count') }))
+            .map((row) => ({
+                ...row,
+                ypp: averageFromTotals(row.statRows, 'offensive_play_yards', 'offensive_play_count'),
+            }))
             .sort((a, b) => b.ypp - a.ypp);
     }, [rows]);
 
@@ -42,17 +66,52 @@ const PlaybooksGraphTab = ({ season, scope }) => {
         <Panel header="Yards per play by playbook">
             <Box sx={{ p: 2 }}>
                 {loading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                        <CircularProgress />
+                    </Box>
                 ) : !playbooks.length ? (
-                    <Box sx={{ color: 'var(--text-muted)', py: 5, textAlign: 'center' }}>No playbook data for this season.</Box>
+                    <Box sx={{ color: 'var(--text-muted)', py: 5, textAlign: 'center' }}>
+                        No playbook data for this season.
+                    </Box>
                 ) : (
                     playbooks.map((p) => (
-                        <Box key={p.offensive_playbook} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px 1fr 50px', sm: '170px 1fr 66px' }, alignItems: 'center', gap: 1.25, py: 0.75, fontSize: '0.8rem' }}>
-                            <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formatOffensivePlaybook(p.offensive_playbook)}</Box>
-                            <Box sx={{ height: 16, background: 'var(--surface-2)', borderRadius: '3px', overflow: 'hidden' }}>
-                                <Box sx={{ height: '100%', borderRadius: '3px', background: 'var(--field)', width: `${Math.max(2, (p.ypp / max) * 100)}%` }} />
+                        <Box
+                            key={p.offensive_playbook}
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: { xs: '110px 1fr 50px', sm: '170px 1fr 66px' },
+                                alignItems: 'center',
+                                gap: 1.25,
+                                py: 0.75,
+                                fontSize: '0.8rem',
+                            }}
+                        >
+                            <Box
+                                component="span"
+                                sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                            >
+                                {formatOffensivePlaybook(p.offensive_playbook)}
                             </Box>
-                            <Box className="num" sx={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{p.ypp == null ? '-' : p.ypp.toFixed(2)}</Box>
+                            <Box
+                                sx={{
+                                    height: 16,
+                                    background: 'var(--surface-2)',
+                                    borderRadius: '3px',
+                                    overflow: 'hidden',
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        height: '100%',
+                                        borderRadius: '3px',
+                                        background: 'var(--field)',
+                                        width: `${Math.max(2, (p.ypp / max) * 100)}%`,
+                                    }}
+                                />
+                            </Box>
+                            <Box className="num" sx={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                                {p.ypp == null ? '-' : p.ypp.toFixed(2)}
+                            </Box>
                         </Box>
                     ))
                 )}

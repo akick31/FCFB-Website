@@ -20,13 +20,14 @@ import {
     Error,
     UserDetails,
     Coaches,
-    ApiDocs
+    ApiDocs,
 } from './pages';
 import { getUserById } from './api/userApi';
-import { checkIfUserIsAdmin } from "./utils/utils";
+import { checkIfUserIsAdmin } from './utils/utils';
 import { Box } from '@mui/system';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import { ColorModeProvider } from './theme/ColorModeContext';
+import { ColorModeProvider } from './context/ColorModeContext';
+import { SESSION_EXPIRED_EVENT } from './utils/session';
 import {
     ResetPassword,
     Complete,
@@ -60,7 +61,7 @@ import {
     MatchupPreview,
     CoachTendencyCard,
     DriveChart,
-    HeadToHead
+    HeadToHead,
 } from './pages';
 
 const AppRoutes = () => {
@@ -70,6 +71,15 @@ const AppRoutes = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let active = true;
+        const clearSessionState = () => {
+            setIsAuthenticated(false);
+            setIsAdmin(false);
+            setUser({});
+            setLoading(false);
+        };
+        window.addEventListener(SESSION_EXPIRED_EVENT, clearSessionState);
+
         const initializeApp = async () => {
             const token = localStorage.getItem('token');
             const userId = localStorage.getItem('userId');
@@ -81,24 +91,42 @@ const AppRoutes = () => {
 
                 try {
                     const userData = await getUserById(userId);
+                    if (!active || token !== localStorage.getItem('token')) {
+                        return;
+                    }
                     setUser(userData);
                 } catch (error) {
+                    if (!active || token !== localStorage.getItem('token')) {
+                        return;
+                    }
                     console.error('Error fetching user data:', error);
-                    setIsAuthenticated(false);
-                    setUser({});
+                    clearSessionState();
+                } finally {
+                    if (active) {
+                        setLoading(false);
+                    }
                 }
             } else {
-                setIsAuthenticated(false);
-                setUser({});
+                clearSessionState();
             }
-            setLoading(false);
         };
 
         initializeApp();
+        return () => {
+            active = false;
+            window.removeEventListener(SESSION_EXPIRED_EVENT, clearSessionState);
+        };
     }, []);
 
     useEffect(() => {
         const handleStorageChange = () => {
+            if (!localStorage.getItem('token') || !localStorage.getItem('userId')) {
+                setIsAuthenticated(false);
+                setIsAdmin(false);
+                setUser({});
+                setLoading(false);
+                return;
+            }
             if (isAuthenticated) {
                 const newAdminStatus = checkIfUserIsAdmin();
                 setIsAdmin(newAdminStatus);
@@ -166,112 +194,312 @@ const AppRoutes = () => {
                 >
                     <Routes>
                         <Route path="/" element={<Home />} />
-                        <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUser={setUser} setIsAdmin={setIsAdmin} />} />
+                        <Route
+                            path="/login"
+                            element={
+                                <Login
+                                    setIsAuthenticated={setIsAuthenticated}
+                                    setUser={setUser}
+                                    setIsAdmin={setIsAdmin}
+                                />
+                            }
+                        />
                         <Route path="/register" element={<Registration />} />
                         <Route path="/register/complete" element={<Complete />} />
                         <Route path="/register/success" element={<RegistrationSuccess />} />
-                        <Route path="/profile" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={false} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <Profile user={user} setUser={setUser} setIsAuthenticated={setIsAuthenticated} setIsAdmin={setIsAdmin} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <Admin user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/user-management" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <UserManagement user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/coach-management" element={<Navigate to="/admin/team-management" replace />} />
-                        <Route path="/admin/game-management" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <GameManagement user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/team-management" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <TeamManagement user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/stats-management" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <StatsManagement user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/reports" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <Reports user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/coach-transaction-log" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <CoachTransactionLog user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/edit-game/:gameId" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <EditGame user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/edit-team/:teamId" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <EditTeam user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/edit-coach/:username" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <EditCoach user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/conferences" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <AdminConferences />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/conferences/:code" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <AdminConferenceDetail />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/team-appearance" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <AdminTeamAppearance />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/postseason-appearance/*" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <AdminFieldAppearance />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/field-appearance" element={<Navigate to="/admin/postseason-appearance" replace />} />
-                        <Route path="/admin/scheduling" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <Scheduling user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/season-management" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <SeasonManagement />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/game-week" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <GameWeek user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/rankings" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <RankingsManagement user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/admin/api-docs" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <AdminApiDocs />
-                            </ProtectedRoute>
-                        } />
+                        <Route
+                            path="/profile"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={false}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <Profile
+                                        user={user}
+                                        setUser={setUser}
+                                        setIsAuthenticated={setIsAuthenticated}
+                                        setIsAdmin={setIsAdmin}
+                                    />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <Admin user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/user-management"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <UserManagement user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/coach-management"
+                            element={<Navigate to="/admin/team-management" replace />}
+                        />
+                        <Route
+                            path="/admin/game-management"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <GameManagement user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/team-management"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <TeamManagement user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/stats-management"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <StatsManagement user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/reports"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <Reports user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/coach-transaction-log"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <CoachTransactionLog user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/edit-game/:gameId"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <EditGame user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/edit-team/:teamId"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <EditTeam user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/edit-coach/:username"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <EditCoach user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/conferences"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <AdminConferences />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/conferences/:code"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <AdminConferenceDetail />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/team-appearance"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <AdminTeamAppearance />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/postseason-appearance/*"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <AdminFieldAppearance />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/field-appearance"
+                            element={<Navigate to="/admin/postseason-appearance" replace />}
+                        />
+                        <Route
+                            path="/admin/scheduling"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <Scheduling user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/season-management"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <SeasonManagement />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/game-week"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <GameWeek user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/rankings"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <RankingsManagement user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/api-docs"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <AdminApiDocs />
+                                </ProtectedRoute>
+                            }
+                        />
                         <Route path="/developers" element={<ApiDocs />} />
                         <Route path="/tools/scouting-report" element={<ScoutingReport />} />
                         <Route path="/tools/matchup-preview" element={<MatchupPreview />} />
@@ -282,18 +510,35 @@ const AppRoutes = () => {
                         <Route path="/game-details/:gameId" element={<GameDetails isAdmin={isAdmin} />} />
                         <Route path="/game-details/:gameId/appearance" element={<GameAppearance />} />
                         <Route path="/team/:teamId" element={<TeamDetails />} />
-                        <Route path="/team-details/:teamId" element={<TeamDetails user={user}/>} />
+                        <Route path="/team-details/:teamId" element={<TeamDetails user={user} />} />
                         <Route path="/user-details/:coachName" element={<UserDetails />} />
-                        <Route path="/team-appearance/:teamId/:tab?" element={
-                            <ProtectedRoute requireAuth={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <TeamAppearance user={user} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/modify-team/:teamId" element={
-                            <ProtectedRoute requireAuth={true} requireAdmin={true} isAuthenticated={isAuthenticated} isAdmin={isAdmin} loading={loading}>
-                                <ModifyTeam />
-                            </ProtectedRoute>
-                        } />
+                        <Route
+                            path="/team-appearance/:teamId/:tab?"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <TeamAppearance user={user} />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/modify-team/:teamId"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <ModifyTeam />
+                                </ProtectedRoute>
+                            }
+                        />
                         <Route path="/schedules" element={<Schedule />} />
                         <Route path="/schedules/:tab" element={<Schedule />} />
                         <Route path="/schedules/:tab/:selection" element={<Schedule />} />
@@ -319,8 +564,14 @@ const AppRoutes = () => {
                         <Route path="/season-stats/:team/:season" element={<Navigate to="/stats" replace />} />
                         <Route path="/league-stats" element={<Navigate to="/stats/league" replace />} />
                         <Route path="/league-stats/:tab/:season" element={<Navigate to="/stats/league" replace />} />
-                        <Route path="/league-stats/:tab/:season/:p1" element={<Navigate to="/stats/league" replace />} />
-                        <Route path="/league-stats/:tab/:season/:p1/:p2" element={<Navigate to="/stats/league" replace />} />
+                        <Route
+                            path="/league-stats/:tab/:season/:p1"
+                            element={<Navigate to="/stats/league" replace />}
+                        />
+                        <Route
+                            path="/league-stats/:tab/:season/:p1/:p2"
+                            element={<Navigate to="/stats/league" replace />}
+                        />
                         <Route path="/leaderboard" element={<Navigate to="/stats/leaderboard" replace />} />
                         <Route path="/elo-history" element={<Navigate to="/graphs/rankings/elo" replace />} />
                         <Route path="/graphs" element={<Graphs />} />

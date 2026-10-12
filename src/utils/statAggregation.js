@@ -20,7 +20,10 @@ export const weightedAverage = (rows, valueKey, weightKey) => {
     let weighted = 0;
     let weight = 0;
     rows.forEach((row) => {
-        if (row[valueKey] != null && row[weightKey]) { weighted += row[valueKey] * row[weightKey]; weight += row[weightKey]; }
+        if (row[valueKey] != null && row[weightKey]) {
+            weighted += row[valueKey] * row[weightKey];
+            weight += row[weightKey];
+        }
     });
     return weight ? weighted / weight : null;
 };

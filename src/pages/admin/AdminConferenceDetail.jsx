@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
@@ -9,11 +9,18 @@ import ConferenceSettingsPanel from '../../components/admin/ConferenceSettingsPa
 import ConferenceTeamsPanel from '../../components/admin/ConferenceTeamsPanel';
 import { getConferences, updateConference, setConferenceActive } from '../../api/conferenceApi';
 import { getAllTeams, updateTeam } from '../../api/teamApi';
-import { refreshConferences } from '../../components/constants/conferences';
+import { refreshConferences } from '../../hooks/useConferencesMap';
 import { goBackOr } from '../../utils/navigation';
 import useConferenceRules from '../../hooks/useConferenceRules';
 
-const backSx = { color: 'var(--brand)', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none', display: 'inline-block', mb: '14px' };
+const backSx = {
+    color: 'var(--brand)',
+    fontSize: '0.8rem',
+    fontWeight: 700,
+    textDecoration: 'none',
+    display: 'inline-block',
+    mb: '14px',
+};
 
 const emptySettings = { label: '', abbreviation: '', logoUrl: '', logoUrlDark: '' };
 
@@ -34,25 +41,53 @@ const AdminConferenceDetail = () => {
 
     const rules = useConferenceRules({ code, onError: setSettingsError, onSuccess: setSettingsSuccess });
 
-    const load = async () => {
+    const scopeRef = useRef(null);
+
+    const load = useCallback(async (scope) => {
+        if (!scope.active) {
+            return;
+        }
+        const request = {};
+        scope.request = request;
+        setError(null);
         setLoading(true);
         try {
             const [confList, allTeams] = await Promise.all([getConferences(), getAllTeams()]);
+            if (!scope.active || scope.request !== request) {
+                return;
+            }
             setConferences(confList);
             setTeams(allTeams);
-        } catch (err) {
-            setError('Failed to load conference data');
+        } catch {
+            if (scope.active && scope.request === request) {
+                setError('Failed to load conference data');
+            }
         } finally {
-            setLoading(false);
+            if (scope.active && scope.request === request) {
+                setLoading(false);
+            }
         }
-    };
+    }, []);
 
-    useEffect(() => { load(); }, [code]);
+    useEffect(() => {
+        const scope = { active: true };
+        scopeRef.current = scope;
+        setPendingTeam(null);
+        setSavingSettings(false);
+        setSettingsError(null);
+        setSettingsSuccess(null);
+        load(scope);
+        return () => {
+            scope.active = false;
+        };
+    }, [code, load]);
 
     const conference = conferences.find((c) => c.code === code);
 
     useEffect(() => {
-        if (!conference) return;
+        if (!conference) {
+            return;
+        }
         setSettingsForm({
             label: conference.label || '',
             abbreviation: conference.abbreviation || '',
@@ -61,61 +96,41 @@ const AdminConferenceDetail = () => {
         });
     }, [conference]);
 
-    const moveTeamToConference = async (team, newConference) => {
-        if (!newConference) return;
+    const saveTeamChange = async (team, changes, failureMessage) => {
+        const scope = scopeRef.current;
         setError(null);
         setPendingTeam(team.name);
         try {
-            await updateTeam({ ...team, conference: newConference });
-            await load();
+            await updateTeam({ ...team, ...changes });
+            await load(scope);
         } catch (err) {
-            setError(err.message || `Failed to update ${team.name}`);
+            if (scope.active) {
+                setError(err.message || failureMessage);
+            }
         } finally {
-            setPendingTeam(null);
+            if (scope.active) {
+                setPendingTeam((pending) => (pending === team.name ? null : pending));
+            }
         }
     };
 
-    const updateTeamDivision = async (team, newDivision) => {
-        setError(null);
-        setPendingTeam(team.name);
-        try {
-            await updateTeam({ ...team, division: newDivision || null });
-            await load();
-        } catch (err) {
-            setError(err.message || `Failed to update ${team.name}`);
-        } finally {
-            setPendingTeam(null);
+    const moveTeamToConference = (team, newConference) => {
+        if (!newConference) {
+            return;
         }
+        return saveTeamChange(team, { conference: newConference }, `Failed to update ${team.name}`);
     };
 
-    const removeFromConference = async (team) => {
-        setError(null);
-        setPendingTeam(team.name);
-        try {
-            await updateTeam({ ...team, conference: null });
-            await load();
-        } catch (err) {
-            setError(err.message || `Failed to remove ${team.name}`);
-        } finally {
-            setPendingTeam(null);
-        }
-    };
+    const updateTeamDivision = (team, newDivision) =>
+        saveTeamChange(team, { division: newDivision || null }, `Failed to update ${team.name}`);
 
-    const addTeam = async (team) => {
-        setError(null);
-        setPendingTeam(team.name);
-        try {
-            await updateTeam({ ...team, conference: code });
-            await load();
-        } catch (err) {
-            setError(err.message || `Failed to add ${team.name}`);
-        } finally {
-            setPendingTeam(null);
-        }
-    };
+    const removeFromConference = (team) => saveTeamChange(team, { conference: null }, `Failed to remove ${team.name}`);
+
+    const addTeam = (team) => saveTeamChange(team, { conference: code }, `Failed to add ${team.name}`);
 
     const handleSaveSettings = async (event) => {
         event.preventDefault();
+        const scope = scopeRef.current;
         setSavingSettings(true);
         setSettingsError(null);
         setSettingsSuccess(null);
@@ -128,24 +143,36 @@ const AdminConferenceDetail = () => {
                 abbreviation: settingsForm.abbreviation.trim() || null,
             });
             refreshConferences();
+            if (!scope.active) {
+                return;
+            }
             setSettingsSuccess('Conference settings saved');
-            await load();
+            await load(scope);
         } catch (err) {
-            setSettingsError(err.message || 'Failed to save conference settings');
+            if (scope.active) {
+                setSettingsError(err.message || 'Failed to save conference settings');
+            }
         } finally {
-            setSavingSettings(false);
+            if (scope.active) {
+                setSavingSettings(false);
+            }
         }
     };
 
     const handleToggleActive = async () => {
-        if (!conference) return;
+        if (!conference) {
+            return;
+        }
+        const scope = scopeRef.current;
         setSettingsError(null);
         try {
             await setConferenceActive(conference.code, !conference.active);
             refreshConferences();
-            await load();
+            await load(scope);
         } catch (err) {
-            setSettingsError(err.message || 'Failed to update conference');
+            if (scope.active) {
+                setSettingsError(err.message || 'Failed to update conference');
+            }
         }
     };
 
@@ -161,12 +188,25 @@ const AdminConferenceDetail = () => {
 
     return (
         <AdminLayout title={conference ? conference.label : code}>
-            <Box component="button" type="button" onClick={() => goBackOr(navigate, '/admin/conferences')} sx={{ ...backSx, border: 0, background: 'transparent', cursor: 'pointer', font: 'inherit', p: 0 }}>&larr; All conferences</Box>
+            <Box
+                component="button"
+                type="button"
+                onClick={() => goBackOr(navigate, '/admin/conferences')}
+                sx={{ ...backSx, border: 0, background: 'transparent', cursor: 'pointer', font: 'inherit', p: 0 }}
+            >
+                &larr; All conferences
+            </Box>
 
-            {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
+            {error && (
+                <Alert severity="error" sx={{ mb: '16px' }}>
+                    {error}
+                </Alert>
+            )}
 
             {!conference && (
-                <Alert severity="warning" sx={{ mb: '16px' }}>No conference found for code &quot;{code}&quot;.</Alert>
+                <Alert severity="warning" sx={{ mb: '16px' }}>
+                    No conference found for code &quot;{code}&quot;.
+                </Alert>
             )}
 
             {conference && (
@@ -206,10 +246,13 @@ const AdminConferenceDetail = () => {
                     {tab === 'rules' && (
                         <Panel header={`Scheduling rules: ${conference.label}`}>
                             {rules.rulesLoading ? (
-                                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
+                                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}>
+                                    <CircularProgress />
+                                </Box>
                             ) : (
                                 <Box sx={{ p: '16px' }}>
                                     <ConferenceRulesEditor
+                                        key={code}
                                         conference={code}
                                         conferenceTeams={teams.filter((team) => team.conference === code)}
                                         numConferenceGames={rules.numConferenceGames}

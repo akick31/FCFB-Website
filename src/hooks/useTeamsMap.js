@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getAllTeams, getTeamByName } from '../api/teamApi';
 
-const toDarkLogo = (logo) =>
-    logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo;
+const toDarkLogo = (logo) => (logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo);
 
 export const toEntry = (team) => ({
     id: team.id,
@@ -20,18 +19,27 @@ let bulkInflight = null;
 const lazy = {};
 const lazyInflight = {};
 const listeners = new Set();
+let snapshot = {};
 
-const notify = () => listeners.forEach((listener) => listener());
+const notify = () => {
+    snapshot = { ...(bulk || {}), ...lazy };
+    listeners.forEach((listener) => listener());
+};
 
 const loadBulk = () => {
-    if (bulk || bulkInflight) return;
+    if (bulk || bulkInflight) {
+        return;
+    }
     bulkInflight = getAllTeams()
         .then((teams) => {
             const map = {};
             for (const team of teams || []) {
-                if (team?.name) map[team.name] = toEntry(team);
+                if (team?.name) {
+                    map[team.name] = toEntry(team);
+                }
             }
             bulk = map;
+            bulkInflight = null;
             notify();
         })
         .catch(() => {
@@ -40,19 +48,21 @@ const loadBulk = () => {
 };
 
 export const ensureTeam = (name) => {
-    if (!name || lazy[name] || lazyInflight[name] || (bulk && bulk[name])) return;
+    if (!name || lazy[name] || lazyInflight[name] || (bulk && bulk[name])) {
+        return;
+    }
     lazyInflight[name] = getTeamByName(name)
         .then((team) => {
-            if (team?.name) lazy[name] = toEntry(team);
+            if (team?.name) {
+                lazy[name] = toEntry(team);
+                notify();
+            }
         })
         .catch(() => {})
         .finally(() => {
             delete lazyInflight[name];
-            notify();
         });
 };
-
-const mergedMap = () => ({ ...(bulk || {}), ...lazy });
 
 export const useTeamsMap = () => {
     const [, setVersion] = useState(0);
@@ -64,5 +74,5 @@ export const useTeamsMap = () => {
         return () => listeners.delete(listener);
     }, []);
 
-    return mergedMap();
+    return snapshot;
 };

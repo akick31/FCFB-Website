@@ -1,42 +1,42 @@
-import apiClient from "./apiClient";
+import apiClient from './apiClient';
 
 export const getNewSignups = async () => {
     try {
         const response = await apiClient.get('/new_signups');
         return response.data;
     } catch (error) {
-        console.error("Failed to fetch new signups:", error);
+        console.error('Failed to fetch new signups:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to fetch new signups");
+            throw new Error(error.response.data.error || 'Failed to fetch new signups');
         }
-        throw new Error("An unexpected error occurred while fetching new signups");
+        throw new Error('An unexpected error occurred while fetching new signups');
     }
-}
+};
 
 export const deleteNewSignup = async (id) => {
     try {
         const response = await apiClient.delete('/new_signups', { params: { id } });
         return response.data;
     } catch (error) {
-        console.error("Failed to delete new signup:", error);
+        console.error('Failed to delete new signup:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to delete new signup");
+            throw new Error(error.response.data.error || 'Failed to delete new signup');
         }
-        throw new Error("An unexpected error occurred while deleting new signup");
+        throw new Error('An unexpected error occurred while deleting new signup');
     }
-}
+};
 
 export const hireFromSignup = async ({ signupId, team, coachPosition, processedBy }) => {
     try {
         const response = await apiClient.post('/new_signups/hire', null, {
-            params: { id: signupId, team, coachPosition, processedBy }
+            params: { id: signupId, team, coachPosition, processedBy },
         });
         return response.data;
     } catch (error) {
-        console.error("Failed to hire from signup:", error);
+        console.error('Failed to hire from signup:');
         if (error.response) {
-            throw new Error(error.response.data.error || "Failed to hire from signup");
+            throw new Error(error.response.data.error || 'Failed to hire from signup');
         }
-        throw new Error("An unexpected error occurred while hiring from signup");
+        throw new Error('An unexpected error occurred while hiring from signup');
     }
-}
+};
