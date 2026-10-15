@@ -1,6 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getUserById, updateUser, updateUsername, updateEmail, updatePassword } from '../api/userApi';
+import {
+    getUserById,
+    updateUser,
+    updateUsername,
+    updateEmail,
+    updatePassword,
+    updateDelayOfGameWarningOptOut,
+} from '../api/userApi';
 import { logout } from '../api/authApi';
 
 const useProfileAccount = ({ user, setUser, setIsAuthenticated, setIsAdmin }) => {
@@ -94,8 +101,19 @@ const useProfileAccount = ({ user, setUser, setIsAuthenticated, setIsAdmin }) =>
     const saveUsername = (username) => saveProfileChange(() => updateUsername(user.id, username), { username });
     const saveEmail = (email) => updateEmail(user.id, email);
     const savePassword = (currentPassword, newPassword) => updatePassword(user.id, currentPassword, newPassword);
+    const saveDelayOfGameWarningOptOut = (optOut) =>
+        saveProfileChange(() => updateDelayOfGameWarningOptOut(user.id, optOut), {
+            delay_of_game_warning_opt_out: optOut,
+        });
 
-    return { saveCoachName, saveUsername, saveEmail, savePassword, handleLogout };
+    return {
+        saveCoachName,
+        saveUsername,
+        saveEmail,
+        savePassword,
+        saveDelayOfGameWarningOptOut,
+        handleLogout,
+    };
 };
 
 export default useProfileAccount;

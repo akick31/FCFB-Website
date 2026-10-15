@@ -9,6 +9,7 @@ import { formatPosition } from '../../utils/formatText';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import Panel from '../../components/ui/Panel';
+import Toggle from '../../components/ui/Toggle';
 import TeamMark from '../../components/ui/TeamMark';
 import ApiKeyPanel from '../../components/user/ApiKeyPanel';
 import { useSeo } from '../../hooks/useSeo';
@@ -21,12 +22,13 @@ import PastUsernamesRow from '../../components/user/PastUsernamesRow';
 const Profile = ({ user, setUser, setIsAuthenticated, setIsAdmin }) => {
     const teamsMap = useTeamsMap();
     const { mode, setMode } = useColorMode();
-    const { saveCoachName, saveUsername, saveEmail, savePassword, handleLogout } = useProfileAccount({
-        user,
-        setUser,
-        setIsAuthenticated,
-        setIsAdmin,
-    });
+    const { saveCoachName, saveUsername, saveEmail, savePassword, saveDelayOfGameWarningOptOut, handleLogout } =
+        useProfileAccount({
+            user,
+            setUser,
+            setIsAuthenticated,
+            setIsAdmin,
+        });
     useSeo({
         title: 'Profile | FCFB',
         description: 'Manage your Fake College Football account, settings, and API access.',
@@ -75,6 +77,18 @@ const Profile = ({ user, setUser, setIsAuthenticated, setIsAdmin }) => {
                         <FieldRow label="Email" type="email" desc="Change your account email" onSave={saveEmail} />
                         <PasswordRow onSave={savePassword} />
                         <DiscordRow user={user} />
+                        <Box sx={rowSx}>
+                            <Box>
+                                <Box sx={lblSx}>First delay of game warning</Box>
+                                <Box sx={descSx}>Get pinged for the first warning. The second warning always sends</Box>
+                            </Box>
+                            <Box sx={{ ml: 'auto' }}>
+                                <Toggle
+                                    on={!user.delay_of_game_warning_opt_out}
+                                    onClick={() => saveDelayOfGameWarningOptOut(!user.delay_of_game_warning_opt_out)}
+                                />
+                            </Box>
+                        </Box>
                         {user.team && (
                             <Box sx={rowSx}>
                                 <Box>

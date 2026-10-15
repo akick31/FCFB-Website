@@ -154,6 +154,25 @@ export const updateScoutingReportHiddenColumns = async (userId, hiddenColumns) =
     }
 };
 
+export const updateDelayOfGameWarningOptOut = async (userId, optOut) => {
+    if (!userId) {
+        throw new Error('User ID is required');
+    }
+
+    try {
+        const response = await apiClient.put('/user/delay-of-game-warning-opt-out', null, {
+            params: { id: userId, optOut },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Failed to update delay of game warning opt-out:');
+        if (error.response) {
+            throw new Error(error.response.data.error || 'Failed to update delay of game warning opt-out');
+        }
+        throw new Error('An unexpected error occurred while updating delay of game warning opt-out');
+    }
+};
+
 export const updateUsername = async (userId, newUsername) => {
     if (!userId) {
         throw new Error('User ID is required');
