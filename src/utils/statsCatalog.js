@@ -10,7 +10,7 @@ const PERCENT = new Set([
 
 const DECIMAL = new Set(['average_yards_per_play', 'opponent_average_yards_per_play', 'average_punt_length', 'opponent_average_punt_length']);
 
-const TIME = new Set(['time_of_possession', 'opponent_time_of_possession', 'average_response_speed']);
+const TIME = new Set(['time_of_possession', 'average_time_of_possession', 'opponent_time_of_possession', 'average_response_speed']);
 
 const LOWER_IS_BETTER = new Set([
     'losses', 'average_response_speed', 'average_offensive_diff', 'average_offensive_special_teams_diff', 'largest_deficit',
@@ -35,7 +35,9 @@ export const STAT_GROUPS = [
         ['red_zone_attempts', 'Red zone trips', { agg: 'sum' }], ['red_zone_successes', 'Red zone scores', { agg: 'sum' }], ['red_zone_success_percentage', 'Red zone %', { agg: 'rate', num: 'red_zone_successes', den: 'red_zone_attempts' }],
         ['third_down_conversion_success', 'Third downs converted', { agg: 'sum' }], ['third_down_conversion_percentage', 'Third down %', { agg: 'rate', num: 'third_down_conversion_success', den: 'third_down_conversion_attempts' }],
         ['fourth_down_conversion_success', 'Fourth downs converted', { agg: 'sum' }], ['fourth_down_conversion_percentage', 'Fourth down %', { agg: 'rate', num: 'fourth_down_conversion_success', den: 'fourth_down_conversion_attempts' }],
-        ['time_of_possession', 'Time of possession', { agg: 'sum' }], ['number_of_drives', 'Drives', { agg: 'sum' }], ['largest_lead', 'Largest lead', { agg: 'max' }],
+        ['time_of_possession', 'Total time of possession', { agg: 'sum' }],
+        ['average_time_of_possession', 'Average time of possession', { agg: 'ratio', num: 'time_of_possession', den: 'games_played' }],
+        ['number_of_drives', 'Drives', { agg: 'sum' }], ['largest_lead', 'Largest lead', { agg: 'max' }],
     ]],
     ['Defense', [
         ['sacks_forced', 'Sacks', { agg: 'sum' }], ['opponent_total_yards', 'Yards allowed', { agg: 'sum' }], ['opponent_pass_yards', 'Pass yards allowed', { agg: 'sum' }],
@@ -59,10 +61,10 @@ export const STAT_GROUPS = [
         ['field_goal_made', 'Field goals made', { agg: 'sum' }], ['field_goal_attempts', 'Field goal attempts', { agg: 'sum' }], ['field_goal_percentage', 'Field goal %', { agg: 'rate', num: 'field_goal_made', den: 'field_goal_attempts' }],
         ['longest_field_goal', 'Longest field goal', { agg: 'max' }], ['field_goal_touchdown', 'Field goal return TDs', { agg: 'sum' }],
         ['blocked_opponent_field_goals', 'Field goals blocked', { agg: 'sum' }], ['blocked_opponent_punt', 'Punts blocked', { agg: 'sum' }],
-        ['punts_attempted', 'Punts', { agg: 'sum' }], ['longest_punt', 'Longest punt', { agg: 'max' }], ['average_punt_length', 'Average punt', { agg: 'ratio', num: 'punt_yards', den: 'punt_count' }],
+        ['punts_attempted', 'Punts', { agg: 'sum' }], ['longest_punt', 'Longest punt', { agg: 'max' }], ['average_punt_length', 'Average punt distance', { agg: 'ratio', num: 'punt_yards', den: 'punt_count' }],
         ['kick_return_td', 'Kick return TDs', { agg: 'sum' }], ['punt_return_td', 'Punt return TDs', { agg: 'sum' }],
-        ['touchbacks', 'Touchbacks', { agg: 'sum' }], ['touchback_percentage', 'Touchback %', { agg: 'rate', num: 'touchbacks', den: 'number_of_kickoffs' }],
-        ['onside_attempts', 'Onside attempts', { agg: 'sum' }], ['onside_success', 'Onside recoveries', { agg: 'sum' }], ['onside_success_percentage', 'Onside %', { agg: 'rate', num: 'onside_success', den: 'onside_attempts' }],
+        ['touchbacks', 'Touchbacks', { agg: 'sum' }], ['touchback_percentage', 'Kickoff touchback %', { agg: 'rate', num: 'touchbacks', den: 'number_of_kickoffs' }],
+        ['onside_attempts', 'Onside attempts', { agg: 'sum' }], ['onside_success', 'Onside recoveries', { agg: 'sum' }], ['onside_success_percentage', 'Onside success %', { agg: 'rate', num: 'onside_success', den: 'onside_attempts' }],
     ]],
     ['Ratings & record', [
         ['wins', 'Wins', { agg: 'sum' }], ['losses', 'Losses', { agg: 'sum' }],
@@ -87,12 +89,21 @@ const formatterFor = (key) => {
     return (value) => Math.round(Number(value)).toLocaleString();
 };
 
+const VOLUME_SENSITIVE_AGGS = new Set(['rate', 'ratio', 'mean']);
+
+export const PACE_STATS = new Set([
+    'average_offensive_diff', 'average_defensive_diff', 'average_offensive_special_teams_diff',
+    'average_defensive_special_teams_diff', 'average_response_speed',
+]);
+
 export const STAT_CATALOG = STAT_GROUPS.flatMap(([group, items]) => items.map(([key, label, agg]) => ({
     key,
     label,
     group,
     agg,
     ascending: LOWER_IS_BETTER.has(key),
+    rateBased: VOLUME_SENSITIVE_AGGS.has(agg?.agg),
+    pace: PACE_STATS.has(key),
     format: formatterFor(key),
 })));
 
@@ -164,7 +175,30 @@ export const aggregateAllTimeStats = (rows) => {
     });
 };
 
+export const withDerivedStats = (rows) => (rows || []).map((row) => {
+    const games = (row.wins || 0) + (row.losses || 0);
+    return {
+        ...row,
+        games_played: games,
+        average_time_of_possession: games ? (row.time_of_possession || 0) / games : null,
+    };
+});
+
 export const seasonHasStarted = (season) => Boolean(season?.start_date || season?.end_date || season?.national_championship_winning_team);
+
+export const POSTSEASON_START_WEEK = 14;
+
+export const seasonNumberOf = (season) => season?.season_number ?? season?.seasonNumber ?? null;
+
+export const seasonHasPostseason = (season) => {
+    const isCurrent = season?.current_season ?? season?.currentSeason ?? false;
+    const week = season?.current_week ?? season?.currentWeek ?? 0;
+    return !isCurrent || week >= POSTSEASON_START_WEEK;
+};
+
+export const postseasonSeasonNumbers = (seasons) => new Set(
+    (seasons || []).filter(seasonHasPostseason).map(seasonNumberOf).filter((value) => value != null),
+);
 
 export const formatValue = (value, type) => {
     if (value == null) return '-';

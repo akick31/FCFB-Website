@@ -66,6 +66,16 @@ export const login = async (usernameOrEmail, password, setIsAuthenticated, setUs
     }
 };
 
+export const refreshSession = async () => {
+    const response = await apiClient.post('/auth/refresh');
+    const token = response.data?.token;
+    if (!token) throw new Error('Refresh response missing token');
+
+    localStorage.setItem('token', token);
+    if (response.data?.role != null) localStorage.setItem('role', String(response.data.role));
+    return token;
+};
+
 export const logout = async (setIsAuthenticated, setUser, setIsAdmin) => {
     try {
         const token = localStorage.getItem('token');

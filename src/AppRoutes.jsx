@@ -20,6 +20,7 @@ import {
     Coaches,
     ApiDocs
 } from './pages';
+import useSessionRefresh from './hooks/useSessionRefresh';
 import { getUserById } from './api/userApi';
 import { checkIfUserIsAdmin } from "./utils/utils";
 import { Box } from '@mui/system';
@@ -64,6 +65,8 @@ const AppRoutes = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [user, setUser] = useState({});
     const [loading, setLoading] = useState(true);
+
+    useSessionRefresh(isAuthenticated);
 
     useEffect(() => {
         const initializeApp = async () => {
