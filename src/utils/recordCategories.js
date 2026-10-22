@@ -1,7 +1,7 @@
 export const RECORD_GROUPS = [
     ['Scoring', ['q1_score', 'q2_score', 'q3_score', 'q4_score', 'score', 'touchdowns', 'largest_lead', 'largest_deficit', 'largest_spread', 'largest_upset']],
-    ['Passing', ['pass_yards', 'pass_touchdowns', 'longest_pass', 'pass_attempts', 'pass_completions', 'pass_completion_percentage', 'pass_successes', 'pass_success_percentage']],
-    ['Rushing', ['rush_yards', 'rush_touchdowns', 'longest_run', 'rush_attempts', 'rush_successes', 'rush_success_percentage']],
+    ['Passing', ['pass_yards', 'pass_touchdowns', 'longest_pass', 'pass_attempts', 'pass_completions', 'pass_completion_percentage', 'average_pass_yards_per_attempt', 'pass_successes', 'pass_success_percentage']],
+    ['Rushing', ['rush_yards', 'rush_touchdowns', 'longest_run', 'rush_attempts', 'average_rush_yards_per_attempt', 'rush_successes', 'rush_success_percentage']],
     ['Offense', ['total_yards', 'average_yards_per_play', 'first_downs', 'third_down_conversion_success', 'third_down_conversion_attempts', 'third_down_conversion_percentage', 'fourth_down_conversion_success', 'fourth_down_conversion_attempts', 'fourth_down_conversion_percentage', 'red_zone_successes', 'red_zone_attempts', 'red_zone_success_percentage', 'red_zone_percentage', 'time_of_possession', 'number_of_drives', 'sacks_allowed']],
     ['Defense', ['sacks_forced', 'interceptions_forced', 'fumbles_forced', 'points_against', 'total_yards_against', 'pass_yards_against', 'rush_yards_against', 'first_downs_against', 'touchdowns_against', 'third_down_conversion_percentage_against', 'fourth_down_conversion_percentage_against', 'red_zone_success_percentage_against']],
     ['Turnovers', ['turnover_differential', 'turnovers_forced', 'turnovers_lost', 'interceptions_lost', 'fumbles_lost', 'pick_sixes_forced', 'pick_sixes_thrown', 'turnover_touchdowns_forced', 'turnover_touchdowns_lost', 'fumble_return_tds_forced', 'fumble_return_tds_committed', 'safeties_forced', 'safeties_committed']],
@@ -37,13 +37,86 @@ export const recordOrder = (recordName, { seasonView = false } = {}) => {
 
 export const SEASON_EXCLUDED_RECORDS = new Set(['largest_lead', 'largest_deficit', 'largest_spread', 'largest_upset']);
 
-export const EXCLUDED_RECORDS = new Set(['ot_score', 'field_goal_percentage', 'normal_kickoff_attempts', 'number_of_kickoffs', 'onside_attempts']);
+export const EXCLUDED_RECORDS = new Set(['ot_score', 'normal_kickoff_attempts', 'number_of_kickoffs', 'onside_attempts']);
 
 export const LOWEST_RECORD_STATS = new Set(['average_offensive_diff', 'average_offensive_special_teams_diff', 'average_response_speed']);
 
 export const AMBIGUOUS_DIRECTION_RECORDS = new Set(['average_diff', 'average_defensive_diff', 'average_defensive_special_teams_diff']);
 
-const LABEL_OVERRIDES = { blocked_opponent_punt: 'Blocked Opponent Punts', field_goal_touchdown: 'Kick Six Against' };
+const LABEL_OVERRIDES = {
+    q1_score: '1st Quarter Points',
+    q2_score: '2nd Quarter Points',
+    q3_score: '3rd Quarter Points',
+    q4_score: '4th Quarter Points',
+    score: 'Total Points',
+    touchdowns: 'Total Touchdowns',
+    largest_spread: 'Biggest Favorite',
+    largest_upset: 'Biggest Upset Win',
+
+    pass_completion_percentage: 'Completion Rate',
+    average_pass_yards_per_attempt: 'Yards per Pass Attempt',
+    pass_successes: 'Successful Passes',
+    pass_success_percentage: 'Pass Success Rate',
+    average_rush_yards_per_attempt: 'Yards per Rush Attempt',
+    rush_successes: 'Successful Rushes',
+    rush_success_percentage: 'Rush Success Rate',
+
+    average_yards_per_play: 'Yards per Play',
+    third_down_conversion_success: '3rd Downs Converted',
+    third_down_conversion_attempts: '3rd Down Attempts',
+    third_down_conversion_percentage: '3rd Down Conversion Rate',
+    fourth_down_conversion_success: '4th Downs Converted',
+    fourth_down_conversion_attempts: '4th Down Attempts',
+    fourth_down_conversion_percentage: '4th Down Conversion Rate',
+    red_zone_successes: 'Red Zone Touchdowns',
+    red_zone_attempts: 'Red Zone Trips',
+    red_zone_success_percentage: 'Red Zone Touchdown Rate',
+    red_zone_percentage: 'Red Zone Trip Rate',
+    time_of_possession: 'Time of Possession',
+    number_of_drives: 'Drives',
+
+    sacks_forced: 'Sacks',
+    interceptions_forced: 'Interceptions',
+    points_against: 'Points Allowed',
+    total_yards_against: 'Total Yards Allowed',
+    pass_yards_against: 'Pass Yards Allowed',
+    rush_yards_against: 'Rush Yards Allowed',
+    first_downs_against: 'First Downs Allowed',
+    touchdowns_against: 'Touchdowns Allowed',
+    third_down_conversion_percentage_against: '3rd Down Conversion Rate Allowed',
+    fourth_down_conversion_percentage_against: '4th Down Conversion Rate Allowed',
+    red_zone_success_percentage_against: 'Red Zone Touchdown Rate Allowed',
+
+    turnover_touchdowns_forced: 'Turnover Touchdowns',
+    turnover_touchdowns_lost: 'Turnover Touchdowns Allowed',
+    fumble_return_tds_forced: 'Fumble Return Touchdowns',
+    fumble_return_tds_committed: 'Fumble Return Touchdowns Allowed',
+
+    field_goal_made: 'Field Goals Made',
+    field_goal_percentage: 'Field Goals Made %',
+    field_goal_attempts: 'Field Goals Attempted',
+    field_goal_touchdown: 'Kick Six Against',
+    blocked_opponent_field_goals: 'Blocked Field Goals',
+    blocked_opponent_punt: 'Blocked Punts',
+    punts_attempted: 'Punts',
+    average_punt_length: 'Yards per Punt',
+    punt_return_td: 'Punt Return Touchdowns',
+    punt_return_td_percentage: 'Punt Return Touchdown Rate',
+    kick_return_td: 'Kick Return Touchdowns',
+    kick_return_td_percentage: 'Kick Return Touchdown Rate',
+    onside_attempts: 'Onside Kicks',
+    onside_success: 'Onside Kicks Recovered',
+    onside_success_percentage: 'Onside Success %',
+    touchback_percentage: 'Kickoff Touchback %',
+
+    average_response_speed: 'Average Response Time',
+};
+
+export const TIME_RECORDS = new Set(['time_of_possession', 'average_response_speed']);
+
+export const isPercentageRecord = (recordName) => String(recordName).toLowerCase().includes('percentage');
+
+export const isAverageRecord = (recordName) => String(recordName).toLowerCase().startsWith('average_');
 
 export const recordLabel = (recordName) => {
     const key = String(recordName).toLowerCase();

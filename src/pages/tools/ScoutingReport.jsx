@@ -16,6 +16,7 @@ import { humanizeEnumValue } from '../../utils/humanize';
 import {
     DOWN_OPTIONS,
     PLAY_TYPE_OPTIONS,
+    ACTUAL_RESULT_VALUES,
     SIDE_OPTIONS,
     FIELD_POSITION_OPTIONS,
     TEMPO_OPTIONS,
@@ -25,6 +26,7 @@ import {
     orderedGameIdsFromPlays,
     orderGameIdsByRecency,
     applyScenarioFilters,
+    annotateScoutingFields,
     favoriteNumbers,
     numberBucketCounts,
     DEFAULT_NUMBER_BUCKET_SIZE,
@@ -36,7 +38,13 @@ import {
 } from '../../utils/scoutingReport';
 import { useSeo } from '../../hooks/useSeo';
 
-const ARRAY_PARAMS = { sides: 'sides', downs: 'downs', fieldPositions: 'fp', playTypes: 'types', tempo: 'tempo' };
+const ARRAY_PARAMS = { sides: 'sides', downs: 'downs', fieldPositions: 'fp', playTypes: 'types', tempo: 'tempo', previousPlayCalls: 'ptypes' };
+const RANGE_PARAMS = { previousNumber: ['pnmin', 'pnmax'], scoreMargin: ['smmin', 'smmax'] };
+const PREVIOUS_RESULT_PARAM = 'presult';
+const parseRange = (searchParams, [minKey, maxKey]) => ({
+    min: searchParams.get(minKey) ?? '',
+    max: searchParams.get(maxKey) ?? '',
+});
 const parseIntArray = (value) => (value ? value.split(',').map(Number).filter((n) => !Number.isNaN(n)) : []);
 const parseStringArray = (value) => (value ? value.split(',').filter(Boolean).map((entry) => entry.toUpperCase()) : []);
 
@@ -104,6 +112,10 @@ const ScoutingReport = () => {
     const [fieldPositions, setFieldPositions] = useState([]);
     const [playTypes, setPlayTypes] = useState([]);
     const [tempo, setTempo] = useState([]);
+    const [previousNumber, setPreviousNumber] = useState({ min: '', max: '' });
+    const [previousPlayCalls, setPreviousPlayCalls] = useState([]);
+    const [previousResults, setPreviousResults] = useState([]);
+    const [scoreMargin, setScoreMargin] = useState({ min: '', max: '' });
     const [customFilters, setCustomFilters] = useState([]);
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [columnsOpen, setColumnsOpen] = useState(true);
@@ -168,6 +180,10 @@ const ScoutingReport = () => {
                 setFieldPositions([]);
                 setPlayTypes([]);
                 setTempo([]);
+                setPreviousNumber({ min: '', max: '' });
+                setPreviousPlayCalls([]);
+                setPreviousResults([]);
+                setScoreMargin({ min: '', max: '' });
                 setCustomFilters([]);
             }
         } catch (err) {
@@ -192,6 +208,8 @@ const ScoutingReport = () => {
         const urlFieldPositions = parseStringArray(searchParams.get(ARRAY_PARAMS.fieldPositions));
         const urlPlayTypes = parseStringArray(searchParams.get(ARRAY_PARAMS.playTypes));
         const urlTempo = parseStringArray(searchParams.get(ARRAY_PARAMS.tempo));
+        const urlPreviousPlayCalls = parseStringArray(searchParams.get(ARRAY_PARAMS.previousPlayCalls));
+        const urlPreviousResult = searchParams.get(PREVIOUS_RESULT_PARAM);
 
         const resolvedGameCount = urlGames > 0 ? urlGames : gameCount;
         const resolvedRangeMode = urlSeason ? 'season' : 'count';
@@ -202,6 +220,10 @@ const ScoutingReport = () => {
         setFieldPositions(urlFieldPositions);
         setPlayTypes(urlPlayTypes);
         setTempo(urlTempo);
+        setPreviousPlayCalls(urlPreviousPlayCalls);
+        setPreviousResults(urlPreviousResult ? [urlPreviousResult.toUpperCase()] : []);
+        setPreviousNumber(parseRange(searchParams, RANGE_PARAMS.previousNumber));
+        setScoreMargin(parseRange(searchParams, RANGE_PARAMS.scoreMargin));
 
         generate(option.value, resolvedGameCount, resolvedRangeMode, false);
     }, [targetOptions]);
@@ -219,10 +241,21 @@ const ScoutingReport = () => {
         setOrDeleteLower(ARRAY_PARAMS.fieldPositions, fieldPositions);
         setOrDeleteLower(ARRAY_PARAMS.playTypes, playTypes);
         setOrDeleteLower(ARRAY_PARAMS.tempo, tempo);
+        setOrDeleteLower(ARRAY_PARAMS.previousPlayCalls, previousPlayCalls);
+        setOrDeleteLower(PREVIOUS_RESULT_PARAM, previousResults);
+        const setOrDeleteRange = ([minKey, maxKey], range) => {
+            if (range.min !== '') next.set(minKey, String(range.min)); else next.delete(minKey);
+            if (range.max !== '') next.set(maxKey, String(range.max)); else next.delete(maxKey);
+        };
+        setOrDeleteRange(RANGE_PARAMS.previousNumber, previousNumber);
+        setOrDeleteRange(RANGE_PARAMS.scoreMargin, scoreMargin);
         const colsEncoded = encodeHiddenColumns(hiddenColumns);
         if (colsEncoded) next.set('cols', colsEncoded); else next.delete('cols');
         setSearchParams(next, { replace: true });
-    }, [reportTarget, gameCount, rangeMode, sides, downs, fieldPositions, playTypes, tempo, hiddenColumns, hasGenerated]);
+    }, [
+        reportTarget, gameCount, rangeMode, sides, downs, fieldPositions, playTypes, tempo,
+        previousPlayCalls, previousResults, previousNumber, scoreMargin, hiddenColumns, hasGenerated,
+    ]);
 
     const toggleColumn = (column) => setHiddenColumns((prev) => toggleInArray(prev, column));
     const saveColumns = async () => {
@@ -237,9 +270,23 @@ const ScoutingReport = () => {
 
     const visibleColumns = useMemo(() => PLAY_COLUMNS.filter((column) => !hiddenColumns.includes(column)), [hiddenColumns]);
 
+    const annotatedPlays = useMemo(() => annotateScoutingFields(plays, 'coach', reportTarget), [plays, reportTarget]);
     const filteredPlays = useMemo(
-        () => applyScenarioFilters(plays, { mode: 'coach', target: reportTarget, sides, downs, fieldPositions, playTypes, tempo, customFilters }),
-        [plays, reportTarget, sides, downs, fieldPositions, playTypes, tempo, customFilters],
+        () => applyScenarioFilters(annotatedPlays, {
+            mode: 'coach',
+            target: reportTarget,
+            sides,
+            downs,
+            fieldPositions,
+            playTypes,
+            tempo,
+            previousNumber,
+            previousPlayCalls,
+            previousResults,
+            scoreMargin,
+            customFilters,
+        }),
+        [annotatedPlays, reportTarget, sides, downs, fieldPositions, playTypes, tempo, previousNumber, previousPlayCalls, previousResults, scoreMargin, customFilters],
     );
 
     const favoriteNumbersList = useMemo(() => favoriteNumbers(filteredPlays, reportTarget, 10), [filteredPlays, reportTarget]);
@@ -329,6 +376,11 @@ const ScoutingReport = () => {
                             {loading ? 'Generating…' : 'Generate report'}
                         </Box>
                     </Box>
+                    <Box sx={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        {rangeMode === 'season'
+                            ? 'Reading every game they have played this season. Uncheck to read a set number of their most recent games instead.'
+                            : `Reading their ${gameCount} most recent ${gameCount === 1 ? 'game' : 'games'}, including earlier seasons. Check current season only to read this season instead.`}
+                    </Box>
                     {error && <Alert severity="error">{error}</Alert>}
                 </Box>
             </Panel>
@@ -379,6 +431,73 @@ const ScoutingReport = () => {
                                     {TEMPO_OPTIONS.map((option) => (
                                         <Chip key={option.value} active={tempo.includes(option.value)} onClick={() => setTempo((prev) => toggleInArray(prev, option.value))}>{option.label}</Chip>
                                     ))}
+                                </Box>
+                            </Box>
+                            <Box>
+                                <Box sx={{ ...labelSx, mb: '8px' }}>Previous play</Box>
+                                <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', mb: '8px' }}>
+                                    <Box component="span" sx={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Their number</Box>
+                                    <Box
+                                        component="input"
+                                        type="number"
+                                        placeholder="Min"
+                                        value={previousNumber.min}
+                                        onChange={(event) => setPreviousNumber((prev) => ({ ...prev, min: event.target.value }))}
+                                        sx={{ ...inputSx, width: '92px' }}
+                                    />
+                                    <Box
+                                        component="input"
+                                        type="number"
+                                        placeholder="Max"
+                                        value={previousNumber.max}
+                                        onChange={(event) => setPreviousNumber((prev) => ({ ...prev, max: event.target.value }))}
+                                        sx={{ ...inputSx, width: '92px' }}
+                                    />
+                                    <Box component="span" sx={{ fontSize: '0.78rem', color: 'var(--text-muted)', ml: '8px' }}>Result</Box>
+                                    <Box
+                                        component="select"
+                                        sx={{ ...inputSx, width: '200px' }}
+                                        value={previousResults[0] || ''}
+                                        onChange={(event) => setPreviousResults(event.target.value ? [event.target.value] : [])}
+                                    >
+                                        <option value="">Any result</option>
+                                        {ACTUAL_RESULT_VALUES.map((option) => <option key={option} value={option}>{humanizeEnumValue(option)}</option>)}
+                                    </Box>
+                                </Box>
+                                <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    {PLAY_TYPE_OPTIONS.map((option) => (
+                                        <Chip
+                                            key={option.value}
+                                            active={previousPlayCalls.includes(option.value)}
+                                            onClick={() => setPreviousPlayCalls((prev) => toggleInArray(prev, option.value))}
+                                        >
+                                            {option.label}
+                                        </Chip>
+                                    ))}
+                                </Box>
+                            </Box>
+                            <Box>
+                                <Box sx={{ ...labelSx, mb: '8px' }}>Score margin</Box>
+                                <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                    <Box
+                                        component="input"
+                                        type="number"
+                                        placeholder="Min"
+                                        value={scoreMargin.min}
+                                        onChange={(event) => setScoreMargin((prev) => ({ ...prev, min: event.target.value }))}
+                                        sx={{ ...inputSx, width: '92px' }}
+                                    />
+                                    <Box
+                                        component="input"
+                                        type="number"
+                                        placeholder="Max"
+                                        value={scoreMargin.max}
+                                        onChange={(event) => setScoreMargin((prev) => ({ ...prev, max: event.target.value }))}
+                                        sx={{ ...inputSx, width: '92px' }}
+                                    />
+                                </Box>
+                                <Box sx={{ fontSize: '0.74rem', color: 'var(--text-dim)', mt: '6px' }}>
+                                    Their score minus the opponent's score, so -10 or lower is trailing by 10+
                                 </Box>
                             </Box>
                             <Box>

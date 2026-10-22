@@ -3,7 +3,7 @@ import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
 const SegTabs = ({ value, onChange, options, ariaLabel, buttonSx }) => {
-    const buttonHeight = buttonSx?.height || '32px';
+    const buttonHeight = buttonSx?.height || '36px';
     return (
         <Box
             role="tablist"

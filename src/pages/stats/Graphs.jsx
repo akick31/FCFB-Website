@@ -10,7 +10,7 @@ import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
 import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import { getAllSeasons } from '../../api/seasonApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
-import { seasonHasStarted } from '../../utils/statsCatalog';
+import { seasonHasStarted, postseasonSeasonNumbers } from '../../utils/statsCatalog';
 import { useSeo } from '../../hooks/useSeo';
 import RankingsGraphTab from '../../components/stats/graphs/RankingsGraphTab';
 import StatPlotsGraphTab from '../../components/stats/graphs/StatPlotsGraphTab';
@@ -50,6 +50,7 @@ const Graphs = () => {
 
     const [teams, setTeams] = useState([]);
     const [seasons, setSeasons] = useState([]);
+    const [postseasonSeasons, setPostseasonSeasons] = useState(() => new Set());
     const [season, setSeason] = useState(seasonParam ? Number(seasonParam) : null);
     const [loading, setLoading] = useState(true);
     const scope = searchParams.get('scope') === 'postseason' ? 'postseason' : 'regular';
@@ -92,11 +93,13 @@ const Graphs = () => {
                 const [allTeams, allSeasons] = await Promise.all([getAllTeamsIncludingInactive().catch(() => []), getAllSeasons().catch(() => [])]);
                 if (!active) return;
                 setTeams((allTeams || []).filter(isRealTeam));
-                const started = (allSeasons || []).filter(seasonHasStarted)
+                const startedSeasons = (allSeasons || []).filter(seasonHasStarted);
+                const started = startedSeasons
                     .map((entry) => entry.season_number ?? entry.seasonNumber)
                     .filter((value) => value != null)
                     .sort((a, b) => b - a);
                 setSeasons(started);
+                setPostseasonSeasons(postseasonSeasonNumbers(startedSeasons));
                 if (season == null) setSeason(started[0] ?? null);
             } finally {
                 if (active) setLoading(false);
@@ -106,6 +109,15 @@ const Graphs = () => {
     }, []);
 
     const seasonOptions = useMemo(() => seasons.map((s) => ({ value: String(s), label: `Season ${s}` })), [seasons]);
+    const postseasonAvailable = season != null && postseasonSeasons.has(season);
+
+    useEffect(() => {
+        if (scope === 'postseason' && season != null && postseasonSeasons.size > 0 && !postseasonSeasons.has(season)) {
+            const next = new URLSearchParams(searchParams);
+            next.delete('scope');
+            setSearchParams(next, { replace: true });
+        }
+    }, [scope, season, postseasonSeasons]);
 
     const teamsMap = useMemo(() => {
         const merged = { ...activeTeamsMap };
@@ -126,7 +138,12 @@ const Graphs = () => {
         <PageWrap>
             <PageHeading eyebrow="Visual trends" title="Graphs">
                 {SCOPED_TABS.includes(activeTab) && (
-                    <SegTabs value={scope} onChange={changeScope} options={SCOPE_TABS} ariaLabel="Stats scope" />
+                    <SegTabs
+                        value={postseasonAvailable ? scope : 'regular'}
+                        onChange={changeScope}
+                        options={postseasonAvailable ? SCOPE_TABS : SCOPE_TABS.filter((tab) => tab.value !== 'postseason')}
+                        ariaLabel="Stats scope"
+                    />
                 )}
                 {season != null && (
                     <SelectPill label="Season" value={String(season)} onChange={(value) => changeSeason(Number(value))} options={seasonOptions} sx={{ height: 38 }} />

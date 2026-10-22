@@ -11,9 +11,10 @@ import TeamMark from '../../components/ui/TeamMark';
 import { getFilteredRecords } from '../../api/recordsApi';
 import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
-import { useConferencesMap, activeConferenceList, conferenceLabel } from '../../components/constants/conferences';
-import { recordGroup, recordOrder, recordLabel, RECORD_GROUP_ORDER, SEASON_EXCLUDED_RECORDS, EXCLUDED_RECORDS, AMBIGUOUS_DIRECTION_RECORDS } from '../../utils/recordCategories';
+import { useConferencesMap, realConferenceList, conferenceLabel } from '../../components/constants/conferences';
+import { recordGroup, recordOrder, recordLabel, RECORD_GROUP_ORDER, SEASON_EXCLUDED_RECORDS, EXCLUDED_RECORDS, AMBIGUOUS_DIRECTION_RECORDS, TIME_RECORDS, isPercentageRecord, isAverageRecord } from '../../utils/recordCategories';
 import { isRealTeam } from '../../utils/teamDataUtils';
+import { formatTime } from '../../utils/statsCatalog';
 import { useSeo } from '../../hooks/useSeo';
 
 const SCOPE_TABS = [
@@ -46,6 +47,25 @@ const GROUP_ORDER = [...RECORD_GROUP_ORDER, 'Other'];
 
 const unwrapContent = (result) => (Array.isArray(result?.content) ? result.content : Array.isArray(result) ? result : []);
 
+const conferenceOption = (entry) => ({ value: entry.code, label: entry.label });
+
+const NON_CONFERENCE_NAMES = new Set(['NAIA']);
+
+const isNonConference = (entry) => {
+    const code = String(entry.code || '').toUpperCase();
+    const label = String(entry.label || '').toUpperCase();
+    return code.endsWith('INDEPENDENT') || label.endsWith('INDEPENDENT') || NON_CONFERENCE_NAMES.has(code) || NON_CONFERENCE_NAMES.has(label);
+};
+
+const conferenceOptions = () => {
+    const conferences = realConferenceList();
+    const active = conferences.filter((entry) => entry.active).map(conferenceOption);
+    const defunct = conferences.filter((entry) => !entry.active && !isNonConference(entry)).map(conferenceOption);
+    return defunct.length ? [...active, { label: 'Defunct conferences', options: defunct }] : active;
+};
+
+const optionCodes = (options) => options.flatMap((entry) => (entry.options ? entry.options : [entry])).map((entry) => entry.value);
+
 const recordMeta = (record, teamsMap) => {
     const parts = [];
     if (record.coach) parts.push(`@${record.coach}`);
@@ -57,6 +77,14 @@ const recordMeta = (record, teamsMap) => {
         parts.push(`${awayAbbr} vs ${homeAbbr}`);
     }
     return parts;
+};
+
+const recordValue = (record) => {
+    const name = String(record.record_name).toLowerCase();
+    if (TIME_RECORDS.has(name)) return formatTime(record.record_value);
+    if (isPercentageRecord(name)) return `${Number(record.record_value).toFixed(1)}%`;
+    if (isAverageRecord(name)) return Number(record.record_value).toFixed(1);
+    return record.record_value % 1 ? Number(record.record_value).toFixed(1) : record.record_value;
 };
 
 const directionSuffix = (record) => {
@@ -97,7 +125,7 @@ const RecordRow = ({ record, teamsMap }) => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box component="span" sx={{ fontWeight: 700, fontSize: '1rem' }}>{recordLabel(record.record_name)}{directionSuffix(record)}</Box>
                 <Box component="span" className="num" sx={{ ml: 'auto', fontWeight: 800, fontSize: '1.3rem', color: 'var(--brand)', fontVariantNumeric: 'tabular-nums' }}>
-                    {record.record_value % 1 ? Number(record.record_value).toFixed(1) : record.record_value}
+                    {recordValue(record)}
                 </Box>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: 'var(--text-dim)', fontSize: '0.78rem', mt: 0.5 }}>
@@ -150,10 +178,13 @@ const RecordsBoard = ({ user }) => {
         return () => { active = false; };
     }, [user?.team]);
 
+    const conferenceChoices = useMemo(() => conferenceOptions(), [conferencesMap]);
+    const conferenceCodes = useMemo(() => optionCodes(conferenceChoices), [conferenceChoices]);
+
     useEffect(() => {
-        if (conference || Object.keys(conferencesMap).length === 0) return;
-        setConference(activeConferenceList()[0]?.code || '');
-    }, [conferencesMap, conference]);
+        if (conferenceCodes.length === 0 || conferenceCodes.includes(conference)) return;
+        setConference(conferenceCodes[0]);
+    }, [conferenceCodes, conference]);
 
     useEffect(() => {
         const next = new URLSearchParams(searchParams);
@@ -238,7 +269,7 @@ const RecordsBoard = ({ user }) => {
             <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                 <SegTabs value={activeTab} onChange={(value) => navigate({ pathname: `/records/${value}`, search: searchParams.toString() })} options={RECORD_TABS} ariaLabel="Record type" />
                 {!isLeagueOnlyTab && scope === 'conference' && (
-                    <SelectPill label="Conference" value={conference} onChange={setConference} options={activeConferenceList().map((entry) => ({ value: entry.code, label: entry.label }))} sx={{ height: 38 }} />
+                    <SelectPill label="Conference" value={conference} onChange={setConference} options={conferenceChoices} sx={{ height: 38 }} />
                 )}
                 {!isLeagueOnlyTab && scope === 'team' && teams.length > 0 && (
                     <SelectPill label="Team" value={team} onChange={setTeam} options={teams.map((entry) => ({ value: entry.name, label: entry.name }))} sx={{ height: 38 }} />
@@ -287,15 +318,22 @@ const RecordsBoard = ({ user }) => {
             ) : categoryRows.length === 0 ? (
                 <Box sx={{ color: 'var(--text-muted)', py: 6, textAlign: 'center' }}>No records yet for this view.</Box>
             ) : (
-                <Panel header={activeCategory} more={`${categoryRows.length}`}>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, columnGap: '16px' }}>
-                        {[categoryRows.slice(0, Math.ceil(categoryRows.length / 2)), categoryRows.slice(Math.ceil(categoryRows.length / 2))].map((column, index) => (
-                            <Box key={index}>
-                                {column.map((record) => <RecordRow key={`${record.record_name}-${record.record_type}`} record={record} teamsMap={teamsMap} />)}
-                            </Box>
-                        ))}
-                    </Box>
-                </Panel>
+                <>
+                    <Panel header={activeCategory} more={`${categoryRows.length}`}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, columnGap: '16px' }}>
+                            {[categoryRows.slice(0, Math.ceil(categoryRows.length / 2)), categoryRows.slice(Math.ceil(categoryRows.length / 2))].map((column, index) => (
+                                <Box key={index}>
+                                    {column.map((record) => <RecordRow key={`${record.record_name}-${record.record_type}`} record={record} teamsMap={teamsMap} />)}
+                                </Box>
+                            ))}
+                        </Box>
+                    </Panel>
+                    {activeTab === 'single_season' && (
+                        <Box sx={{ color: 'var(--text-dim)', fontSize: '0.72rem', mt: 1.25 }}>
+                            *Percentage and per play records require a minimum number of attempts per stat
+                        </Box>
+                    )}
+                </>
             )}
         </PageWrap>
     );
