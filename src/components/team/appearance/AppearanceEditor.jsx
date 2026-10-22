@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { forwardRef, useImperativeHandle, useMemo } from 'react';
 import { Box, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
 import Panel from '../../ui/Panel';
@@ -32,7 +32,7 @@ const btnSx = {
     '&:disabled': { opacity: 0.6, cursor: 'default' },
 };
 
-const AppearanceEditor = ({
+const AppearanceEditor = forwardRef(({
     team,
     view,
     half,
@@ -45,7 +45,7 @@ const AppearanceEditor = ({
     previewGroups,
     previewLabel = 'Live preview',
     onDirtyChange,
-}) => {
+}, ref) => {
     const groups = previewGroups || [
         { title: previewLabel, views: [{ view }], note: 'Unsaved edits shown here. Save to apply.' },
     ];
@@ -75,13 +75,19 @@ const AppearanceEditor = ({
         });
     };
 
-    const submit = async (event) => {
-        event.preventDefault();
+    const doSave = async () => {
         await save(async (draft) => {
             const persisted = await onSave(payloadFrom(sections, draft));
             return formFrom(sections, persisted, teamColors);
         });
     };
+
+    const submit = async (event) => {
+        event.preventDefault();
+        await doSave();
+    };
+
+    useImperativeHandle(ref, () => ({ save: doSave }));
 
     return (
         <Box component="form" onSubmit={submit}>
@@ -258,7 +264,9 @@ const AppearanceEditor = ({
             </Box>
         </Box>
     );
-};
+});
+
+AppearanceEditor.displayName = 'AppearanceEditor';
 
 AppearanceEditor.propTypes = {
     team: PropTypes.string.isRequired,

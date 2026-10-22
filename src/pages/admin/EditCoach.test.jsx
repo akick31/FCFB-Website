@@ -2,7 +2,7 @@
 import React, { StrictMode } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import EditCoach from './EditCoach';
-import { getAllUsers, updateUser } from '../../api/userApi';
+import { getUserByUsernameOrCoachName, updateUser } from '../../api/userApi';
 import { getAllTeams, hireCoach, fireSingleCoach } from '../../api/teamApi';
 
 let mockUsername;
@@ -11,7 +11,7 @@ jest.mock('react-router-dom', () => ({
     useParams: () => ({ username: mockUsername }),
     useNavigate: () => mockNavigate,
 }));
-jest.mock('../../api/userApi', () => ({ getAllUsers: jest.fn(), updateUser: jest.fn() }));
+jest.mock('../../api/userApi', () => ({ getUserByUsernameOrCoachName: jest.fn(), updateUser: jest.fn() }));
 jest.mock('../../api/teamApi', () => ({ getAllTeams: jest.fn(), hireCoach: jest.fn(), fireSingleCoach: jest.fn() }));
 jest.mock('../../hooks/useConferencesMap', () => ({ conferenceLabel: (code) => code }));
 jest.mock('../../components/layout/AdminLayout', () => ({
@@ -38,7 +38,9 @@ beforeEach(() => {
     jest.useFakeTimers();
     jest.resetAllMocks();
     mockUsername = 'Alpha';
-    getAllUsers.mockResolvedValue([alpha, beta]);
+    getUserByUsernameOrCoachName.mockImplementation(
+        async (name) => [alpha, beta].find((u) => u.username === name || u.coach_name === name) || null
+    );
     getAllTeams.mockResolvedValue([
         { name: 'A', active: true },
         { name: 'B', active: true },
@@ -60,20 +62,20 @@ const switchToBeta = async (rerender) => {
 
 test('an obsolete coach read cannot populate a new route', async () => {
     let resolveOld;
-    getAllUsers.mockReturnValueOnce(
+    getUserByUsernameOrCoachName.mockReturnValueOnce(
         new Promise((resolve) => {
             resolveOld = resolve;
         })
     );
     const { rerender } = render(page);
     await switchToBeta(rerender);
-    await act(async () => resolveOld([{ ...beta, coach_name: 'Obsolete' }]));
+    await act(async () => resolveOld({ ...beta, coach_name: 'Obsolete' }));
     expect(screen.getByLabelText('Coach name').value).toBe('Coach B');
 });
 
 test('an obsolete failure cannot end loading for the new coach', async () => {
     let rejectOld;
-    getAllUsers
+    getUserByUsernameOrCoachName
         .mockReturnValueOnce(
             new Promise((resolve, reject) => {
                 rejectOld = reject;
@@ -87,14 +89,14 @@ test('an obsolete failure cannot end loading for the new coach', async () => {
     expect(console.error).not.toHaveBeenCalled();
 });
 
-test('a failed coach read can recover on the next route with fixed diagnostics', async () => {
-    getAllUsers.mockRejectedValueOnce({ message: 'sensitive transport detail' });
+test('a failed coach read recovers as not found on the next route', async () => {
+    getUserByUsernameOrCoachName.mockRejectedValueOnce({ message: 'sensitive transport detail' });
     const { rerender } = render(page);
     await act(async () => {});
-    expect(screen.getByText('Failed to load coach')).toBeTruthy();
-    expect(console.error.mock.calls).toEqual([['Failed to load coach']]);
+    expect(screen.getByText('Coach not found')).toBeTruthy();
+    expect(console.error).not.toHaveBeenCalled();
     await switchToBeta(rerender);
-    expect(screen.queryByText('Failed to load coach')).toBeNull();
+    expect(screen.queryByText('Coach not found')).toBeNull();
     expect(screen.getByLabelText('Coach name').value).toBe('Coach B');
 });
 
@@ -184,19 +186,19 @@ test('a current coach save preserves the payload and 1500ms redirect', async () 
 
 test('StrictMode cleanup invalidates the first coach read', async () => {
     let resolveOld;
-    getAllUsers.mockReturnValueOnce(
+    getUserByUsernameOrCoachName.mockReturnValueOnce(
         new Promise((resolve) => {
             resolveOld = resolve;
         })
     );
     render(<StrictMode>{page}</StrictMode>);
     await act(async () => {});
-    await act(async () => resolveOld([{ ...alpha, coach_name: 'Obsolete' }]));
+    await act(async () => resolveOld({ ...alpha, coach_name: 'Obsolete' }));
     expect(screen.getByLabelText('Coach name').value).toBe('Coach A');
 });
 
 test('missing Discord IDs still block a team change before any mutation', async () => {
-    getAllUsers.mockResolvedValueOnce([{ ...alpha, discord_id: null }]);
+    getUserByUsernameOrCoachName.mockResolvedValueOnce({ ...alpha, discord_id: null });
     render(page);
     await act(async () => {});
     fireEvent.change(screen.getByLabelText('Team'), { target: { value: 'B' } });

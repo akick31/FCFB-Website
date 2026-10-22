@@ -11,6 +11,18 @@ const GOAL_POST_STYLES = [
     { value: 'Y', label: 'Y (single stem)' },
     { value: 'H', label: 'H (two stems)' },
 ];
+const STADIUM_BACKDROPS = [
+    { value: 'CROWD', label: 'Crowd' },
+    { value: 'BUILDING', label: 'City skyline' },
+    { value: 'CAMPUS', label: 'Campus buildings' },
+    { value: 'FOREST', label: 'Forest' },
+    { value: 'FIELD', label: 'Open field' },
+    { value: 'LAKE', label: 'Lake' },
+    { value: 'MOUNTAINS', label: 'Mountains' },
+    { value: 'HILL', label: 'Hill with scoreboard' },
+    { value: 'NONE', label: 'None (open sky)' },
+];
+const STADIUM_BACKDROPS_RIGHT = [{ value: '', label: 'Match left' }, ...STADIUM_BACKDROPS];
 const GRAPHIC_OPTIONS = [
     { value: 'PRIMARY', label: 'Primary logo' },
     { value: 'SECONDARY', label: 'Secondary logo' },
@@ -36,7 +48,11 @@ const FIELD_LOGO_SOURCES = [
     { value: 'SECONDARY', label: 'Secondary logo' },
 ];
 const QUARTER_LOGO_SOURCES = [...FIELD_LOGO_SOURCES, { value: 'NONE', label: 'None (off)' }];
-const WALL_LOGO_SOURCES = [{ value: 'NONE', label: 'Use midfield logo' }, ...FIELD_LOGO_SOURCES];
+const WALL_LOGO_SOURCES = [
+    { value: 'NONE', label: 'Use midfield logo' },
+    { value: 'BLANK', label: 'No logo' },
+    ...FIELD_LOGO_SOURCES,
+];
 const WALL_LOGO_SOURCES_RIGHT = [{ value: '', label: 'Match left' }, ...WALL_LOGO_SOURCES];
 
 export const UNIFORM_SECTIONS = [
@@ -45,6 +61,13 @@ export const UNIFORM_SECTIONS = [
         fields: [
             { key: 'helmet_color', label: 'Shell color', type: 'color', defaultColor: 'primary' },
             { key: 'facemask_color', label: 'Facemask', type: 'color', defaultColor: '#FFFFFF' },
+            {
+                key: 'bumper_color',
+                label: 'Chin strap bumper',
+                type: 'color',
+                defaultColor: '#DDDDDD',
+                help: 'Visible on the small field-goal figure only, not the detailed helmet preview.',
+            },
             { key: 'helmet_graphic', label: 'Graphic', type: 'graphic', options: GRAPHIC_OPTIONS },
             {
                 key: 'helmet_number_color',
@@ -531,6 +554,52 @@ export const TEAM_FIELD_SECTIONS = [
                 label: 'Custom logo URL',
                 type: 'logo',
                 showIf: (f) => f.right_wall_logo_source === 'CUSTOM',
+            },
+        ],
+    },
+    {
+        title: 'Stadium',
+        help: 'Each side can be styled independently; blank right-side fields match the left.',
+        fields: [
+            { key: '_left_stadium_heading', label: 'Left side', type: 'subheading' },
+            { key: 'stadium_backdrop', label: 'Backdrop', type: 'select', options: STADIUM_BACKDROPS },
+            {
+                key: 'stadium_size',
+                label: 'Stadium size',
+                type: 'scale',
+                min: 0.2,
+                max: 1,
+                step: 0.05,
+                fallback: 1,
+                showIf: (f) => f.stadium_backdrop !== 'NONE',
+            },
+            { key: 'jumbotron_enabled', label: 'Jumbotron', type: 'toggle' },
+            {
+                key: 'jumbotron_pylon_mount',
+                label: 'Mount on pylons',
+                type: 'toggle',
+                showIf: (f) => f.jumbotron_enabled && f.stadium_backdrop === 'CROWD',
+                help: 'Only applies over a Crowd backdrop — other backdrops always use pylons.',
+            },
+            { key: '_right_stadium_heading', label: 'Right side', type: 'subheading' },
+            { key: 'right_stadium_backdrop', label: 'Backdrop', type: 'select', options: STADIUM_BACKDROPS_RIGHT },
+            {
+                key: 'right_stadium_size',
+                label: 'Stadium size',
+                type: 'scale',
+                min: 0.2,
+                max: 1,
+                step: 0.05,
+                fallback: 1,
+                showIf: (f) => (f.right_stadium_backdrop || f.stadium_backdrop) !== 'NONE',
+            },
+            { key: 'right_jumbotron_enabled', label: 'Jumbotron', type: 'toggle' },
+            {
+                key: 'right_jumbotron_pylon_mount',
+                label: 'Mount on pylons',
+                type: 'toggle',
+                showIf: (f) => f.right_jumbotron_enabled && (f.right_stadium_backdrop || f.stadium_backdrop) === 'CROWD',
+                help: 'Only applies over a Crowd backdrop — other backdrops always use pylons.',
             },
         ],
     },

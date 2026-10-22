@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { forwardRef, useImperativeHandle, useMemo } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import Panel from '../../ui/Panel';
@@ -141,7 +141,7 @@ const colorsForm = (source) => ({
     tertiary_color: source.tertiary_color || '#000000',
 });
 
-const ColorsEditor = ({ team, source, isAdmin, canEditTertiary, onSave, onDirtyChange }) => {
+const ColorsEditor = forwardRef(({ team, source, isAdmin, canEditTertiary, onSave, onDirtyChange }, ref) => {
     const sourceForm = useMemo(() => colorsForm(source), [source]);
     const { form, changeForm, saving, error, saved, save } = useAppearanceDraft(sourceForm, onDirtyChange);
 
@@ -153,8 +153,7 @@ const ColorsEditor = ({ team, source, isAdmin, canEditTertiary, onSave, onDirtyC
         changeForm((current) => ({ ...current, [key]: value }));
     };
 
-    const submit = async (event) => {
-        event.preventDefault();
+    const doSave = async () => {
         await save(async (draft) => {
             const payload = {};
             if (isAdmin) {
@@ -167,6 +166,13 @@ const ColorsEditor = ({ team, source, isAdmin, canEditTertiary, onSave, onDirtyC
             return colorsForm(await onSave(payload));
         });
     };
+
+    const submit = async (event) => {
+        event.preventDefault();
+        await doSave();
+    };
+
+    useImperativeHandle(ref, () => ({ save: doSave }));
 
     return (
         <Box
@@ -236,7 +242,9 @@ const ColorsEditor = ({ team, source, isAdmin, canEditTertiary, onSave, onDirtyC
             </Box>
         </Box>
     );
-};
+});
+
+ColorsEditor.displayName = 'ColorsEditor';
 
 ColorsEditor.propTypes = {
     team: PropTypes.string.isRequired,

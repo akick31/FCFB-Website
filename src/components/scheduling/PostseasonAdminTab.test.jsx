@@ -2,10 +2,16 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 import PostseasonAdminTab from './PostseasonAdminTab';
-import { createScheduleEntry, updateScheduleEntry, deleteScheduleEntry } from '../../api/scheduleApi';
+import {
+    createScheduleEntry,
+    createBulkScheduleEntries,
+    updateScheduleEntry,
+    deleteScheduleEntry,
+} from '../../api/scheduleApi';
 
 jest.mock('../../api/scheduleApi', () => ({
     createScheduleEntry: jest.fn(),
+    createBulkScheduleEntries: jest.fn(),
     updateScheduleEntry: jest.fn(),
     deleteScheduleEntry: jest.fn(),
 }));
@@ -51,6 +57,7 @@ const games = [
 let props;
 beforeEach(() => {
     createScheduleEntry.mockReset().mockResolvedValue({});
+    createBulkScheduleEntries.mockReset().mockResolvedValue([]);
     updateScheduleEntry.mockReset().mockResolvedValue({});
     deleteScheduleEntry.mockReset().mockResolvedValue({});
     props = {
@@ -189,13 +196,12 @@ test('regeneration retains existing seeds and deletes all old games before creat
     fireEvent.click(within(dialog).getByRole('button', { name: 'Regenerate Bracket' }));
     await act(async () => {});
     expect(deleteScheduleEntry.mock.calls.map(([id]) => id)).toEqual(schedule.map(({ id }) => id));
-    expect(createScheduleEntry).toHaveBeenCalledTimes(16);
+    expect(createBulkScheduleEntries).toHaveBeenCalledTimes(1);
+    const entries = createBulkScheduleEntries.mock.calls[0][0];
+    expect(entries).toHaveLength(16);
     expect(Math.max(...deleteScheduleEntry.mock.invocationCallOrder)).toBeLessThan(
-        Math.min(...createScheduleEntry.mock.invocationCallOrder)
+        createBulkScheduleEntries.mock.invocationCallOrder[0]
     );
-    expect(createScheduleEntry.mock.calls.map(([entry]) => entry.playoffRound)).toEqual([
-        ...Array(8).fill(1),
-        ...Array(8).fill(2),
-    ]);
+    expect(entries.map((entry) => entry.playoffRound)).toEqual([...Array(8).fill(1), ...Array(8).fill(2)]);
     expect(props.onRefresh).toHaveBeenCalledTimes(1);
 });

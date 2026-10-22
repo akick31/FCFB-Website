@@ -57,6 +57,7 @@ import {
     AdminApiDocs,
     AdminFieldAppearance,
     AdminTeamAppearance,
+    AdminFonts,
     ScoutingReport,
     MatchupPreview,
     CoachTendencyCard,
@@ -429,6 +430,20 @@ const AppRoutes = () => {
                         <Route
                             path="/admin/field-appearance"
                             element={<Navigate to="/admin/postseason-appearance" replace />}
+                        />
+                        <Route
+                            path="/admin/fonts"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <AdminFonts />
+                                </ProtectedRoute>
+                            }
                         />
                         <Route
                             path="/admin/scheduling"

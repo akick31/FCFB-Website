@@ -3,6 +3,7 @@ import { Box, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getFilteredGames } from '../../api/gameApi';
+import { getGameStatsBySeasonAndWeek } from '../../api/gameStatsApi';
 import { getPostseasonSchedule } from '../../api/scheduleApi';
 import { getCurrentSeason, getCurrentWeek, getAllSeasons, getLatestCompletedSeason } from '../../api/seasonApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
@@ -64,6 +65,7 @@ const Scoreboard = () => {
         weekParam ? (weekParam === 'postseason' ? 'postseason' : parseInt(weekParam, 10)) : 'postseason'
     );
     const [games, setGames] = useState([]);
+    const [statsByGame, setStatsByGame] = useState({});
     const [page, setPage] = useState(Number.isFinite(parsedPage) && parsedPage >= 0 ? parsedPage : 0);
     const [pageCount, setPageCount] = useState(1);
     const [loading, setLoading] = useState(true);
@@ -243,6 +245,9 @@ const Scoreboard = () => {
             () => {
                 (async () => {
                     try {
+                        if (active && !(activeTab === 'final' && week !== 'postseason')) {
+                            setStatsByGame({});
+                        }
                         const conferenceParam = conference !== 'ALL' ? conference : undefined;
                         const filterParams = rankedOnly ? ['RANKED_GAME'] : undefined;
                         const fetchSize = searchesTeams ? SEARCH_SIZE : PAGE_SIZE;
@@ -295,19 +300,37 @@ const Scoreboard = () => {
                                 setGames(finals.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE));
                             }
                         } else {
-                            const response = await getFilteredGames({
-                                category: 'PAST',
-                                season,
-                                week,
-                                sort: 'NEWEST',
-                                page: fetchPage,
-                                size: fetchSize,
-                                conference: conferenceParam,
-                                filters: filterParams,
-                            }).catch(() => null);
+                            const [response, statsRows] = await Promise.all([
+                                getFilteredGames({
+                                    category: 'PAST',
+                                    season,
+                                    week,
+                                    sort: 'NEWEST',
+                                    page: fetchPage,
+                                    size: fetchSize,
+                                    conference: conferenceParam,
+                                    filters: filterParams,
+                                }).catch(() => null),
+                                getGameStatsBySeasonAndWeek(season, week).catch(() => []),
+                            ]);
                             if (active) {
-                                setGames((response?.content || []).filter(matchesSearch));
+                                const filteredGames = (response?.content || []).filter(matchesSearch);
+                                setGames(filteredGames);
                                 setPageCount(searchesTeams ? 1 : response?.total_pages || 1);
+                                const map = {};
+                                filteredGames.forEach((game) => {
+                                    map[game.game_id] = {
+                                        home:
+                                            statsRows.find(
+                                                (row) => row.game_id === game.game_id && row.team === game.home_team
+                                            ) || null,
+                                        away:
+                                            statsRows.find(
+                                                (row) => row.game_id === game.game_id && row.team === game.away_team
+                                            ) || null,
+                                    };
+                                });
+                                setStatsByGame(map);
                             }
                         }
                     } finally {
@@ -432,7 +455,7 @@ const Scoreboard = () => {
                         sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: '14px' }}
                     >
                         {games.map((game) => (
-                            <GameCard key={game.game_id} game={game} teamsMap={teamsMap} />
+                            <GameCard key={game.game_id} game={game} teamsMap={teamsMap} statsByGame={statsByGame} />
                         ))}
                     </Box>
                     {pageCount > 1 && (

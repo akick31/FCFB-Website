@@ -18,6 +18,19 @@ export const getUserById = async (userId) => {
     }
 };
 
+export const getUserByUsernameOrCoachName = async (name) => {
+    try {
+        const response = await apiClient.get('/user/username-or-coach-name', { params: { name } });
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch user by username or coach name:');
+        if (error.response) {
+            throw new Error(error.response.data.error || 'Failed to fetch user by username or coach name');
+        }
+        throw new Error('An unexpected error occurred while fetching user by username or coach name');
+    }
+};
+
 export const getAllUsers = async () => {
     try {
         const response = await apiClient.get('/user/all');

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { getAllUsers, getUsernameHistory } from '../../api/userApi';
+import { getUserByUsernameOrCoachName, getUsernameHistory } from '../../api/userApi';
 import { getAllTeams } from '../../api/teamApi';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
 import { getEloHistoryForTeams } from '../../api/eloHistoryApi.jsx';
@@ -124,8 +124,8 @@ const UserDetails = () => {
         (async () => {
             setLoading(true);
             try {
-                const [allUsers, allTeams, allTransactions, defSeason, latest] = await Promise.all([
-                    getAllUsers(),
+                const [foundUser, allTeams, allTransactions, defSeason, latest] = await Promise.all([
+                    getUserByUsernameOrCoachName(decodedName).catch(() => null),
                     getAllTeams().catch(() => []),
                     getEntireCoachTransactionLog().catch(() => []),
                     resolveDefaultSeason(),
@@ -135,9 +135,6 @@ const UserDetails = () => {
                     return;
                 }
 
-                const foundUser =
-                    allUsers.find((entry) => entry.coach_name === decodedName || entry.username === decodedName) ||
-                    null;
                 setUser(foundUser);
                 if (!foundUser) {
                     return;

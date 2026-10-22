@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { forwardRef, useImperativeHandle, useMemo } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import Panel from '../../ui/Panel';
@@ -86,7 +86,7 @@ const logosForm = (source) => ({
     secondaryLogo: source.secondary_logo || '',
 });
 
-const LogosEditor = ({ team, source, canEdit, onSave, onDirtyChange }) => {
+const LogosEditor = forwardRef(({ team, source, canEdit, onSave, onDirtyChange }, ref) => {
     const sourceForm = useMemo(() => logosForm(source), [source]);
     const { form, changeForm, saving, error, saved, save } = useAppearanceDraft(sourceForm, onDirtyChange);
 
@@ -101,8 +101,7 @@ const LogosEditor = ({ team, source, canEdit, onSave, onDirtyChange }) => {
         changeForm((current) => ({ ...current, [key]: value }));
     };
 
-    const submit = async (event) => {
-        event.preventDefault();
+    const doSave = async () => {
         await save(async (draft) =>
             logosForm(
                 await onSave({
@@ -113,6 +112,13 @@ const LogosEditor = ({ team, source, canEdit, onSave, onDirtyChange }) => {
             )
         );
     };
+
+    const submit = async (event) => {
+        event.preventDefault();
+        await doSave();
+    };
+
+    useImperativeHandle(ref, () => ({ save: doSave }));
 
     return (
         <Box
@@ -190,7 +196,9 @@ const LogosEditor = ({ team, source, canEdit, onSave, onDirtyChange }) => {
             </Box>
         </Box>
     );
-};
+});
+
+LogosEditor.displayName = 'LogosEditor';
 
 LogosEditor.propTypes = {
     team: PropTypes.string.isRequired,

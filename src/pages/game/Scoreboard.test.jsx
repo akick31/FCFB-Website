@@ -20,6 +20,7 @@ jest.mock('../../api/seasonApi', () => ({
     getAllSeasons: jest.fn(),
 }));
 jest.mock('../../api/gameApi', () => ({ getFilteredGames: jest.fn() }));
+jest.mock('../../api/gameStatsApi', () => ({ getGameStatsBySeasonAndWeek: jest.fn().mockResolvedValue([]) }));
 jest.mock('../../api/scheduleApi', () => ({ getPostseasonSchedule: jest.fn().mockResolvedValue([]) }));
 jest.mock('../../hooks/useTeamsMap', () => ({ useTeamsMap: jest.fn() }));
 jest.mock('../../hooks/useConferencesMap', () => ({

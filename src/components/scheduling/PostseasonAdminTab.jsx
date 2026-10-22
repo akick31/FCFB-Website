@@ -9,7 +9,12 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import Panel from '../ui/Panel';
-import { createScheduleEntry, updateScheduleEntry, deleteScheduleEntry } from '../../api/scheduleApi';
+import {
+    createScheduleEntry,
+    createBulkScheduleEntries,
+    updateScheduleEntry,
+    deleteScheduleEntry,
+} from '../../api/scheduleApi';
 import { uploadPostseasonLogo } from '../../api/uploadApi';
 import { useConferencesMap, activeConferenceList } from '../../hooks/useConferencesMap';
 import Postseason from '../schedule/Postseason';
@@ -277,15 +282,15 @@ const PostseasonAdminTab = ({
             const secondRoundWeek = playoffWeekForRound(2);
 
             const { firstRoundGames, secondRoundGames } = initialPlayoffGames(playoffTeams);
-            for (const game of [...firstRoundGames, ...secondRoundGames]) {
-                await createScheduleEntry({
+            await createBulkScheduleEntries(
+                [...firstRoundGames, ...secondRoundGames].map((game) => ({
                     ...game,
                     season,
                     subdivision: 'FBS',
                     postseasonGameLogo: CFP_LOGO_URL,
                     postseasonGameName: ROUND_LABELS[game.playoffRound],
-                });
-            }
+                }))
+            );
 
             onShowSnackbar(
                 `Playoff bracket created: ${firstRoundGames.length} R1 games (Wk ${firstRoundWeek}) + ${secondRoundGames.length} R2 placeholders (Wk ${secondRoundWeek})`

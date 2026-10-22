@@ -4,7 +4,7 @@ import { act, render, screen } from '@testing-library/react';
 import TeamDetails from './team/TeamDetails';
 import UserDetails from './user/UserDetails';
 import { getTeamById } from '../api/teamApi';
-import { getAllUsers, getUsernameHistory } from '../api/userApi';
+import { getAllUsers, getUserByUsernameOrCoachName, getUsernameHistory } from '../api/userApi';
 import { getLatestRankings } from '../api/rankingApi';
 import { getCoachStats } from '../api/coachStatsApi';
 import { getCurrentSeason, getLatestCompletedSeason, getAllSeasons } from '../api/seasonApi';
@@ -17,7 +17,11 @@ jest.mock('react-router-dom', () => ({
     Link: ({ children }) => <span>{children}</span>,
 }));
 jest.mock('../api/teamApi', () => ({ getTeamById: jest.fn(), getAllTeams: async () => [] }));
-jest.mock('../api/userApi', () => ({ getAllUsers: jest.fn(), getUsernameHistory: jest.fn() }));
+jest.mock('../api/userApi', () => ({
+    getAllUsers: jest.fn(),
+    getUserByUsernameOrCoachName: jest.fn(),
+    getUsernameHistory: jest.fn(),
+}));
 jest.mock('../api/eloHistoryApi.jsx', () => ({ getEloHistory: async () => [], getEloHistoryForTeams: async () => [] }));
 jest.mock('../api/rankingApi', () => ({
     getLatestRankings: jest.fn(),
@@ -75,6 +79,9 @@ beforeEach(() => {
     mockParams = new URLSearchParams();
     getTeamById.mockImplementation(async (id) => ({ id, name: id }));
     getAllUsers.mockResolvedValue(users);
+    getUserByUsernameOrCoachName.mockImplementation(
+        async (name) => users.find((u) => u.username === name || u.coach_name === name) || null
+    );
     getUsernameHistory.mockResolvedValue([]);
     getCoachStats.mockResolvedValue([]);
     getCurrentSeason.mockResolvedValue(12);

@@ -18,10 +18,10 @@ import { ensureTeam } from '../../../hooks/useTeamsMap';
 
 const QUARTER_KEYS = ['q1_score', 'q2_score', 'q3_score', 'q4_score'];
 
-const useQuarterScores = (game) => {
+const useQuarterScores = (game, preloaded) => {
     const [stats, setStats] = useState(null);
     useEffect(() => {
-        if (!game?.game_id || !game.home_team || !game.away_team) {
+        if (preloaded || !game?.game_id || !game.home_team || !game.away_team) {
             return;
         }
         let active = true;
@@ -42,7 +42,10 @@ const useQuarterScores = (game) => {
         return () => {
             active = false;
         };
-    }, [game?.game_id, game?.home_team, game?.away_team, game?.home_score, game?.away_score]);
+    }, [preloaded, game?.game_id, game?.home_team, game?.away_team, game?.home_score, game?.away_score]);
+    if (preloaded) {
+        return preloaded;
+    }
     return stats &&
         stats.gameId === game?.game_id &&
         stats.homeTeam === game?.home_team &&
@@ -157,10 +160,10 @@ TeamRow.propTypes = {
     size: PropTypes.number.isRequired,
 };
 
-const GameCard = ({ game, teamsMap, compact = false }) => {
+const GameCard = ({ game, teamsMap, compact = false, statsByGame }) => {
     const { mode } = useColorMode();
     const ongoing = isGameOngoing(game.game_status);
-    const stats = useQuarterScores(game);
+    const stats = useQuarterScores(game, statsByGame?.[game.game_id]);
     const play = useLivePlay(game, ongoing);
 
     const home = teamsMap[game.home_team];
@@ -477,6 +480,7 @@ GameCard.propTypes = {
     game: PropTypes.object.isRequired,
     teamsMap: PropTypes.object.isRequired,
     compact: PropTypes.bool,
+    statsByGame: PropTypes.object,
 };
 
 export default GameCard;

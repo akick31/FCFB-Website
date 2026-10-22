@@ -41,7 +41,25 @@ const TeamAppearance = ({ user }) => {
     const setTab = (value) => navigate(`/team-appearance/${teamId}/${value}`, { replace: true });
     const [dirtyTabs, setDirtyTabs] = useState({});
     const loadScopeRef = useRef(null);
+    const uniformRef = useRef(null);
+    const fieldRef = useRef(null);
+    const colorsRef = useRef(null);
+    const logosRef = useRef(null);
+    const tabRefs = { uniform: uniformRef, field: fieldRef, colors: colorsRef, logos: logosRef };
+    const [savingAll, setSavingAll] = useState(false);
     const hasUnsaved = Object.values(dirtyTabs).some(Boolean);
+    const saveAll = async () => {
+        setSavingAll(true);
+        try {
+            await Promise.all(
+                Object.entries(dirtyTabs)
+                    .filter(([, dirty]) => dirty)
+                    .map(([key]) => tabRefs[key]?.current?.save())
+            );
+        } finally {
+            setSavingAll(false);
+        }
+    };
     const setTabDirty = (key) => {
         const scope = loadScopeRef.current;
         return (isDirty) => {
@@ -177,12 +195,37 @@ const TeamAppearance = ({ user }) => {
                     You can only edit your own team&apos;s appearance. This is a read-only preview.
                 </Alert>
             )}
-            <Box sx={{ mb: '16px' }}>
+            <Box sx={{ mb: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
                 <SegTabs value={tab} onChange={setTab} options={tabs} ariaLabel="Appearance section" />
+                {canEdit && hasUnsaved && (
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={saveAll}
+                        disabled={savingAll}
+                        sx={{
+                            border: 0,
+                            background: 'var(--brand-deep)',
+                            color: '#fff',
+                            borderRadius: 'var(--r-sm)',
+                            px: '16px',
+                            height: '38px',
+                            boxSizing: 'border-box',
+                            font: 'inherit',
+                            fontSize: '0.85rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            '&:disabled': { opacity: 0.6, cursor: 'default' },
+                        }}
+                    >
+                        {savingAll ? 'Saving all...' : 'Save all tabs'}
+                    </Box>
+                )}
             </Box>
             {uniform && (
                 <Box {...panel('uniform')}>
                     <AppearanceEditor
+                        ref={uniformRef}
                         team={teamName}
                         view="UNIFORM"
                         half="uniform"
@@ -215,6 +258,7 @@ const TeamAppearance = ({ user }) => {
             {field && (
                 <Box {...panel('field')}>
                     <AppearanceEditor
+                        ref={fieldRef}
                         team={teamName}
                         view="FIELD"
                         half="field"
@@ -222,6 +266,16 @@ const TeamAppearance = ({ user }) => {
                         source={field}
                         teamColors={colors}
                         wallTextDefault={teamName}
+                        previewGroups={[
+                            { title: 'Field', views: [{ view: 'FIELD' }], note: 'Unsaved edits shown here. Save to apply.' },
+                            {
+                                title: 'Walls',
+                                views: [
+                                    { view: 'LEFT_WALL', label: 'Left wall' },
+                                    { view: 'RIGHT_WALL', label: 'Right wall' },
+                                ],
+                            },
+                        ]}
                         canEdit={canEdit}
                         onDirtyChange={setTabDirty('field')}
                         onSave={async (payload) => {
@@ -238,6 +292,7 @@ const TeamAppearance = ({ user }) => {
             {colors && (
                 <Box {...panel('colors')}>
                     <ColorsEditor
+                        ref={colorsRef}
                         team={teamName}
                         source={colors}
                         isAdmin={isAdmin}
@@ -257,6 +312,7 @@ const TeamAppearance = ({ user }) => {
             {isAdmin && logos && (
                 <Box {...panel('logos')}>
                     <LogosEditor
+                        ref={logosRef}
                         team={teamName}
                         source={logos}
                         canEdit={isAdmin}

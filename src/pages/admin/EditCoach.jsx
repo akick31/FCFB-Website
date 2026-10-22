@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
-import { getAllUsers, updateUser } from '../../api/userApi';
+import { getUserByUsernameOrCoachName, updateUser } from '../../api/userApi';
 import { getAllTeams, hireCoach, fireSingleCoach } from '../../api/teamApi';
 import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS } from '../../constants/teamEnums';
 import { formatOffensivePlaybook, formatDefensivePlaybook, formatRole, formatPosition } from '../../utils/formatText';
@@ -140,12 +140,14 @@ const EditCoach = ({ user: adminUser }) => {
         setCoach(null);
         const fetchData = async () => {
             try {
-                const [allUsers, allTeams] = await Promise.all([getAllUsers(), getAllTeams().catch(() => [])]);
+                const decoded = decodeURIComponent(username || '');
+                const [found, allTeams] = await Promise.all([
+                    getUserByUsernameOrCoachName(decoded).catch(() => null),
+                    getAllTeams().catch(() => []),
+                ]);
                 if (!scope.active) {
                     return;
                 }
-                const decoded = decodeURIComponent(username || '');
-                const found = allUsers.find((entry) => entry.username === decoded || entry.coach_name === decoded);
                 setCoach(found || null);
                 setOriginalTeam(found?.team ?? null);
                 setOriginalPosition(found?.position ?? null);
