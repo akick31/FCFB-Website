@@ -11,7 +11,7 @@ import TeamMark from '../../components/ui/TeamMark';
 import { getFilteredRecords } from '../../api/recordsApi';
 import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
-import { useConferencesMap, activeConferenceList, conferenceLabel } from '../../hooks/useConferencesMap';
+import { useConferencesMap, realConferenceList, conferenceLabel } from '../../hooks/useConferencesMap';
 import {
     recordGroup,
     recordOrder,
@@ -20,8 +20,12 @@ import {
     SEASON_EXCLUDED_RECORDS,
     EXCLUDED_RECORDS,
     AMBIGUOUS_DIRECTION_RECORDS,
+    TIME_RECORDS,
+    isPercentageRecord,
+    isAverageRecord,
 } from '../../utils/recordCategories';
 import { isRealTeam } from '../../utils/teamDataUtils';
+import { formatTime } from '../../utils/statsCatalog';
 import { useSeo } from '../../hooks/useSeo';
 
 const SCOPE_TABS = [
@@ -55,6 +59,31 @@ const GROUP_ORDER = [...RECORD_GROUP_ORDER, 'Other'];
 const unwrapContent = (result) =>
     Array.isArray(result?.content) ? result.content : Array.isArray(result) ? result : [];
 
+const conferenceOption = (entry) => ({ value: entry.code, label: entry.label });
+
+const NON_CONFERENCE_NAMES = new Set(['NAIA']);
+
+const isNonConference = (entry) => {
+    const code = String(entry.code || '').toUpperCase();
+    const label = String(entry.label || '').toUpperCase();
+    return (
+        code.endsWith('INDEPENDENT') ||
+        label.endsWith('INDEPENDENT') ||
+        NON_CONFERENCE_NAMES.has(code) ||
+        NON_CONFERENCE_NAMES.has(label)
+    );
+};
+
+const conferenceOptions = () => {
+    const conferences = realConferenceList();
+    const active = conferences.filter((entry) => entry.active).map(conferenceOption);
+    const defunct = conferences.filter((entry) => !entry.active && !isNonConference(entry)).map(conferenceOption);
+    return defunct.length ? [...active, { label: 'Defunct conferences', options: defunct }] : active;
+};
+
+const optionCodes = (options) =>
+    options.flatMap((entry) => (entry.options ? entry.options : [entry])).map((entry) => entry.value);
+
 const recordMeta = (record, teamsMap) => {
     const parts = [];
     if (record.coach) {
@@ -71,6 +100,20 @@ const recordMeta = (record, teamsMap) => {
         parts.push(`${awayAbbr} vs ${homeAbbr}`);
     }
     return parts;
+};
+
+const recordValue = (record) => {
+    const name = String(record.record_name).toLowerCase();
+    if (TIME_RECORDS.has(name)) {
+        return formatTime(record.record_value);
+    }
+    if (isPercentageRecord(name)) {
+        return `${Number(record.record_value).toFixed(1)}%`;
+    }
+    if (isAverageRecord(name)) {
+        return Number(record.record_value).toFixed(1);
+    }
+    return record.record_value % 1 ? Number(record.record_value).toFixed(1) : record.record_value;
 };
 
 const directionSuffix = (record) => {
@@ -133,7 +176,7 @@ const RecordRow = ({ record, teamsMap }) => {
                         fontVariantNumeric: 'tabular-nums',
                     }}
                 >
-                    {record.record_value % 1 ? Number(record.record_value).toFixed(1) : record.record_value}
+                    {recordValue(record)}
                 </Box>
             </Box>
             <Box
@@ -215,12 +258,15 @@ const RecordsBoard = ({ user }) => {
         };
     }, [user?.team]);
 
+    const conferenceChoices = useMemo(() => conferenceOptions(), [conferencesMap]);
+    const conferenceCodes = useMemo(() => optionCodes(conferenceChoices), [conferenceChoices]);
+
     useEffect(() => {
-        if (conference || Object.keys(conferencesMap).length === 0) {
+        if (conferenceCodes.length === 0 || conferenceCodes.includes(conference)) {
             return;
         }
-        setConference(activeConferenceList()[0]?.code || '');
-    }, [conferencesMap, conference]);
+        setConference(conferenceCodes[0]);
+    }, [conferenceCodes, conference]);
 
     useEffect(() => {
         const next = new URLSearchParams(searchParams);
@@ -369,7 +415,7 @@ const RecordsBoard = ({ user }) => {
                         label="Conference"
                         value={conference}
                         onChange={setConference}
-                        options={activeConferenceList().map((entry) => ({ value: entry.code, label: entry.label }))}
+                        options={conferenceChoices}
                         sx={{ height: 38 }}
                     />
                 )}
@@ -440,24 +486,37 @@ const RecordsBoard = ({ user }) => {
             ) : categoryRows.length === 0 ? (
                 <Box sx={{ color: 'var(--text-muted)', py: 6, textAlign: 'center' }}>No records yet for this view.</Box>
             ) : (
-                <Panel header={activeCategory} more={`${categoryRows.length}`}>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, columnGap: '16px' }}>
-                        {[
-                            categoryRows.slice(0, Math.ceil(categoryRows.length / 2)),
-                            categoryRows.slice(Math.ceil(categoryRows.length / 2)),
-                        ].map((column, index) => (
-                            <Box key={index}>
-                                {column.map((record) => (
-                                    <RecordRow
-                                        key={`${record.record_name}-${record.record_type}`}
-                                        record={record}
-                                        teamsMap={teamsMap}
-                                    />
-                                ))}
-                            </Box>
-                        ))}
-                    </Box>
-                </Panel>
+                <>
+                    <Panel header={activeCategory} more={`${categoryRows.length}`}>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                                columnGap: '16px',
+                            }}
+                        >
+                            {[
+                                categoryRows.slice(0, Math.ceil(categoryRows.length / 2)),
+                                categoryRows.slice(Math.ceil(categoryRows.length / 2)),
+                            ].map((column, index) => (
+                                <Box key={index}>
+                                    {column.map((record) => (
+                                        <RecordRow
+                                            key={`${record.record_name}-${record.record_type}`}
+                                            record={record}
+                                            teamsMap={teamsMap}
+                                        />
+                                    ))}
+                                </Box>
+                            ))}
+                        </Box>
+                    </Panel>
+                    {activeTab === 'single_season' && (
+                        <Box sx={{ color: 'var(--text-dim)', fontSize: '0.72rem', mt: 1.25 }}>
+                            *Percentage and per play records require a minimum number of attempts per stat
+                        </Box>
+                    )}
+                </>
             )}
         </PageWrap>
     );

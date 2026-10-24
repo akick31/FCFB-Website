@@ -9,7 +9,7 @@ export const SPECIAL_TEAMS_PLAY_CALLS = [
     'KICKOFF_SQUIB',
 ];
 
-const ACTUAL_RESULT_VALUES = [
+export const ACTUAL_RESULT_VALUES = [
     'FIRST_DOWN',
     'GAIN',
     'NO_GAIN',
@@ -71,7 +71,7 @@ export const SIDE_OPTIONS = [
 export const FIELD_POSITION_OPTIONS = [
     { value: 'OWN_TERRITORY', label: 'Own territory' },
     { value: 'OPPONENT_TERRITORY', label: 'Opponent territory' },
-    { value: 'RED_ZONE', label: 'Red zone (20)' },
+    { value: 'RED_ZONE', label: 'Red zone (inside the 20)' },
 ];
 
 export const TEMPO_OPTIONS = [
@@ -114,6 +114,10 @@ export const PLAY_COLUMNS = [
     'play_finished',
     'offensive_response_speed',
     'defensive_response_speed',
+    'previous_number',
+    'score_margin',
+    'previous_play_call',
+    'previous_result',
 ];
 
 export const encodeHiddenColumns = (hiddenColumns) => {
@@ -137,6 +141,13 @@ export const decodeHiddenColumns = (encoded) => {
 
 export const CUSTOM_FIELD_CATALOG = [
     { key: 'quarter', label: 'Quarter', type: 'number' },
+    { key: 'previous_number', label: 'Previous number', type: 'number' },
+    { key: 'previous_play_call', label: 'Previous play call', type: 'enum', options: PLAY_CALL_VALUES },
+    { key: 'previous_result', label: 'Previous result', type: 'enum', options: ACTUAL_RESULT_VALUES },
+    { key: 'previous_yards', label: 'Previous yards gained', type: 'number' },
+    { key: 'previous_down', label: 'Previous down', type: 'number' },
+    { key: 'score_margin', label: 'Score margin', type: 'number' },
+    { key: 'own_response_speed', label: 'Response speed (seconds)', type: 'number' },
     { key: 'down', label: 'Down', type: 'number' },
     { key: 'yards_to_go', label: 'Yards to go', type: 'number' },
     { key: 'ball_location', label: 'Ball location', type: 'number' },
@@ -244,6 +255,74 @@ export const classifyPlaySide = (play, mode, target) => {
     return teamHasBall ? 'OFFENSE' : 'DEFENSE';
 };
 
+export const targetHasBall = (play, mode, target) => {
+    if (mode === 'coach') {
+        if (play.offensive_submitter_id === target) {
+            return true;
+        }
+        if (play.defensive_submitter_id === target) {
+            return false;
+        }
+        return null;
+    }
+    return (
+        (play.possession === 'HOME' && play.home_team === target) ||
+        (play.possession === 'AWAY' && play.away_team === target)
+    );
+};
+
+const scoreMarginOf = (play, hasBall) => {
+    if (hasBall == null) {
+        return null;
+    }
+    const possessionIsHome = play.possession === 'HOME';
+    const offenseScore = Number(possessionIsHome ? play.home_score : play.away_score) || 0;
+    const defenseScore = Number(possessionIsHome ? play.away_score : play.home_score) || 0;
+    return hasBall ? offenseScore - defenseScore : defenseScore - offenseScore;
+};
+
+const responseSpeedOf = (play, hasBall) => {
+    if (hasBall == null) {
+        return null;
+    }
+    const value = hasBall ? play.offensive_response_speed : play.defensive_response_speed;
+    return value == null ? null : Number(value);
+};
+
+/**
+ * Everything prefixed `previous_` describes the play immediately before this one in the same game, and the
+ * number is the last one this coach submitted, so both chain across possession changes rather than resetting.
+ */
+export const annotateScoutingFields = (plays, mode, target) => {
+    const ordered = [...(plays || [])].sort(
+        (a, b) => a.game_id - b.game_id || a.play_number - b.play_number || a.play_id - b.play_id
+    );
+    const lastNumberByGame = new Map();
+    const lastPlayByGame = new Map();
+    const derivedByPlay = new Map();
+
+    ordered.forEach((play) => {
+        const hasBall = targetHasBall(play, mode, target);
+        const previousPlay = lastPlayByGame.get(play.game_id) || null;
+        derivedByPlay.set(play, {
+            previous_number: lastNumberByGame.has(play.game_id) ? lastNumberByGame.get(play.game_id) : null,
+            previous_play_call: previousPlay?.play_call ?? null,
+            previous_result: previousPlay?.actual_result ?? null,
+            previous_yards: previousPlay?.yards ?? null,
+            previous_down: previousPlay?.down ?? null,
+            score_margin: scoreMarginOf(play, hasBall),
+            own_response_speed: responseSpeedOf(play, hasBall),
+        });
+        const own = resolveOwnNumber(play, target);
+        if (own != null && !Number.isNaN(Number(own))) {
+            lastNumberByGame.set(play.game_id, Number(own));
+        }
+        lastPlayByGame.set(play.game_id, play);
+    });
+
+    return (plays || []).map((play) => ({ ...play, ...derivedByPlay.get(play) }));
+};
+
 const matchesCustomFilter = (play, filter) => {
     const field = CUSTOM_FIELD_CATALOG.find((entry) => entry.key === filter.field);
     if (!field || filter.value === '' || filter.value == null) {
@@ -283,9 +362,32 @@ const matchesCustomFilter = (play, filter) => {
     return filter.operator === 'contains' ? value.includes(target) : value === target;
 };
 
+const withinRange = (value, { min, max }) => {
+    if (min !== '' && min != null && (value == null || Number(value) < Number(min))) {
+        return false;
+    }
+    if (max !== '' && max != null && (value == null || Number(value) > Number(max))) {
+        return false;
+    }
+    return true;
+};
+
 export const applyScenarioFilters = (
     plays,
-    { mode, target, sides, downs, fieldPositions, playTypes, tempo, customFilters }
+    {
+        mode,
+        target,
+        sides,
+        downs,
+        fieldPositions,
+        playTypes,
+        tempo,
+        previousNumber,
+        previousPlayCalls,
+        previousResults,
+        scoreMargin,
+        customFilters,
+    }
 ) =>
     plays.filter((play) => {
         const side = classifyPlaySide(play, mode, target);
@@ -302,6 +404,21 @@ export const applyScenarioFilters = (
             return false;
         }
         if (tempo?.length && !tempo.includes(tempoOf(play))) {
+            return false;
+        }
+        if (previousNumber && !withinRange(play.previous_number, previousNumber)) {
+            return false;
+        }
+        if (
+            previousPlayCalls?.length &&
+            !previousPlayCalls.includes(String(play.previous_play_call || '').toUpperCase())
+        ) {
+            return false;
+        }
+        if (previousResults?.length && !previousResults.includes(String(play.previous_result || '').toUpperCase())) {
+            return false;
+        }
+        if (scoreMargin && !withinRange(play.score_margin, scoreMargin)) {
             return false;
         }
         if (customFilters?.length && !customFilters.every((filter) => matchesCustomFilter(play, filter))) {

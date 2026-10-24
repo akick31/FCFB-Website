@@ -4,6 +4,8 @@ import { Box, CircularProgress } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import Panel from '../../ui/Panel';
 import SelectPill from '../../ui/SelectPill';
+import NumberPill from '../../ui/NumberPill';
+import PillButton from '../../ui/PillButton';
 import SegTabs from '../../ui/SegTabs';
 import LogoScatterChart from '../../charts/LogoScatterChart';
 import { getFilteredSeasonStats } from '../../../api/seasonStatsApi';
@@ -14,6 +16,16 @@ import {
     conferenceLabel,
 } from '../../../hooks/useConferencesMap';
 import { pickTeamColor } from '../../../utils/teamColor';
+import {
+    averagePlaysPerGame,
+    maxPlaysPerGame,
+    defaultMinPlays,
+    filterByMinPlays,
+    gamesPlayed,
+    perGame,
+    parseMinPlays,
+    MIN_PLAYS_STEP,
+} from '../../../utils/minPlays';
 
 const PLOTS = [
     {
@@ -42,6 +54,8 @@ const PLOTS = [
     },
 ];
 
+const DOWNS_PER_GAME_MINIMUM = 5;
+
 const num = (stat, key) => stat[key] ?? 0;
 const round1 = (v) => Math.round(v * 10) / 10;
 
@@ -61,6 +75,7 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope, sub, onSubCha
         }
         return plotIndexFromLegacyParam(searchParams) ?? 0;
     });
+    const [minPlays, setMinPlays] = useState(() => parseMinPlays(searchParams.get('minPlays')));
     const [resetNonce, setResetNonce] = useState(0);
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -80,6 +95,12 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope, sub, onSubCha
     const changeCf = (value) => {
         setCf(value);
         updateParams({ cf: value.toLowerCase() });
+    };
+
+    const changeMinPlays = (value) => {
+        const next = Number(value);
+        setMinPlays(next);
+        updateParams({ minPlays: next });
     };
 
     const changePlot = (value) => {
@@ -146,6 +167,11 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope, sub, onSubCha
 
     const plot = PLOTS[plotIndex];
 
+    const leagueRows = useMemo(() => rows.filter((stat) => activeNames.has(stat.team)), [rows, activeNames]);
+    const leagueAveragePlays = useMemo(() => averagePlaysPerGame(leagueRows), [leagueRows]);
+    const playsPerGameCap = useMemo(() => Math.floor(maxPlaysPerGame(leagueRows)), [leagueRows]);
+    const effectiveMinPlays = Math.min(minPlays ?? defaultMinPlays(leagueAveragePlays), playsPerGameCap || Infinity);
+
     const points = useMemo(() => {
         const logoOf = (name) => {
             const entry = teamsMap[name];
@@ -154,8 +180,17 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope, sub, onSubCha
             }
             return mode === 'dark' && entry.logoDark ? entry.logoDark : entry.logo;
         };
-        return rows
-            .filter((stat) => activeNames.has(stat.team))
+        const qualified =
+            plot.key === 'downs'
+                ? filterByMinPlays(leagueRows, effectiveMinPlays).filter(
+                      (stat) =>
+                          gamesPlayed(stat) > 0 &&
+                          perGame(stat, 'third_down_conversion_attempts') +
+                              perGame(stat, 'fourth_down_conversion_attempts') >=
+                              DOWNS_PER_GAME_MINIMUM
+                  )
+                : filterByMinPlays(leagueRows, effectiveMinPlays);
+        return qualified
             .filter(
                 (stat) =>
                     cf === 'ALL' || (cf === 'TOP25' ? top25Names.has(stat.team) : confByName.get(stat.team) === cf)
@@ -199,7 +234,7 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope, sub, onSubCha
                 };
             })
             .filter(Boolean);
-    }, [rows, activeNames, confByName, top25Names, cf, plot, teamsMap, mode]);
+    }, [leagueRows, effectiveMinPlays, confByName, top25Names, cf, plot, teamsMap, mode]);
 
     const showOptions = [{ value: 'TOP25', label: 'Top 25' }, { value: 'ALL', label: 'All teams' }, ...confOptions];
 
@@ -216,25 +251,19 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope, sub, onSubCha
                     ariaLabel="Plot metric"
                 />
                 <SelectPill label="Show" value={cf} onChange={changeCf} options={showOptions} sx={{ height: 38 }} />
-                <Box
-                    component="button"
-                    type="button"
-                    onClick={() => setResetNonce((n) => n + 1)}
-                    sx={{
-                        border: '1px solid var(--line)',
-                        background: 'var(--surface-2)',
-                        color: 'var(--text-muted)',
-                        borderRadius: 'var(--r-sm)',
-                        padding: '7px 11px',
-                        font: 'inherit',
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-                    }}
-                >
-                    Reset zoom
-                </Box>
+                <NumberPill
+                    label="Minimum plays per game"
+                    value={effectiveMinPlays}
+                    onChange={changeMinPlays}
+                    step={MIN_PLAYS_STEP}
+                    max={playsPerGameCap || undefined}
+                    sx={{ height: 38 }}
+                    ariaLabel="Minimum offensive plays per game"
+                />
+                <PillButton onClick={() => changeMinPlays(0)} active={effectiveMinPlays === 0}>
+                    No minimum
+                </PillButton>
+                <PillButton onClick={() => setResetNonce((n) => n + 1)}>Reset zoom</PillButton>
             </Box>
             <Panel header={plot.title} more={`${points.length} teams, scroll to zoom, drag to pan, hover a logo`}>
                 <Box sx={{ p: 2 }}>
@@ -252,7 +281,7 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope, sub, onSubCha
                             xLabel={plot.xl}
                             yLabel={plot.yl}
                             invertX={plot.invX}
-                            resetKey={`${plot.key}-${cf}-${season}-${resetNonce}`}
+                            resetKey={`${plot.key}-${cf}-${season}-${effectiveMinPlays}-${resetNonce}`}
                         />
                     )}
                 </Box>

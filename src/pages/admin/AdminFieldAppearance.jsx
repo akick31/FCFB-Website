@@ -10,11 +10,13 @@ import PostseasonFieldThumb from '../../components/admin/fieldAppearance/Postsea
 import BowlMetaEditor from '../../components/admin/fieldAppearance/BowlMetaEditor';
 import {
     BOWL_SECTIONS,
+    bowlSectionsWithStadiums,
     PLAYOFF_SECTIONS,
     CCG_SECTIONS,
     NC_SECTIONS,
 } from '../../components/admin/fieldAppearance/fieldDefinitions';
 import { getConferences } from '../../api/conferenceApi';
+import { getAllTeams } from '../../api/teamApi';
 import {
     getBowlFields,
     updateBowlField,
@@ -109,6 +111,7 @@ const AdminFieldAppearance = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [bowlDraft, setBowlDraft] = useState(null);
+    const [stadiumTeams, setStadiumTeams] = useState([]);
     const [loadedCategory, setLoadedCategory] = useState(null);
     const categoryScopeRef = useRef(null);
     const routeScopeRef = useRef(null);
@@ -121,6 +124,21 @@ const AdminFieldAppearance = () => {
             scope.active = false;
         };
     }, [category, itemSlug]);
+
+    useEffect(() => {
+        if (category !== 'bowl' || stadiumTeams.length) {
+            return undefined;
+        }
+        const scope = { active: true };
+        getAllTeams()
+            .then((teams) => scope.active && setStadiumTeams(teams.map((team) => team.name).filter(Boolean)))
+            .catch(() => scope.active && setStadiumTeams([]));
+        return () => {
+            scope.active = false;
+        };
+    }, [category, stadiumTeams.length]);
+
+    const bowlSections = useMemo(() => bowlSectionsWithStadiums(stadiumTeams), [stadiumTeams]);
 
     const selectedId = useMemo(
         () =>
@@ -305,7 +323,9 @@ const AdminFieldAppearance = () => {
                                 sections={
                                     category === 'playoff' && selectedId === 'National Championship'
                                         ? NC_SECTIONS
-                                        : config.sections
+                                        : category === 'bowl'
+                                          ? bowlSections
+                                          : config.sections
                                 }
                                 source={source}
                                 onSave={save}

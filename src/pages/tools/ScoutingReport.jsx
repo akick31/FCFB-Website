@@ -9,6 +9,7 @@ import SearchableSelect from '../../components/ui/SearchableSelect';
 import {
     PLAY_COLUMNS,
     applyScenarioFilters,
+    annotateScoutingFields,
     favoriteNumbers,
     numberBucketCounts,
     DEFAULT_NUMBER_BUCKET_SIZE,
@@ -37,7 +38,19 @@ const ScoutingReport = () => {
     const [numbersOpen, setNumbersOpen] = useState(true);
     const [bucketSize, setBucketSize] = useState(DEFAULT_NUMBER_BUCKET_SIZE);
     const filters = useScoutingFilters();
-    const { sides, downs, fieldPositions, playTypes, tempo, customFilters, filterSummary } = filters;
+    const {
+        sides,
+        downs,
+        fieldPositions,
+        playTypes,
+        tempo,
+        previousNumber,
+        previousPlayCalls,
+        previousResults,
+        scoreMargin,
+        customFilters,
+        filterSummary,
+    } = filters;
     const columns = useScoutingColumns({ setError });
     const { loggedInUserId, loginToken, hiddenColumns, setHiddenColumns } = columns;
     const report = useScoutingReportData({
@@ -70,9 +83,10 @@ const ScoutingReport = () => {
         [hiddenColumns]
     );
 
+    const annotatedPlays = useMemo(() => annotateScoutingFields(plays, 'coach', reportTarget), [plays, reportTarget]);
     const filteredPlays = useMemo(
         () =>
-            applyScenarioFilters(plays, {
+            applyScenarioFilters(annotatedPlays, {
                 mode: 'coach',
                 target: reportTarget,
                 sides,
@@ -80,9 +94,26 @@ const ScoutingReport = () => {
                 fieldPositions,
                 playTypes,
                 tempo,
+                previousNumber,
+                previousPlayCalls,
+                previousResults,
+                scoreMargin,
                 customFilters,
             }),
-        [plays, reportTarget, sides, downs, fieldPositions, playTypes, tempo, customFilters]
+        [
+            annotatedPlays,
+            reportTarget,
+            sides,
+            downs,
+            fieldPositions,
+            playTypes,
+            tempo,
+            previousNumber,
+            previousPlayCalls,
+            previousResults,
+            scoreMargin,
+            customFilters,
+        ]
     );
 
     const favoriteNumbersList = useMemo(
@@ -184,6 +215,11 @@ const ScoutingReport = () => {
                         >
                             {loading ? 'Generating…' : 'Generate report'}
                         </Box>
+                    </Box>
+                    <Box sx={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        {rangeMode === 'season'
+                            ? 'Reading every game they have played this season. Uncheck to read a set number of their most recent games instead.'
+                            : `Reading their ${gameCount} most recent ${gameCount === 1 ? 'game' : 'games'}, including earlier seasons. Check current season only to read this season instead.`}
                     </Box>
                     {error && <Alert severity="error">{error}</Alert>}
                 </Box>

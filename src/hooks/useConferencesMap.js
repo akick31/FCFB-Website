@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { getConferences } from '../api/conferenceApi';
 import { getTeamSeasonConference } from '../api/teamSeasonConferenceApi';
 
+const FAKE_CONFERENCE_CODE = 'FAKE_TEAM';
+
 let bulk = null;
 let bulkInflight = null;
 const listeners = new Set();
@@ -78,6 +80,9 @@ export const activeConferenceList = () =>
 
 export const allConferenceList = () =>
     Object.values(bulk || {}).sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+
+export const realConferenceList = () =>
+    allConferenceList().filter((conference) => conference.code !== FAKE_CONFERENCE_CODE);
 
 export const activeConferenceCodes = () => activeConferenceList().map((conference) => conference.code);
 

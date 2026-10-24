@@ -10,6 +10,7 @@ import BackButton from '../../components/ui/BackButton';
 import AppearanceEditor from '../../components/team/appearance/AppearanceEditor';
 import ColorsEditor from '../../components/team/appearance/ColorsEditor';
 import LogosEditor from '../../components/team/appearance/LogosEditor';
+import TeamStadiumTab from '../../components/team/appearance/TeamStadiumTab';
 import { UNIFORM_SECTIONS, TEAM_FIELD_SECTIONS } from '../../components/team/appearance/appearanceSections';
 import { getTeamById } from '../../api/teamApi';
 import {
@@ -27,12 +28,13 @@ import { checkIfUserIsAdmin } from '../../utils/utils';
 const BASE_TABS = [
     { value: 'uniform', label: 'Uniform' },
     { value: 'field', label: 'Field' },
+    { value: 'stadium', label: 'Stadium' },
     { value: 'colors', label: 'Colors' },
 ];
 
 const UNSAVED_MESSAGE = 'You have unsaved appearance changes. Leave without saving?';
 
-const TAB_VALUES = ['uniform', 'field', 'colors', 'logos'];
+const TAB_VALUES = ['uniform', 'field', 'stadium', 'colors', 'logos'];
 
 const TeamAppearance = ({ user }) => {
     const { teamId, tab: tabParam } = useParams();
@@ -45,7 +47,8 @@ const TeamAppearance = ({ user }) => {
     const fieldRef = useRef(null);
     const colorsRef = useRef(null);
     const logosRef = useRef(null);
-    const tabRefs = { uniform: uniformRef, field: fieldRef, colors: colorsRef, logos: logosRef };
+    const stadiumRef = useRef(null);
+    const tabRefs = { uniform: uniformRef, field: fieldRef, stadium: stadiumRef, colors: colorsRef, logos: logosRef };
     const [savingAll, setSavingAll] = useState(false);
     const hasUnsaved = Object.values(dirtyTabs).some(Boolean);
     const saveAll = async () => {
@@ -195,7 +198,16 @@ const TeamAppearance = ({ user }) => {
                     You can only edit your own team&apos;s appearance. This is a read-only preview.
                 </Alert>
             )}
-            <Box sx={{ mb: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+            <Box
+                sx={{
+                    mb: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                }}
+            >
                 <SegTabs value={tab} onChange={setTab} options={tabs} ariaLabel="Appearance section" />
                 {canEdit && hasUnsaved && (
                     <Box
@@ -267,9 +279,13 @@ const TeamAppearance = ({ user }) => {
                         teamColors={colors}
                         wallTextDefault={teamName}
                         previewGroups={[
-                            { title: 'Field', views: [{ view: 'FIELD' }], note: 'Unsaved edits shown here. Save to apply.' },
                             {
-                                title: 'Walls',
+                                title: 'Field',
+                                views: [{ view: 'FIELD' }],
+                                note: 'Unsaved edits shown here. Save to apply.',
+                            },
+                            {
+                                title: 'End zone backdrops',
                                 views: [
                                     { view: 'LEFT_WALL', label: 'Left wall' },
                                     { view: 'RIGHT_WALL', label: 'Right wall' },
@@ -289,6 +305,16 @@ const TeamAppearance = ({ user }) => {
                     />
                 </Box>
             )}
+            <Box {...panel('stadium')}>
+                <TeamStadiumTab
+                    ref={stadiumRef}
+                    team={teamName}
+                    stadium={team.stadium}
+                    canEdit={canEdit}
+                    onDirtyChange={setTabDirty('stadium')}
+                    onStadiumChanged={(name) => setTeam((current) => ({ ...current, stadium: name }))}
+                />
+            </Box>
             {colors && (
                 <Box {...panel('colors')}>
                     <ColorsEditor

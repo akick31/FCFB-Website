@@ -2,6 +2,12 @@ import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
+const renderOption = ({ value, label }) => (
+    <option key={value} value={value}>
+        {label}
+    </option>
+);
+
 const SelectPill = ({ label, value, onChange, options, ariaLabel, sx }) => (
     <Box
         sx={{
@@ -48,13 +54,18 @@ const SelectPill = ({ label, value, onChange, options, ariaLabel, sx }) => (
                 cursor: 'pointer',
                 outline: 'none',
                 '& option': { background: 'var(--surface)', color: 'var(--text)' },
+                '& optgroup': { background: 'var(--surface)', color: 'var(--text-dim)', fontWeight: 800 },
             }}
         >
-            {options.map(({ value: optionValue, label: optionLabel }) => (
-                <option key={optionValue} value={optionValue}>
-                    {optionLabel}
-                </option>
-            ))}
+            {options.map((option) =>
+                option.options ? (
+                    <optgroup key={option.label} label={option.label}>
+                        {option.options.map(renderOption)}
+                    </optgroup>
+                ) : (
+                    renderOption(option)
+                )
+            )}
         </Box>
     </Box>
 );
@@ -64,10 +75,16 @@ SelectPill.propTypes = {
     value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     onChange: PropTypes.func.isRequired,
     options: PropTypes.arrayOf(
-        PropTypes.shape({
-            value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-            label: PropTypes.node.isRequired,
-        })
+        PropTypes.oneOfType([
+            PropTypes.shape({
+                value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+                label: PropTypes.node.isRequired,
+            }),
+            PropTypes.shape({
+                label: PropTypes.string.isRequired,
+                options: PropTypes.array.isRequired,
+            }),
+        ])
     ).isRequired,
     ariaLabel: PropTypes.string,
     sx: PropTypes.object,

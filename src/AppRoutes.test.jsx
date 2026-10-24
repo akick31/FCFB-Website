@@ -21,6 +21,7 @@ jest.mock('./pages', () => {
     );
 });
 jest.mock('./api/userApi', () => ({ getUserById: jest.fn() }));
+jest.mock('./hooks/useSessionRefresh', () => ({ __esModule: true, default: () => {} }));
 jest.mock('./utils/utils', () => ({ checkIfUserIsAdmin: () => global.localStorage.getItem('role') === 'ADMIN' }));
 jest.mock('./components/header/Header', () => ({
     __esModule: true,

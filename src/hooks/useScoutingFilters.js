@@ -10,12 +10,18 @@ import {
     OPERATORS_BY_TYPE,
 } from '../utils/scoutingReport';
 
+const EMPTY_RANGE = { min: '', max: '' };
+
 const useScoutingFilters = () => {
     const [sides, setSides] = useState([]);
     const [downs, setDowns] = useState([]);
     const [fieldPositions, setFieldPositions] = useState([]);
     const [playTypes, setPlayTypes] = useState([]);
     const [tempo, setTempo] = useState([]);
+    const [previousNumber, setPreviousNumber] = useState(EMPTY_RANGE);
+    const [previousPlayCalls, setPreviousPlayCalls] = useState([]);
+    const [previousResults, setPreviousResults] = useState([]);
+    const [scoreMargin, setScoreMargin] = useState(EMPTY_RANGE);
     const [customFilters, setCustomFilters] = useState([]);
     const nextFilterId = useRef(0);
     const filterSummary = useMemo(() => {
@@ -74,6 +80,10 @@ const useScoutingFilters = () => {
         setFieldPositions([]);
         setPlayTypes([]);
         setTempo([]);
+        setPreviousNumber(EMPTY_RANGE);
+        setPreviousPlayCalls([]);
+        setPreviousResults([]);
+        setScoreMargin(EMPTY_RANGE);
         setCustomFilters([]);
     };
     return {
@@ -87,6 +97,14 @@ const useScoutingFilters = () => {
         setPlayTypes,
         tempo,
         setTempo,
+        previousNumber,
+        setPreviousNumber,
+        previousPlayCalls,
+        setPreviousPlayCalls,
+        previousResults,
+        setPreviousResults,
+        scoreMargin,
+        setScoreMargin,
         customFilters,
         setCustomFilters,
         filterSummary,

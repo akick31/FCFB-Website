@@ -176,7 +176,22 @@ FieldControl.propTypes = {
     onChange: PropTypes.func.isRequired,
 };
 
-const FieldSettingsEditor = ({ title, sections, source, onSave, preview, aside }) => {
+const shownFields = (section, form, fieldFilter) => {
+    const visible = section.fields.filter((definition) => isVisible(definition, form));
+    if (!fieldFilter) {
+        return visible;
+    }
+    return visible.filter((definition, index) => {
+        if (definition.type !== 'subheading') {
+            return fieldFilter(definition);
+        }
+        const next = visible.slice(index + 1);
+        const groupEnd = next.findIndex((field) => field.type === 'subheading');
+        return (groupEnd === -1 ? next : next.slice(0, groupEnd)).some(fieldFilter);
+    });
+};
+
+const FieldSettingsEditor = ({ title, sections, source, onSave, preview, aside, fieldFilter }) => {
     const sourceForm = useMemo(() => formFrom(sections, source), [sections, source]);
     const { form, changeForm, saving, error, saved, save } = useAppearanceDraft(sourceForm);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -256,7 +271,9 @@ const FieldSettingsEditor = ({ title, sections, source, onSave, preview, aside }
     const editor = (
         <Panel header={title}>
             <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {sections.map((section) => (
+                {sections
+                    .filter((section) => shownFields(section, form, fieldFilter).length > 0)
+                    .map((section) => (
                     <Box key={section.title}>
                         <Box
                             sx={{
@@ -276,9 +293,7 @@ const FieldSettingsEditor = ({ title, sections, source, onSave, preview, aside }
                                 gap: '14px',
                             }}
                         >
-                            {section.fields
-                                .filter((definition) => isVisible(definition, form))
-                                .map((definition) =>
+                            {shownFields(section, form, fieldFilter).map((definition) =>
                                     definition.type === 'subheading' ? (
                                         <Box
                                             key={definition.key}

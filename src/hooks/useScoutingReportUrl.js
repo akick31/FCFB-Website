@@ -1,7 +1,20 @@
 import { useEffect, useRef } from 'react';
 import { encodeHiddenColumns } from '../utils/scoutingReport';
 
-const ARRAY_PARAMS = { sides: 'sides', downs: 'downs', fieldPositions: 'fp', playTypes: 'types', tempo: 'tempo' };
+const ARRAY_PARAMS = {
+    sides: 'sides',
+    downs: 'downs',
+    fieldPositions: 'fp',
+    playTypes: 'types',
+    tempo: 'tempo',
+    previousPlayCalls: 'ptypes',
+};
+const RANGE_PARAMS = { previousNumber: ['pnmin', 'pnmax'], scoreMargin: ['smmin', 'smmax'] };
+const PREVIOUS_RESULT_PARAM = 'presult';
+const parseRange = (searchParams, [minKey, maxKey]) => ({
+    min: searchParams.get(minKey) ?? '',
+    max: searchParams.get(maxKey) ?? '',
+});
 const parseIntArray = (value) =>
     value
         ? value
@@ -40,6 +53,14 @@ const useScoutingReportUrl = ({ searchParams, setSearchParams, report, filters, 
         setPlayTypes,
         tempo,
         setTempo,
+        previousNumber,
+        setPreviousNumber,
+        previousPlayCalls,
+        setPreviousPlayCalls,
+        previousResults,
+        setPreviousResults,
+        scoreMargin,
+        setScoreMargin,
     } = filters;
     const autoRanRef = useRef(false);
     useEffect(() => {
@@ -61,6 +82,8 @@ const useScoutingReportUrl = ({ searchParams, setSearchParams, report, filters, 
         const urlFieldPositions = parseStringArray(searchParams.get(ARRAY_PARAMS.fieldPositions));
         const urlPlayTypes = parseStringArray(searchParams.get(ARRAY_PARAMS.playTypes));
         const urlTempo = parseStringArray(searchParams.get(ARRAY_PARAMS.tempo));
+        const urlPreviousPlayCalls = parseStringArray(searchParams.get(ARRAY_PARAMS.previousPlayCalls));
+        const urlPreviousResult = searchParams.get(PREVIOUS_RESULT_PARAM);
 
         const resolvedGameCount = urlGames > 0 ? urlGames : gameCount;
         const resolvedRangeMode = urlSeason ? 'season' : 'count';
@@ -71,6 +94,10 @@ const useScoutingReportUrl = ({ searchParams, setSearchParams, report, filters, 
         setFieldPositions(urlFieldPositions);
         setPlayTypes(urlPlayTypes);
         setTempo(urlTempo);
+        setPreviousPlayCalls(urlPreviousPlayCalls);
+        setPreviousResults(urlPreviousResult ? [urlPreviousResult.toUpperCase()] : []);
+        setPreviousNumber(parseRange(searchParams, RANGE_PARAMS.previousNumber));
+        setScoreMargin(parseRange(searchParams, RANGE_PARAMS.scoreMargin));
 
         generate(option.value, resolvedGameCount, resolvedRangeMode, false);
     }, [targetOptions]);
@@ -106,6 +133,22 @@ const useScoutingReportUrl = ({ searchParams, setSearchParams, report, filters, 
         setOrDeleteLower(ARRAY_PARAMS.fieldPositions, fieldPositions);
         setOrDeleteLower(ARRAY_PARAMS.playTypes, playTypes);
         setOrDeleteLower(ARRAY_PARAMS.tempo, tempo);
+        setOrDeleteLower(ARRAY_PARAMS.previousPlayCalls, previousPlayCalls);
+        setOrDeleteLower(PREVIOUS_RESULT_PARAM, previousResults);
+        const setOrDeleteRange = ([minKey, maxKey], range) => {
+            if (range.min !== '') {
+                next.set(minKey, String(range.min));
+            } else {
+                next.delete(minKey);
+            }
+            if (range.max !== '') {
+                next.set(maxKey, String(range.max));
+            } else {
+                next.delete(maxKey);
+            }
+        };
+        setOrDeleteRange(RANGE_PARAMS.previousNumber, previousNumber);
+        setOrDeleteRange(RANGE_PARAMS.scoreMargin, scoreMargin);
         const colsEncoded = encodeHiddenColumns(hiddenColumns);
         if (colsEncoded) {
             next.set('cols', colsEncoded);
@@ -122,6 +165,10 @@ const useScoutingReportUrl = ({ searchParams, setSearchParams, report, filters, 
         fieldPositions,
         playTypes,
         tempo,
+        previousPlayCalls,
+        previousResults,
+        previousNumber,
+        scoreMargin,
         hiddenColumns,
         hasGenerated,
     ]);

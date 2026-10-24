@@ -3,6 +3,7 @@ import React, { StrictMode } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import AdminFieldAppearance from './AdminFieldAppearance';
 import { getConferences } from '../../api/conferenceApi';
+import { getAllTeams } from '../../api/teamApi';
 import {
     getBowlFields,
     getPlayoffFields,
@@ -13,6 +14,7 @@ let mockPath;
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({ useParams: () => ({ '*': mockPath }), useNavigate: () => mockNavigate }));
 jest.mock('../../api/conferenceApi', () => ({ getConferences: jest.fn() }));
+jest.mock('../../api/teamApi', () => ({ getAllTeams: jest.fn() }));
 jest.mock('../../api/fieldAppearanceApi', () => ({
     getBowlFields: jest.fn(),
     getPlayoffFields: jest.fn(),
@@ -42,6 +44,7 @@ jest.mock('../../components/admin/fieldAppearance/BowlMetaEditor', () => ({
 }));
 beforeEach(() => {
     jest.resetAllMocks();
+    getAllTeams.mockResolvedValue([]);
     mockPath = 'bowls/alpha';
     getBowlFields.mockResolvedValue([
         { bowl: 'Alpha', marker: 'A' },

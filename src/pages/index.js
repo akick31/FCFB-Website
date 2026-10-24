@@ -24,6 +24,8 @@ export {
     AdminApiDocs,
     AdminFieldAppearance,
     AdminTeamAppearance,
+    AdminFonts,
+    AdminStadiums,
 } from './admin';
 
 export { Home, Profile, ApiDocs, Standings, Rankings, RiceSheet, Schedule, Error, NotFound } from './core';

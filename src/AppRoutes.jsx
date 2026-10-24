@@ -22,6 +22,7 @@ import {
     Coaches,
     ApiDocs,
 } from './pages';
+import useSessionRefresh from './hooks/useSessionRefresh';
 import { getUserById } from './api/userApi';
 import { checkIfUserIsAdmin } from './utils/utils';
 import { Box } from '@mui/system';
@@ -58,6 +59,7 @@ import {
     AdminFieldAppearance,
     AdminTeamAppearance,
     AdminFonts,
+    AdminStadiums,
     ScoutingReport,
     MatchupPreview,
     CoachTendencyCard,
@@ -70,6 +72,8 @@ const AppRoutes = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [user, setUser] = useState({});
     const [loading, setLoading] = useState(true);
+
+    useSessionRefresh(isAuthenticated);
 
     useEffect(() => {
         let active = true;
@@ -430,6 +434,20 @@ const AppRoutes = () => {
                         <Route
                             path="/admin/field-appearance"
                             element={<Navigate to="/admin/postseason-appearance" replace />}
+                        />
+                        <Route
+                            path="/admin/stadiums"
+                            element={
+                                <ProtectedRoute
+                                    requireAuth={true}
+                                    requireAdmin={true}
+                                    isAuthenticated={isAuthenticated}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                >
+                                    <AdminStadiums />
+                                </ProtectedRoute>
+                            }
                         />
                         <Route
                             path="/admin/fonts"

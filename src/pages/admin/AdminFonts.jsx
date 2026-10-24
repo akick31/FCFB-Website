@@ -154,7 +154,13 @@ const AdminFonts = () => {
                     onSubmit={handleAdd}
                     sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}
                 >
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                            gap: '12px',
+                        }}
+                    >
                         <Box>
                             <Box sx={labelSx}>Name</Box>
                             <Box
@@ -179,7 +185,13 @@ const AdminFonts = () => {
                     </Box>
                     <Box
                         component="label"
-                        sx={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontSize: '0.8rem',
+                            color: 'var(--text-muted)',
+                        }}
                     >
                         <input
                             type="checkbox"
@@ -189,7 +201,12 @@ const AdminFonts = () => {
                         I have the right to share this font, and understand it will be available league-wide in the
                         uniform and field editors.
                     </Box>
-                    <Box component="button" type="submit" disabled={saving || !form.ack} sx={{ ...btnSx, justifySelf: 'start' }}>
+                    <Box
+                        component="button"
+                        type="submit"
+                        disabled={saving || !form.ack}
+                        sx={{ ...btnSx, justifySelf: 'start' }}
+                    >
                         {saving ? 'Adding...' : 'Add font'}
                     </Box>
                 </Box>

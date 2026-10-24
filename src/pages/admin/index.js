@@ -18,3 +18,4 @@ export { default as AdminApiDocs } from './AdminApiDocs';
 export { default as AdminFieldAppearance } from './AdminFieldAppearance';
 export { default as AdminTeamAppearance } from './AdminTeamAppearance';
 export { default as AdminFonts } from './AdminFonts';
+export { default as AdminStadiums } from './AdminStadiums';

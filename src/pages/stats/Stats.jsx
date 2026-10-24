@@ -5,6 +5,8 @@ import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
 import SelectPill from '../../components/ui/SelectPill';
+import NumberPill from '../../components/ui/NumberPill';
+import PillButton from '../../components/ui/PillButton';
 import Panel from '../../components/ui/Panel';
 import SectionTitle from '../../components/ui/SectionTitle';
 import DataTable from '../../components/ui/DataTable';
@@ -28,10 +30,20 @@ import {
 import { formatOffensivePlaybook } from '../../utils/formatText';
 import { averageFromTotals } from '../../utils/statAggregation';
 import {
+    averagePlaysPerGame,
+    maxPlaysPerGame,
+    defaultMinPlays,
+    qualifiesForStat,
+    parseMinPlays,
+    MIN_PLAYS_STEP,
+} from '../../utils/minPlays';
+import {
     STAT_CATALOG,
     STAT_BY_KEY,
     buildLeaderboard,
+    withDerivedStats,
     seasonHasStarted,
+    postseasonSeasonNumbers,
     formatValue,
     LEAGUE_STAT_GROUPS,
     CONFERENCE_COLUMNS,
@@ -53,6 +65,26 @@ const SCOPE_TABS = [
     { value: 'postseason', label: 'Postseason' },
 ];
 const CARDS_PER_PAGE = 9;
+const KIND_TABS = [
+    { value: 'all', label: 'All stats', dropdownLabel: 'All stats' },
+    { value: 'counting', label: 'Counting', dropdownLabel: 'All counting stats' },
+    { value: 'rate', label: 'Rates & Averages', dropdownLabel: 'All rate & average stats' },
+    { value: 'pace', label: 'Diff & Pace', dropdownLabel: 'All difference & pace stats' },
+];
+const KIND_VALUES = KIND_TABS.map((tab) => tab.value);
+
+const statBelongsToKind = (stat, kind) => {
+    if (!stat || kind === 'all') {
+        return true;
+    }
+    if (kind === 'counting') {
+        return !stat.rateBased && !stat.pace;
+    }
+    if (kind === 'rate') {
+        return stat.rateBased && !stat.pace;
+    }
+    return Boolean(stat.pace);
+};
 
 const LEAGUE_FIELD_AGGS = {
     total_teams: 'latest',
@@ -137,14 +169,17 @@ const Stats = () => {
     const parsedCountParam = parseInt(countParam, 10);
 
     const [seasons, setSeasons] = useState([]);
+    const [postseasonSeasons, setPostseasonSeasons] = useState(() => new Set());
     const [season, setSeason] = useState(seasonParam ? (seasonParam === 'all' ? 'all' : Number(seasonParam)) : null);
     const [statFilter, setStatFilter] = useState(searchParams.get('statFilter') || '');
     const [cardPage, setCardPage] = useState(0);
     const [count, setCount] = useState(
         countParam === 'all' ? 'all' : Number.isFinite(parsedCountParam) && parsedCountParam > 0 ? parsedCountParam : 5
     );
+    const [minPlays, setMinPlays] = useState(() => parseMinPlays(searchParams.get('minPlays')));
     const scope = searchParams.get('scope') === 'postseason' ? 'postseason' : 'regular';
     const conferenceFilter = searchParams.get('conference')?.toUpperCase() || 'ALL';
+    const statKind = KIND_VALUES.includes(searchParams.get('kind')) ? searchParams.get('kind') : 'all';
     useConferencesMap();
     const seasonConferenceCodes = useSeasonConferenceCodes(season === 'all' ? null : season);
 
@@ -187,6 +222,20 @@ const Stats = () => {
         updateParams({ count: next });
     };
 
+    const changeMinPlays = (value) => {
+        const next = Number(value);
+        setMinPlays(next);
+        updateParams({ minPlays: next });
+    };
+
+    const changeStatKind = (value) => {
+        const keepsStat = !statFilter || statBelongsToKind(STAT_BY_KEY[statFilter], value);
+        if (!keepsStat) {
+            setStatFilter('');
+        }
+        updateParams({ kind: value === 'all' ? null : value, ...(keepsStat ? {} : { statFilter: null }) });
+    };
+
     const changeConferenceFilter = (value) => {
         updateParams({ conference: value === 'ALL' ? null : value.toLowerCase() });
     };
@@ -224,6 +273,7 @@ const Stats = () => {
                     .filter((value) => value != null)
                     .sort((a, b) => b - a);
                 setSeasons(started);
+                setPostseasonSeasons(postseasonSeasonNumbers(all.filter(seasonHasStarted)));
                 if (season == null) {
                     setSeason(started[0] ?? 11);
                 }
@@ -253,12 +303,12 @@ const Stats = () => {
                     );
                     const rows = perSeason.flatMap((result) => unwrapContent(result));
                     if (active) {
-                        setSeasonStatRows(aggregateAllTimeStats(rows));
+                        setSeasonStatRows(withDerivedStats(aggregateAllTimeStats(rows)));
                     }
                 } else if (activeSub === 'leaderboard') {
                     const rows = unwrapContent(await getFilteredSeasonStats(null, null, season, null, 0, 1000, scope));
                     if (active) {
-                        setSeasonStatRows(rows);
+                        setSeasonStatRows(withDerivedStats(rows));
                     }
                 } else if (activeSub === 'league' && season === 'all') {
                     const perSeason = await Promise.all(
@@ -317,11 +367,25 @@ const Stats = () => {
 
     useEffect(() => {
         setCardPage(0);
-    }, [statFilter, season, conferenceFilter]);
+    }, [statFilter, season, conferenceFilter, statKind]);
+
+    useEffect(() => {
+        if (
+            scope === 'postseason' &&
+            season != null &&
+            season !== 'all' &&
+            postseasonSeasons.size > 0 &&
+            !postseasonSeasons.has(season)
+        ) {
+            updateParams({ scope: null });
+        }
+    }, [scope, season, postseasonSeasons]);
+
+    const kindCatalog = useMemo(() => STAT_CATALOG.filter((stat) => statBelongsToKind(stat, statKind)), [statKind]);
 
     const filteredCatalog = useMemo(
-        () => (statFilter && STAT_BY_KEY[statFilter] ? [STAT_BY_KEY[statFilter]] : STAT_CATALOG),
-        [statFilter]
+        () => (statFilter && STAT_BY_KEY[statFilter] ? [STAT_BY_KEY[statFilter]] : kindCatalog),
+        [statFilter, kindCatalog]
     );
 
     const leaderboardRows = useMemo(
@@ -331,6 +395,17 @@ const Stats = () => {
                 : seasonStatRows.filter((row) => row.conference === conferenceFilter),
         [seasonStatRows, conferenceFilter]
     );
+
+    const minPlaysApplies = season !== 'all';
+    const leagueAveragePlays = useMemo(() => averagePlaysPerGame(seasonStatRows), [seasonStatRows]);
+    const playsPerGameCap = useMemo(() => Math.floor(maxPlaysPerGame(seasonStatRows)), [seasonStatRows]);
+    const effectiveMinPlays = minPlaysApplies
+        ? Math.min(minPlays ?? defaultMinPlays(leagueAveragePlays), playsPerGameCap || Infinity)
+        : 0;
+    const rowsForStat = (stat) =>
+        stat.rateBased && effectiveMinPlays > 0
+            ? leaderboardRows.filter((row) => qualifiesForStat(row, stat, effectiveMinPlays))
+            : leaderboardRows;
 
     const aggregatedPlaybooks = useMemo(() => {
         const byPlaybook = new Map();
@@ -389,26 +464,58 @@ const Stats = () => {
     const seasonControl = season != null && seasons.length > 0 && (
         <SelectPill label="Season" value={season} onChange={changeSeason} options={seasonOptions} sx={controlSx} />
     );
-    const scopeControl = <SegTabs value={scope} onChange={changeScope} options={SCOPE_TABS} ariaLabel="Stats scope" />;
+    const postseasonAvailable = season === 'all' || postseasonSeasons.has(season);
+    const scopeTabs = postseasonAvailable ? SCOPE_TABS : SCOPE_TABS.filter((tab) => tab.value !== 'postseason');
+    const scopeControl = (
+        <SegTabs
+            value={postseasonAvailable ? scope : 'regular'}
+            onChange={changeScope}
+            options={scopeTabs}
+            ariaLabel="Stats scope"
+        />
+    );
+    const minPlaysControl = (
+        <>
+            <NumberPill
+                label="Minimum plays per game"
+                value={effectiveMinPlays}
+                onChange={changeMinPlays}
+                step={MIN_PLAYS_STEP}
+                max={playsPerGameCap || undefined}
+                sx={{ height: 38 }}
+                ariaLabel="Minimum offensive plays per game"
+            />
+            <PillButton onClick={() => changeMinPlays(0)} active={effectiveMinPlays === 0}>
+                No minimum
+            </PillButton>
+        </>
+    );
 
     const detailStat = statKey ? STAT_BY_KEY[statKey] : null;
 
     const renderLeaderboard = () => {
         if (detailStat) {
             return (
-                <StatLeaderboardDetail
-                    stat={detailStat}
-                    rows={buildLeaderboard(leaderboardRows, detailStat)}
-                    onBack={() => navigate({ pathname: '/stats/leaderboard', search: searchParams.toString() })}
-                />
+                <>
+                    {detailStat.rateBased && minPlaysApplies && (
+                        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                            {minPlaysControl}
+                        </Box>
+                    )}
+                    <StatLeaderboardDetail
+                        stat={detailStat}
+                        rows={buildLeaderboard(rowsForStat(detailStat), detailStat)}
+                        onBack={() => navigate({ pathname: '/stats/leaderboard', search: searchParams.toString() })}
+                    />
+                </>
             );
         }
         const pageCount = Math.max(1, Math.ceil(filteredCatalog.length / CARDS_PER_PAGE));
         const page = Math.min(cardPage, pageCount - 1);
         const visible = filteredCatalog.slice(page * CARDS_PER_PAGE, page * CARDS_PER_PAGE + CARDS_PER_PAGE);
         const statOptions = [
-            { value: '', label: 'All stats' },
-            ...STAT_CATALOG.map((stat) => ({ value: stat.key, label: stat.label })),
+            { value: '', label: KIND_TABS.find((tab) => tab.value === statKind)?.dropdownLabel || 'All stats' },
+            ...kindCatalog.map((stat) => ({ value: stat.key, label: stat.label })),
         ];
         const seasonScopedConferences =
             season === 'all' ? activeConferenceList() : seasonConferenceList(seasonConferenceCodes);
@@ -450,6 +557,10 @@ const Stats = () => {
                         sx={{ height: 38 }}
                     />
                 </Box>
+                <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <SegTabs value={statKind} onChange={changeStatKind} options={KIND_TABS} ariaLabel="Stat kind" />
+                    {statKind !== 'counting' && minPlaysApplies && minPlaysControl}
+                </Box>
                 <Box sx={{ color: 'var(--text-muted)', fontSize: '0.8rem', mb: 2 }}>
                     Click a stat title to open its full leaderboard.
                 </Box>
@@ -461,7 +572,7 @@ const Stats = () => {
                             key={stat.key}
                             title={stat.label}
                             statKey={stat.key}
-                            rows={buildLeaderboard(leaderboardRows, stat)}
+                            rows={buildLeaderboard(rowsForStat(stat), stat)}
                             count={count}
                             format={stat.format}
                             to={{ pathname: `/stats/leaderboard/${stat.key}`, search: searchParams.toString() }}

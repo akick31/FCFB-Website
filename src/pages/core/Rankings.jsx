@@ -601,7 +601,6 @@ const Rankings = () => {
                     value={isMetricMode(mode) ? groupTabFor(mode) : mode}
                     onChange={changeTab}
                     options={segOptions}
-                    buttonSx={{ height: '36px' }}
                 />
                 {season != null && seasons.length > 0 && (
                     <SelectPill

@@ -12,6 +12,7 @@ import {
     Code,
     Palette,
     FontDownload,
+    Stadium,
 } from '@mui/icons-material';
 
 export const adminNavigationItems = [
@@ -24,6 +25,7 @@ export const adminNavigationItems = [
     { label: 'Schedule Management', icon: <CalendarMonth />, path: '/admin/scheduling' },
     { label: 'Team Appearance', icon: <Palette />, path: '/admin/team-appearance' },
     { label: 'Postseason Appearance', icon: <Palette />, path: '/admin/postseason-appearance' },
+    { label: 'Stadiums', icon: <Stadium />, path: '/admin/stadiums' },
     { label: 'Fonts', icon: <FontDownload />, path: '/admin/fonts' },
     { label: 'Rankings Management', icon: <FormatListNumbered />, path: '/admin/rankings' },
     { label: 'Stats Management', icon: <Assessment />, path: '/admin/stats-management' },

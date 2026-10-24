@@ -26,7 +26,12 @@ const DECIMAL = new Set([
     'opponent_average_punt_length',
 ]);
 
-const TIME = new Set(['time_of_possession', 'opponent_time_of_possession', 'average_response_speed']);
+const TIME = new Set([
+    'time_of_possession',
+    'average_time_of_possession',
+    'opponent_time_of_possession',
+    'average_response_speed',
+]);
 
 const LOWER_IS_BETTER = new Set([
     'losses',
@@ -109,7 +114,12 @@ export const STAT_GROUPS = [
                 'Fourth down %',
                 { agg: 'rate', num: 'fourth_down_conversion_success', den: 'fourth_down_conversion_attempts' },
             ],
-            ['time_of_possession', 'Time of possession', { agg: 'sum' }],
+            ['time_of_possession', 'Total time of possession', { agg: 'sum' }],
+            [
+                'average_time_of_possession',
+                'Average time of possession',
+                { agg: 'ratio', num: 'time_of_possession', den: 'games_played' },
+            ],
             ['number_of_drives', 'Drives', { agg: 'sum' }],
             ['largest_lead', 'Largest lead', { agg: 'max' }],
         ],
@@ -193,14 +203,22 @@ export const STAT_GROUPS = [
             ['blocked_opponent_punt', 'Punts blocked', { agg: 'sum' }],
             ['punts_attempted', 'Punts', { agg: 'sum' }],
             ['longest_punt', 'Longest punt', { agg: 'max' }],
-            ['average_punt_length', 'Average punt', { agg: 'ratio', num: 'punt_yards', den: 'punt_count' }],
+            ['average_punt_length', 'Average punt distance', { agg: 'ratio', num: 'punt_yards', den: 'punt_count' }],
             ['kick_return_td', 'Kick return TDs', { agg: 'sum' }],
             ['punt_return_td', 'Punt return TDs', { agg: 'sum' }],
             ['touchbacks', 'Touchbacks', { agg: 'sum' }],
-            ['touchback_percentage', 'Touchback %', { agg: 'rate', num: 'touchbacks', den: 'number_of_kickoffs' }],
+            [
+                'touchback_percentage',
+                'Kickoff touchback %',
+                { agg: 'rate', num: 'touchbacks', den: 'number_of_kickoffs' },
+            ],
             ['onside_attempts', 'Onside attempts', { agg: 'sum' }],
             ['onside_success', 'Onside recoveries', { agg: 'sum' }],
-            ['onside_success_percentage', 'Onside %', { agg: 'rate', num: 'onside_success', den: 'onside_attempts' }],
+            [
+                'onside_success_percentage',
+                'Onside success %',
+                { agg: 'rate', num: 'onside_success', den: 'onside_attempts' },
+            ],
         ],
     ],
     [
@@ -240,6 +258,16 @@ const formatterFor = (key) => {
     return (value) => Math.round(Number(value)).toLocaleString();
 };
 
+const VOLUME_SENSITIVE_AGGS = new Set(['rate', 'ratio', 'mean']);
+
+export const PACE_STATS = new Set([
+    'average_offensive_diff',
+    'average_defensive_diff',
+    'average_offensive_special_teams_diff',
+    'average_defensive_special_teams_diff',
+    'average_response_speed',
+]);
+
 export const STAT_CATALOG = STAT_GROUPS.flatMap(([group, items]) =>
     items.map(([key, label, agg]) => ({
         key,
@@ -247,6 +275,8 @@ export const STAT_CATALOG = STAT_GROUPS.flatMap(([group, items]) =>
         group,
         agg,
         ascending: LOWER_IS_BETTER.has(key),
+        rateBased: VOLUME_SENSITIVE_AGGS.has(agg?.agg),
+        pace: PACE_STATS.has(key),
         format: formatterFor(key),
     }))
 );
@@ -349,8 +379,36 @@ export const aggregateAllTimeStats = (rows) => {
     });
 };
 
+export const withDerivedStats = (rows) =>
+    (rows || []).map((row) => {
+        const games = (row.wins || 0) + (row.losses || 0);
+        return {
+            ...row,
+            games_played: games,
+            average_time_of_possession: games ? (row.time_of_possession || 0) / games : null,
+        };
+    });
+
 export const seasonHasStarted = (season) =>
     Boolean(season?.start_date || season?.end_date || season?.national_championship_winning_team);
+
+export const POSTSEASON_START_WEEK = 14;
+
+export const seasonNumberOf = (season) => season?.season_number ?? season?.seasonNumber ?? null;
+
+export const seasonHasPostseason = (season) => {
+    const isCurrent = season?.current_season ?? season?.currentSeason ?? false;
+    const week = season?.current_week ?? season?.currentWeek ?? 0;
+    return !isCurrent || week >= POSTSEASON_START_WEEK;
+};
+
+export const postseasonSeasonNumbers = (seasons) =>
+    new Set(
+        (seasons || [])
+            .filter(seasonHasPostseason)
+            .map(seasonNumberOf)
+            .filter((value) => value != null)
+    );
 
 export const formatValue = (value, type) => {
     if (value == null) {
