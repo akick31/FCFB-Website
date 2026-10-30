@@ -65,8 +65,9 @@ export const PLAY_TYPE_OPTIONS = [
 export const SIDE_OPTIONS = [
     { value: 'OFFENSE', label: 'Offense' },
     { value: 'DEFENSE', label: 'Defense' },
-    { value: 'SPECIAL_TEAMS', label: 'Special teams' },
 ];
+
+const SIDE_VALUES = SIDE_OPTIONS.map((option) => option.value);
 
 export const FIELD_POSITION_OPTIONS = [
     { value: 'OWN_TERRITORY', label: 'Own territory' },
@@ -236,10 +237,6 @@ export const tempoOf = (play) => {
 };
 
 export const classifyPlaySide = (play, mode, target) => {
-    const call = String(play.play_call || '').toUpperCase();
-    if (SPECIAL_TEAMS_PLAY_CALLS.includes(call)) {
-        return 'SPECIAL_TEAMS';
-    }
     if (mode === 'coach') {
         if (play.offensive_submitter_id === target) {
             return 'OFFENSE';
@@ -391,7 +388,8 @@ export const applyScenarioFilters = (
 ) =>
     plays.filter((play) => {
         const side = classifyPlaySide(play, mode, target);
-        if (sides?.length && !sides.includes(side)) {
+        const chosenSides = (sides || []).filter((value) => SIDE_VALUES.includes(value));
+        if (chosenSides.length && !chosenSides.includes(side)) {
             return false;
         }
         if (downs?.length && !downs.includes(play.down)) {

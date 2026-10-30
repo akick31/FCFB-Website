@@ -2,21 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
+import TeamMark from './TeamMark';
+import { inputSx as baseInputSx } from '../../styles/controls';
 
 const inputSx = {
-    width: '100%',
-    height: '34px',
-    boxSizing: 'border-box',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    py: 0,
+    ...baseInputSx,
     pr: '30px',
-    font: 'inherit',
-    fontSize: '0.82rem',
 };
+
+const teamsOf = (option) => option.teams || (option.team ? [option.team] : []);
 
 const SearchableSelect = ({ id, value, onChange, options, placeholder }) => {
     const [query, setQuery] = useState(value);
@@ -55,6 +49,9 @@ const SearchableSelect = ({ id, value, onChange, options, placeholder }) => {
         query ? options.filter((option) => option.label.toLowerCase().includes(query.toLowerCase())) : options
     ).slice(0, 200);
 
+    const selected = options.find((option) => option.label === query);
+    const selectedTeams = selected ? teamsOf(selected) : [];
+
     const selectOption = (option) => {
         setQuery(option.label);
         onChange(option.label);
@@ -75,8 +72,25 @@ const SearchableSelect = ({ id, value, onChange, options, placeholder }) => {
                 onFocus={() => setOpen(true)}
                 placeholder={placeholder}
                 autoComplete="off"
-                sx={inputSx}
+                sx={selectedTeams.length ? { ...inputSx, pl: `${14 + selectedTeams.length * 22}px` } : inputSx}
             />
+            {selectedTeams.length > 0 && (
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        left: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        display: 'flex',
+                        gap: '4px',
+                        pointerEvents: 'none',
+                    }}
+                >
+                    {selectedTeams.map((team) => (
+                        <TeamMark key={team} team={{ name: team }} size={18} decorative />
+                    ))}
+                </Box>
+            )}
             <Box
                 sx={{
                     position: 'absolute',
@@ -114,6 +128,9 @@ const SearchableSelect = ({ id, value, onChange, options, placeholder }) => {
                                 key={`${option.value}-${option.label}`}
                                 onMouseDown={() => selectOption(option)}
                                 sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
                                     px: '10px',
                                     py: '8px',
                                     fontSize: '0.82rem',
@@ -122,6 +139,9 @@ const SearchableSelect = ({ id, value, onChange, options, placeholder }) => {
                                     '&:hover': { background: 'var(--surface-raise)' },
                                 }}
                             >
+                                {teamsOf(option).map((team) => (
+                                    <TeamMark key={team} team={{ name: team }} size={18} decorative />
+                                ))}
                                 {option.label}
                             </Box>
                         ))}
@@ -137,7 +157,12 @@ SearchableSelect.propTypes = {
     value: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
     options: PropTypes.arrayOf(
-        PropTypes.shape({ value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), label: PropTypes.string })
+        PropTypes.shape({
+            value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+            label: PropTypes.string,
+            team: PropTypes.string,
+            teams: PropTypes.arrayOf(PropTypes.string),
+        })
     ).isRequired,
     placeholder: PropTypes.string,
 };

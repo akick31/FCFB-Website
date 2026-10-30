@@ -12,9 +12,10 @@ import {
     CUSTOM_FIELD_CATALOG,
     OPERATORS_BY_TYPE,
 } from '../../utils/scoutingReport';
-import { inputSx, ghostBtnSx, labelSx } from './scoutingStyles';
+import { ghostBtnSx } from './scoutingStyles';
 import Chip from './ScoutingFilterChip';
 import { toggleInArray } from '../../utils/scoutingReport';
+import { inputSx, labelSx } from '../../styles/controls';
 
 const ScoutingScenarioFilters = ({ filters }) => {
     const {
@@ -42,10 +43,18 @@ const ScoutingScenarioFilters = ({ filters }) => {
         removeCustomFilter,
     } = filters;
     return (
-        <Panel sx={{ mb: '16px' }}>
-            <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <Panel sx={{ mb: '14px' }}>
+            <Box
+                sx={{
+                    p: '12px 16px',
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+                    gap: '12px 24px',
+                    '& > *': { minWidth: 0 },
+                }}
+            >
                 <Box>
-                    <Box sx={{ ...labelSx, mb: '8px' }}>Side</Box>
+                    <Box sx={{ ...labelSx, mb: '6px' }}>Side</Box>
                     <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {SIDE_OPTIONS.map((option) => (
                             <Chip
@@ -59,7 +68,7 @@ const ScoutingScenarioFilters = ({ filters }) => {
                     </Box>
                 </Box>
                 <Box>
-                    <Box sx={{ ...labelSx, mb: '8px' }}>Down</Box>
+                    <Box sx={{ ...labelSx, mb: '6px' }}>Down</Box>
                     <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {DOWN_OPTIONS.map((option) => (
                             <Chip
@@ -73,35 +82,7 @@ const ScoutingScenarioFilters = ({ filters }) => {
                     </Box>
                 </Box>
                 <Box>
-                    <Box sx={{ ...labelSx, mb: '8px' }}>Field position</Box>
-                    <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {FIELD_POSITION_OPTIONS.map((option) => (
-                            <Chip
-                                key={option.value}
-                                active={fieldPositions.includes(option.value)}
-                                onClick={() => setFieldPositions((prev) => toggleInArray(prev, option.value))}
-                            >
-                                {option.label}
-                            </Chip>
-                        ))}
-                    </Box>
-                </Box>
-                <Box>
-                    <Box sx={{ ...labelSx, mb: '8px' }}>Play type</Box>
-                    <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {PLAY_TYPE_OPTIONS.map((option) => (
-                            <Chip
-                                key={option.value}
-                                active={playTypes.includes(option.value)}
-                                onClick={() => setPlayTypes((prev) => toggleInArray(prev, option.value))}
-                            >
-                                {option.label}
-                            </Chip>
-                        ))}
-                    </Box>
-                </Box>
-                <Box>
-                    <Box sx={{ ...labelSx, mb: '8px' }}>Tempo</Box>
+                    <Box sx={{ ...labelSx, mb: '6px' }}>Tempo</Box>
                     <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {TEMPO_OPTIONS.map((option) => (
                             <Chip
@@ -115,7 +96,35 @@ const ScoutingScenarioFilters = ({ filters }) => {
                     </Box>
                 </Box>
                 <Box>
-                    <Box sx={{ ...labelSx, mb: '8px' }}>Previous play</Box>
+                    <Box sx={{ ...labelSx, mb: '6px' }}>Field position</Box>
+                    <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {FIELD_POSITION_OPTIONS.map((option) => (
+                            <Chip
+                                key={option.value}
+                                active={fieldPositions.includes(option.value)}
+                                onClick={() => setFieldPositions((prev) => toggleInArray(prev, option.value))}
+                            >
+                                {option.label}
+                            </Chip>
+                        ))}
+                    </Box>
+                </Box>
+                <Box sx={{ gridColumn: { md: 'span 2' } }}>
+                    <Box sx={{ ...labelSx, mb: '6px' }}>Play type</Box>
+                    <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {PLAY_TYPE_OPTIONS.map((option) => (
+                            <Chip
+                                key={option.value}
+                                active={playTypes.includes(option.value)}
+                                onClick={() => setPlayTypes((prev) => toggleInArray(prev, option.value))}
+                            >
+                                {option.label}
+                            </Chip>
+                        ))}
+                    </Box>
+                </Box>
+                <Box sx={{ gridColumn: { md: 'span 2' } }}>
+                    <Box sx={{ ...labelSx, mb: '6px' }}>Previous play</Box>
                     <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', mb: '8px' }}>
                         <Box component="span" sx={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                             Their number
@@ -166,7 +175,7 @@ const ScoutingScenarioFilters = ({ filters }) => {
                     </Box>
                 </Box>
                 <Box>
-                    <Box sx={{ ...labelSx, mb: '8px' }}>Score margin</Box>
+                    <Box sx={{ ...labelSx, mb: '6px' }}>Score margin</Box>
                     <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                         <Box
                             component="input"
@@ -189,7 +198,7 @@ const ScoutingScenarioFilters = ({ filters }) => {
                         Their score minus the opponent&apos;s score, so -10 or lower is trailing by 10+
                     </Box>
                 </Box>
-                <Box>
+                <Box sx={{ gridColumn: { md: '1 / -1' } }}>
                     <Box
                         sx={{
                             display: 'flex',

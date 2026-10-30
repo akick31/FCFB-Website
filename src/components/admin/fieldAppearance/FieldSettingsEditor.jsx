@@ -2,50 +2,19 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import Panel from '../../ui/Panel';
+import EditorShell from '../../appearance/editor/EditorShell';
+import SettingsPanel from '../../appearance/editor/SettingsPanel';
 import Toggle from '../../ui/Toggle';
+import ScaleControl from '../../appearance/editor/ScaleControl';
 import LogoUrlField from '../LogoUrlField';
 import FontControl from '../../team/appearance/FontControl';
-import { formFrom, payloadFrom, isVisible } from './fieldDefinitions';
+import { formFrom, payloadFrom } from './fieldDefinitions';
 import { renderPostseasonPreview } from '../../../api/fieldAppearanceApi';
 import { useAppearanceDraft } from '../../../hooks/useAppearanceDraft';
+import { inputSx } from '../../../styles/controls';
 
 const PREVIEW_DEBOUNCE_MS = 450;
 
-const labelSx = {
-    display: 'block',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    mb: '5px',
-};
-const inputSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-};
-const btnSx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
 const clearSx = {
     border: '1px solid var(--line)',
     background: 'var(--surface-2)',
@@ -60,7 +29,6 @@ const clearSx = {
     cursor: 'pointer',
     '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
 };
-const helpSx = { color: 'var(--text-dim)', fontSize: '0.7rem', mt: '4px' };
 
 const ColorControl = ({ value, onChange, clearable }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -101,7 +69,7 @@ ColorControl.propTypes = {
     clearable: PropTypes.bool,
 };
 
-const FieldControl = ({ definition, value, onChange }) => {
+const FieldControl = ({ definition, value, onChange, eventLogo }) => {
     switch (definition.type) {
         case 'color':
             return <ColorControl value={value} onChange={onChange} />;
@@ -151,10 +119,21 @@ const FieldControl = ({ definition, value, onChange }) => {
                 </Box>
             );
         }
+        case 'scale':
+            return <ScaleControl definition={definition} value={Number(value)} onChange={onChange} />;
         case 'toggle':
             return <Toggle on={value} onClick={() => onChange(!value)} />;
         case 'logo':
-            return <LogoUrlField label="" value={value} onChange={(event) => onChange(event.target.value)} />;
+            return (
+                <LogoUrlField
+                    label=""
+                    value={value}
+                    onChange={onChange}
+                    uploadKind="POSTSEASON"
+                    fallback={definition.eventLogoFallback ? eventLogo : undefined}
+                    placeholder={definition.eventLogoFallback ? 'Built-in logo' : undefined}
+                />
+            );
         case 'font':
             return <FontControl value={value} onChange={onChange} allowDefault={definition.allowDefault} />;
         default:
@@ -174,24 +153,10 @@ FieldControl.propTypes = {
     definition: PropTypes.object.isRequired,
     value: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]).isRequired,
     onChange: PropTypes.func.isRequired,
+    eventLogo: PropTypes.string,
 };
 
-const shownFields = (section, form, fieldFilter) => {
-    const visible = section.fields.filter((definition) => isVisible(definition, form));
-    if (!fieldFilter) {
-        return visible;
-    }
-    return visible.filter((definition, index) => {
-        if (definition.type !== 'subheading') {
-            return fieldFilter(definition);
-        }
-        const next = visible.slice(index + 1);
-        const groupEnd = next.findIndex((field) => field.type === 'subheading');
-        return (groupEnd === -1 ? next : next.slice(0, groupEnd)).some(fieldFilter);
-    });
-};
-
-const FieldSettingsEditor = ({ title, sections, source, onSave, preview, aside, fieldFilter }) => {
+const FieldSettingsEditor = ({ sections, source, onSave, preview, aside, eventLogo }) => {
     const sourceForm = useMemo(() => formFrom(sections, source), [sections, source]);
     const { form, changeForm, saving, error, saved, save } = useAppearanceDraft(sourceForm);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -268,183 +233,101 @@ const FieldSettingsEditor = ({ title, sections, source, onSave, preview, aside, 
         await save(async (draft) => formFrom(sections, await onSave(payloadFrom(sections, draft))));
     };
 
-    const editor = (
-        <Panel header={title}>
-            <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {sections
-                    .filter((section) => shownFields(section, form, fieldFilter).length > 0)
-                    .map((section) => (
-                    <Box key={section.title}>
+    const renderControl = (definition) => (
+        <FieldControl
+            definition={definition}
+            value={form[definition.key]}
+            onChange={(value) => change(definition.key, value)}
+            eventLogo={eventLogo}
+        />
+    );
+
+    const fieldPreview = preview && (
+        <Panel header="Field preview">
+            <Box
+                sx={{
+                    p: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '8px',
+                    minHeight: 140,
+                }}
+            >
+                {previewError && (
+                    <Alert severity="warning" sx={{ width: '100%' }}>
+                        {previewError}
+                    </Alert>
+                )}
+                <Box sx={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                    {previewUrl && (
+                        <Box
+                            component="img"
+                            src={previewUrl}
+                            alt="Field preview"
+                            sx={{
+                                maxWidth: '100%',
+                                maxHeight: { xs: '34vh', md: 'calc(100vh - 280px)' },
+                                borderRadius: 'var(--r-sm)',
+                                border: '1px solid var(--line)',
+                                opacity: previewLoading ? 0.5 : 1,
+                                transition: 'opacity 0.15s',
+                            }}
+                        />
+                    )}
+                    {previewLoading && (
                         <Box
                             sx={{
-                                fontFamily: 'var(--cond)',
-                                fontWeight: 800,
-                                textTransform: 'uppercase',
-                                fontSize: '0.85rem',
-                                mb: '10px',
+                                position: 'absolute',
+                                inset: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                             }}
                         >
-                            {section.title}
+                            <CircularProgress size={26} />
                         </Box>
-                        <Box
-                            sx={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                                gap: '14px',
-                            }}
-                        >
-                            {shownFields(section, form, fieldFilter).map((definition) =>
-                                    definition.type === 'subheading' ? (
-                                        <Box
-                                            key={definition.key}
-                                            sx={{
-                                                gridColumn: '1 / -1',
-                                                mt: '2px',
-                                                pt: '8px',
-                                                borderTop: '1px solid var(--line)',
-                                                fontFamily: 'var(--cond)',
-                                                fontSize: '0.72rem',
-                                                fontWeight: 800,
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.05em',
-                                                color: 'var(--text-muted)',
-                                            }}
-                                        >
-                                            {definition.label}
-                                        </Box>
-                                    ) : (
-                                        <Box key={definition.key}>
-                                            <Box sx={labelSx}>{definition.label}</Box>
-                                            <FieldControl
-                                                definition={definition}
-                                                value={form[definition.key]}
-                                                onChange={(value) => change(definition.key, value)}
-                                            />
-                                            {definition.help && <Box sx={helpSx}>{definition.help}</Box>}
-                                        </Box>
-                                    )
-                                )}
-                        </Box>
-                    </Box>
-                ))}
+                    )}
+                </Box>
             </Box>
         </Panel>
     );
 
-    const header = (
-        <>
-            {error && (
-                <Alert severity="error" sx={{ mb: '12px' }}>
-                    {error}
-                </Alert>
-            )}
-            {saved && (
-                <Alert severity="success" sx={{ mb: '12px' }}>
-                    Saved
-                </Alert>
-            )}
-            <Box component="button" type="submit" disabled={saving} sx={{ ...btnSx, mb: '16px' }}>
-                {saving ? 'Saving...' : 'Save'}
-            </Box>
-        </>
-    );
-
-    if (!preview) {
-        return (
-            <Box component="form" onSubmit={submit}>
-                {header}
-                {editor}
-            </Box>
-        );
-    }
-
     return (
         <Box component="form" onSubmit={submit}>
-            {header}
-            <Box
-                sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', md: '1fr 360px' },
-                    gap: '16px',
-                    alignItems: 'start',
-                }}
-            >
-                {editor}
-                <Box
-                    sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '16px',
-                        position: { md: 'sticky' },
-                        top: { md: '16px' },
-                    }}
-                >
-                    <Panel header="Field preview">
-                        <Box
-                            sx={{
-                                p: '16px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '8px',
-                                minHeight: 160,
-                            }}
-                        >
-                            {previewError && (
-                                <Alert severity="warning" sx={{ width: '100%' }}>
-                                    {previewError}
-                                </Alert>
-                            )}
-                            <Box
-                                sx={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}
-                            >
-                                {previewUrl && (
-                                    <Box
-                                        component="img"
-                                        src={previewUrl}
-                                        alt="Field preview"
-                                        sx={{
-                                            maxWidth: '100%',
-                                            borderRadius: 'var(--r-sm)',
-                                            border: '1px solid var(--line)',
-                                            opacity: previewLoading ? 0.5 : 1,
-                                            transition: 'opacity 0.15s',
-                                        }}
-                                    />
-                                )}
-                                {previewLoading && (
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            inset: 0,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                        }}
-                                    >
-                                        <CircularProgress size={26} />
-                                    </Box>
-                                )}
-                            </Box>
-                            <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem', textAlign: 'center' }}>
-                                Shows the last-played matchup for this field.
-                            </Box>
-                        </Box>
-                    </Panel>
-                    {aside}
-                </Box>
-            </Box>
+            <EditorShell
+                previewWidth={340}
+                preview={
+                    fieldPreview && (
+                        <>
+                            {fieldPreview}
+                            {aside}
+                        </>
+                    )
+                }
+                settings={
+                    <SettingsPanel
+                        sections={sections}
+                        form={form}
+                        renderControl={renderControl}
+                        canEdit
+                        saving={saving}
+                        saved={saved}
+                        error={error}
+                    />
+                }
+            />
         </Box>
     );
 };
 
 FieldSettingsEditor.propTypes = {
-    title: PropTypes.node.isRequired,
     sections: PropTypes.array.isRequired,
     source: PropTypes.object.isRequired,
     onSave: PropTypes.func.isRequired,
     preview: PropTypes.shape({ category: PropTypes.string, key: PropTypes.string }),
     aside: PropTypes.node,
+    eventLogo: PropTypes.string,
 };
 
 export default FieldSettingsEditor;

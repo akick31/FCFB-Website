@@ -5,19 +5,9 @@ import Toggle from '../../ui/Toggle';
 import LogoUrlField from '../../admin/LogoUrlField';
 import ConferenceColorsControl from './ConferenceColorsControl';
 import FontControl from './FontControl';
+import ScaleControl from '../../appearance/editor/ScaleControl';
+import { inputSx } from '../../../styles/controls';
 
-const inputSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-};
 const clearSx = {
     border: '1px solid var(--line)',
     background: 'var(--surface-2)',
@@ -150,41 +140,6 @@ ColorControl.propTypes = {
     resetColor: PropTypes.string,
 };
 
-const ScaleControl = ({ definition, value, onChange, disabled }) => (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <Box
-            component="input"
-            type="range"
-            disabled={disabled}
-            min={definition.min}
-            max={definition.max}
-            step={definition.step}
-            value={value}
-            onChange={(event) => onChange(Number(event.target.value))}
-            sx={{ flex: 1, accentColor: 'var(--brand)' }}
-        />
-        <Box
-            sx={{
-                width: 48,
-                textAlign: 'right',
-                fontVariantNumeric: 'tabular-nums',
-                fontSize: '0.8rem',
-                color: 'var(--text-muted)',
-            }}
-        >
-            {Number(value).toFixed(definition.decimals ?? 2)}
-            {definition.unit ?? 'x'}
-        </Box>
-    </Box>
-);
-
-ScaleControl.propTypes = {
-    definition: PropTypes.object.isRequired,
-    value: PropTypes.number.isRequired,
-    onChange: PropTypes.func.isRequired,
-    disabled: PropTypes.bool,
-};
-
 const AppearanceControl = ({ definition, value, onChange, disabled, teamColors, team }) => {
     switch (definition.type) {
         case 'color':
@@ -231,7 +186,7 @@ const AppearanceControl = ({ definition, value, onChange, disabled, teamColors, 
         case 'toggle':
             return <Toggle on={value} onClick={() => onChange(!value)} disabled={disabled} />;
         case 'logo':
-            return <LogoUrlField label="" value={value} onChange={(event) => onChange(event.target.value)} />;
+            return <LogoUrlField label="" value={value} onChange={onChange} uploadKind="TEAM" />;
         case 'conferenceColors':
             return (
                 <ConferenceColorsControl

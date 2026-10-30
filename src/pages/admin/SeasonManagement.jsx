@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box, CircularProgress, Alert, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import AdminLayout from '../../components/layout/AdminLayout';
+import NumberInput from '../../components/ui/NumberInput';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
 import StatTile, { TileGrid } from '../../components/ui/StatTile';
@@ -15,54 +16,11 @@ import {
 } from '../../api/seasonApi';
 import { getCurrentOffseason, startOffseason, endOffseason } from '../../api/offseasonApi';
 import { validateSchedule } from '../../api/scheduleApi';
+import { primaryButtonSx, secondaryButtonSx } from '../../styles/controls';
 
 const camelOrSnakeField = (obj, camel, snake) => obj?.[camel] ?? obj?.[snake];
 
-const inputSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-};
-const ctrlSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '14px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.8rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
-const btnPrimarySx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
-const btnDangerSx = { ...btnPrimarySx, background: 'var(--live)' };
+const btnDangerSx = { ...primaryButtonSx, background: 'var(--live)' };
 const dialogPaperSx = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)' };
 const dialogTitleSx = { color: 'var(--text)', fontWeight: 800, fontSize: '1.05rem' };
 const pillSx = {
@@ -294,16 +252,19 @@ const SeasonManagement = () => {
                 </Alert>
             )}
 
-            <TileGrid minTile={170} sx={{ mb: '16px' }}>
+            <TileGrid minTile={140} sx={{ mb: '12px' }}>
                 <StatTile
+                    compact
                     label="Current season"
                     value={currentSeason ? camelOrSnakeField(currentSeason, 'seasonNumber', 'season_number') : '-'}
                 />
                 <StatTile
+                    compact
                     label="Current week"
                     value={currentSeason ? camelOrSnakeField(currentSeason, 'currentWeek', 'current_week') : '-'}
                 />
                 <StatTile
+                    compact
                     label="Offseason"
                     value={isOffseason ? 'Yes' : 'No'}
                     caption={
@@ -311,13 +272,14 @@ const SeasonManagement = () => {
                     }
                 />
                 <StatTile
+                    compact
                     label="Pending season"
                     value={pendingSeason ? camelOrSnakeField(pendingSeason, 'seasonNumber', 'season_number') : 'None'}
                 />
             </TileGrid>
 
-            <Panel header="Current season controls" sx={{ mb: '16px' }}>
-                <Box sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <Panel header="Current season controls" sx={{ mb: '12px' }}>
+                <Box sx={{ p: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <Box sx={{ display: 'flex', gap: '10px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                         <Box>
                             <Box
@@ -333,17 +295,16 @@ const SeasonManagement = () => {
                             >
                                 Current week
                             </Box>
-                            <Box
-                                component="input"
-                                type="number"
-                                min={1}
+                            <NumberInput
                                 value={weekInput}
-                                onChange={(e) => {
+                                onChange={(next) => {
                                     weekRevisionRef.current += 1;
-                                    setWeekInput(e.target.value);
+                                    setWeekInput(String(next));
                                 }}
+                                min={1}
+                                ariaLabel="Current week"
                                 disabled={!currentSeason}
-                                sx={{ ...inputSx, width: 120 }}
+                                sx={{ width: 140 }}
                             />
                         </Box>
                         <Box
@@ -351,7 +312,7 @@ const SeasonManagement = () => {
                             type="button"
                             onClick={handleSaveWeek}
                             disabled={busy || !currentSeason}
-                            sx={ctrlSx}
+                            sx={secondaryButtonSx}
                         >
                             Save week
                         </Box>
@@ -360,7 +321,7 @@ const SeasonManagement = () => {
                             type="button"
                             onClick={handleNextWeek}
                             disabled={busy || !currentSeason}
-                            sx={btnPrimarySx}
+                            sx={primaryButtonSx}
                             title="Advance the current week by one and compute ranking metrics for the week that just finished"
                         >
                             Move to next week
@@ -373,7 +334,7 @@ const SeasonManagement = () => {
                             type="button"
                             onClick={handleToggleOffseason}
                             disabled={busy}
-                            sx={ctrlSx}
+                            sx={secondaryButtonSx}
                         >
                             {isOffseason ? 'End offseason' : 'Start offseason'}
                         </Box>
@@ -385,7 +346,7 @@ const SeasonManagement = () => {
                             gap: '10px',
                             flexWrap: 'wrap',
                             borderTop: '1px solid var(--line-soft)',
-                            pt: '16px',
+                            pt: '10px',
                         }}
                     >
                         <Box
@@ -393,7 +354,7 @@ const SeasonManagement = () => {
                             type="button"
                             onClick={handleValidate}
                             disabled={!pendingSeason}
-                            sx={ctrlSx}
+                            sx={secondaryButtonSx}
                         >
                             Validate pending schedule
                         </Box>
@@ -406,7 +367,7 @@ const SeasonManagement = () => {
                             }}
                             disabled={!pendingSeason}
                             title={!pendingSeason ? 'No pending season to start' : ''}
-                            sx={btnPrimarySx}
+                            sx={primaryButtonSx}
                         >
                             Start season
                             {pendingSeason
@@ -477,7 +438,7 @@ const SeasonManagement = () => {
                                             onClick={() => handleToggleLock(season)}
                                             disabled={busy}
                                             sx={{
-                                                ...ctrlSx,
+                                                ...secondaryButtonSx,
                                                 color: isLocked ? 'var(--live)' : 'var(--field)',
                                                 height: 28,
                                                 px: '10px',
@@ -498,7 +459,12 @@ const SeasonManagement = () => {
                                                 type="button"
                                                 onClick={() => handleSetCurrent(seasonNumber)}
                                                 disabled={busy}
-                                                sx={{ ...ctrlSx, height: 28, px: '10px', fontSize: '0.72rem' }}
+                                                sx={{
+                                                    ...secondaryButtonSx,
+                                                    height: 28,
+                                                    px: '10px',
+                                                    fontSize: '0.72rem',
+                                                }}
                                             >
                                                 Set current
                                             </Box>
@@ -581,7 +547,7 @@ const SeasonManagement = () => {
                     </Box>
                 </DialogContent>
                 <DialogActions sx={{ px: '20px', pb: '18px' }}>
-                    <Box component="button" type="button" onClick={closeValidation} sx={ctrlSx}>
+                    <Box component="button" type="button" onClick={closeValidation} sx={secondaryButtonSx}>
                         Close
                     </Box>
                 </DialogActions>
@@ -613,11 +579,17 @@ const SeasonManagement = () => {
                         type="button"
                         onClick={() => setStartDialogOpen(false)}
                         disabled={busy}
-                        sx={ctrlSx}
+                        sx={secondaryButtonSx}
                     >
                         Cancel
                     </Box>
-                    <Box component="button" type="button" onClick={handleStartSeason} disabled={busy} sx={btnPrimarySx}>
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={handleStartSeason}
+                        disabled={busy}
+                        sx={primaryButtonSx}
+                    >
                         {busy ? 'Starting…' : 'Start season'}
                     </Box>
                 </DialogActions>
@@ -645,7 +617,7 @@ const SeasonManagement = () => {
                         type="button"
                         onClick={() => setEndDialogOpen(false)}
                         disabled={busy}
-                        sx={ctrlSx}
+                        sx={secondaryButtonSx}
                     >
                         Cancel
                     </Box>

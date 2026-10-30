@@ -12,9 +12,9 @@ const cmpRow = {
     fontSize: '0.84rem',
 };
 
-const ComparisonTable = ({ awayHeader, homeHeader, sections }) => (
+const ComparisonTable = ({ awayHeader, homeHeader, sections, dense = false }) => (
     <Box>
-        <Box sx={{ ...cmpRow, background: 'var(--surface-2)' }}>
+        <Box sx={{ ...cmpRow, ...(dense && { py: 0.6 }), background: 'var(--surface-2)' }}>
             <Box sx={{ textAlign: 'left', minWidth: 0 }}>{awayHeader}</Box>
             <span />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', minWidth: 0 }}>{homeHeader}</Box>
@@ -39,7 +39,7 @@ const ComparisonTable = ({ awayHeader, homeHeader, sections }) => (
                     </Box>
                 )}
                 {section.rows.map((row) => (
-                    <Box key={row.label} sx={cmpRow}>
+                    <Box key={row.label} sx={{ ...cmpRow, ...(dense && { py: 0.6 }) }}>
                         <Box sx={{ textAlign: 'left', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
                             {row.away ?? '-'}
                         </Box>
@@ -67,6 +67,7 @@ const ComparisonTable = ({ awayHeader, homeHeader, sections }) => (
 ComparisonTable.propTypes = {
     awayHeader: PropTypes.node,
     homeHeader: PropTypes.node,
+    dense: PropTypes.bool,
     sections: PropTypes.arrayOf(
         PropTypes.shape({
             group: PropTypes.string,

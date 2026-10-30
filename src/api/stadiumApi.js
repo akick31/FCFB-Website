@@ -11,6 +11,15 @@ export const getStadiums = async (includeInactive = false) => {
     }
 };
 
+export const getStadiumById = async (id) => {
+    try {
+        const response = await apiClient.get('/stadium/by-id', { params: { id } });
+        return response.data;
+    } catch (error) {
+        throw failure(error, 'Failed to load stadium');
+    }
+};
+
 export const getStadium = async (name) => {
     try {
         const response = await apiClient.get('/stadium', { params: { name } });
@@ -44,6 +53,51 @@ export const setStadiumActive = async (name, active) => {
         return response.data;
     } catch (error) {
         throw failure(error, 'Failed to update stadium');
+    }
+};
+
+export const getStadiumHistory = async (name) => {
+    try {
+        const response = await apiClient.get('/stadium/history', { params: { name } });
+        return response.data;
+    } catch (error) {
+        throw failure(error, 'Failed to load stadium history');
+    }
+};
+
+export const revertStadiumChange = async (id) => {
+    try {
+        const response = await apiClient.put('/stadium/history/revert', null, { params: { id } });
+        return response.data;
+    } catch (error) {
+        throw failure(error, 'Failed to revert the stadium');
+    }
+};
+
+export const getStadiumGames = async (name) => {
+    try {
+        const response = await apiClient.get('/stadium/games', { params: { name } });
+        return response.data;
+    } catch (error) {
+        throw failure(error, 'Failed to load games at this stadium');
+    }
+};
+
+export const getUpcomingStadiumGames = async (name) => {
+    try {
+        const response = await apiClient.get('/stadium/upcoming', { params: { name } });
+        return response.data;
+    } catch (error) {
+        throw failure(error, 'Failed to load upcoming games');
+    }
+};
+
+export const getCountries = async () => {
+    try {
+        const response = await apiClient.get('/stadium/countries');
+        return response.data;
+    } catch (error) {
+        throw failure(error, 'Failed to load countries');
     }
 };
 

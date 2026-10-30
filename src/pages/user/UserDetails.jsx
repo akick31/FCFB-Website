@@ -30,6 +30,9 @@ import TeamMark from '../../components/ui/TeamMark';
 import SeasonStatTable from '../../components/team/SeasonStatTable';
 import MultiLineChart from '../../components/charts/MultiLineChart';
 import CoachHeader from '../../components/user/CoachHeader';
+import PageTabs from '../../components/ui/PageTabs';
+import CoachEditDialog from '../../components/admin/CoachEditDialog';
+import { compact, secondaryButtonSx } from '../../styles/controls';
 import CurrentTeamsPanel from '../../components/user/CurrentTeamsPanel';
 
 const POLL_TICKS = [1, 5, 10, 15, 20, 25].map((v) => ({ v, label: String(v) }));
@@ -81,7 +84,7 @@ TrendLegend.propTypes = {
     teamsMap: PropTypes.object.isRequired,
 };
 
-const UserDetails = () => {
+const UserDetails = ({ user: signedInUser }) => {
     const { coachName } = useParams();
     const [searchParams, setSearchParams] = useSearchParams();
     const teamsMap = useTeamsMap();
@@ -97,19 +100,9 @@ const UserDetails = () => {
     const [seasonView, setSeasonView] = useState(null);
     const [championSeason, setChampionSeason] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [collapsedSections, setCollapsedSections] = useState(() => new Set());
+    const [editing, setEditing] = useState(false);
+    const [version, setVersion] = useState(0);
     const [statsSeasonView, setStatsSeasonView] = useState('career');
-
-    const toggleSection = (key) =>
-        setCollapsedSections((prev) => {
-            const next = new Set(prev);
-            if (next.has(key)) {
-                next.delete(key);
-            } else {
-                next.add(key);
-            }
-            return next;
-        });
 
     useSeo({
         title: `${decodedName || 'Coach'} | Fake College Football`,
@@ -206,7 +199,7 @@ const UserDetails = () => {
         return () => {
             active = false;
         };
-    }, [decodedName]);
+    }, [decodedName, version]);
 
     const stints = useMemo(
         () => buildCoachStints(transactions, user ? { team: user.team, position: user.position } : null),
@@ -324,33 +317,27 @@ const UserDetails = () => {
     const eloBounds = trendBounds(eloLines, 25);
     const seasonLabel = seasonView === 'alltime' ? 'All seasons' : `Season ${seasonView}`;
 
+    const tabOptions = [
+        { value: 'overview', label: 'Overview' },
+        { value: 'stats', label: 'Stats' },
+        ...(eloLines.length > 0 || rankLines.length > 0 ? [{ value: 'trends', label: 'Trends' }] : []),
+        { value: 'history', label: 'History' },
+    ];
+    const shownTab = tabOptions.some((option) => option.value === searchParams.get('tab'))
+        ? searchParams.get('tab')
+        : 'overview';
+    const setTab = (next) => {
+        const params = new URLSearchParams(searchParams);
+        if (next === 'overview') {
+            params.delete('tab');
+        } else {
+            params.set('tab', next);
+        }
+        setSearchParams(params, { replace: true });
+    };
+
     return (
         <PageWrap>
-            <PageHeading eyebrow="Coach profile" title={`@${user.coach_name || user.username}`}>
-                {isAdmin && (
-                    <Box
-                        component={Link}
-                        to={`/admin/edit-coach/${encodeURIComponent(user.username)}`}
-                        sx={{
-                            border: '1px solid var(--line)',
-                            background: 'var(--surface)',
-                            color: 'var(--text)',
-                            borderRadius: 'var(--r-sm)',
-                            px: '14px',
-                            py: '8px',
-                            font: 'inherit',
-                            fontSize: '0.78rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            textDecoration: 'none',
-                            '&:hover': { borderColor: 'var(--brand)' },
-                        }}
-                    >
-                        Edit coach
-                    </Box>
-                )}
-            </PageHeading>
-
             <CoachHeader
                 user={user}
                 team={primaryTeam}
@@ -358,58 +345,75 @@ const UserDetails = () => {
                 championSeason={championSeason}
             />
 
-            <SectionTitle
-                title="Coaching record"
-                collapsible
-                collapsed={collapsedSections.has('record')}
-                onToggle={() => toggleSection('record')}
-            />
-            {!collapsedSections.has('record') && (
-                <TileGrid>
-                    <StatTile
-                        label="All-time record"
-                        value={`${user.wins || 0}-${user.losses || 0}`}
-                        caption={`${user.conference_wins || 0}-${user.conference_losses || 0} conference`}
-                    />
-                    <StatTile label="Win percentage" value={formatWinPct(user.win_percentage)} />
-                    <StatTile label="National titles" value={user.national_championship_wins || 0} />
-                    <StatTile label="Conference titles" value={user.conference_championship_wins || 0} />
-                    <StatTile label="Playoff record" value={`${user.playoff_wins || 0}-${user.playoff_losses || 0}`} />
-                    <StatTile label="Bowl record" value={`${user.bowl_wins || 0}-${user.bowl_losses || 0}`} />
-                </TileGrid>
+            <Box sx={{ mt: '12px' }}>
+                <PageTabs
+                    value={shownTab}
+                    onChange={setTab}
+                    options={tabOptions}
+                    ariaLabel="Coach sections"
+                    trailing={
+                        isAdmin && (
+                            <Box
+                                component="button"
+                                type="button"
+                                onClick={() => setEditing(true)}
+                                sx={compact(secondaryButtonSx)}
+                            >
+                                Edit coach
+                            </Box>
+                        )
+                    }
+                />
+            </Box>
+
+            {shownTab === 'overview' && (
+                <>
+                    <SectionTitle title="Coaching record" />
+                    <TileGrid minTile={130}>
+                        <StatTile
+                            compact
+                            label="All-time record"
+                            value={`${user.wins || 0}-${user.losses || 0}`}
+                            caption={`${user.conference_wins || 0}-${user.conference_losses || 0} conference`}
+                        />
+                        <StatTile compact label="Win percentage" value={formatWinPct(user.win_percentage)} />
+                        <StatTile compact label="National titles" value={user.national_championship_wins || 0} />
+                        <StatTile compact label="Conference titles" value={user.conference_championship_wins || 0} />
+                        <StatTile
+                            compact
+                            label="Playoff record"
+                            value={`${user.playoff_wins || 0}-${user.playoff_losses || 0}`}
+                        />
+                        <StatTile
+                            compact
+                            label="Bowl record"
+                            value={`${user.bowl_wins || 0}-${user.bowl_losses || 0}`}
+                        />
+                    </TileGrid>
+                    {teamEntries.length > 0 && (
+                        <>
+                            <SectionTitle title={teamEntries.length > 1 ? 'Current programs' : 'Current program'} />
+                            <CurrentTeamsPanel entries={teamEntries} teamsMap={teamsMap} />
+                        </>
+                    )}
+                </>
             )}
 
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    justifyContent: 'space-between',
-                    gap: 2,
-                    flexWrap: 'wrap',
-                    mb: '12px',
-                }}
-            >
-                <SectionTitle
-                    title="Coach stats"
-                    collapsible
-                    collapsed={collapsedSections.has('stats')}
-                    onToggle={() => toggleSection('stats')}
-                    sx={{ width: 'auto', mb: 0 }}
-                />
-                {!collapsedSections.has('stats') && statSeasons.length > 0 && (
-                    <SelectPill
-                        label="Viewing"
-                        value={statsSeasonView}
-                        onChange={(next) => setStatsSeasonView(next === 'career' ? 'career' : Number(next))}
-                        options={[
-                            { value: 'career', label: 'Career' },
-                            ...statSeasons.map((option) => ({ value: option, label: `Season ${option}` })),
-                        ]}
-                    />
-                )}
-            </Box>
-            {!collapsedSections.has('stats') && (
+            {shownTab === 'stats' && (
                 <>
+                    {statSeasons.length > 0 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '12px' }}>
+                            <SelectPill
+                                label="Viewing"
+                                value={statsSeasonView}
+                                onChange={(next) => setStatsSeasonView(next === 'career' ? 'career' : Number(next))}
+                                options={[
+                                    { value: 'career', label: 'Career' },
+                                    ...statSeasons.map((option) => ({ value: option, label: `Season ${option}` })),
+                                ]}
+                            />
+                        </Box>
+                    )}
                     <TileGrid>
                         <StatTile
                             label="Total games"
@@ -453,107 +457,75 @@ const UserDetails = () => {
                             <SeasonStatTable stats={displayedStats} />
                         </Panel>
                     )}
-                </>
-            )}
-
-            {teamEntries.length > 0 && (
-                <>
-                    <SectionTitle
-                        title={teamEntries.length > 1 ? 'Current programs' : 'Current program'}
-                        collapsible
-                        collapsed={collapsedSections.has('programs')}
-                        onToggle={() => toggleSection('programs')}
-                    />
-                    {!collapsedSections.has('programs') && (
-                        <CurrentTeamsPanel entries={teamEntries} teamsMap={teamsMap} />
+                    {coachStats.length === 0 && (
+                        <Panel sx={{ mt: '16px' }}>
+                            <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>
+                                Detailed stats for this coach haven&apos;t been generated yet. They fill in after the
+                                coach&apos;s next finished game, or when stats are regenerated in Stats Management.
+                            </Box>
+                        </Panel>
                     )}
                 </>
             )}
 
-            {(eloLines.length > 0 || rankLines.length > 0) && (
+            {shownTab === 'trends' && (
                 <>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '12px' }}>
+                        <SelectPill
+                            label="Viewing"
+                            value={seasonView ?? ''}
+                            onChange={(next) => setSeasonView(next === 'alltime' ? 'alltime' : Number(next))}
+                            options={[
+                                ...seasons.map((option) => ({ value: option, label: `Season ${option}` })),
+                                { value: 'alltime', label: 'All-time' },
+                            ]}
+                        />
+                    </Box>
                     <Box
                         sx={{
-                            display: 'flex',
-                            alignItems: 'flex-end',
-                            justifyContent: 'space-between',
-                            gap: 2,
-                            flexWrap: 'wrap',
-                            mb: '12px',
+                            display: 'grid',
+                            gridTemplateColumns: {
+                                xs: '1fr',
+                                md: eloLines.length > 0 && rankLines.length > 0 ? '1fr 1fr' : '1fr',
+                            },
+                            gap: '16px',
                         }}
                     >
-                        <SectionTitle
-                            title="Trends"
-                            collapsible
-                            collapsed={collapsedSections.has('trends')}
-                            onToggle={() => toggleSection('trends')}
-                            sx={{ width: 'auto', mb: 0 }}
-                        />
-                        {!collapsedSections.has('trends') && (
-                            <SelectPill
-                                label="Viewing"
-                                value={seasonView ?? ''}
-                                onChange={(next) => setSeasonView(next === 'alltime' ? 'alltime' : Number(next))}
-                                options={[
-                                    ...seasons.map((option) => ({ value: option, label: `Season ${option}` })),
-                                    { value: 'alltime', label: 'All-time' },
-                                ]}
-                            />
+                        {eloLines.length > 0 && (
+                            <Panel header="ELO trend" more={seasonLabel} sx={{ overflow: 'visible' }}>
+                                <Box sx={{ p: 2, pb: 0 }}>
+                                    <MultiLineChart
+                                        lines={eloLines}
+                                        yMin={eloBounds.yMin}
+                                        yMax={eloBounds.yMax}
+                                        height={260}
+                                        label={(p) => `Season ${p.season}, Week ${p.week}, ELO ${p.val}`}
+                                    />
+                                </Box>
+                                <TrendLegend lines={eloLines} teamsMap={teamsMap} />
+                            </Panel>
+                        )}
+                        {rankLines.length > 0 && (
+                            <Panel header="Coaches poll" more={seasonLabel} sx={{ overflow: 'visible' }}>
+                                <Box sx={{ p: 2, pb: 0 }}>
+                                    <MultiLineChart
+                                        lines={rankLines}
+                                        yMin={1}
+                                        yMax={25}
+                                        invert
+                                        yTicks={POLL_TICKS}
+                                        height={260}
+                                        label={(p) => `Season ${p.season}, Week ${p.week}, #${p.val}`}
+                                    />
+                                </Box>
+                                <TrendLegend lines={rankLines} teamsMap={teamsMap} />
+                            </Panel>
                         )}
                     </Box>
-                    {!collapsedSections.has('trends') && (
-                        <Box
-                            sx={{
-                                display: 'grid',
-                                gridTemplateColumns: {
-                                    xs: '1fr',
-                                    md: eloLines.length > 0 && rankLines.length > 0 ? '1fr 1fr' : '1fr',
-                                },
-                                gap: '16px',
-                            }}
-                        >
-                            {eloLines.length > 0 && (
-                                <Panel header="ELO trend" more={seasonLabel} sx={{ overflow: 'visible' }}>
-                                    <Box sx={{ p: 2, pb: 0 }}>
-                                        <MultiLineChart
-                                            lines={eloLines}
-                                            yMin={eloBounds.yMin}
-                                            yMax={eloBounds.yMax}
-                                            height={260}
-                                            label={(p) => `Season ${p.season}, Week ${p.week}, ELO ${p.val}`}
-                                        />
-                                    </Box>
-                                    <TrendLegend lines={eloLines} teamsMap={teamsMap} />
-                                </Panel>
-                            )}
-                            {rankLines.length > 0 && (
-                                <Panel header="Coaches poll" more={seasonLabel} sx={{ overflow: 'visible' }}>
-                                    <Box sx={{ p: 2, pb: 0 }}>
-                                        <MultiLineChart
-                                            lines={rankLines}
-                                            yMin={1}
-                                            yMax={25}
-                                            invert
-                                            yTicks={POLL_TICKS}
-                                            height={260}
-                                            label={(p) => `Season ${p.season}, Week ${p.week}, #${p.val}`}
-                                        />
-                                    </Box>
-                                    <TrendLegend lines={rankLines} teamsMap={teamsMap} />
-                                </Panel>
-                            )}
-                        </Box>
-                    )}
                 </>
             )}
 
-            <SectionTitle
-                title="Coaching history"
-                collapsible
-                collapsed={collapsedSections.has('history')}
-                onToggle={() => toggleSection('history')}
-            />
-            {!collapsedSections.has('history') &&
+            {shownTab === 'history' &&
                 (stints.length > 0 ? (
                     <DataTable minWidth={480}>
                         <thead>
@@ -629,8 +601,21 @@ const UserDetails = () => {
                         </Box>
                     </Panel>
                 ))}
+            {editing && (
+                <CoachEditDialog
+                    username={user.username}
+                    user={signedInUser}
+                    onClose={() => setEditing(false)}
+                    onSaved={() => {
+                        setEditing(false);
+                        setVersion((current) => current + 1);
+                    }}
+                />
+            )}
         </PageWrap>
     );
 };
+
+UserDetails.propTypes = { user: PropTypes.object };
 
 export default UserDetails;

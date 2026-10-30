@@ -1,3 +1,6 @@
-import { baseURL } from '../config/api';
+import apiClient from './apiClient';
 
-export const getPlayAnimationUrl = (playId) => `${baseURL}/play-animation?playId=${playId}`;
+export const getPlayAnimation = async (playId) => {
+    const response = await apiClient.get('/play-animation', { params: { playId }, responseType: 'blob' });
+    return response.data;
+};

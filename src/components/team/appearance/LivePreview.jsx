@@ -33,6 +33,7 @@ const PreviewImage = ({ team, view, body, label }) => {
                         alt={label || view}
                         sx={{
                             maxWidth: '100%',
+                            maxHeight: { xs: '30vh', md: 'calc(100vh - 300px)' },
                             borderRadius: 'var(--r-sm)',
                             border: '1px solid var(--line)',
                             opacity: loading ? 0.5 : 1,

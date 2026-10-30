@@ -1,67 +1,13 @@
 import React, { useState } from 'react';
 import { Box, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
+import NumberInput from '../ui/NumberInput';
+import TeamSelect from '../ui/TeamSelect';
+import { inputSx, primaryButtonSx, secondaryButtonSx, selectSx } from '../../styles/controls';
 
 const TOTAL_WEEKS = 12;
 const DEFAULT_CONFERENCE_GAMES = 9;
 
-const selectSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    cursor: 'pointer',
-    '& option': { background: 'var(--surface)', color: 'var(--text)' },
-};
-const inputSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-};
-const btnPrimarySx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '14px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.8rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
-const ctrlSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.78rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
 const removeBtnSx = {
     border: 0,
     background: 'transparent',
@@ -133,16 +79,12 @@ const ConferenceRulesEditor = ({
                 >
                     Conference games per team
                 </Box>
-                <Box
-                    component="input"
-                    type="number"
+                <NumberInput
+                    value={numConferenceGames}
+                    onChange={(next) => onNumConferenceGamesChange(Math.round(next) || DEFAULT_CONFERENCE_GAMES)}
                     min={1}
                     max={TOTAL_WEEKS}
-                    value={numConferenceGames}
-                    onChange={(e) =>
-                        onNumConferenceGamesChange(parseInt(e.target.value, 10) || DEFAULT_CONFERENCE_GAMES)
-                    }
-                    sx={{ ...inputSx, width: '100%' }}
+                    ariaLabel="Conference games per team"
                 />
                 <Box sx={{ mt: '4px', fontSize: '0.72rem', color: 'var(--text-dim)' }}>
                     OOC games: {TOTAL_WEEKS - numConferenceGames}
@@ -157,7 +99,7 @@ const ConferenceRulesEditor = ({
                             component="button"
                             type="button"
                             onClick={() => onToggleDivisions(!divisionsEnabled)}
-                            sx={ctrlSx}
+                            sx={secondaryButtonSx}
                         >
                             {divisionsEnabled ? 'Disable divisions' : 'Enable divisions'}
                         </Box>
@@ -197,7 +139,7 @@ const ConferenceRulesEditor = ({
             <Box sx={{ borderTop: '1px solid var(--line-soft)', pt: '16px' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: '6px' }}>
                     <Box sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Protected rivalries</Box>
-                    <Box component="button" type="button" onClick={onAddRivalry} sx={ctrlSx}>
+                    <Box component="button" type="button" onClick={onAddRivalry} sx={secondaryButtonSx}>
                         + Add rivalry
                     </Box>
                 </Box>
@@ -219,35 +161,27 @@ const ConferenceRulesEditor = ({
                             key={index}
                             sx={{ display: 'flex', gap: '8px', mb: '8px', alignItems: 'center', flexWrap: 'wrap' }}
                         >
-                            <Box
-                                component="select"
+                            <TeamSelect
                                 value={rivalry.team1 || ''}
-                                onChange={(e) => onUpdateRivalry(index, 'team1', e.target.value)}
+                                onChange={(name) => onUpdateRivalry(index, 'team1', name)}
+                                teams={conferenceTeams.map((t) => t.name)}
+                                exclude={rivalry.team2 || undefined}
+                                ariaLabel={`Rivalry ${index + 1} team 1`}
+                                placeholder="Team 1"
                                 disabled={isLocked}
-                                sx={{ ...selectSx, flex: '1 1 160px' }}
-                            >
-                                <option value="">Team 1</option>
-                                {conferenceTeams.map((t) => (
-                                    <option key={t.name} value={t.name}>
-                                        {t.name}
-                                    </option>
-                                ))}
-                            </Box>
+                                sx={{ flex: '1 1 180px' }}
+                            />
                             <Box sx={{ color: 'var(--text-dim)', fontSize: '0.78rem' }}>vs</Box>
-                            <Box
-                                component="select"
+                            <TeamSelect
                                 value={rivalry.team2 || ''}
-                                onChange={(e) => onUpdateRivalry(index, 'team2', e.target.value)}
+                                onChange={(name) => onUpdateRivalry(index, 'team2', name)}
+                                teams={conferenceTeams.map((t) => t.name)}
+                                exclude={rivalry.team1 || undefined}
+                                ariaLabel={`Rivalry ${index + 1} team 2`}
+                                placeholder="Team 2"
                                 disabled={isLocked}
-                                sx={{ ...selectSx, flex: '1 1 160px' }}
-                            >
-                                <option value="">Team 2</option>
-                                {conferenceTeams.map((t) => (
-                                    <option key={t.name} value={t.name}>
-                                        {t.name}
-                                    </option>
-                                ))}
-                            </Box>
+                                sx={{ flex: '1 1 180px' }}
+                            />
                             <Box
                                 component="select"
                                 value={rivalry.week || ''}
@@ -280,7 +214,7 @@ const ConferenceRulesEditor = ({
                         type="button"
                         onClick={handleSave}
                         disabled={savingRules || disabled}
-                        sx={btnPrimarySx}
+                        sx={primaryButtonSx}
                     >
                         {savingRules ? 'Saving...' : 'Save conference rules'}
                     </Box>

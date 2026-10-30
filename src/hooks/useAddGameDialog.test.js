@@ -2,10 +2,10 @@
 import { act, renderHook } from '@testing-library/react';
 import useAddGameDialog from './useAddGameDialog';
 import { getBowl, createScheduleEntry } from '../api/scheduleApi';
-import { uploadPostseasonLogo } from '../api/uploadApi';
+import { uploadLogo } from '../api/uploadApi';
 
 jest.mock('../api/scheduleApi', () => ({ getBowl: jest.fn(), createScheduleEntry: jest.fn() }));
-jest.mock('../api/uploadApi', () => ({ uploadPostseasonLogo: jest.fn() }));
+jest.mock('../api/uploadApi', () => ({ uploadLogo: jest.fn() }));
 jest.mock('./useConferencesMap', () => ({ getConference: () => null }));
 jest.mock('../utils/logoUrl', () => ({ resolveLogoUrl: (logo) => `resolved:${logo}` }));
 
@@ -27,7 +27,7 @@ beforeEach(() => {
     jest.clearAllMocks();
     getBowl.mockReset().mockResolvedValue(null);
     createScheduleEntry.mockReset().mockResolvedValue({});
-    uploadPostseasonLogo.mockReset().mockResolvedValue({ url: 'uploaded.png' });
+    uploadLogo.mockReset().mockResolvedValue({ url: 'uploaded.png' });
     props = { season: 12, scheduleLocked: false, teamMap: {}, onSuccess: jest.fn(), showSnackbar: jest.fn() };
     readers = [];
     originalFileReader = global.FileReader;
@@ -140,7 +140,7 @@ test('current bowl defaults preserve lookup trimming and an existing logo', asyn
 test.each(['success', 'failure'])('an obsolete upload %s cannot finish the reopened dialog upload', async (outcome) => {
     const older = deferred();
     const current = deferred();
-    uploadPostseasonLogo.mockReturnValueOnce(older.promise).mockReturnValueOnce(current.promise);
+    uploadLogo.mockReturnValueOnce(older.promise).mockReturnValueOnce(current.promise);
     const { result } = renderHook(useAddGameDialog, { initialProps: props });
     open(result, 'PLAYOFFS');
     const olderCompletion = startUpload(result);
@@ -167,7 +167,7 @@ test.each(['success', 'failure'])('an obsolete upload %s cannot finish the reope
 });
 
 test('a queued file preview cannot overwrite a later upload', async () => {
-    uploadPostseasonLogo.mockResolvedValueOnce({ url: 'first.png' }).mockResolvedValueOnce({ url: 'second.png' });
+    uploadLogo.mockResolvedValueOnce({ url: 'first.png' }).mockResolvedValueOnce({ url: 'second.png' });
     const { result } = renderHook(useAddGameDialog, { initialProps: props });
     open(result, 'PLAYOFFS');
     await act(async () => {
@@ -203,7 +203,7 @@ test('dialog cleanup aborts and detaches a pending local preview', async () => {
 
 test('an upload resolved after unmount does not start a preview or publish feedback', async () => {
     const pending = deferred();
-    uploadPostseasonLogo.mockReturnValueOnce(pending.promise);
+    uploadLogo.mockReturnValueOnce(pending.promise);
     const { result, unmount } = renderHook(useAddGameDialog, { initialProps: props });
     open(result, 'PLAYOFFS');
     const completion = startUpload(result);
@@ -217,7 +217,7 @@ test('an upload resolved after unmount does not start a preview or publish feedb
 });
 
 test('current upload failure keeps existing feedback and allows retry', async () => {
-    uploadPostseasonLogo.mockRejectedValueOnce(new Error('Upload unavailable'));
+    uploadLogo.mockRejectedValueOnce(new Error('Upload unavailable'));
     const { result } = renderHook(useAddGameDialog, { initialProps: props });
     open(result, 'PLAYOFFS');
     await act(async () => {

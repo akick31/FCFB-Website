@@ -6,6 +6,9 @@ import { getAllUsers } from '../../api/userApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { formatPosition, formatWinPct } from '../../utils/formatText';
 import PageWrap from '../../components/layout/PageWrap';
+import PagedFooter from '../../components/ui/PagedFooter';
+import usePagedRows from '../../hooks/usePagedRows';
+import useFitCount from '../../hooks/useFitCount';
 import PageHeading from '../../components/ui/PageHeading';
 import SelectPill from '../../components/ui/SelectPill';
 import DataTable from '../../components/ui/DataTable';
@@ -139,6 +142,13 @@ const Coaches = () => {
             .sort(SORTS[sort]);
     }, [users, status, position, search, sort]);
 
+    const [fitRef, pageSize] = useFitCount({ rowHeight: 44, phoneCount: 25 });
+    const { page, pageCount, pageRows, setPage } = usePagedRows(
+        shown,
+        pageSize,
+        `${status}|${position}|${search}|${sort}`
+    );
+
     if (loading) {
         return (
             <PageWrap>
@@ -212,70 +222,82 @@ const Coaches = () => {
                 />
             </PageHeading>
 
-            <DataTable minWidth={720}>
-                <thead>
-                    <tr>
-                        <th className="lft stick">Coach</th>
-                        <th className="lft">Team</th>
-                        <th className="lft">Position</th>
-                        <th>Record</th>
-                        <th>Win Pct</th>
-                        <th className="lft">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {shown.map((user) => {
-                        const teamId = user.team ? teamsMap[user.team]?.id : null;
-                        const userHref = `/user-details/${user.username}`;
-                        return (
-                            <tr key={user.id ?? user.username}>
-                                <LinkCell to={userHref} className="lft stick">
-                                    <Box sx={{ fontWeight: 700 }}>{user.coach_name || user.username}</Box>
-                                    <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem' }}>@{user.username}</Box>
-                                </LinkCell>
-                                <LinkCell to={user.team && teamId != null ? null : userHref} className="lft">
-                                    {user.team && teamId != null ? (
-                                        <Box
-                                            component={Link}
-                                            to={`/team-details/${teamId}`}
-                                            className="teamcell"
-                                            sx={{
-                                                position: 'relative',
-                                                zIndex: 3,
-                                                cursor: 'pointer',
-                                                textDecoration: 'none',
-                                                color: 'inherit',
-                                            }}
-                                        >
-                                            <TeamMark team={teamsMap[user.team]} size={22} />
-                                            <span className="nm">{user.team}</span>
+            <Box ref={fitRef}>
+                <DataTable minWidth={720} dense>
+                    <thead>
+                        <tr>
+                            <th className="lft stick">Coach</th>
+                            <th className="lft">Team</th>
+                            <th className="lft">Position</th>
+                            <th>Record</th>
+                            <th>Win Pct</th>
+                            <th className="lft">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {pageRows.map((user) => {
+                            const teamId = user.team ? teamsMap[user.team]?.id : null;
+                            const userHref = `/user-details/${user.username}`;
+                            return (
+                                <tr key={user.id ?? user.username}>
+                                    <LinkCell to={userHref} className="lft stick">
+                                        <Box sx={{ fontWeight: 700 }}>{user.coach_name || user.username}</Box>
+                                        <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem' }}>
+                                            @{user.username}
                                         </Box>
-                                    ) : user.team ? (
-                                        <Box className="teamcell" sx={{ cursor: 'default' }}>
-                                            <TeamMark team={teamsMap[user.team]} size={22} />
-                                            <span className="nm">{user.team}</span>
-                                        </Box>
-                                    ) : (
-                                        <Box sx={{ color: 'var(--text-dim)' }}>-</Box>
-                                    )}
-                                </LinkCell>
-                                <LinkCell to={userHref} className="lft">
-                                    {formatPosition(user.position)}
-                                </LinkCell>
-                                <LinkCell to={userHref} className="num">
-                                    {user.wins || 0}-{user.losses || 0}
-                                </LinkCell>
-                                <LinkCell to={userHref} className="num">
-                                    {formatWinPct(user.win_percentage)}
-                                </LinkCell>
-                                <LinkCell to={userHref} className="lft">
-                                    <StatusPill status={coachStatus(user)} />
-                                </LinkCell>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </DataTable>
+                                    </LinkCell>
+                                    <LinkCell to={user.team && teamId != null ? null : userHref} className="lft">
+                                        {user.team && teamId != null ? (
+                                            <Box
+                                                component={Link}
+                                                to={`/team-details/${teamId}`}
+                                                className="teamcell"
+                                                sx={{
+                                                    position: 'relative',
+                                                    zIndex: 3,
+                                                    cursor: 'pointer',
+                                                    textDecoration: 'none',
+                                                    color: 'inherit',
+                                                }}
+                                            >
+                                                <TeamMark team={teamsMap[user.team]} size={22} />
+                                                <span className="nm">{user.team}</span>
+                                            </Box>
+                                        ) : user.team ? (
+                                            <Box className="teamcell" sx={{ cursor: 'default' }}>
+                                                <TeamMark team={teamsMap[user.team]} size={22} />
+                                                <span className="nm">{user.team}</span>
+                                            </Box>
+                                        ) : (
+                                            <Box sx={{ color: 'var(--text-dim)' }}>-</Box>
+                                        )}
+                                    </LinkCell>
+                                    <LinkCell to={userHref} className="lft">
+                                        {formatPosition(user.position)}
+                                    </LinkCell>
+                                    <LinkCell to={userHref} className="num">
+                                        {user.wins || 0}-{user.losses || 0}
+                                    </LinkCell>
+                                    <LinkCell to={userHref} className="num">
+                                        {formatWinPct(user.win_percentage)}
+                                    </LinkCell>
+                                    <LinkCell to={userHref} className="lft">
+                                        <StatusPill status={coachStatus(user)} />
+                                    </LinkCell>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </DataTable>
+                <PagedFooter
+                    page={page}
+                    pageCount={pageCount}
+                    pageSize={pageSize}
+                    total={shown.length}
+                    onChange={setPage}
+                    noun="coaches"
+                />
+            </Box>
         </PageWrap>
     );
 };

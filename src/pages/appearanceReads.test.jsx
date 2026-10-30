@@ -69,6 +69,8 @@ jest.mock('../components/team/appearance/ColorsEditor', () => ({
         <button onClick={() => onSave({ tertiary_color: '#123456' })}>colors: {source.marker}</button>
     ),
 }));
+jest.mock('../components/team/appearance/TeamStadiumTab', () => ({ __esModule: true, default: () => null }));
+jest.mock('../components/stadium/GameStadiumPanel', () => ({ __esModule: true, default: () => null }));
 jest.mock('../components/team/appearance/LogosEditor', () => ({
     __esModule: true,
     default: ({ source, onSave }) => (

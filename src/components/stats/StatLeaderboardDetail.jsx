@@ -84,7 +84,7 @@ const StatLeaderboardDetail = ({ stat, rows, onBack }) => {
             </Box>
             <Panel
                 header={stat.label}
-                more={`${filtered.length} team${filtered.length === 1 ? '' : 's'}${stat.ascending ? ' · lowest is best' : ''}`}
+                more={`${filtered.length} team${filtered.length === 1 ? '' : 's'}${stat.ascending ? ', lowest is best' : ''}`}
             >
                 <DataTable minWidth={480}>
                     <thead>

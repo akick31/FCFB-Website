@@ -1,6 +1,6 @@
 import { readGeneric, writeGeneric } from './appearanceForm';
 
-export { isVisible } from './appearanceForm';
+export { isEnabled, isVisible } from './appearanceForm';
 const WALL_DESIGNS = [
     { value: 'TEXT_WITH_LOGOS', label: 'Text with logos' },
     { value: 'TEXT_ONLY', label: 'Text only' },
@@ -23,7 +23,8 @@ const STADIUM_BACKDROPS = [
     { value: 'FACILITY', label: 'Facility building' },
     { value: 'NONE', label: 'None (open sky)' },
 ];
-const STADIUM_BACKDROPS_RIGHT = [{ value: '', label: 'Match left' }, ...STADIUM_BACKDROPS];
+export const MATCH_LEFT = 'MATCH_LEFT';
+const STADIUM_BACKDROPS_RIGHT = [...STADIUM_BACKDROPS, { value: MATCH_LEFT, label: 'Match left end' }];
 const BACKDROP_STYLES = {
     BUILDING: [
         { value: 'BUILDING_CITY', label: 'City skyline' },
@@ -99,6 +100,31 @@ const SCOREBOARD_SHAPES = [
     { value: 'MARQUEE', label: 'Marquee sign' },
 ];
 const SCOREBOARD_SHAPES_RIGHT = [{ value: '', label: 'Match left' }, ...SCOREBOARD_SHAPES];
+const FIELD_SURFACES = [
+    { value: 'TURF', label: 'Artificial turf' },
+    { value: 'GRASS', label: 'Natural grass' },
+];
+
+const MOWING_PATTERNS = [
+    { value: 'STRIPES', label: 'Striped' },
+    { value: 'NONE', label: 'None' },
+];
+
+const isGrass = (f) => f.surface === 'GRASS';
+
+export const DOME_STYLES = [
+    { value: 'NONE', label: 'Open air' },
+    { value: 'SUITES', label: 'Dome, suite level' },
+    { value: 'FABRIC', label: 'Dome, fabric roof' },
+    { value: 'WINDOWED', label: 'Dome, windowed wall' },
+];
+
+const closedDome = (f) => ['SUITES', 'FABRIC'].includes(f.dome_style);
+
+const SKY_HELP = 'Only shows where sky is visible: lower the crowd below 1.0, or pick a backdrop with open sky.';
+
+const skylineHelp = (f) => (closedDome(f) ? 'A closed dome hides distant scenery.' : SKY_HELP);
+
 const SCOREBOARD_STYLES = [
     { value: 'CLASSIC', label: 'Classic bulbs' },
     { value: 'VIDEO', label: 'Modern video board' },
@@ -107,16 +133,17 @@ const SCOREBOARD_STYLES = [
 ];
 const SCOREBOARD_STYLES_RIGHT = [{ value: '', label: 'Match left' }, ...SCOREBOARD_STYLES];
 const leftBackdrop = (f) => f.stadium_backdrop || 'CROWD';
-const rightBackdrop = (f) => f.right_stadium_backdrop || leftBackdrop(f);
+const rightMatchesLeft = (f) => f.right_stadium_backdrop === MATCH_LEFT;
+const rightBackdrop = (f) => (rightMatchesLeft(f) ? leftBackdrop(f) : f.right_stadium_backdrop || 'CROWD');
 const leftStadiumSize = (f) => Number(f.stadium_size) || 1;
-const rightStadiumSize = (f) => Number(f.right_stadium_size) || leftStadiumSize(f);
+const rightStadiumSize = (f) => (rightMatchesLeft(f) ? leftStadiumSize(f) : Number(f.right_stadium_size) || 1);
 const jumbotronAllowed = (backdrop, size) =>
     !BUILT_IN_SCOREBOARD.includes(backdrop) && !(backdrop === 'CROWD' && size >= 1);
 const leftJumbotronAllowed = (f) => jumbotronAllowed(leftBackdrop(f), leftStadiumSize(f));
 const rightJumbotronAllowed = (f) => jumbotronAllowed(rightBackdrop(f), rightStadiumSize(f));
 const NARROW_FACILITIES = ['FACILITY_NARROW_GEORGIAN', 'FACILITY_NARROW_MODERN', 'FACILITY_NARROW_COLLEGIATE'];
 const leftStyle = (f) => f.backdrop_style || '';
-const rightStyle = (f) => (f.right_stadium_backdrop ? f.right_backdrop_style || '' : leftStyle(f));
+const rightStyle = (f) => (rightMatchesLeft(f) ? leftStyle(f) : f.right_backdrop_style || '');
 const SMALL_FACILITIES = ['FACILITY_TOWER', 'FACILITY_TOWER_STONE', 'FACILITY_TOWER_MODERN', ...NARROW_FACILITIES];
 const isNarrowFacility = (backdrop, style) => backdrop === 'FACILITY' && NARROW_FACILITIES.includes(style);
 const isFullFacility = (backdrop, style) => backdrop === 'FACILITY' && !SMALL_FACILITIES.includes(style);
@@ -315,6 +342,7 @@ export const UNIFORM_SECTIONS = [
     },
     {
         title: 'Secondary helmet',
+        tab: 'Helmet',
         help: 'Worn by the away team when both shells clash. Blank fields copy the primary helmet.',
         copyMap: {
             alt_facemask_color: 'facemask_color',
@@ -406,11 +434,10 @@ export const TEAM_FIELD_SECTIONS = [
     {
         title: 'Field',
         fields: [
-            { key: 'turf_color', label: 'Turf color', type: 'color' },
             { key: 'midfield_logo_source', label: 'Midfield logo source', type: 'select', options: FIELD_LOGO_SOURCES },
             {
                 key: 'midfield_logo_url',
-                label: 'Custom logo URL',
+                label: 'Midfield logo URL',
                 type: 'logo',
                 showIf: (f) => f.midfield_logo_source === 'CUSTOM',
             },
@@ -426,13 +453,13 @@ export const TEAM_FIELD_SECTIONS = [
             { key: 'quarter_logo_source', label: '25-yard logo source', type: 'select', options: QUARTER_LOGO_SOURCES },
             {
                 key: 'quarter_logo_url',
-                label: 'Custom logo URL',
+                label: '25-yard logo URL',
                 type: 'logo',
                 showIf: (f) => f.quarter_logo_source === 'CUSTOM',
             },
             {
                 key: 'conference_logo_size',
-                label: 'Conference logo size (25)',
+                label: '25-yard logo size',
                 type: 'scale',
                 min: 0.4,
                 max: 2,
@@ -444,6 +471,22 @@ export const TEAM_FIELD_SECTIONS = [
                 label: 'Conference logo colors',
                 type: 'conferenceColors',
                 help: 'Recolor parts of your conference logo to your team colors. Unmapped parts keep their original color.',
+            },
+        ],
+    },
+    {
+        title: 'Surface',
+        fields: [
+            { key: 'turf_color', label: 'Turf color', type: 'color' },
+            { key: 'surface', label: 'Surface', type: 'select', options: FIELD_SURFACES, default: 'TURF' },
+            {
+                key: 'mowing_pattern',
+                label: 'Mowing pattern',
+                type: 'select',
+                options: MOWING_PATTERNS,
+                default: 'STRIPES',
+                disabledIf: (f) => !isGrass(f),
+                disabledHelp: () => 'Turf fields have no mowing pattern.',
             },
         ],
     },
@@ -532,6 +575,7 @@ export const TEAM_FIELD_SECTIONS = [
     },
     {
         title: 'Markings',
+        firstGroup: 'Yard numbers',
         fields: [
             {
                 key: 'field_number_outline_enabled',
@@ -566,7 +610,7 @@ export const TEAM_FIELD_SECTIONS = [
                 fallback: 1,
                 showIf: (f) => f.field_number_outline_enabled,
             },
-            { key: '_red_zone_divider', type: 'divider' },
+            { key: '_red_zone_divider', label: 'Red zone', type: 'subheading' },
             {
                 key: 'red_zone_border_enabled',
                 label: 'Red zone border',
@@ -581,7 +625,7 @@ export const TEAM_FIELD_SECTIONS = [
                 defaultColor: 'secondary',
                 showIf: (f) => f.red_zone_border_enabled,
             },
-            { key: '_midfield_divider', type: 'divider' },
+            { key: '_midfield_divider', label: 'Midfield', type: 'subheading' },
             {
                 key: 'midfield_border_enabled',
                 label: 'Midfield (50) border',
@@ -596,7 +640,7 @@ export const TEAM_FIELD_SECTIONS = [
                 defaultColor: 'secondary',
                 showIf: (f) => f.midfield_border_enabled,
             },
-            { key: '_sideline_divider', type: 'divider' },
+            { key: '_sideline_divider', label: 'Sideline', type: 'subheading' },
             {
                 key: 'sideline_accent_enabled',
                 label: 'Sideline accent',
@@ -659,7 +703,12 @@ export const TEAM_FIELD_SECTIONS = [
                 showIf: (f) => f.wall_logo_source === 'CUSTOM',
             },
             { key: '_right_wall_heading', label: 'Right wall', type: 'subheading' },
-            { key: 'right_wall_color', label: 'Color', type: 'optionalColor', help: 'Blank matches the left wall.' },
+            {
+                key: 'right_wall_color',
+                label: 'Color',
+                type: 'optionalColor',
+                help: 'Blank matches the left wall.',
+            },
             { key: 'right_wall_design', label: 'Design', type: 'select', options: WALL_DESIGNS },
             { key: 'right_wall_text', label: 'Text', type: 'text', placeholder: 'Same as left' },
             {
@@ -758,12 +807,72 @@ const emptyValue = (definition, source, teamColors) => {
     return readGeneric(definition, stored ?? source[definition.fallbackKey], resolveDefault(definition, teamColors));
 };
 
+const ownRightEnd = (field) => ({
+    ...field,
+    stable: !field.showIf,
+    showIf: (f) => !rightMatchesLeft(f) && (!field.showIf || field.showIf(f)),
+});
+
+const labelOf = (options, value) => options.find((option) => option.value === value)?.label;
+
+const endSummary = (title, backdrop, size, style, skyline, hasBoard, boardStyle) => ({
+    title,
+    rows: [
+        [
+            'Backdrop',
+            [labelOf(STADIUM_BACKDROPS, backdrop), labelOf(BACKDROP_STYLES[backdrop] || [], style)]
+                .filter(Boolean)
+                .join(', '),
+        ],
+        ['Stadium size', backdrop === 'NONE' ? '—' : `${size.toFixed(2)}x`],
+        ['Distant scenery', skyline ? labelOf(SKYLINE_BACKDROPS, skyline) || skyline : 'Open sky'],
+        ['Scoreboard', hasBoard ? labelOf(SCOREBOARD_STYLES, boardStyle) || 'Classic bulbs' : 'None'],
+    ],
+});
+
+export const stadiumOverview = (f) => [
+    endSummary(
+        'Left end',
+        leftBackdrop(f),
+        leftStadiumSize(f),
+        leftStyle(f),
+        f.skyline_backdrop,
+        leftHasScoreboard(f),
+        f.jumbotron_style
+    ),
+    rightMatchesLeft(f)
+        ? { title: 'Right end', rows: [['Matches', 'Left end']] }
+        : endSummary(
+              'Right end',
+              rightBackdrop(f),
+              rightStadiumSize(f),
+              rightStyle(f),
+              f.right_skyline_backdrop || f.skyline_backdrop,
+              rightHasScoreboard(f),
+              f.right_jumbotron_style || f.jumbotron_style
+          ),
+];
+
 export const STADIUM_SECTIONS = [
     {
-        title: 'Stadium',
-        help: 'Each side can be styled independently; blank right-side fields match the left.',
+        title: 'Overview',
         fields: [
-            { key: '_left_stadium_heading', label: 'Left side', type: 'subheading' },
+            {
+                key: 'dome_style',
+                label: 'Roof',
+                type: 'select',
+                options: DOME_STYLES,
+                default: 'NONE',
+                transient: true,
+                showIf: () => false,
+            },
+        ],
+        overview: stadiumOverview,
+    },
+    {
+        title: 'Left end',
+        firstGroup: 'Backdrop',
+        fields: [
             { key: 'stadium_backdrop', label: 'Backdrop', type: 'select', options: STADIUM_BACKDROPS },
             {
                 key: 'stadium_size',
@@ -773,7 +882,8 @@ export const STADIUM_SECTIONS = [
                 max: 1,
                 step: 0.05,
                 fallback: 1,
-                showIf: (f) => leftBackdrop(f) !== 'NONE',
+                disabledIf: (f) => leftBackdrop(f) === 'NONE',
+                disabledHelp: () => 'Open sky has no stands to size.',
                 help: 'A jumbotron over the crowd needs a size below 1.0.',
             },
             {
@@ -788,23 +898,20 @@ export const STADIUM_SECTIONS = [
                 label: 'Distant scenery',
                 type: 'select',
                 options: SKYLINE_BACKDROPS,
-                showIf: (f) => showsSkyline(leftBackdrop(f), leftStyle(f), leftStadiumSize(f)),
+                disabledIf: (f) => closedDome(f) || !showsSkyline(leftBackdrop(f), leftStyle(f), leftStadiumSize(f)),
+                disabledHelp: skylineHelp,
                 help: 'Scenery further back that shows wherever sky is visible over the backdrop.',
             },
             {
                 key: 'wall_enabled',
                 label: 'Show wall',
                 type: 'toggle',
-                showIf: (f) => !['CROWD', 'FACILITY'].includes(leftBackdrop(f)),
+                disabledIf: (f) => ['CROWD', 'FACILITY'].includes(leftBackdrop(f)),
+                disabledHelp: (f) =>
+                    leftBackdrop(f) === 'CROWD'
+                        ? 'The crowd always sits behind a wall.'
+                        : 'Buildings stand on the grass, so there is no wall.',
                 help: 'Off runs the backdrop straight down to the end zone.',
-            },
-            { key: 'jumbotron_enabled', label: 'Jumbotron', type: 'toggle', showIf: leftJumbotronAllowed },
-            {
-                key: 'jumbotron_pylon_mount',
-                label: 'Mount on pylons',
-                type: 'toggle',
-                showIf: (f) => leftJumbotronAllowed(f) && f.jumbotron_enabled && leftBackdrop(f) === 'CROWD',
-                help: 'Only applies over a Crowd backdrop — other backdrops always use pylons.',
             },
             {
                 key: 'facility_full_width',
@@ -812,6 +919,24 @@ export const STADIUM_SECTIONS = [
                 type: 'toggle',
                 showIf: (f) => isNarrowFacility(leftBackdrop(f), leftStyle(f)),
                 help: 'Runs the low building across the whole background. The board then stands in front of it.',
+            },
+            { key: 'scoreboard_heading', label: 'Scoreboard', type: 'subheading' },
+            {
+                key: 'jumbotron_enabled',
+                label: 'Jumbotron',
+                type: 'toggle',
+                disabledIf: (f) => !leftJumbotronAllowed(f),
+                disabledHelp: (f) =>
+                    BUILT_IN_SCOREBOARD.includes(leftBackdrop(f))
+                        ? 'This backdrop already has its own scoreboard.'
+                        : 'Lower the stadium size below 1.0 to fit a jumbotron over the crowd.',
+            },
+            {
+                key: 'jumbotron_pylon_mount',
+                label: 'Mount on pylons',
+                type: 'toggle',
+                showIf: (f) => leftJumbotronAllowed(f) && f.jumbotron_enabled && leftBackdrop(f) === 'CROWD',
+                help: 'Only applies over a Crowd backdrop — other backdrops always use pylons.',
             },
             {
                 key: 'jumbotron_over_building',
@@ -910,164 +1035,197 @@ export const STADIUM_SECTIONS = [
                 fallback: 1,
                 showIf: leftHasScoreboard,
             },
-            { key: '_right_stadium_heading', label: 'Right side', type: 'subheading' },
-            { key: 'right_stadium_backdrop', label: 'Backdrop', type: 'select', options: STADIUM_BACKDROPS_RIGHT },
+        ],
+    },
+    {
+        title: 'Right end',
+        firstGroup: 'Backdrop',
+        help: 'Set up on its own, starting as a full crowd. "Match left end" copies the whole left end instead.',
+        fields: [
             {
-                key: 'right_stadium_size',
-                label: 'Stadium size',
-                type: 'scale',
-                min: 0.2,
-                max: 1,
-                step: 0.05,
-                fallback: 1,
-                showIf: (f) => rightBackdrop(f) !== 'NONE',
-                help: 'A jumbotron over the crowd needs a size below 1.0.',
-            },
-            {
-                key: 'right_backdrop_style',
-                label: 'Style',
+                key: 'right_stadium_backdrop',
+                label: 'Backdrop',
                 type: 'select',
-                optionsFor: (f) => BACKDROP_STYLES[rightBackdrop(f)] || [],
-                showIf: (f) => Boolean(f.right_stadium_backdrop && BACKDROP_STYLES[f.right_stadium_backdrop]),
-                help: 'Matches the left style when the right backdrop is set to Match left.',
+                options: STADIUM_BACKDROPS_RIGHT,
+                default: 'CROWD',
             },
-            {
-                key: 'right_skyline_backdrop',
-                label: 'Distant scenery',
-                type: 'select',
-                options: SKYLINE_BACKDROPS_RIGHT,
-                showIf: (f) => showsSkyline(rightBackdrop(f), rightStyle(f), rightStadiumSize(f)),
-                help: 'Scenery further back that shows wherever sky is visible over the backdrop.',
-            },
-            {
-                key: 'right_wall_enabled',
-                label: 'Show wall',
-                type: 'toggle',
-                showIf: (f) => !['CROWD', 'FACILITY'].includes(rightBackdrop(f)),
-                help: 'Off runs the backdrop straight down to the end zone.',
-            },
-            { key: 'right_jumbotron_enabled', label: 'Jumbotron', type: 'toggle', showIf: rightJumbotronAllowed },
-            {
-                key: 'right_jumbotron_pylon_mount',
-                label: 'Mount on pylons',
-                type: 'toggle',
-                showIf: (f) => rightJumbotronAllowed(f) && f.right_jumbotron_enabled && rightBackdrop(f) === 'CROWD',
-                help: 'Only applies over a Crowd backdrop — other backdrops always use pylons.',
-            },
-            {
-                key: 'right_facility_full_width',
-                label: 'Span the full width',
-                type: 'toggle',
-                showIf: (f) => isNarrowFacility(rightBackdrop(f), rightStyle(f)),
-                help: 'Runs the low building across the whole background. The board then stands in front of it.',
-            },
-            {
-                key: 'right_jumbotron_over_building',
-                label: 'Board over the building',
-                type: 'toggle',
-                showIf: (f) =>
-                    rightHasScoreboard(f) &&
-                    isSmallFacility(rightBackdrop(f), rightStyle(f)) &&
-                    !spansFullWidth(rightBackdrop(f), rightStyle(f), f.right_facility_full_width),
-                help: 'On spans the building on tall pylons; off stands a normal jumbotron in front of it.',
-            },
-            {
-                key: 'right_jumbotron_style',
-                label: 'Scoreboard style',
-                type: 'select',
-                options: SCOREBOARD_STYLES_RIGHT,
-                showIf: rightHasScoreboard,
-            },
-            {
-                key: 'right_scoreboard_logo',
-                label: 'Scoreboard logo',
-                type: 'select',
-                options: SCOREBOARD_LOGOS_RIGHT,
-                showIf: (f) => rightHasScoreboard(f) && TOPPER_SHAPES.includes(rightShape(f)),
-                help: 'Shows in the arched or marquee topper.',
-            },
-            {
-                key: 'right_jumbotron_shape',
-                label: 'Scoreboard shape',
-                type: 'select',
-                options: SCOREBOARD_SHAPES_RIGHT,
-                showIf: rightHasScoreboard,
-            },
-            {
-                key: 'right_jumbotron_color',
-                label: 'Jumbotron color',
-                type: 'optionalColor',
-                showIf: rightHasScoreboard,
-                help: 'Blank matches the left board.',
-            },
-            {
-                key: 'right_topper_color',
-                label: 'Topper color',
-                type: 'optionalColor',
-                showIf: (f) => rightHasScoreboard(f) && TOPPER_SHAPES.includes(rightShape(f)),
-                help: 'Background of the arched topper or marquee sign.',
-            },
-            {
-                key: 'right_jumbotron_pylon_style',
-                label: 'Pylon design',
-                type: 'select',
-                options: PYLON_STYLES_RIGHT,
-                showIf: (f) => rightHasScoreboard(f) && rightOnPylons(f),
-            },
-            {
-                key: 'right_jumbotron_pylons_outside',
-                label: 'Posts on the outside',
-                type: 'toggle',
-                showIf: (f) =>
-                    rightHasScoreboard(f) &&
-                    pylonsCanMoveOutside(
-                        rightBackdrop(f),
-                        rightStyle(f),
-                        rightOnPylons(f),
-                        f.right_jumbotron_over_building
-                    ),
-                help: 'Moves the posts to the outer edges of the board.',
-            },
-            {
-                key: 'right_jumbotron_elevation',
-                label: 'Height above ground',
-                type: 'scale',
-                min: 0,
-                max: 1,
-                step: 0.05,
-                fallback: 0,
-                showIf: (f) =>
-                    rightHasScoreboard(f) &&
-                    canRaise(
-                        rightBackdrop(f),
-                        rightStyle(f),
-                        f.right_jumbotron_pylon_mount,
-                        f.right_jumbotron_over_building
-                    ),
-                help: 'Raises it on taller pylons; over a crowd, turn on Mount on pylons first.',
-            },
-            {
-                key: 'right_jumbotron_width',
-                label: 'Scoreboard width',
-                type: 'scale',
-                min: 1,
-                max: 2,
-                step: 0.05,
-                fallback: 1,
-                showIf: (f) =>
-                    rightHasScoreboard(f) && !(isNarrowFacility(rightBackdrop(f), rightStyle(f)) && rightBoardOver(f)),
-                help: 'Wider boards add timeouts and possession beside each score.',
-            },
-            {
-                key: 'right_jumbotron_size',
-                label: 'Scoreboard size',
-                type: 'scale',
-                min: 0.7,
-                max: 1.4,
-                step: 0.05,
-                fallback: 1,
-                showIf: rightHasScoreboard,
-            },
+            ...[
+                {
+                    key: 'right_stadium_size',
+                    label: 'Stadium size',
+                    type: 'scale',
+                    min: 0.2,
+                    max: 1,
+                    step: 0.05,
+                    fallback: 1,
+                    disabledIf: (f) => rightBackdrop(f) === 'NONE',
+                    disabledHelp: () => 'Open sky has no stands to size.',
+                    help: 'A jumbotron over the crowd needs a size below 1.0.',
+                },
+                {
+                    key: 'right_backdrop_style',
+                    label: 'Style',
+                    type: 'select',
+                    optionsFor: (f) => BACKDROP_STYLES[rightBackdrop(f)] || [],
+                    showIf: (f) => Boolean(BACKDROP_STYLES[rightBackdrop(f)]),
+                    help: 'Matches the left style when the right backdrop is set to Match left.',
+                },
+                {
+                    key: 'right_skyline_backdrop',
+                    label: 'Distant scenery',
+                    type: 'select',
+                    options: SKYLINE_BACKDROPS_RIGHT,
+                    disabledIf: (f) =>
+                        closedDome(f) || !showsSkyline(rightBackdrop(f), rightStyle(f), rightStadiumSize(f)),
+                    disabledHelp: skylineHelp,
+                    help: 'Scenery further back that shows wherever sky is visible over the backdrop.',
+                },
+                {
+                    key: 'right_wall_enabled',
+                    label: 'Show wall',
+                    type: 'toggle',
+                    disabledIf: (f) => ['CROWD', 'FACILITY'].includes(rightBackdrop(f)),
+                    disabledHelp: (f) =>
+                        rightBackdrop(f) === 'CROWD'
+                            ? 'The crowd always sits behind a wall.'
+                            : 'Buildings stand on the grass, so there is no wall.',
+                    help: 'Off runs the backdrop straight down to the end zone.',
+                },
+                {
+                    key: 'right_facility_full_width',
+                    label: 'Span the full width',
+                    type: 'toggle',
+                    showIf: (f) => isNarrowFacility(rightBackdrop(f), rightStyle(f)),
+                    help: 'Runs the low building across the whole background. The board then stands in front of it.',
+                },
+                { key: 'right_scoreboard_heading', label: 'Scoreboard', type: 'subheading' },
+                {
+                    key: 'right_jumbotron_enabled',
+                    label: 'Jumbotron',
+                    type: 'toggle',
+                    disabledIf: (f) => !rightJumbotronAllowed(f),
+                    disabledHelp: (f) =>
+                        BUILT_IN_SCOREBOARD.includes(rightBackdrop(f))
+                            ? 'This backdrop already has its own scoreboard.'
+                            : 'Lower the stadium size below 1.0 to fit a jumbotron over the crowd.',
+                },
+                {
+                    key: 'right_jumbotron_pylon_mount',
+                    label: 'Mount on pylons',
+                    type: 'toggle',
+                    showIf: (f) =>
+                        rightJumbotronAllowed(f) && f.right_jumbotron_enabled && rightBackdrop(f) === 'CROWD',
+                    help: 'Only applies over a Crowd backdrop — other backdrops always use pylons.',
+                },
+                {
+                    key: 'right_jumbotron_over_building',
+                    label: 'Board over the building',
+                    type: 'toggle',
+                    showIf: (f) =>
+                        rightHasScoreboard(f) &&
+                        isSmallFacility(rightBackdrop(f), rightStyle(f)) &&
+                        !spansFullWidth(rightBackdrop(f), rightStyle(f), f.right_facility_full_width),
+                    help: 'On spans the building on tall pylons; off stands a normal jumbotron in front of it.',
+                },
+                {
+                    key: 'right_jumbotron_style',
+                    label: 'Scoreboard style',
+                    type: 'select',
+                    options: SCOREBOARD_STYLES_RIGHT,
+                    showIf: rightHasScoreboard,
+                },
+                {
+                    key: 'right_scoreboard_logo',
+                    label: 'Scoreboard logo',
+                    type: 'select',
+                    options: SCOREBOARD_LOGOS_RIGHT,
+                    showIf: (f) => rightHasScoreboard(f) && TOPPER_SHAPES.includes(rightShape(f)),
+                    help: 'Shows in the arched or marquee topper.',
+                },
+                {
+                    key: 'right_jumbotron_shape',
+                    label: 'Scoreboard shape',
+                    type: 'select',
+                    options: SCOREBOARD_SHAPES_RIGHT,
+                    showIf: rightHasScoreboard,
+                },
+                {
+                    key: 'right_jumbotron_color',
+                    label: 'Jumbotron color',
+                    type: 'optionalColor',
+                    showIf: rightHasScoreboard,
+                    help: 'Blank matches the left board.',
+                },
+                {
+                    key: 'right_topper_color',
+                    label: 'Topper color',
+                    type: 'optionalColor',
+                    showIf: (f) => rightHasScoreboard(f) && TOPPER_SHAPES.includes(rightShape(f)),
+                    help: 'Background of the arched topper or marquee sign.',
+                },
+                {
+                    key: 'right_jumbotron_pylon_style',
+                    label: 'Pylon design',
+                    type: 'select',
+                    options: PYLON_STYLES_RIGHT,
+                    showIf: (f) => rightHasScoreboard(f) && rightOnPylons(f),
+                },
+                {
+                    key: 'right_jumbotron_pylons_outside',
+                    label: 'Posts on the outside',
+                    type: 'toggle',
+                    showIf: (f) =>
+                        rightHasScoreboard(f) &&
+                        pylonsCanMoveOutside(
+                            rightBackdrop(f),
+                            rightStyle(f),
+                            rightOnPylons(f),
+                            f.right_jumbotron_over_building
+                        ),
+                    help: 'Moves the posts to the outer edges of the board.',
+                },
+                {
+                    key: 'right_jumbotron_elevation',
+                    label: 'Height above ground',
+                    type: 'scale',
+                    min: 0,
+                    max: 1,
+                    step: 0.05,
+                    fallback: 0,
+                    showIf: (f) =>
+                        rightHasScoreboard(f) &&
+                        canRaise(
+                            rightBackdrop(f),
+                            rightStyle(f),
+                            f.right_jumbotron_pylon_mount,
+                            f.right_jumbotron_over_building
+                        ),
+                    help: 'Raises it on taller pylons; over a crowd, turn on Mount on pylons first.',
+                },
+                {
+                    key: 'right_jumbotron_width',
+                    label: 'Scoreboard width',
+                    type: 'scale',
+                    min: 1,
+                    max: 2,
+                    step: 0.05,
+                    fallback: 1,
+                    showIf: (f) =>
+                        rightHasScoreboard(f) &&
+                        !(isNarrowFacility(rightBackdrop(f), rightStyle(f)) && rightBoardOver(f)),
+                    help: 'Wider boards add timeouts and possession beside each score.',
+                },
+                {
+                    key: 'right_jumbotron_size',
+                    label: 'Scoreboard size',
+                    type: 'scale',
+                    min: 0.7,
+                    max: 1.4,
+                    step: 0.05,
+                    fallback: 1,
+                    showIf: rightHasScoreboard,
+                },
+            ].map(ownRightEnd),
         ],
     },
 ];

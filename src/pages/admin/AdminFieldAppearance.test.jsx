@@ -3,7 +3,6 @@ import React, { StrictMode } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import AdminFieldAppearance from './AdminFieldAppearance';
 import { getConferences } from '../../api/conferenceApi';
-import { getAllTeams } from '../../api/teamApi';
 import {
     getBowlFields,
     getPlayoffFields,
@@ -14,7 +13,6 @@ let mockPath;
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({ useParams: () => ({ '*': mockPath }), useNavigate: () => mockNavigate }));
 jest.mock('../../api/conferenceApi', () => ({ getConferences: jest.fn() }));
-jest.mock('../../api/teamApi', () => ({ getAllTeams: jest.fn() }));
 jest.mock('../../api/fieldAppearanceApi', () => ({
     getBowlFields: jest.fn(),
     getPlayoffFields: jest.fn(),
@@ -28,12 +26,24 @@ jest.mock('../../components/layout/AdminLayout', () => ({
     default: ({ children }) => <div>{children}</div>,
 }));
 jest.mock('../../components/ui/BackButton', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../components/ui/SegTabs', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../components/ui/SegTabs', () => ({
+    __esModule: true,
+    default: ({ options, onChange }) => (
+        <div>
+            {options.map((option) => (
+                <button key={option.value} type="button" onClick={() => onChange(option.value)}>
+                    Tab {option.label}
+                </button>
+            ))}
+        </div>
+    ),
+}));
 jest.mock('../../components/ui/Panel', () => ({ __esModule: true, default: ({ children }) => <div>{children}</div> }));
 jest.mock('../../components/admin/fieldAppearance/PostseasonFieldThumb', () => ({
     __esModule: true,
     default: () => null,
 }));
+jest.mock('../../components/admin/fieldAppearance/EventStadiumTab', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../components/admin/fieldAppearance/FieldSettingsEditor', () => ({
     __esModule: true,
     default: ({ source, onSave }) => <button onClick={() => onSave({ grass: 'new' })}>Field {source.marker}</button>,
@@ -44,7 +54,6 @@ jest.mock('../../components/admin/fieldAppearance/BowlMetaEditor', () => ({
 }));
 beforeEach(() => {
     jest.resetAllMocks();
-    getAllTeams.mockResolvedValue([]);
     mockPath = 'bowls/alpha';
     getBowlFields.mockResolvedValue([
         { bowl: 'Alpha', marker: 'A' },
@@ -123,6 +132,7 @@ test('a save for another field cannot overwrite the current source', async () =>
     );
     const { rerender } = render(<AdminFieldAppearance />);
     await act(async () => {});
+    fireEvent.click(screen.getByText('Tab Field'));
     fireEvent.click(screen.getByText('Field A'));
     mockPath = 'bowls/beta';
     await act(async () => rerender(<AdminFieldAppearance />));
@@ -170,6 +180,7 @@ test('obsolete StrictMode failures cannot replace the current list', async () =>
     );
     await act(async () => {});
     await act(async () => reject(new Error('obsolete')));
+    fireEvent.click(screen.getByText('Tab Field'));
     expect(screen.getByText('Field A')).toBeTruthy();
     expect(screen.queryByText('obsolete')).toBeNull();
 });
@@ -202,6 +213,7 @@ test('a current field save still publishes the saved response', async () => {
     updateBowlField.mockResolvedValueOnce({ bowl: 'Alpha', marker: 'saved' });
     render(<AdminFieldAppearance />);
     await act(async () => {});
+    fireEvent.click(screen.getByText('Tab Field'));
     await act(async () => fireEvent.click(screen.getByText('Field A')));
     expect(screen.getByText('Field saved')).toBeTruthy();
 });

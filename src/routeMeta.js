@@ -37,6 +37,18 @@ export const routeList = [
             'Every coach in the Fake College Football league, their current team, record, and status: active, free agent, or retired.',
     },
     {
+        path: '/history',
+        title: 'History | FCFB',
+        description:
+            'Every past Fake College Football week: results, upsets, ranked teams that fell, and the biggest swings.',
+    },
+    {
+        path: '/stadiums',
+        title: 'Stadiums | FCFB',
+        description:
+            'Every stadium in the Fake College Football league, who plays there, and the games and records each has hosted.',
+    },
+    {
         path: '/schedules',
         title: 'Schedules | FCFB',
         description: 'Full season and postseason schedules for every Fake College Football team and conference.',

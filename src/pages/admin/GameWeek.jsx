@@ -14,6 +14,7 @@ import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
+import Paged from '../../components/ui/Paged';
 import StatTile, { TileGrid } from '../../components/ui/StatTile';
 import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
 import {
@@ -24,37 +25,10 @@ import {
 } from '../../api/scheduleApi';
 import { weekLabel } from '../../utils/formatText';
 import { startPolling as startPoller } from '../../utils/polling';
+import { primaryButtonSx, selectSx } from '../../styles/controls';
 
 const POLL_INTERVAL_MS = 3000;
 
-const selectSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    cursor: 'pointer',
-    '& option': { background: 'var(--surface-2)', color: 'var(--text)' },
-};
-const btnPrimarySx = {
-    border: 0,
-    background: 'var(--field)',
-    color: '#04231a',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    py: '11px',
-    font: 'inherit',
-    fontSize: '0.88rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    width: '100%',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
 const btnGhostSx = {
     border: '1px solid var(--line)',
     background: 'var(--surface-2)',
@@ -344,6 +318,16 @@ const GameWeek = () => {
         );
     }
 
+    const sortedWeekSchedule = [...weekSchedule].sort((a, b) => {
+        if (a.started !== b.started) {
+            return a.started ? 1 : -1;
+        }
+        if (a.finished !== b.finished) {
+            return a.finished ? 1 : -1;
+        }
+        return 0;
+    });
+
     return (
         <AdminLayout title="Game Week">
             {error && (
@@ -426,7 +410,7 @@ const GameWeek = () => {
                         type="button"
                         onClick={() => setConfirmDialogOpen(true)}
                         disabled={isStarting || stats.notStarted === 0}
-                        sx={btnPrimarySx}
+                        sx={primaryButtonSx}
                     >
                         {isStarting
                             ? 'Starting...'
@@ -590,50 +574,44 @@ const GameWeek = () => {
                         No games scheduled for Week {selectedWeek}.
                     </Box>
                 ) : (
-                    <DataTable minWidth={560}>
-                        <thead>
-                            <tr>
-                                <th className="lft stick">Home team</th>
-                                <th className="lft">Away team</th>
-                                <th className="lft">Game type</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {[...weekSchedule]
-                                .sort((a, b) => {
-                                    if (a.started !== b.started) {
-                                        return a.started ? 1 : -1;
-                                    }
-                                    if (a.finished !== b.finished) {
-                                        return a.finished ? 1 : -1;
-                                    }
-                                    return 0;
-                                })
-                                .map((game, idx) => {
-                                    const status = gameStatusInfo(game);
-                                    return (
-                                        <tr key={game.id || idx}>
-                                            <td className="lft stick">{game.homeTeam || game.home_team}</td>
-                                            <td className="lft">{game.awayTeam || game.away_team}</td>
-                                            <td className="lft">{game.gameType || game.game_type || '-'}</td>
-                                            <td>
-                                                <Box
-                                                    component="span"
-                                                    sx={{
-                                                        ...pillSx,
-                                                        background: 'var(--surface-2)',
-                                                        color: status.color,
-                                                    }}
-                                                >
-                                                    {status.label}
-                                                </Box>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                        </tbody>
-                    </DataTable>
+                    <Paged rows={sortedWeekSchedule} noun="games" resetKey={selectedWeek}>
+                        {(pageRows) => (
+                            <DataTable minWidth={560}>
+                                <thead>
+                                    <tr>
+                                        <th className="lft stick">Home team</th>
+                                        <th className="lft">Away team</th>
+                                        <th className="lft">Game type</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {pageRows.map((game, idx) => {
+                                        const status = gameStatusInfo(game);
+                                        return (
+                                            <tr key={game.id || idx}>
+                                                <td className="lft stick">{game.homeTeam || game.home_team}</td>
+                                                <td className="lft">{game.awayTeam || game.away_team}</td>
+                                                <td className="lft">{game.gameType || game.game_type || '-'}</td>
+                                                <td>
+                                                    <Box
+                                                        component="span"
+                                                        sx={{
+                                                            ...pillSx,
+                                                            background: 'var(--surface-2)',
+                                                            color: status.color,
+                                                        }}
+                                                    >
+                                                        {status.label}
+                                                    </Box>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </DataTable>
+                        )}
+                    </Paged>
                 )}
             </Panel>
 

@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Box, Alert, Snackbar, CircularProgress } from '@mui/material';
-import { Lock as LockIcon, LockOpen as LockOpenIcon, FactCheck as FactCheckIcon } from '@mui/icons-material';
 import AdminLayout from '../../components/layout/AdminLayout';
 import SegTabs from '../../components/ui/SegTabs';
+import SeasonScheduleBar from '../../components/scheduling/SeasonScheduleBar';
 import { getAllTeams } from '../../api/teamApi';
-import { getAllVenues } from '../../api/venueApi';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { getCurrentSeasonOrUpcoming, getAllSeasons, lockSchedule, unlockSchedule } from '../../api/seasonApi';
 import { useConferencesMap, activeConferenceList } from '../../hooks/useConferencesMap';
@@ -29,46 +28,6 @@ import useAdminScheduleData from '../../hooks/useAdminScheduleData';
 import useConferenceGeneration from '../../hooks/useConferenceGeneration';
 import useConferenceRuleActions from '../../hooks/useConferenceRuleActions';
 const EXCLUDED_ADMIN_CONFERENCES = ['FBS_INDEPENDENT'];
-
-const selectSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    cursor: 'pointer',
-    '& option': { background: 'var(--surface)', color: 'var(--text)' },
-};
-const ctrlSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.78rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-};
-const ctrlLockedSx = {
-    ...ctrlSx,
-    color: 'var(--live)',
-    borderColor: 'color-mix(in srgb, var(--live) 40%, var(--line))',
-};
-const ctrlUnlockedSx = {
-    ...ctrlSx,
-    color: 'var(--field)',
-    borderColor: 'color-mix(in srgb, var(--field) 40%, var(--line))',
-};
 
 const Scheduling = () => {
     useConferencesMap();
@@ -98,7 +57,6 @@ const Scheduling = () => {
     const [allSeasons, setAllSeasons] = useState([]);
     const { scheduleLocked, lockStatusKnown, lockError, setScheduleLocked } = useScheduleLock(season);
     const [allTeams, setAllTeams] = useState([]);
-    const [venueNames, setVenueNames] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [conferenceTeams, setConferenceTeams] = useState([]);
@@ -190,17 +148,15 @@ const Scheduling = () => {
         const init = async () => {
             try {
                 setLoading(true);
-                const [teamsData, currentSeason, seasonsData, venuesData] = await Promise.all([
+                const [teamsData, currentSeason, seasonsData] = await Promise.all([
                     getAllTeams(),
                     getCurrentSeasonOrUpcoming(),
                     getAllSeasons(),
-                    getAllVenues().catch(() => []),
                 ]);
                 if (!active) {
                     return;
                 }
                 setAllTeams(teamsData);
-                setVenueNames(venuesData.map((v) => v.name).filter(Boolean));
                 const seasonNumbers = seasonsData.map((s) => s.season_number || s.seasonNumber);
                 setAllSeasons(seasonNumbers);
                 setSeason(currentSeason);
@@ -379,7 +335,7 @@ const Scheduling = () => {
 
     if (loading) {
         return (
-            <AdminLayout title="Scheduling">
+            <AdminLayout title="Schedule management">
                 <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}>
                     <CircularProgress size={48} />
                 </Box>
@@ -389,99 +345,34 @@ const Scheduling = () => {
 
     return (
         <AdminLayout
-            title="Scheduling"
+            title="Schedule management"
             controls={
-                <>
-                    <Box
-                        component="select"
-                        value={season || ''}
-                        onChange={(e) => setSeason(Number(e.target.value))}
-                        sx={selectSx}
-                    >
-                        {allSeasons.map((s) => (
-                            <option key={s} value={s}>
-                                Season {s}
-                            </option>
-                        ))}
-                    </Box>
-                    <Box
-                        component="button"
-                        type="button"
-                        onClick={() => {
-                            const maxSeason = allSeasons.length > 0 ? Math.max(...allSeasons) : 0;
-                            seasonCreationJob.openDialog(maxSeason + 1);
-                        }}
-                        sx={ctrlSx}
-                    >
-                        + New season
-                    </Box>
-                    <Box
-                        component="button"
-                        type="button"
-                        onClick={handleToggleLock}
-                        disabled={!lockStatusKnown}
-                        title={
-                            scheduleLocked
-                                ? 'Schedule is locked (click to unlock)'
-                                : 'Schedule is unlocked (click to lock)'
-                        }
-                        sx={{
-                            ...(scheduleLocked ? ctrlLockedSx : ctrlUnlockedSx),
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                        }}
-                    >
-                        {scheduleLocked ? <LockIcon sx={{ fontSize: 15 }} /> : <LockOpenIcon sx={{ fontSize: 15 }} />}
-                        {scheduleLocked ? 'Locked' : 'Unlocked'}
-                    </Box>
-                    <Box
-                        component="button"
-                        type="button"
-                        disabled={scheduleLocked}
-                        onClick={oocDialog.openDialog}
-                        sx={{
-                            ...ctrlSx,
-                            opacity: scheduleLocked ? 0.6 : 1,
-                            cursor: scheduleLocked ? 'default' : 'pointer',
-                        }}
-                    >
-                        Auto-generate OOC schedule
-                    </Box>
-                    <Box
-                        component="button"
-                        type="button"
-                        onClick={validateDialog.handleValidateSchedule}
-                        sx={{ ...ctrlSx, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                    >
-                        <FactCheckIcon sx={{ fontSize: 15 }} />
-                        Validate schedule
-                    </Box>
-                </>
-            }
-        >
-            <Box sx={{ color: 'var(--text-muted)', fontSize: '0.85rem', mb: '16px' }}>
-                Season {season}: manage conference, team, and postseason schedules
-            </Box>
-
-            {scheduleLocked && (
-                <Alert severity="warning" sx={{ mb: '16px' }}>
-                    The schedule for Season {season} is locked. Unlock it to make changes. Postseason entries are exempt
-                    from schedule lock.
-                </Alert>
-            )}
-
-            <Box sx={{ mb: '16px' }}>
                 <SegTabs
                     value={tab}
                     onChange={setTab}
+                    ariaLabel="Schedule view"
                     options={[
-                        { value: 'conference', label: 'Conference Schedule' },
+                        { value: 'conference', label: 'Conference' },
                         { value: 'team', label: 'Team' },
                         { value: 'postseason', label: 'Postseason' },
                     ]}
                 />
-            </Box>
+            }
+        >
+            <SeasonScheduleBar
+                season={season}
+                seasons={allSeasons}
+                onSeasonChange={setSeason}
+                locked={scheduleLocked}
+                lockKnown={lockStatusKnown}
+                onToggleLock={handleToggleLock}
+                onGenerateOoc={oocDialog.openDialog}
+                onValidate={validateDialog.handleValidateSchedule}
+                onNewSeason={() => {
+                    const maxSeason = allSeasons.length > 0 ? Math.max(...allSeasons) : 0;
+                    seasonCreationJob.openDialog(maxSeason + 1);
+                }}
+            />
 
             {tab === 'conference' && (
                 <ConferenceScheduleAdminTab
@@ -541,7 +432,6 @@ const Scheduling = () => {
                     postseasonLoading={postseasonLoading}
                     allTeams={allTeams}
                     teamMap={teamMap}
-                    venueNames={venueNames}
                     onRefresh={fetchPostseasonSchedule}
                     onShowSnackbar={showSnackbar}
                     onOpenAddGameDialog={(gameType, week) => addGameDialog.openForPostseason(gameType, week)}
@@ -555,7 +445,6 @@ const Scheduling = () => {
                 allTeams={allTeams}
                 teamMap={teamMap}
                 teamWeekOccupiedAll={teamWeekOccupiedAll}
-                venueNames={venueNames}
             />
 
             <MoveGameDialog

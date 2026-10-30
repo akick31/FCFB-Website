@@ -1,9 +1,15 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
+import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
+import TeamEditDialog from '../../components/admin/TeamEditDialog';
+import PagedFooter from '../../components/ui/PagedFooter';
+import usePagedRows from '../../hooks/usePagedRows';
+import useFitCount from '../../hooks/useFitCount';
 import Panel from '../../components/ui/Panel';
 import SelectPill from '../../components/ui/SelectPill';
+import ConferencePill from '../../components/ui/ConferencePill';
 import CreateTeamForm from '../../components/forms/CreateTeamForm';
 import TeamsTable from '../../components/teamManagement/TeamsTable';
 import HireCoachDialog from '../../components/teamManagement/HireCoachDialog';
@@ -83,6 +89,8 @@ const TeamManagement = ({ user }) => {
     const [hideFakeTeams, setHideFakeTeams] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [conferenceFilter, setConferenceFilter] = useState('ALL');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const editing = searchParams.get('edit');
     const [takenFilter, setTakenFilter] = useState('ALL');
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [createTeamOpen, setCreateTeamOpen] = useState(false);
@@ -137,6 +145,13 @@ const TeamManagement = ({ user }) => {
             scope.active = false;
         };
     }, [loadData]);
+
+    const closeEditor = () => setSearchParams({}, { replace: true });
+
+    const teamSaved = () => {
+        closeEditor();
+        loadData();
+    };
 
     const rosterFor = (team) =>
         getTeamCoaches(team).map((coach) => ({
@@ -199,6 +214,12 @@ const TeamManagement = ({ user }) => {
         }
         return filtered;
     }, [teams, hideFakeTeams, conferenceFilter, takenFilter, activeFilter, activeOverrides, searchTerm]);
+    const [fitRef, pageSize] = useFitCount({ rowHeight: 42 });
+    const { page, pageCount, pageRows, setPage } = usePagedRows(
+        filteredTeams,
+        pageSize,
+        `${searchTerm}|${conferenceFilter}|${takenFilter}|${activeFilter}|${hideFakeTeams}`
+    );
 
     const handleTeamCreated = () => loadData();
 
@@ -217,15 +238,46 @@ const TeamManagement = ({ user }) => {
             title="Team Management"
             controls={
                 <>
+                    <Box component="button" type="button" onClick={() => setCreateTeamOpen(true)} sx={createBtnSx}>
+                        + Create team
+                    </Box>
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={handleSaveActive}
+                        disabled={pendingActiveCount === 0 || savingActive}
+                        sx={{
+                            ...createBtnSx,
+                            background: 'var(--field)',
+                            '&:disabled': { opacity: 0.5, cursor: 'default' },
+                        }}
+                    >
+                        {savingActive
+                            ? 'Saving...'
+                            : pendingActiveCount > 0
+                              ? `Save status changes (${pendingActiveCount})`
+                              : 'Save status changes'}
+                    </Box>
+                </>
+            }
+        >
+            {error && (
+                <Alert severity="error" sx={{ mb: '16px' }}>
+                    {error}
+                </Alert>
+            )}
+
+            <Panel header="Teams" more={`${filteredTeams.length} teams`}>
+                <Box sx={{ p: '10px 14px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <Box
                         component="input"
-                        placeholder="Search team, coach, or discord..."
+                        placeholder="Search team, coach or Discord"
                         aria-label="Search teams"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         sx={searchSx}
                     />
-                    <SelectPill
+                    <ConferencePill
                         label="Conference"
                         value={conferenceFilter}
                         onChange={setConferenceFilter}
@@ -265,47 +317,31 @@ const TeamManagement = ({ user }) => {
                         />
                         Hide fake teams
                     </Box>
-                    <Box component="button" type="button" onClick={() => setCreateTeamOpen(true)} sx={createBtnSx}>
-                        + Create team
-                    </Box>
-                    <Box
-                        component="button"
-                        type="button"
-                        onClick={handleSaveActive}
-                        disabled={pendingActiveCount === 0 || savingActive}
-                        sx={{
-                            ...createBtnSx,
-                            background: 'var(--field)',
-                            '&:disabled': { opacity: 0.5, cursor: 'default' },
-                        }}
-                    >
-                        {savingActive
-                            ? 'Saving...'
-                            : pendingActiveCount > 0
-                              ? `Save status changes (${pendingActiveCount})`
-                              : 'Save status changes'}
-                    </Box>
-                </>
-            }
-        >
-            {error && (
-                <Alert severity="error" sx={{ mb: '16px' }}>
-                    {error}
-                </Alert>
-            )}
-
-            <Panel header="Teams" more={`${filteredTeams.length} teams`}>
-                <TeamsTable
-                    teams={filteredTeams}
-                    teamsMap={teamsMap}
-                    effectiveActive={effectiveActive}
-                    rosterFor={rosterFor}
-                    onToggleActive={handleToggleActive}
-                    onFireCoach={(team, coach) => setFireTarget({ team, coach })}
-                    onFireClick={handleFireClick}
-                    onHireCoach={handleHireCoach}
-                />
+                </Box>
+                <Box ref={fitRef}>
+                    <TeamsTable
+                        teams={pageRows}
+                        teamsMap={teamsMap}
+                        effectiveActive={effectiveActive}
+                        rosterFor={rosterFor}
+                        onToggleActive={handleToggleActive}
+                        onFireCoach={(team, coach) => setFireTarget({ team, coach })}
+                        onFireClick={handleFireClick}
+                        onHireCoach={handleHireCoach}
+                        onEditTeam={(team) => setSearchParams({ edit: String(team.id) })}
+                    />
+                    <PagedFooter
+                        page={page}
+                        pageCount={pageCount}
+                        pageSize={pageSize}
+                        total={filteredTeams.length}
+                        onChange={setPage}
+                        noun="teams"
+                    />
+                </Box>
             </Panel>
+
+            {editing && <TeamEditDialog teamId={editing} onClose={closeEditor} onSaved={teamSaved} />}
 
             <CreateTeamForm
                 open={createTeamOpen}

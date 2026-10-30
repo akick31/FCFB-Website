@@ -4,42 +4,8 @@ import PropTypes from 'prop-types';
 import Panel from '../../ui/Panel';
 import LogoUrlField from '../LogoUrlField';
 import { updateBowlMeta } from '../../../api/fieldAppearanceApi';
-
-const labelSx = {
-    display: 'block',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    mb: '5px',
-};
-const inputSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-};
-const btnSx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
+import { getBowl } from '../../../api/scheduleApi';
+import { helpSx, inputSx, labelSx, primaryButtonSx } from '../../../styles/controls';
 
 const BowlMetaEditor = ({ bowl, onSaved, initialDraft }) => {
     const [name, setName] = useState(bowl);
@@ -60,6 +26,14 @@ const BowlMetaEditor = ({ bowl, onSaved, initialDraft }) => {
         setLogo(draft.logo);
         setSaved(false);
         setError(null);
+        if (!initialDraft) {
+            getBowl(bowl).then((found) => {
+                if (scope.active && found?.logo && draftRef.current.logo === '') {
+                    draftRef.current = { ...draftRef.current, logo: found.logo };
+                    setLogo(found.logo);
+                }
+            });
+        }
         return () => {
             scope.active = false;
         };
@@ -136,29 +110,31 @@ const BowlMetaEditor = ({ bowl, onSaved, initialDraft }) => {
                     </Alert>
                 )}
                 <Box>
-                    <Box sx={labelSx}>Bowl name</Box>
+                    <Box component="label" sx={labelSx}>
+                        Bowl name
+                    </Box>
                     <Box
                         component="input"
+                        aria-label="Bowl name"
                         value={name}
                         onChange={(e) => changeDraft('name', e.target.value)}
                         sx={inputSx}
                     />
-                    <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem', mt: '4px' }}>
-                        Renames it everywhere, including scheduled games.
-                    </Box>
                 </Box>
-                <Box>
-                    <Box sx={labelSx}>Replace logo</Box>
-                    <LogoUrlField label="" value={logo} onChange={(e) => changeDraft('logo', e.target.value)} />
-                    <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem', mt: '4px' }}>
-                        Blank keeps the current logo.
-                    </Box>
+                <LogoUrlField
+                    label="Logo"
+                    value={logo}
+                    onChange={(value) => changeDraft('logo', value)}
+                    uploadKind="POSTSEASON"
+                />
+                <Box sx={{ ...helpSx, gridColumn: '1 / -1', mt: 0 }}>
+                    Renaming updates the bowl everywhere, including scheduled games.
                 </Box>
                 <Box
                     component="button"
                     type="submit"
                     disabled={saving}
-                    sx={{ ...btnSx, gridColumn: '1 / -1', justifySelf: 'start' }}
+                    sx={{ ...primaryButtonSx, gridColumn: '1 / -1', justifySelf: 'start' }}
                 >
                     {saving ? 'Saving...' : 'Save bowl details'}
                 </Box>

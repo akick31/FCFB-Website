@@ -1,9 +1,10 @@
 import React from 'react';
 import { Box, CircularProgress } from '@mui/material';
-import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import DataTable from '../ui/DataTable';
 import Pager from '../ui/Pager';
+import TeamName from '../ui/TeamName';
+import { compact, secondaryButtonSx } from '../../styles/controls';
 import { GAME_TYPE_DESCRIPTIONS, GAME_STATUS_DESCRIPTIONS } from '../../constants/gameEnums';
 
 const pillSx = {
@@ -19,21 +20,7 @@ const pillSx = {
     borderRadius: 'var(--r-sm)',
     lineHeight: 1,
 };
-const editBtnSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    py: '5px',
-    font: 'inherit',
-    fontSize: '0.72rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-};
-
-const GamesTable = ({ games, loading, currentPage, pageSize, totalGames, pageCount, onPageChange }) => {
+const GamesTable = ({ games, loading, currentPage, pageSize, totalGames, pageCount, onPageChange, onEditGame }) => {
     if (loading) {
         return (
             <Box sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
@@ -46,7 +33,7 @@ const GamesTable = ({ games, loading, currentPage, pageSize, totalGames, pageCou
     }
     return (
         <Box sx={{ p: '16px' }}>
-            <DataTable minWidth={720}>
+            <DataTable minWidth={720} dense>
                 <thead>
                     <tr>
                         <th className="lft stick">Teams</th>
@@ -62,7 +49,13 @@ const GamesTable = ({ games, loading, currentPage, pageSize, totalGames, pageCou
                     {games.map((game) => (
                         <tr key={game.game_id || game.gameId}>
                             <td className="lft stick">
-                                {game.awayTeam || game.away_team} @ {game.homeTeam || game.home_team}
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                    <TeamName name={game.awayTeam || game.away_team} />
+                                    <Box component="span" sx={{ color: 'var(--text-dim)' }}>
+                                        @
+                                    </Box>
+                                    <TeamName name={game.homeTeam || game.home_team} />
+                                </Box>
                             </td>
                             <td className="lft">
                                 {game.awayScore || game.away_score || 0} - {game.homeScore || game.home_score || 0}
@@ -91,9 +84,10 @@ const GamesTable = ({ games, loading, currentPage, pageSize, totalGames, pageCou
                             </td>
                             <td>
                                 <Box
-                                    component={Link}
-                                    to={`/admin/edit-game/${game.game_id}`}
-                                    sx={{ ...editBtnSx, textDecoration: 'none', display: 'inline-block' }}
+                                    component="button"
+                                    type="button"
+                                    onClick={() => onEditGame(game.game_id)}
+                                    sx={compact(secondaryButtonSx)}
                                 >
                                     Edit
                                 </Box>
@@ -123,6 +117,7 @@ GamesTable.propTypes = {
     pageSize: PropTypes.number.isRequired,
     totalGames: PropTypes.number.isRequired,
     pageCount: PropTypes.number.isRequired,
+    onEditGame: PropTypes.func.isRequired,
     onPageChange: PropTypes.func.isRequired,
 };
 

@@ -114,9 +114,13 @@ export const formatWinPct = (value) => {
     return fixed.startsWith('0.') ? fixed.slice(1) : fixed;
 };
 
-export const weekLabel = (week) => {
-    if (week === 13) {
-        return 'Conference Championship Week';
-    }
-    return `Week ${week}`;
+const POSTSEASON_WEEK_NAMES = {
+    13: 'Conference Championship Week',
+    14: 'Bowls & First Round',
+    15: 'Second Round',
+    16: 'Quarterfinals',
+    17: 'Semifinals',
+    18: 'National Championship',
 };
+
+export const weekLabel = (week) => POSTSEASON_WEEK_NAMES[week] || `Week ${week}`;

@@ -13,8 +13,9 @@ import { isGameOngoing, formatBallLocationWithTeam } from '../scoreboard/utils/s
 import { formatScoreboardQuarter, formatDownAndDistance } from '../../../utils/gameUtils';
 import { describePlay } from '../../../utils/formatPlay';
 import { getGameStatsByIdAndTeam } from '../../../api/gameStatsApi';
-import { getPreviousPlay } from '../../../api/playApi';
 import { ensureTeam } from '../../../hooks/useTeamsMap';
+import useLivePlay from '../../../hooks/useLivePlay';
+import { homeWinProbability } from '../../../utils/winProbability';
 
 const QUARTER_KEYS = ['q1_score', 'q2_score', 'q3_score', 'q4_score'];
 
@@ -52,28 +53,6 @@ const useQuarterScores = (game, preloaded) => {
         stats.awayTeam === game?.away_team
         ? stats
         : { home: null, away: null };
-};
-
-const useLivePlay = (game, ongoing) => {
-    const [play, setPlay] = useState(null);
-    useEffect(() => {
-        if (!game?.game_id || !ongoing) {
-            setPlay(null);
-            return undefined;
-        }
-        let active = true;
-        getPreviousPlay(game.game_id)
-            .then((next) => {
-                if (active) {
-                    setPlay({ gameId: game.game_id, value: next });
-                }
-            })
-            .catch(() => {});
-        return () => {
-            active = false;
-        };
-    }, [game?.game_id, ongoing, game?.home_score, game?.away_score]);
-    return ongoing && play && play.gameId === game?.game_id ? play.value : null;
 };
 
 const TeamRow = ({ team, name, rank, score, quarters, columns, isWinner, hasPossession, grid, size }) => (
@@ -210,16 +189,7 @@ const GameCard = ({ game, teamsMap, compact = false, statsByGame }) => {
     const homeWon = game.home_score > game.away_score;
     const awayWon = game.away_score > game.home_score;
 
-    const homeWinProb =
-        play?.win_probability != null
-            ? play.possession === 'HOME'
-                ? play.win_probability
-                : 1 - play.win_probability
-            : game.win_probability != null
-              ? game.possession === 'HOME'
-                  ? game.win_probability
-                  : 1 - game.win_probability
-              : null;
+    const homeWinProb = homeWinProbability(game, play);
     const homePct = homeWinProb != null ? Math.round(homeWinProb * 100) : null;
     const leaderIsHome = homePct != null && homePct >= 50;
     const leaderPct = homePct != null ? Math.max(homePct, 100 - homePct) : null;

@@ -1,56 +1,63 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
+import ScrollFade from './ScrollFade';
+import useScrollFade from '../../hooks/useScrollFade';
 
 const SegTabs = ({ value, onChange, options, ariaLabel, buttonSx }) => {
     const buttonHeight = buttonSx?.height || '36px';
+    const { ref, edges } = useScrollFade();
     return (
-        <Box
-            role="tablist"
-            aria-label={ariaLabel}
-            sx={{
-                display: 'inline-flex',
-                height: `calc(${buttonHeight} + 2px)`,
-                boxSizing: 'border-box',
-                border: '1px solid var(--line)',
-                borderRadius: 'var(--r-sm)',
-                overflow: 'hidden',
-                overflowX: 'auto',
-                maxWidth: '100%',
-                '& button': {
+        <Box sx={{ position: 'relative', display: 'inline-flex', maxWidth: '100%', verticalAlign: 'middle' }}>
+            <ScrollFade edges={edges} />
+            <Box
+                ref={ref}
+                role="tablist"
+                aria-label={ariaLabel}
+                sx={{
                     display: 'inline-flex',
-                    alignItems: 'center',
-                    height: buttonHeight,
-                    background: 'var(--surface)',
-                    border: 0,
-                    color: 'var(--text-muted)',
-                    font: 'inherit',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    padding: '0 15px',
-                    cursor: 'pointer',
-                    borderRight: '1px solid var(--line-soft)',
-                    whiteSpace: 'nowrap',
+                    height: `calc(${buttonHeight} + 2px)`,
                     boxSizing: 'border-box',
-                    ...buttonSx,
-                },
-                '& button:last-of-type': { borderRight: 0 },
-                '& button.on': { background: 'var(--brand-deep)', color: '#fff' },
-                '& button:not(.on):hover': { background: 'var(--surface-2)' },
-            }}
-        >
-            {options.map(({ value: optionValue, label }) => (
-                <button
-                    key={optionValue}
-                    type="button"
-                    role="tab"
-                    aria-selected={value === optionValue}
-                    className={value === optionValue ? 'on' : ''}
-                    onClick={() => onChange(optionValue)}
-                >
-                    {label}
-                </button>
-            ))}
+                    border: '1px solid var(--line)',
+                    borderRadius: 'var(--r-sm)',
+                    overflow: 'hidden',
+                    overflowX: 'auto',
+                    maxWidth: '100%',
+                    '& button': {
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        height: buttonHeight,
+                        background: 'var(--surface)',
+                        border: 0,
+                        color: 'var(--text-muted)',
+                        font: 'inherit',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        padding: '0 15px',
+                        cursor: 'pointer',
+                        borderRight: '1px solid var(--line-soft)',
+                        whiteSpace: 'nowrap',
+                        boxSizing: 'border-box',
+                        ...buttonSx,
+                    },
+                    '& button:last-of-type': { borderRight: 0 },
+                    '& button.on': { background: 'var(--brand-deep)', color: '#fff' },
+                    '& button:not(.on):hover': { background: 'var(--surface-2)' },
+                }}
+            >
+                {options.map(({ value: optionValue, label }) => (
+                    <button
+                        key={optionValue}
+                        type="button"
+                        role="tab"
+                        aria-selected={value === optionValue}
+                        className={value === optionValue ? 'on' : ''}
+                        onClick={() => onChange(optionValue)}
+                    >
+                        {label}
+                    </button>
+                ))}
+            </Box>
         </Box>
     );
 };

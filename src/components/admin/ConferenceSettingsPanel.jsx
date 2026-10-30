@@ -4,59 +4,7 @@ import PropTypes from 'prop-types';
 import Panel from '../ui/Panel';
 import Toggle from '../ui/Toggle';
 import LogoUrlField from './LogoUrlField';
-
-const labelSx = {
-    display: 'block',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    mb: '5px',
-};
-const inputSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-};
-const btnSx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
-const ctrlSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.78rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
+import { inputSx, labelSx, primaryButtonSx, secondaryButtonSx } from '../../styles/controls';
 
 const ConferenceSettingsPanel = ({
     code,
@@ -126,17 +74,26 @@ const ConferenceSettingsPanel = ({
                     <LogoUrlField
                         label="Logo URL"
                         value={settingsForm.logoUrl}
-                        onChange={(e) => onFieldChange('logoUrl', e.target.value)}
+                        onChange={(value) => onFieldChange('logoUrl', value)}
+                        uploadKind="CONFERENCE"
                         previewBg="#ffffff"
                     />
                     <LogoUrlField
                         label="Dark logo URL"
                         value={settingsForm.logoUrlDark}
-                        onChange={(e) => onFieldChange('logoUrlDark', e.target.value)}
+                        onChange={(value) => onFieldChange('logoUrlDark', value)}
+                        uploadKind="CONFERENCE"
+                        fallback={settingsForm.logoUrl || undefined}
+                        placeholder="Using the light logo"
                         previewBg="#0a1620"
                     />
                 </Box>
-                <Box component="button" type="submit" disabled={savingSettings} sx={{ ...btnSx, justifySelf: 'start' }}>
+                <Box
+                    component="button"
+                    type="submit"
+                    disabled={savingSettings}
+                    sx={{ ...primaryButtonSx, alignSelf: 'start', justifySelf: 'start' }}
+                >
                     {savingSettings ? 'Saving...' : 'Save settings'}
                 </Box>
             </Box>
@@ -150,7 +107,7 @@ const ConferenceSettingsPanel = ({
                         component="button"
                         type="button"
                         onClick={() => onToggleDivisions(!divisionsEnabled)}
-                        sx={ctrlSx}
+                        sx={secondaryButtonSx}
                     >
                         {divisionsEnabled ? 'Disable divisions' : 'Enable divisions'}
                     </Box>
@@ -185,7 +142,7 @@ const ConferenceSettingsPanel = ({
                             type="button"
                             onClick={onSaveDivisions}
                             disabled={savingDivisions}
-                            sx={btnSx}
+                            sx={primaryButtonSx}
                         >
                             {savingDivisions ? 'Saving...' : 'Save divisions'}
                         </Box>

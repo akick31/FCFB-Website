@@ -1,27 +1,10 @@
 import React from 'react';
-import {
-    Box,
-    TextField,
-    Autocomplete,
-    Avatar,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Alert,
-    CircularProgress,
-} from '@mui/material';
+import { Box, Avatar, Dialog, DialogTitle, DialogContent, DialogActions, Alert, CircularProgress } from '@mui/material';
 import { CloudUpload as UploadIcon } from '@mui/icons-material';
 import { camelOrSnakeField } from '../../utils/fieldHelper';
-import {
-    btnPrimarySx,
-    ctrlSx,
-    labelSx,
-    inputSx,
-    dialogPaperSx,
-    dialogTitleSx,
-    autocompleteSx,
-} from './postseasonStyles';
+import VenueField from './VenueField';
+import { dialogPaperSx, dialogTitleSx } from './postseasonStyles';
+import { inputSx, labelSx, primaryButtonSx, secondaryButtonSx } from '../../styles/controls';
 
 const EditPostseasonBowlDialog = ({
     open,
@@ -29,7 +12,6 @@ const EditPostseasonBowlDialog = ({
     game,
     name,
     onNameChange,
-    venueNames,
     venue,
     onVenueChange,
     uploading,
@@ -65,20 +47,7 @@ const EditPostseasonBowlDialog = ({
                     <Box component="label" sx={labelSx}>
                         Venue
                     </Box>
-                    <Autocomplete
-                        freeSolo
-                        options={venueNames}
-                        inputValue={venue}
-                        onInputChange={(_, v) => onVenueChange(v || '')}
-                        sx={autocompleteSx}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                size="small"
-                                placeholder="e.g., Mercedes-Benz Stadium, Atlanta, GA"
-                            />
-                        )}
-                    />
+                    <VenueField value={venue} onChange={onVenueChange} />
                 </Box>
                 <Box>
                     <input
@@ -92,7 +61,7 @@ const EditPostseasonBowlDialog = ({
                         component="label"
                         htmlFor="edit-logo-upload-button"
                         sx={{
-                            ...ctrlSx,
+                            ...secondaryButtonSx,
                             width: '100%',
                             justifyContent: 'center',
                             gap: '8px',
@@ -117,10 +86,10 @@ const EditPostseasonBowlDialog = ({
             </Box>
         </DialogContent>
         <DialogActions sx={{ px: '20px', pb: '18px' }}>
-            <Box component="button" type="button" onClick={onCancel} sx={ctrlSx}>
+            <Box component="button" type="button" onClick={onCancel} sx={secondaryButtonSx}>
                 Cancel
             </Box>
-            <Box component="button" type="button" onClick={onSubmit} sx={btnPrimarySx}>
+            <Box component="button" type="button" onClick={onSubmit} sx={primaryButtonSx}>
                 Save
             </Box>
         </DialogActions>

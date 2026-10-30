@@ -27,6 +27,14 @@ jest.mock('../../charts/MultiLineChart', () => ({
         <div data-testid="chart">{JSON.stringify(lines.map(({ team, pts }) => ({ team, pts })))}</div>
     ),
 }));
+jest.mock('../../charts/SingleWeekBars', () => ({
+    __esModule: true,
+    default: ({ lines }) => (
+        <div data-testid="chart" data-view="single-week">
+            {JSON.stringify(lines.map(({ team, pts }) => ({ team, pts })))}
+        </div>
+    ),
+}));
 const props = {
     season: 12,
     teams: [{ name: 'Alpha', current_elo: 1500 }],
@@ -128,12 +136,14 @@ describe.each([
                           ],
             },
         ]);
+        expect(screen.getByTestId('chart')).not.toHaveAttribute('data-view');
     });
     test('retain successful weeks when an individual week fails', async () => {
         rowsApi.mockRejectedValueOnce(new Error('unavailable'));
         await open(sub);
         const lines = JSON.parse(screen.getByTestId('chart').textContent);
         expect(lines[0].pts).toEqual([{ x: 3, val: sub === 'poll' ? 3 : 30 }]);
+        expect(screen.getByTestId('chart')).toHaveAttribute('data-view', 'single-week');
         expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     });
     test('retain the existing empty view on weeks lookup failure', async () => {

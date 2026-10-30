@@ -4,10 +4,15 @@ import { Box, CircularProgress, Alert } from '@mui/material';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
+import PagedFooter from '../../components/ui/PagedFooter';
+import usePagedRows from '../../hooks/usePagedRows';
+import useFitCount from '../../hooks/useFitCount';
 import SegTabs from '../../components/ui/SegTabs';
-import SelectPill from '../../components/ui/SelectPill';
+import ConferencePill from '../../components/ui/ConferencePill';
+import TeamFilterPill from '../../components/ui/TeamFilterPill';
 import Panel from '../../components/ui/Panel';
-import TeamMark from '../../components/ui/TeamMark';
+import TeamName from '../../components/ui/TeamName';
+import FactList from '../../components/ui/FactList';
 import { getFilteredRecords } from '../../api/recordsApi';
 import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import { useTeamsMap, ensureTeam } from '../../hooks/useTeamsMap';
@@ -147,12 +152,13 @@ const RecordRow = ({ record, teamsMap }) => {
     const gameId = record.game_id;
     return (
         <Box
+            data-record-row
             component={gameId ? Link : 'div'}
             to={gameId ? `/game-details/${gameId}` : undefined}
             sx={{
                 display: 'block',
                 px: 1.75,
-                py: 1.2,
+                py: 0.8,
                 borderBottom: '1px solid var(--line-soft)',
                 textDecoration: 'none',
                 color: 'inherit',
@@ -182,25 +188,21 @@ const RecordRow = ({ record, teamsMap }) => {
             <Box
                 sx={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.75,
+                    alignItems: 'baseline',
+                    flexWrap: 'wrap',
+                    columnGap: '14px',
+                    rowGap: '2px',
                     color: 'var(--text-dim)',
                     fontSize: '0.78rem',
                     mt: 0.5,
                 }}
             >
                 {record.record_team && (
-                    <TeamMark team={teamsMap[record.record_team] || { name: record.record_team }} size={16} />
+                    <Box sx={{ color: 'var(--text-muted)', fontWeight: 700, alignSelf: 'center' }}>
+                        <TeamName name={record.record_team} size={16} />
+                    </Box>
                 )}
-                <Box component="span" sx={{ color: 'var(--text-muted)', fontWeight: 700 }}>
-                    {record.record_team}
-                </Box>
-                {recordMeta(record, teamsMap).map((part) => (
-                    <React.Fragment key={part}>
-                        <Box component="span">-</Box>
-                        <Box component="span">{part}</Box>
-                    </React.Fragment>
-                ))}
+                <FactList items={recordMeta(record, teamsMap)} />
             </Box>
         </Box>
     );
@@ -394,61 +396,35 @@ const RecordsBoard = ({ user }) => {
 
     const activeCategory = availableGroups.includes(category) ? category : availableGroups[0];
     const categoryRows = activeCategory ? byGroup[activeCategory] || [] : [];
+    const [fitRef, pageSize] = useFitCount({
+        itemSelector: '[data-record-row]',
+        rowHeight: 62,
+        columnWidth: 480,
+        phoneCount: 12,
+    });
+    const { page, pageCount, pageRows, setPage } = usePagedRows(
+        categoryRows,
+        pageSize,
+        `${activeTab}|${scope}|${conference}|${team}|${activeCategory}`
+    );
 
     return (
         <PageWrap>
             <PageHeading eyebrow="All-time" title="Records">
-                {!isLeagueOnlyTab && (
-                    <SegTabs value={scope} onChange={setScope} options={SCOPE_TABS} ariaLabel="Record scope" />
-                )}
-            </PageHeading>
-
-            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                 <SegTabs
                     value={activeTab}
                     onChange={(value) => navigate({ pathname: `/records/${value}`, search: searchParams.toString() })}
                     options={RECORD_TABS}
                     ariaLabel="Record type"
                 />
-                {!isLeagueOnlyTab && scope === 'conference' && (
-                    <SelectPill
-                        label="Conference"
-                        value={conference}
-                        onChange={setConference}
-                        options={conferenceChoices}
-                        sx={{ height: 38 }}
-                    />
+                {!isLeagueOnlyTab && (
+                    <SegTabs value={scope} onChange={setScope} options={SCOPE_TABS} ariaLabel="Record scope" />
                 )}
-                {!isLeagueOnlyTab && scope === 'team' && teams.length > 0 && (
-                    <SelectPill
-                        label="Team"
-                        value={team}
-                        onChange={setTeam}
-                        options={teams.map((entry) => ({ value: entry.name, label: entry.name }))}
-                        sx={{ height: 38 }}
-                    />
-                )}
-            </Box>
+            </PageHeading>
 
-            {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                </Alert>
-            )}
-
-            {!isLeagueOnlyTab && scope === 'conference' && (
-                <Box sx={{ color: 'var(--text-muted)', fontSize: '0.85rem', mb: 2, fontWeight: 700 }}>
-                    {conferenceLabel(conference)} records
-                </Box>
-            )}
-
-            {!loading && availableGroups.length > 0 && (
-                <Box
-                    role="tablist"
-                    aria-label="Record category"
-                    sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}
-                >
-                    {availableGroups.map((group) => {
+            <Box sx={{ display: 'flex', gap: 1, mb: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {!loading &&
+                    availableGroups.map((group) => {
                         const on = group === activeCategory;
                         return (
                             <Box
@@ -466,7 +442,7 @@ const RecordsBoard = ({ user }) => {
                                     font: 'inherit',
                                     fontSize: '0.78rem',
                                     fontWeight: 700,
-                                    padding: '8px 15px',
+                                    padding: '7px 13px',
                                     cursor: 'pointer',
                                     whiteSpace: 'nowrap',
                                     '&:hover': on ? {} : { background: 'var(--surface-2)' },
@@ -476,6 +452,36 @@ const RecordsBoard = ({ user }) => {
                             </Box>
                         );
                     })}
+                <Box sx={{ flex: 1 }} />
+                {!isLeagueOnlyTab && scope === 'conference' && (
+                    <ConferencePill
+                        label="Conference"
+                        value={conference}
+                        onChange={setConference}
+                        options={conferenceChoices}
+                        sx={{ height: 38 }}
+                    />
+                )}
+                {!isLeagueOnlyTab && scope === 'team' && teams.length > 0 && (
+                    <TeamFilterPill
+                        value={team}
+                        onChange={setTeam}
+                        teams={teams.map((entry) => entry.name)}
+                        allValue=""
+                        allLabel="Choose a team"
+                    />
+                )}
+            </Box>
+
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                </Alert>
+            )}
+
+            {!isLeagueOnlyTab && scope === 'conference' && (
+                <Box sx={{ color: 'var(--text-muted)', fontSize: '0.85rem', mb: 2, fontWeight: 700 }}>
+                    {conferenceLabel(conference)} records
                 </Box>
             )}
 
@@ -488,27 +494,37 @@ const RecordsBoard = ({ user }) => {
             ) : (
                 <>
                     <Panel header={activeCategory} more={`${categoryRows.length}`}>
-                        <Box
-                            sx={{
-                                display: 'grid',
-                                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                                columnGap: '16px',
-                            }}
-                        >
-                            {[
-                                categoryRows.slice(0, Math.ceil(categoryRows.length / 2)),
-                                categoryRows.slice(Math.ceil(categoryRows.length / 2)),
-                            ].map((column, index) => (
-                                <Box key={index}>
-                                    {column.map((record) => (
-                                        <RecordRow
-                                            key={`${record.record_name}-${record.record_type}`}
-                                            record={record}
-                                            teamsMap={teamsMap}
-                                        />
-                                    ))}
-                                </Box>
-                            ))}
+                        <Box ref={fitRef}>
+                            <Box
+                                sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                                    columnGap: '16px',
+                                }}
+                            >
+                                {[
+                                    pageRows.slice(0, Math.ceil(pageRows.length / 2)),
+                                    pageRows.slice(Math.ceil(pageRows.length / 2)),
+                                ].map((column, index) => (
+                                    <Box key={index}>
+                                        {column.map((record) => (
+                                            <RecordRow
+                                                key={`${record.record_name}-${record.record_type}`}
+                                                record={record}
+                                                teamsMap={teamsMap}
+                                            />
+                                        ))}
+                                    </Box>
+                                ))}
+                            </Box>
+                            <PagedFooter
+                                page={page}
+                                pageCount={pageCount}
+                                pageSize={pageSize}
+                                total={categoryRows.length}
+                                onChange={setPage}
+                                noun="records"
+                            />
                         </Box>
                     </Panel>
                     {activeTab === 'single_season' && (

@@ -11,6 +11,7 @@ const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
     useNavigate: () => mockNavigate,
     useSearchParams: () => [mockParams, jest.fn()],
+    Link: ({ children }) => <span>{children}</span>,
 }));
 jest.mock('../../api/coachTransactionLogApi', () => ({ getEntireCoachTransactionLog: jest.fn() }));
 jest.mock('../../api/playApi', () => ({ getUserDelayOfGameInstances: jest.fn() }));
@@ -19,7 +20,11 @@ jest.mock('../../api/seasonApi', () => ({
     getCurrentSeasonOrLatest: jest.fn(),
     getCurrentWeekOrLatest: jest.fn(),
 }));
-jest.mock('../../hooks/useTeamsMap', () => ({ useTeamsMap: () => ({}) }));
+jest.mock('../../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    ensureTeam: jest.fn(),
+    useTeamsMap: () => ({}),
+}));
 jest.mock('../../hooks/useConferencesMap', () => ({ conferenceLabel: (code) => code }));
 jest.mock('../../components/layout/AdminLayout', () => ({
     __esModule: true,
@@ -75,7 +80,7 @@ test('a prior user-load response cannot replace current report transactions', as
     const { rerender } = render(<Reports user={firstUser} />);
     await act(async () => rerender(<Reports user={secondUser} />));
     await act(async () => resolveOld([transaction('Obsolete')]));
-    expect(screen.getByRole('cell', { name: 'Current' })).toBeTruthy();
+    expect(screen.getByTitle('Current coaching history')).toBeTruthy();
     expect(screen.queryByText('Obsolete')).toBeNull();
 });
 
@@ -102,7 +107,7 @@ test('a new successful transaction load clears a previous failure', async () => 
     expect(screen.getByText('Failed to load coach transaction log')).toBeTruthy();
     expect(console.error.mock.calls).toEqual([['Failed to fetch transactions']]);
     await act(async () => rerender(<Reports user={secondUser} />));
-    expect(screen.getByRole('cell', { name: 'Current' })).toBeTruthy();
+    expect(screen.getByTitle('Current coaching history')).toBeTruthy();
     expect(screen.queryByText('Failed to load coach transaction log')).toBeNull();
 });
 
@@ -132,7 +137,7 @@ test('obsolete season lookup failures retain fallback handling without logging',
     await act(async () => rerender(<Reports user={secondUser} />));
     await act(async () => rejectOldSeasons({ message: 'sensitive transport detail' }));
     expect(console.error).not.toHaveBeenCalled();
-    expect(screen.getByRole('cell', { name: 'Current' })).toBeTruthy();
+    expect(screen.getByTitle('Current coaching history')).toBeTruthy();
 });
 
 test('delay report preserves full-season request arguments and ignores replaced-period rows', async () => {

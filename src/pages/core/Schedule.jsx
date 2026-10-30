@@ -19,6 +19,7 @@ import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
 import SelectPill from '../../components/ui/SelectPill';
+import TeamFilterPill from '../../components/ui/TeamFilterPill';
 import ConferenceTabs from '../../components/team/ConferenceTabs';
 import TeamSchedule from '../../components/schedule/TeamSchedule';
 import ConferenceGrid from '../../components/schedule/ConferenceGrid';
@@ -27,24 +28,7 @@ import ConferenceGameDialogs from '../../components/scheduling/ConferenceGameDia
 import PostseasonView from '../../components/schedule/PostseasonView';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
-
-const ctrlSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.78rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
+import { secondaryButtonSx } from '../../styles/controls';
 
 const LS_TEAM = 'schedule_selectedTeam';
 const LS_CONFERENCE = 'schedule_conference';
@@ -374,8 +358,9 @@ const Schedule = () => {
             {mode === 'team' && (
                 <>
                     <Box sx={{ mb: '16px' }}>
-                        <SelectPill
-                            label="Team"
+                        <TeamFilterPill
+                            allValue=""
+                            allLabel="Choose a team"
                             value={selectedTeam?.name || ''}
                             onChange={(name) => {
                                 const team = activeTeams.find((entry) => entry.name === name) || null;
@@ -386,7 +371,7 @@ const Schedule = () => {
                                     });
                                 }
                             }}
-                            options={activeTeams.map((team) => ({ value: team.name, label: team.name }))}
+                            teams={activeTeams.map((team) => team.name)}
                         />
                     </Box>
                     <TeamSchedule
@@ -401,7 +386,7 @@ const Schedule = () => {
 
             {mode === 'conference' && (
                 <>
-                    <Box sx={{ mb: '16px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+                    <Box sx={{ mb: '16px', display: 'flex', flexWrap: 'nowrap', gap: '10px', alignItems: 'center' }}>
                         <ConferenceTabs
                             conferences={availableConferences}
                             value={selectedConference}
@@ -417,7 +402,7 @@ const Schedule = () => {
                                 component="button"
                                 type="button"
                                 onClick={scheduleEditor.handleAddGameManually}
-                                sx={ctrlSx}
+                                sx={secondaryButtonSx}
                             >
                                 + Add game manually
                             </Box>

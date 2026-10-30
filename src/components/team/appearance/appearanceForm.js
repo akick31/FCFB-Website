@@ -1,5 +1,7 @@
 export const isVisible = (definition, form) => !definition.showIf || definition.showIf(form);
 
+export const isEnabled = (definition, form) => !definition.disabledIf || !definition.disabledIf(form);
+
 export const readGeneric = (definition, stored, fallback) => {
     if (definition.type === 'toggle') {
         return stored !== false;
@@ -12,7 +14,7 @@ export const readGeneric = (definition, stored, fallback) => {
 
 /** Writes a form value into the save payload; hidden fields are cleared, so opting out of a control unsets it. */
 export const writeGeneric = (payload, definition, form) => {
-    if (!isVisible(definition, form)) {
+    if (!isVisible(definition, form) || !isEnabled(definition, form)) {
         payload[definition.key] = null;
         return;
     }

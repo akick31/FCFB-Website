@@ -14,20 +14,19 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import PeopleIcon from '@mui/icons-material/People';
-import SportsFootballIcon from '@mui/icons-material/SportsFootball';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
-import StatTile, { TileGrid } from '../../components/ui/StatTile';
 import TeamMark from '../../components/ui/TeamMark';
 import ConferenceMark from '../../components/ui/ConferenceMark';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { getNewSignups, deleteNewSignup, hireFromSignup } from '../../api/newSignupsApi';
 import { getAllTeams } from '../../api/teamApi';
 import { isRealTeam, getTeamCoaches } from '../../utils/teamDataUtils';
+import { compact, secondaryButtonSx } from '../../styles/controls';
+import TeamName from '../../components/ui/TeamName';
+import TeamSelect from '../../components/ui/TeamSelect';
+import FormField from '../../components/admin/form/FormField';
 
 const pillSx = {
     display: 'inline-flex',
@@ -42,47 +41,6 @@ const pillSx = {
     borderRadius: 'var(--r-sm)',
     lineHeight: 1,
 };
-
-const hireBtnSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--field)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '30px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.72rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:hover': { borderColor: 'var(--field)' },
-};
-
-const ctrlSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.78rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '6px',
-    textDecoration: 'none',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-};
-
-const QUICK_ACTIONS = [
-    { label: 'Create game', path: '/admin/game-management', icon: <SportsFootballIcon sx={{ fontSize: 15 }} /> },
-    { label: 'Manage teams', path: '/admin/team-management', icon: <EmojiEventsIcon sx={{ fontSize: 15 }} /> },
-    { label: 'Manage users', path: '/admin/user-management', icon: <PeopleIcon sx={{ fontSize: 15 }} /> },
-    { label: 'Manage conferences', path: '/admin/conferences', icon: <AccountTreeIcon sx={{ fontSize: 15 }} /> },
-];
 
 const Admin = ({ user }) => {
     const teamsMap = useTeamsMap();
@@ -208,178 +166,155 @@ const Admin = ({ user }) => {
     }
 
     return (
-        <AdminLayout
-            title="Admin dashboard"
-            controls={
-                <>
-                    {QUICK_ACTIONS.map((action) => (
-                        <Box key={action.path} component={Link} to={action.path} sx={ctrlSx}>
-                            {action.icon}
-                            {action.label}
-                        </Box>
-                    ))}
-                </>
-            }
-        >
-            <Box sx={{ color: 'var(--text-muted)', fontSize: '0.85rem', mb: '16px' }}>
-                Welcome back, {user?.username || 'Admin'}.
-            </Box>
-
+        <AdminLayout title="Admin dashboard">
             {error && (
                 <Alert severity="error" sx={{ mb: '16px' }}>
                     {error}
                 </Alert>
             )}
 
-            <TileGrid minTile={160} sx={{ mb: '16px' }}>
-                <StatTile label="Pending signups" value={newSignups.length} />
-                <StatTile label="Open teams" value={openTeams.length} />
-            </TileGrid>
-
-            <Panel header="New signups" sx={{ mb: '16px' }}>
-                {newSignups.length === 0 ? (
-                    <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No pending signups.</Box>
-                ) : (
-                    <DataTable minWidth={620}>
-                        <thead>
-                            <tr>
-                                <th className="lft stick">Username</th>
-                                <th className="lft">Coach</th>
-                                <th className="lft">Discord</th>
-                                <th className="lft">Team choices</th>
-                                <th style={{ textAlign: 'center' }}>Status</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {newSignups.map((signup) => (
-                                <tr key={signup.id}>
-                                    <td className="lft stick">@{signup.username}</td>
-                                    <td className="lft">{signup.coach_name}</td>
-                                    <td className="lft">{signup.discord_tag}</td>
-                                    <td className="lft">
-                                        {[signup.team_choice_one, signup.team_choice_two, signup.team_choice_three]
-                                            .filter(Boolean)
-                                            .join(', ')}
-                                    </td>
-                                    <td style={{ textAlign: 'center' }}>
-                                        <Box
-                                            component="span"
-                                            sx={{
-                                                ...pillSx,
-                                                background: signup.approved
-                                                    ? 'rgba(55,192,125,0.15)'
-                                                    : 'var(--surface-2)',
-                                                color: signup.approved ? 'var(--field)' : 'var(--text-muted)',
-                                            }}
-                                        >
-                                            {signup.approved ? 'Verified' : 'Not verified'}
-                                        </Box>
-                                    </td>
-                                    <td>
-                                        <Box sx={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                                            <Box
-                                                component="button"
-                                                type="button"
-                                                onClick={(event) => {
-                                                    event.stopPropagation();
-                                                    handleHireClick(signup);
-                                                }}
-                                                sx={hireBtnSx}
-                                            >
-                                                + Hire
-                                            </Box>
-                                            <Box
-                                                component="button"
-                                                type="button"
-                                                disabled={clearingId === signup.id}
-                                                onClick={(event) => {
-                                                    event.stopPropagation();
-                                                    handleClearSignup(signup.id);
-                                                }}
-                                                sx={{
-                                                    border: '1px solid var(--line)',
-                                                    background: 'var(--surface-2)',
-                                                    color: 'var(--live)',
-                                                    borderRadius: 'var(--r-sm)',
-                                                    px: '10px',
-                                                    height: '30px',
-                                                    boxSizing: 'border-box',
-                                                    font: 'inherit',
-                                                    fontSize: '0.72rem',
-                                                    fontWeight: 700,
-                                                    cursor: 'pointer',
-                                                    '&:hover': { borderColor: 'var(--live)' },
-                                                    '&:disabled': { opacity: 0.6, cursor: 'default' },
-                                                }}
-                                            >
-                                                {clearingId === signup.id ? 'Clearing...' : 'Clear'}
-                                            </Box>
-                                        </Box>
-                                    </td>
+            <Box
+                sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 3fr) minmax(0, 2fr)' },
+                    gap: '16px',
+                    alignItems: 'start',
+                }}
+            >
+                <Panel header="New signups" more={`${newSignups.length} pending`}>
+                    {newSignups.length === 0 ? (
+                        <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No pending signups.</Box>
+                    ) : (
+                        <DataTable minWidth={560} phoneMinWidth={0}>
+                            <thead>
+                                <tr>
+                                    <th className="lft">Coach</th>
+                                    <th className="lft wide">Team choices</th>
+                                    <th style={{ textAlign: 'center' }}>Status</th>
+                                    <th></th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </DataTable>
-                )}
-            </Panel>
-
-            <Panel header="Open teams" sx={{ mb: '16px' }}>
-                {openTeams.length === 0 ? (
-                    <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No open teams.</Box>
-                ) : (
-                    <DataTable minWidth={480}>
-                        <thead>
-                            <tr>
-                                <th className="lft stick">Team</th>
-                                <th className="lft">Conference</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {openTeams.map((team) => {
-                                const teamId = teamsMap[team.name]?.id;
-                                return (
-                                    <Box
-                                        component={teamId ? Link : 'tr'}
-                                        to={teamId ? `/team-details/${teamId}` : undefined}
-                                        key={team.name}
-                                        sx={{
-                                            display: 'table-row',
-                                            textDecoration: 'none',
-                                            color: 'inherit',
-                                            cursor: teamId ? 'pointer' : 'default',
-                                        }}
-                                    >
-                                        <td className="lft stick">
-                                            <Box className="teamcell">
-                                                <TeamMark team={teamsMap[team.name]} size={22} />
-                                                <span className="nm">{team.name}</span>
+                            </thead>
+                            <tbody>
+                                {newSignups.map((signup) => (
+                                    <tr key={signup.id}>
+                                        <td className="lft">
+                                            <Box sx={{ fontWeight: 700 }}>@{signup.username}</Box>
+                                            <Box sx={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+                                                {signup.coach_name}, {signup.discord_tag}
                                             </Box>
                                         </td>
-                                        <td className="lft">
-                                            <ConferenceMark conference={team.conference} size={20} />
+                                        <td className="lft wide">
+                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                                {[
+                                                    signup.team_choice_one,
+                                                    signup.team_choice_two,
+                                                    signup.team_choice_three,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .map((choice) => (
+                                                        <TeamName key={choice} name={choice} size={16} />
+                                                    ))}
+                                            </Box>
                                         </td>
-                                        <td>
+                                        <td style={{ textAlign: 'center' }}>
                                             <Box
                                                 component="span"
                                                 sx={{
                                                     ...pillSx,
-                                                    background: 'transparent',
-                                                    color: 'var(--field)',
-                                                    border: '1px solid color-mix(in srgb, var(--field) 55%, var(--line))',
+                                                    background: signup.approved
+                                                        ? 'rgba(55,192,125,0.15)'
+                                                        : 'var(--surface-2)',
+                                                    color: signup.approved ? 'var(--field)' : 'var(--text-muted)',
                                                 }}
                                             >
-                                                Open
+                                                {signup.approved ? 'Verified' : 'Not verified'}
                                             </Box>
                                         </td>
+                                        <td>
+                                            <Box sx={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                                <Box
+                                                    component="button"
+                                                    type="button"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        handleHireClick(signup);
+                                                    }}
+                                                    sx={compact({ ...secondaryButtonSx, color: 'var(--field)' })}
+                                                >
+                                                    + Hire
+                                                </Box>
+                                                <Box
+                                                    component="button"
+                                                    type="button"
+                                                    disabled={clearingId === signup.id}
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        handleClearSignup(signup.id);
+                                                    }}
+                                                    sx={compact({ ...secondaryButtonSx, color: 'var(--live)' })}
+                                                >
+                                                    {clearingId === signup.id ? 'Clearing...' : 'Clear'}
+                                                </Box>
+                                            </Box>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </DataTable>
+                    )}
+                </Panel>
+
+                <Panel header="Open teams" more={`${openTeams.length} open`}>
+                    {openTeams.length === 0 ? (
+                        <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No open teams.</Box>
+                    ) : (
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+                            {openTeams.map((team) => {
+                                const teamId = teamsMap[team.name]?.id;
+                                return (
+                                    <Box
+                                        key={team.name}
+                                        component={teamId ? Link : 'div'}
+                                        to={teamId ? `/team-details/${teamId}` : undefined}
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            p: '8px 12px',
+                                            borderBottom: '1px solid var(--line-soft)',
+                                            textDecoration: 'none',
+                                            color: 'inherit',
+                                            minWidth: 0,
+                                            '&:hover': { background: 'var(--surface-2)' },
+                                        }}
+                                    >
+                                        <TeamMark
+                                            team={teamsMap[team.name] || { name: team.name }}
+                                            size={22}
+                                            decorative
+                                        />
+                                        <Box
+                                            component="span"
+                                            sx={{
+                                                flex: 1,
+                                                minWidth: 0,
+                                                fontWeight: 700,
+                                                fontSize: '0.84rem',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                            }}
+                                        >
+                                            {team.name}
+                                        </Box>
+                                        <ConferenceMark conference={team.conference} size={18} />
                                     </Box>
                                 );
                             })}
-                        </tbody>
-                    </DataTable>
-                )}
-            </Panel>
+                        </Box>
+                    )}
+                </Panel>
+            </Box>
 
             <Dialog open={Boolean(hireSignup)} onClose={closeHireDialog} maxWidth="sm" fullWidth>
                 <DialogTitle>
@@ -387,20 +322,20 @@ const Admin = ({ user }) => {
                 </DialogTitle>
                 <DialogContent>
                     <Box sx={{ pt: 2 }}>
-                        <FormControl fullWidth sx={{ mb: 2 }}>
-                            <InputLabel>Team</InputLabel>
-                            <Select value={hireTeam} onChange={(e) => setHireTeam(e.target.value)} label="Team">
-                                {hireableTeams.map((team) => {
-                                    const coachCount = getTeamCoaches(team).length;
-                                    return (
-                                        <MenuItem key={team.name} value={team.name}>
-                                            {team.name}{' '}
-                                            {coachCount === 0 ? '(vacant)' : '(1 coach, hire as coordinator)'}
-                                        </MenuItem>
-                                    );
-                                })}
-                            </Select>
-                        </FormControl>
+                        <FormField label="Team">
+                            <TeamSelect
+                                value={hireTeam}
+                                onChange={setHireTeam}
+                                teams={hireableTeams.map((team) => team.name)}
+                                ariaLabel="Team"
+                                detailOf={(name) => {
+                                    const team = hireableTeams.find((entry) => entry.name === name);
+                                    return team && getTeamCoaches(team).length > 0
+                                        ? '1 coach, hire as coordinator'
+                                        : 'Vacant';
+                                }}
+                            />
+                        </FormField>
                         <FormControl fullWidth sx={{ mb: 2 }}>
                             <InputLabel>Coach Position</InputLabel>
                             <Select

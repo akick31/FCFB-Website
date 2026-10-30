@@ -3,6 +3,7 @@ import React, { StrictMode } from 'react';
 import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { pickTeam } from '../../testUtils/pickTeam';
 import Schedule from './Schedule';
 import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import {
@@ -33,7 +34,13 @@ jest.mock('../../utils/utils', () => ({
     getStorageItem: (_storage, _key, fallback) => fallback,
     checkIfUserIsAdmin: () => false,
 }));
-jest.mock('../../hooks/useTeamsMap', () => ({ useTeamsMap: () => ({}) }));
+jest.mock('../../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    ensureTeam: jest.fn(),
+    useTeamsMap: () => ({}),
+}));
+jest.mock('../../components/ui/TeamMark', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../components/ui/ConferenceMark', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../hooks/useSeo', () => ({ useSeo: () => {} }));
 jest.mock('../../hooks/useConferencesMap', () => ({
     useConferencesMap: () => ({}),
@@ -117,9 +124,7 @@ test.each(['resolve', 'reject'])(
         const previous = pending(getScheduleBySeasonAndTeam);
         const current = pending(getScheduleBySeasonAndTeam);
         await open('/schedules/team/alpha/12');
-        await act(async () =>
-            fireEvent.change(screen.getByRole('combobox', { name: 'Team' }), { target: { value: 'Beta' } })
-        );
+        await act(async () => pickTeam('Team', 'Beta'));
         await previous[completion]([{ label: 'Old team', week: 1 }]);
         expect(screen.getByTestId('team-result')).toHaveTextContent('Loading team');
         await current.resolve([{ label: 'New team', week: 1 }]);

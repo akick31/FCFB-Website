@@ -26,6 +26,7 @@ import {
 import { formatResponseTime } from '../../utils/timeUtils';
 import { humanizeEnumValue } from '../../utils/humanize';
 import { useSeo } from '../../hooks/useSeo';
+import { inputSx, labelSx, primaryButtonSx } from '../../styles/controls';
 
 const userLabel = (user) => (user.team ? `${user.username} (${user.team})` : user.username);
 const num = (value) => (value == null ? '-' : Number(value).toLocaleString());
@@ -33,43 +34,6 @@ const dec = (value, digits = 2) => (value == null ? '-' : Number(value).toFixed(
 const statPct = (value) => (value == null ? '-' : `${Number(value).toFixed(1)}%`);
 const signed = (value) => (value == null ? '-' : value > 0 ? `+${value}` : `${value}`);
 const sharePct = (value) => (value == null ? '-' : `${(value * 100).toFixed(1)}%`);
-
-const CONTROL_HEIGHT = '34px';
-const inputSx = {
-    height: CONTROL_HEIGHT,
-    boxSizing: 'border-box',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    py: 0,
-    font: 'inherit',
-    fontSize: '0.8rem',
-};
-const btnSx = {
-    height: CONTROL_HEIGHT,
-    boxSizing: 'border-box',
-    display: 'flex',
-    alignItems: 'center',
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:disabled': { opacity: 0.5, cursor: 'not-allowed' },
-};
-const labelSx = {
-    fontSize: '0.68rem',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
-};
 
 const CoachTendencyCard = () => {
     useSeo({
@@ -182,10 +146,13 @@ const CoachTendencyCard = () => {
                     ? seasonRows
                     : seasonRows.filter((row) => row.season_number === overrideSeason);
             const stats = aggregateSeasonStats(statsRows);
-            const record = statsRows.reduce(
-                (acc, row) => ({ wins: acc.wins + (row.wins || 0), losses: acc.losses + (row.losses || 0) }),
-                { wins: 0, losses: 0 }
-            );
+            const record =
+                statsRows.length === 0 && overrideSeason === 'alltime'
+                    ? { wins: overrideUser.wins || 0, losses: overrideUser.losses || 0 }
+                    : statsRows.reduce(
+                          (acc, row) => ({ wins: acc.wins + (row.wins || 0), losses: acc.losses + (row.losses || 0) }),
+                          { wins: 0, losses: 0 }
+                      );
 
             setCard({
                 coach: overrideUser,
@@ -267,7 +234,7 @@ const CoachTendencyCard = () => {
                             type="button"
                             onClick={() => generate()}
                             disabled={loading || !resolvedTarget}
-                            sx={btnSx}
+                            sx={primaryButtonSx}
                         >
                             {loading ? 'Generating…' : 'Generate card'}
                         </Box>
@@ -285,13 +252,15 @@ const CoachTendencyCard = () => {
             {!loading && card && (
                 <>
                     <SectionTitle title={`@${card.coach.username}`} note={card.coach.coach_name} />
-                    <TileGrid>
+                    <TileGrid minTile={110}>
                         <StatTile
+                            compact
                             label="Total games"
                             value={num(card.record.wins + card.record.losses)}
                             caption={`${card.record.wins}-${card.record.losses}`}
                         />
                         <StatTile
+                            compact
                             label="Average response"
                             value={
                                 card.coach.average_response_time
@@ -299,107 +268,129 @@ const CoachTendencyCard = () => {
                                     : 'N/A'
                             }
                         />
-                        <StatTile label="Total yards" value={card.stats ? num(card.stats.total_yards) : '-'} />
+                        <StatTile compact label="Total yards" value={card.stats ? num(card.stats.total_yards) : '-'} />
                         <StatTile
+                            compact
                             label="Yards per play"
                             value={card.stats ? dec(card.stats.average_yards_per_play) : '-'}
                         />
                         <StatTile
+                            compact
                             label="Avg offensive diff"
                             value={card.stats ? dec(card.stats.average_offensive_diff) : '-'}
                         />
                         <StatTile
+                            compact
                             label="Avg defensive diff"
                             value={card.stats ? dec(card.stats.average_defensive_diff) : '-'}
                         />
                         <StatTile
+                            compact
                             label="Turnover diff"
                             value={card.stats ? signed(card.stats.turnover_differential) : '-'}
                         />
                         <StatTile
+                            compact
                             label="3rd down %"
                             value={card.stats ? statPct(card.stats.third_down_conversion_percentage) : '-'}
                         />
                         <StatTile
+                            compact
                             label="Red zone %"
                             value={card.stats ? statPct(card.stats.red_zone_success_percentage) : '-'}
                         />
                     </TileGrid>
 
-                    <SectionTitle title="Tendencies" />
-                    <Panel sx={{ mb: '16px' }}>
-                        <TileGrid minTile={140}>
-                            <StatTile
-                                compact
-                                label="Run rate"
-                                value={sharePct(card.split.runPct)}
-                                caption={`${card.split.runs} of ${card.split.total} snaps`}
-                            />
-                            <StatTile
-                                compact
-                                label="Pass rate"
-                                value={sharePct(card.split.passPct)}
-                                caption={`${card.split.passes} of ${card.split.total} snaps`}
-                            />
-                            <StatTile
-                                compact
-                                label="4th down go-for-it"
-                                value={sharePct(card.fourthDown.goForItRate)}
-                                caption={`${card.fourthDown.wentForIt} of ${card.fourthDown.attempts} attempts`}
-                            />
-                            <StatTile
-                                compact
-                                label="Onside kick rate"
-                                value={sharePct(card.kickoff.shares?.KICKOFF_ONSIDE)}
-                                caption={`${card.kickoff.counts.KICKOFF_ONSIDE} of ${card.kickoff.total} kicks`}
-                            />
-                            <StatTile
-                                compact
-                                label="Squib kick rate"
-                                value={sharePct(card.kickoff.shares?.KICKOFF_SQUIB)}
-                                caption={`${card.kickoff.counts.KICKOFF_SQUIB} of ${card.kickoff.total} kicks`}
-                            />
-                            <StatTile
-                                compact
-                                label="Chew rate"
-                                value={sharePct(card.tempo.chewPct)}
-                                caption={`${card.tempo.chew} of ${card.tempo.total} snaps`}
-                            />
-                            <StatTile
-                                compact
-                                label="Hurry rate"
-                                value={sharePct(card.tempo.hurryPct)}
-                                caption={`${card.tempo.hurry} of ${card.tempo.total} snaps`}
-                            />
-                        </TileGrid>
-                    </Panel>
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.3fr) minmax(0, 1fr)' },
+                            gap: '16px',
+                            alignItems: 'start',
+                            mt: '14px',
+                        }}
+                    >
+                        <Panel header="Tendencies">
+                            <TileGrid minTile={120} sx={{ p: '12px' }}>
+                                <StatTile
+                                    compact
+                                    label="Run rate"
+                                    value={sharePct(card.split.runPct)}
+                                    caption={`${card.split.runs} of ${card.split.total} snaps`}
+                                />
+                                <StatTile
+                                    compact
+                                    label="Pass rate"
+                                    value={sharePct(card.split.passPct)}
+                                    caption={`${card.split.passes} of ${card.split.total} snaps`}
+                                />
+                                <StatTile
+                                    compact
+                                    label="4th down go-for-it"
+                                    value={sharePct(card.fourthDown.goForItRate)}
+                                    caption={`${card.fourthDown.wentForIt} of ${card.fourthDown.attempts} attempts`}
+                                />
+                                <StatTile
+                                    compact
+                                    label="Onside kick rate"
+                                    value={sharePct(card.kickoff.shares?.KICKOFF_ONSIDE)}
+                                    caption={`${card.kickoff.counts.KICKOFF_ONSIDE} of ${card.kickoff.total} kicks`}
+                                />
+                                <StatTile
+                                    compact
+                                    label="Squib kick rate"
+                                    value={sharePct(card.kickoff.shares?.KICKOFF_SQUIB)}
+                                    caption={`${card.kickoff.counts.KICKOFF_SQUIB} of ${card.kickoff.total} kicks`}
+                                />
+                                <StatTile
+                                    compact
+                                    label="Chew rate"
+                                    value={sharePct(card.tempo.chewPct)}
+                                    caption={`${card.tempo.chew} of ${card.tempo.total} snaps`}
+                                />
+                                <StatTile
+                                    compact
+                                    label="Hurry rate"
+                                    value={sharePct(card.tempo.hurryPct)}
+                                    caption={`${card.tempo.hurry} of ${card.tempo.total} snaps`}
+                                />
+                            </TileGrid>
+                        </Panel>
 
-                    <SectionTitle title="Favorite play call by down" />
-                    <DataTable minWidth={420}>
-                        <thead>
-                            <tr>
-                                <th className="lft stick">Down</th>
-                                <th className="lft">Favorite call</th>
-                                <th>Share</th>
-                                <th>Snaps</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {[1, 2, 3, 4].map((down) => {
-                                const entry = card.byDown[down];
-                                return (
-                                    <tr key={down}>
-                                        <td className="lft stick">
-                                            {down === 1 ? '1st' : down === 2 ? '2nd' : down === 3 ? '3rd' : '4th'}
-                                        </td>
-                                        <td className="lft">{entry ? humanizeEnumValue(entry.call) : '-'}</td>
-                                        <td>{entry ? sharePct(entry.share) : '-'}</td>
-                                        <td>{entry ? entry.total : '-'}</td>
+                        <Panel header="Favorite play call by down">
+                            <DataTable minWidth={360} phoneMinWidth={0} dense>
+                                <thead>
+                                    <tr>
+                                        <th className="lft stick">Down</th>
+                                        <th className="lft">Favorite call</th>
+                                        <th>Share</th>
+                                        <th>Snaps</th>
                                     </tr>
-                                );
-                            })}
-                        </tbody>
-                    </DataTable>
+                                </thead>
+                                <tbody>
+                                    {[1, 2, 3, 4].map((down) => {
+                                        const entry = card.byDown[down];
+                                        return (
+                                            <tr key={down}>
+                                                <td className="lft stick">
+                                                    {down === 1
+                                                        ? '1st'
+                                                        : down === 2
+                                                          ? '2nd'
+                                                          : down === 3
+                                                            ? '3rd'
+                                                            : '4th'}
+                                                </td>
+                                                <td className="lft">{entry ? humanizeEnumValue(entry.call) : '-'}</td>
+                                                <td>{entry ? sharePct(entry.share) : '-'}</td>
+                                                <td>{entry ? entry.total : '-'}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </DataTable>
+                        </Panel>
+                    </Box>
                 </>
             )}
         </PageWrap>

@@ -1,8 +1,8 @@
-import { inputSx, labelSx } from './apiExplorerStyles';
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import { backendRoot } from '../../api/apiDocsApi';
+import { inputSx, labelSx } from '../../styles/controls';
 
 const shellQuote = (value) => `'${String(value).replace(/'/g, `'\\''`)}'`;
 

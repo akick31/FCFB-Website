@@ -4,45 +4,18 @@ import PropTypes from 'prop-types';
 import Panel from '../../ui/Panel';
 import { useAppearancePreview } from './useAppearancePreview';
 import { useAppearanceDraft } from '../../../hooks/useAppearanceDraft';
+import { inputSx, labelSx, primaryButtonSx } from '../../../styles/controls';
 
-const labelSx = {
-    display: 'block',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    mb: '5px',
+const toolbarSx = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    p: '8px 14px',
+    borderBottom: '1px solid var(--line)',
 };
-const inputSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-};
-const btnSx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
-const helpSx = { color: 'var(--text-dim)', fontSize: '0.7rem', mt: '4px' };
+const toolbarTitleSx = { fontWeight: 800, fontSize: '0.9rem' };
 
-const ColorRow = ({ label, value, onChange, disabled, help }) => (
+const ColorRow = ({ label, value, onChange, disabled }) => (
     <Box>
         <Box sx={labelSx}>{label}</Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -71,7 +44,6 @@ const ColorRow = ({ label, value, onChange, disabled, help }) => (
                 sx={inputSx}
             />
         </Box>
-        {help && <Box sx={helpSx}>{help}</Box>}
     </Box>
 );
 
@@ -108,6 +80,7 @@ const PreviewPanel = ({ title, state }) => (
                         alt={title}
                         sx={{
                             maxWidth: '100%',
+                            maxHeight: { xs: '30vh', md: '42vh' },
                             borderRadius: 'var(--r-sm)',
                             border: '1px solid var(--line)',
                             opacity: state.loading ? 0.5 : 1,
@@ -175,70 +148,66 @@ const ColorsEditor = forwardRef(({ team, source, isAdmin, canEditTertiary, onSav
     useImperativeHandle(ref, () => ({ save: doSave }));
 
     return (
-        <Box
-            sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: '1fr 360px' },
-                gap: '16px',
-                alignItems: 'start',
-            }}
-        >
-            <Panel header="Team colors">
-                <Box
-                    component="form"
-                    onSubmit={submit}
-                    sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}
-                >
-                    {error && <Alert severity="error">{error}</Alert>}
-                    {saved && <Alert severity="success">Saved</Alert>}
-                    {!isAdmin && (
-                        <Alert severity="info">
-                            Primary and secondary are league identity and only admins or commissioners can change them.
-                            You can set your tertiary color.
-                        </Alert>
-                    )}
-                    <ColorRow
-                        label="Primary"
-                        value={form.primary_color}
-                        onChange={(value) => change('primary_color', value)}
-                        disabled={!isAdmin}
-                    />
-                    <ColorRow
-                        label="Secondary"
-                        value={form.secondary_color}
-                        onChange={(value) => change('secondary_color', value)}
-                        disabled={!isAdmin}
-                    />
-                    <ColorRow
-                        label="Tertiary"
-                        value={form.tertiary_color}
-                        onChange={(value) => change('tertiary_color', value)}
-                        disabled={!canEditTertiary}
-                        help="Your accent color."
-                    />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <Box
+                component="form"
+                onSubmit={submit}
+                sx={{ border: '1px solid var(--line)', borderRadius: '10px', background: 'var(--surface)' }}
+            >
+                <Box sx={toolbarSx}>
+                    <Box sx={toolbarTitleSx}>Team colors</Box>
+                    <Box sx={{ flex: 1 }} />
+                    {saved && <Box sx={{ color: 'var(--text-dim)', fontSize: '0.75rem', fontWeight: 700 }}>Saved</Box>}
                     {(isAdmin || canEditTertiary) && (
-                        <Box
-                            component="button"
-                            type="submit"
-                            disabled={saving}
-                            sx={{ ...btnSx, alignSelf: 'flex-start' }}
-                        >
-                            {saving ? 'Saving...' : 'Save colors'}
+                        <Box component="button" type="submit" disabled={saving} sx={primaryButtonSx}>
+                            {saving ? 'Saving...' : 'Save'}
                         </Box>
                     )}
                 </Box>
-            </Panel>
+                <Box sx={{ p: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {error && <Alert severity="error">{error}</Alert>}
+                    {!isAdmin && (
+                        <Box sx={{ color: 'var(--text-dim)', fontSize: '0.74rem' }}>
+                            Only admins and commissioners can change primary and secondary.
+                        </Box>
+                    )}
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+                            gap: '14px',
+                        }}
+                    >
+                        <ColorRow
+                            label="Primary"
+                            value={form.primary_color}
+                            onChange={(value) => change('primary_color', value)}
+                            disabled={!isAdmin}
+                        />
+                        <ColorRow
+                            label="Secondary"
+                            value={form.secondary_color}
+                            onChange={(value) => change('secondary_color', value)}
+                            disabled={!isAdmin}
+                        />
+                        <ColorRow
+                            label="Tertiary"
+                            value={form.tertiary_color}
+                            onChange={(value) => change('tertiary_color', value)}
+                            disabled={!canEditTertiary}
+                        />
+                    </Box>
+                </Box>
+            </Box>
             <Box
                 sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '16px',
-                    position: { md: 'sticky' },
-                    top: { md: '16px' },
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) minmax(0, 1fr)' },
+                    gap: '14px',
                 }}
             >
-                <PreviewPanel title="Scorebug preview" state={scorebug} />
-                <PreviewPanel title="Uniform preview" state={uniform} />
+                <PreviewPanel title="Scorebug" state={scorebug} />
+                <PreviewPanel title="Uniform" state={uniform} />
             </Box>
         </Box>
     );

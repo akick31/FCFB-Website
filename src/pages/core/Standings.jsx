@@ -431,7 +431,7 @@ const Standings = () => {
                 )}
             </PageHeading>
 
-            <Box sx={{ mb: '16px' }}>
+            <Box sx={{ mb: '10px' }}>
                 <ConferenceTabs
                     conferences={availableConferences}
                     value={selectedConference}
@@ -444,22 +444,22 @@ const Standings = () => {
                     <CircularProgress />
                 </Box>
             ) : (
-                <DataTable minWidth={860} tableLayout="fixed">
+                <DataTable minWidth={860} phoneMinWidth={0} tableLayout="fixed" dense>
                     <thead>
                         <tr>
-                            <th className="lft stick" style={{ width: '32%' }}>
+                            <th className="lft stick" style={{ width: '40%' }}>
                                 Team
                             </th>
                             <th style={{ width: '11%' }}>Overall</th>
                             <th style={{ width: '11%' }}>Conference</th>
                             <th style={{ width: '11%' }}>ELO</th>
-                            <th className="lft" style={{ width: '11%' }}>
+                            <th className="lft wide" style={{ width: '11%' }}>
                                 Offense
                             </th>
-                            <th className="lft" style={{ width: '11%' }}>
+                            <th className="lft wide" style={{ width: '11%' }}>
                                 Defense
                             </th>
-                            <th className="lft" style={{ width: '13%' }}>
+                            <th className="lft wide" style={{ width: '13%' }}>
                                 Coach
                             </th>
                         </tr>
@@ -493,7 +493,7 @@ const Standings = () => {
                                             <LinkCell to={teamHref} className="lft stick">
                                                 <div className="teamcell">
                                                     <span className="rk">{index + 1}</span>
-                                                    <TeamMark team={mark} size={22} />
+                                                    <TeamMark team={mark} size={20} />
                                                     <span className="nm">{row.name}</span>
                                                 </div>
                                             </LinkCell>
@@ -508,19 +508,19 @@ const Standings = () => {
                                             </LinkCell>
                                             <LinkCell
                                                 to={teamHref}
-                                                className="lft"
+                                                className="lft wide"
                                                 sx={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}
                                             >
                                                 {formatOffensivePlaybook(row.offense)}
                                             </LinkCell>
                                             <LinkCell
                                                 to={teamHref}
-                                                className="lft"
+                                                className="lft wide"
                                                 sx={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}
                                             >
                                                 {formatDefensivePlaybook(row.defense)}
                                             </LinkCell>
-                                            <LinkCell to={row.coach ? null : teamHref} className="lft">
+                                            <LinkCell to={row.coach ? null : teamHref} className="lft wide">
                                                 {row.coach ? (
                                                     <Box
                                                         component={Link}

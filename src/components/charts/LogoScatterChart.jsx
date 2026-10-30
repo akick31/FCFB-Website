@@ -7,7 +7,7 @@ const H = 440;
 const PAD = 56;
 const BASE_VB = [0, 0, W, H];
 
-const LogoScatterChart = ({ points, xLabel, yLabel, invertX = false, resetKey }) => {
+const LogoScatterChart = ({ points, xLabel, yLabel, invertX = false, resetKey, maxHeight }) => {
     const svgRef = useRef(null);
     const wrapRef = useRef(null);
     const dragRef = useRef(null);
@@ -105,7 +105,7 @@ const LogoScatterChart = ({ points, xLabel, yLabel, invertX = false, resetKey })
                 width="100%"
                 onWheel={onWheel}
                 onMouseDown={onDown}
-                sx={{ display: 'block', cursor: 'grab', touchAction: 'none' }}
+                sx={{ display: 'block', cursor: 'grab', touchAction: 'none', maxHeight }}
             >
                 {grid.map((f) => {
                     const yy = PAD + f * (H - 2 * PAD);
@@ -192,6 +192,7 @@ const LogoScatterChart = ({ points, xLabel, yLabel, invertX = false, resetKey })
 };
 
 LogoScatterChart.propTypes = {
+    maxHeight: PropTypes.number,
     points: PropTypes.arrayOf(
         PropTypes.shape({
             team: PropTypes.string.isRequired,

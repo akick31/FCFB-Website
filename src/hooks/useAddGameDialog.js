@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createScheduleEntry, getBowl } from '../api/scheduleApi';
-import { uploadPostseasonLogo } from '../api/uploadApi';
+import { uploadLogo } from '../api/uploadApi';
 import { getConference } from './useConferencesMap';
 import { resolveLogoUrl } from '../utils/logoUrl';
 import { POSTSEASON_GAME_TYPES } from '../constants/gameEnums';
@@ -169,7 +169,7 @@ const useAddGameDialog = ({ season, scheduleLocked, teamMap, onSuccess, showSnac
         const isCurrent = () => scope.active && logoUploadRef.current === upload;
         setUploadingLogo(true);
         try {
-            const result = await uploadPostseasonLogo(file);
+            const result = await uploadLogo(file, 'POSTSEASON');
             if (!isCurrent()) {
                 return;
             }

@@ -3,17 +3,26 @@ import { Box } from '@mui/material';
 import Panel from '../ui/Panel';
 import DataTable from '../ui/DataTable';
 import { DEFAULT_NUMBER_BUCKET_SIZE, NUMBER_MAX } from '../../utils/scoutingReport';
-import { inputSx, labelSx } from './scoutingStyles';
+
 import Chip from './ScoutingFilterChip';
+import { inputSx, labelSx } from '../../styles/controls';
 const sharePct = (value) => (value == null ? '-' : `${(value * 100).toFixed(1)}%`);
 const BUCKET_SIZE_PRESETS = [100, 250, 375, 750, 1000];
 
 const ScoutingNumberSummary = ({ favoriteNumbersList, bucketSize, setBucketSize, numberBuckets }) => (
     <Panel sx={{ mb: '16px' }}>
-        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <Box
+            sx={{
+                p: 2,
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) minmax(0, 1.4fr)' },
+                gap: '20px',
+                alignItems: 'start',
+            }}
+        >
             <Box>
                 <Box sx={{ ...labelSx, mb: '8px' }}>Favorite numbers</Box>
-                <DataTable minWidth={360}>
+                <DataTable minWidth={300} phoneMinWidth={0} dense>
                     <thead>
                         <tr>
                             <th className="lft">Number</th>
@@ -83,7 +92,7 @@ const ScoutingNumberSummary = ({ favoriteNumbersList, bucketSize, setBucketSize,
                         />
                     </Box>
                 </Box>
-                <DataTable minWidth={480}>
+                <DataTable minWidth={360} phoneMinWidth={0} dense>
                     <thead>
                         <tr>
                             <th className="lft">Range</th>

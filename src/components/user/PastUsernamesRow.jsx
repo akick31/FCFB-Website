@@ -3,7 +3,8 @@ import { Box, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
 import useProfileEditor from '../../hooks/useProfileEditor';
 import { getUsernameHistory, addHistoricalUsername } from '../../api/userApi';
-import { rowSx, lblSx, descSx, ctrlSx, inputSx, primarySx } from './profileStyles';
+import { rowSx, lblSx, descSx, ctrlSx, primarySx } from './profileStyles';
+import { inputSx } from '../../styles/controls';
 
 const PastUsernamesRow = ({ userId }) => {
     const [history, setHistory] = useState([]);

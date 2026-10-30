@@ -13,7 +13,11 @@ jest.mock('react-router-dom', () => ({
         </a>
     ),
 }));
-jest.mock('../../hooks/useTeamsMap', () => ({ useTeamsMap: () => ({}), ensureTeam: jest.fn() }));
+jest.mock('../../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    useTeamsMap: () => ({}),
+    ensureTeam: jest.fn(),
+}));
 jest.mock('../ui/TeamMark', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../api/seasonApi', () => ({ getCurrentSeasonOrLatest: jest.fn(), getCurrentWeekOrLatest: jest.fn() }));
 jest.mock('../../api/gameApi', () => ({ getFilteredGames: jest.fn() }));

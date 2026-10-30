@@ -5,6 +5,8 @@ import Panel from '../ui/Panel';
 import OperationList from './OperationList';
 import OperationDetail from './OperationDetail';
 import ApiKeyBar from './ApiKeyBar';
+import ApiOverview from './ApiOverview';
+import { compact, secondaryButtonSx } from '../../styles/controls';
 import { getPublicApiSpec, getAdminApiSpec } from '../../api/apiDocsApi';
 import { getStoredApiKey, setStoredApiKey } from '../../utils/apiKeyStorage';
 import { humanizeTag } from '../../utils/humanize';
@@ -49,11 +51,21 @@ const buildOperations = (spec) => {
     return operations.sort((a, b) => a.path.localeCompare(b.path));
 };
 
+const groupByTag = (operations) => {
+    const groups = {};
+    operations.forEach((op) => {
+        groups[op.tag] = groups[op.tag] || [];
+        groups[op.tag].push(op);
+    });
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+};
+
 const ApiExplorer = ({ specKind }) => {
     const [spec, setSpec] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [query, setQuery] = useState('');
+    const [pickedGroups, setPickedGroups] = useState([]);
     const [selectedId, setSelectedId] = useState(null);
     const [apiKey, setApiKey] = useState(getStoredApiKey);
     const isLoggedIn = typeof window !== 'undefined' && Boolean(window.localStorage.getItem('token'));
@@ -91,28 +103,24 @@ const ApiExplorer = ({ specKind }) => {
     const operations = useMemo(() => buildOperations(spec), [spec]);
 
     const filtered = useMemo(() => {
-        if (!query) {
-            return operations;
-        }
         const q = query.toLowerCase();
         return operations.filter(
             (op) =>
-                op.path.toLowerCase().includes(q) ||
-                op.summary.toLowerCase().includes(q) ||
-                op.tag.toLowerCase().includes(q)
+                (pickedGroups.length === 0 || pickedGroups.includes(op.tag)) &&
+                (!q ||
+                    op.path.toLowerCase().includes(q) ||
+                    op.summary.toLowerCase().includes(q) ||
+                    op.tag.toLowerCase().includes(q))
         );
-    }, [operations, query]);
+    }, [operations, query, pickedGroups]);
 
-    const grouped = useMemo(() => {
-        const groups = {};
-        filtered.forEach((op) => {
-            groups[op.tag] = groups[op.tag] || [];
-            groups[op.tag].push(op);
-        });
-        return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
-    }, [filtered]);
+    const grouped = useMemo(() => groupByTag(filtered), [filtered]);
+    const allGroups = useMemo(() => groupByTag(operations), [operations]);
 
     const selected = operations.find((op) => op.id === selectedId) || null;
+    const exampleOperation = operations.find(
+        (op) => op.method === 'GET' && !op.parameters.some((param) => param.required) && !op.binaryResponse
+    );
 
     return (
         <Box>
@@ -138,7 +146,24 @@ const ApiExplorer = ({ specKind }) => {
                         alignItems: 'flex-start',
                     }}
                 >
-                    <Panel header="Endpoints" more={`${filtered.length}`}>
+                    <Panel
+                        header="Endpoints"
+                        more={
+                            pickedGroups.length > 0 ? (
+                                <Box
+                                    component="button"
+                                    type="button"
+                                    onClick={() => setPickedGroups([])}
+                                    sx={compact(secondaryButtonSx)}
+                                >
+                                    {pickedGroups.length === 1 ? pickedGroups[0] : `${pickedGroups.length} groups`},
+                                    clear
+                                </Box>
+                            ) : (
+                                `${filtered.length}`
+                            )
+                        }
+                    >
                         <OperationList
                             groups={grouped}
                             query={query}
@@ -147,14 +172,20 @@ const ApiExplorer = ({ specKind }) => {
                             onSelect={setSelectedId}
                         />
                     </Panel>
-                    <Panel header={selected ? selected.summary : 'Select an endpoint'}>
-                        {selected ? (
-                            <OperationDetail operation={selected} apiKey={apiKey} />
-                        ) : (
-                            <Box sx={{ p: 3, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                Choose an endpoint on the left to see details and try it live.
-                            </Box>
-                        )}
+                    <Panel header={selected ? selected.summary : 'Getting started'}>
+                        <Box sx={{ maxHeight: { md: 'max(300px, calc(100vh - 412px))' }, overflowY: { md: 'auto' } }}>
+                            {selected ? (
+                                <OperationDetail operation={selected} apiKey={apiKey} />
+                            ) : (
+                                <ApiOverview
+                                    groups={allGroups}
+                                    exampleOperation={exampleOperation}
+                                    apiKey={apiKey}
+                                    pickedGroups={pickedGroups}
+                                    onPickGroups={setPickedGroups}
+                                />
+                            )}
+                        </Box>
                     </Panel>
                 </Box>
             )}

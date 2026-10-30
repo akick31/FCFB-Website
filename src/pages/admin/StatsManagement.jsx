@@ -162,8 +162,8 @@ const StatsManagement = () => {
                                         color: results[action.id].success ? 'var(--field)' : 'var(--live)',
                                     }}
                                 >
-                                    {results[action.id].success ? 'Success' : 'Failed'} &middot;{' '}
-                                    {results[action.id].message} &middot; {results[action.id].timestamp}
+                                    {results[action.id].success ? 'Success' : 'Failed'}: {results[action.id].message} (
+                                    {results[action.id].timestamp})
                                 </Box>
                             )}
                         </Box>

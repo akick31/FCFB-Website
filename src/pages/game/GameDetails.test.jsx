@@ -6,9 +6,11 @@ import { getGameById, chewGameByGameId, unchewGameByGameId, endGameByGameId } fr
 import { generateGameStats } from '../../api/gameStatsApi.jsx';
 let mockId;
 const mockNavigate = jest.fn();
+const mockSearchParams = new URLSearchParams();
 jest.mock('react-router-dom', () => ({
     useParams: () => ({ gameId: mockId }),
     useNavigate: () => mockNavigate,
+    useSearchParams: () => [mockSearchParams, () => {}],
     Link: ({ children }) => <span>{children}</span>,
 }));
 jest.mock('../../api/gameApi', () => ({
@@ -25,7 +27,12 @@ jest.mock('../../api/gameStatsApi.jsx', () => ({
 jest.mock('../../api/teamApi', () => ({ getTeamByName: async () => null }));
 jest.mock('../../api/seasonApi', () => ({ getCurrentSeasonOrLatest: async () => 12 }));
 jest.mock('../../api/scheduleApi', () => ({ getScheduleBySeasonAndTeam: async () => [] }));
-jest.mock('../../hooks/useTeamsMap', () => ({ useTeamsMap: () => ({}), toEntry: (team) => team }));
+jest.mock('../../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    ensureTeam: jest.fn(),
+    useTeamsMap: () => ({}),
+    toEntry: (team) => team,
+}));
 jest.mock('../../hooks/useVenuesMap', () => ({ useVenuesMap: () => ({}) }));
 jest.mock('../../hooks/useConferencesMap', () => ({ conferenceLabel: (code) => code }));
 jest.mock('../../hooks/useSeo', () => ({ useSeo: () => {} }));

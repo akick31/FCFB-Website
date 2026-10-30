@@ -6,16 +6,16 @@ import { isRealTeam, isTeamAvailable } from '../../utils/teamDataUtils';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../context/ColorModeContext';
 import { pickTeamColor } from '../../utils/teamColor';
-import {
-    useConferencesMap,
-    activeConferenceCodes,
-    conferenceLabel,
-    formatConference,
-} from '../../hooks/useConferencesMap';
+import { useConferencesMap, activeConferenceCodes, conferenceLabel } from '../../hooks/useConferencesMap';
 
 import PageWrap from '../../components/layout/PageWrap';
+import PagedFooter from '../../components/ui/PagedFooter';
+import usePagedRows from '../../hooks/usePagedRows';
+import useFitCount from '../../hooks/useFitCount';
 import PageHeading from '../../components/ui/PageHeading';
 import SelectPill from '../../components/ui/SelectPill';
+import ConferencePill from '../../components/ui/ConferencePill';
+import ConferenceName from '../../components/ui/ConferenceName';
 import TeamMark from '../../components/ui/TeamMark';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
@@ -125,6 +125,13 @@ const Teams = () => {
             .sort(SORTS[sort]);
     }, [teams, conference, availability, search, sort]);
 
+    const [fitRef, pageSize] = useFitCount({ itemSelector: 'a', rowHeight: 80, columnWidth: 222, phoneCount: 30 });
+    const { page, pageCount, pageRows, setPage } = usePagedRows(
+        shown,
+        pageSize,
+        `${conference}|${availability}|${search}|${sort}`
+    );
+
     const openCount = useMemo(
         () => teams.filter((team) => !(team.coach_usernames && team.coach_usernames.length)).length,
         [teams]
@@ -169,7 +176,7 @@ const Teams = () => {
                         '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 },
                     }}
                 />
-                <SelectPill
+                <ConferencePill
                     label="Conference"
                     value={conference}
                     onChange={changeConference}
@@ -200,71 +207,95 @@ const Teams = () => {
                 />
             </PageHeading>
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '12px' }}>
-                {shown.map((team) => {
-                    const teamMark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation };
-                    return (
-                        <Box
-                            key={team.id}
-                            component={Link}
-                            to={`/team-details/${team.id}`}
-                            sx={{
-                                background: 'var(--surface)',
-                                border: '1px solid var(--line)',
-                                borderRadius: 'var(--r)',
-                                p: '13px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                cursor: 'pointer',
-                                position: 'relative',
-                                overflow: 'hidden',
-                                textDecoration: 'none',
-                                color: 'inherit',
-                                transition: 'transform .14s, border-color .14s',
-                                '&:hover': {
-                                    transform: 'translateY(-2px)',
-                                    borderColor: 'color-mix(in srgb, var(--brand) 50%, var(--line))',
-                                },
-                                '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' },
-                            }}
-                        >
+            <Box ref={fitRef}>
+                <Box
+                    sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '12px' }}
+                >
+                    {pageRows.map((team) => {
+                        const teamMark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation };
+                        return (
                             <Box
+                                key={team.id}
+                                component={Link}
+                                to={`/team-details/${team.id}`}
                                 sx={{
-                                    position: 'absolute',
-                                    left: 0,
-                                    top: 0,
-                                    bottom: 0,
-                                    width: '3px',
-                                    background: pickTeamColor(teamMark, mode),
+                                    background: 'var(--surface)',
+                                    border: '1px solid var(--line)',
+                                    borderRadius: 'var(--r)',
+                                    p: '13px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    cursor: 'pointer',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    textDecoration: 'none',
+                                    color: 'inherit',
+                                    transition: 'transform .14s, border-color .14s',
+                                    '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        borderColor: 'color-mix(in srgb, var(--brand) 50%, var(--line))',
+                                    },
+                                    '&:focus-visible': { outline: '2px solid var(--brand)', outlineOffset: '2px' },
                                 }}
-                            />
-                            <TeamMark team={teamMark} size={38} />
-                            <Box sx={{ minWidth: 0 }}>
+                            >
                                 <Box
                                     sx={{
-                                        fontWeight: 800,
-                                        fontSize: '0.9rem',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
+                                        position: 'absolute',
+                                        left: 0,
+                                        top: 0,
+                                        bottom: 0,
+                                        width: '3px',
+                                        background: pickTeamColor(teamMark, mode),
                                     }}
-                                >
-                                    {team.name}
-                                </Box>
-                                <Box sx={{ color: 'var(--text-dim)', fontSize: '0.7rem', fontWeight: 600 }}>
-                                    {formatConference(team.conference)}
-                                </Box>
-                                <Box
-                                    sx={{ color: 'var(--text-muted)', fontSize: '0.74rem', fontWeight: 700, mt: '2px' }}
-                                >
-                                    {team.current_wins || 0}-{team.current_losses || 0}, ELO{' '}
-                                    {team.current_elo != null ? Math.round(team.current_elo) : '-'}
+                                />
+                                <TeamMark team={teamMark} size={38} />
+                                <Box sx={{ minWidth: 0 }}>
+                                    <Box
+                                        sx={{
+                                            fontWeight: 800,
+                                            fontSize: '0.9rem',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                        }}
+                                    >
+                                        {team.name}
+                                    </Box>
+                                    <Box
+                                        sx={{
+                                            color: 'var(--text-dim)',
+                                            fontSize: '0.7rem',
+                                            fontWeight: 600,
+                                            display: 'flex',
+                                        }}
+                                    >
+                                        <ConferenceName code={team.conference} size={14} />
+                                    </Box>
+                                    <Box
+                                        sx={{
+                                            color: 'var(--text-muted)',
+                                            fontSize: '0.74rem',
+                                            fontWeight: 700,
+                                            mt: '2px',
+                                        }}
+                                    >
+                                        {team.current_wins || 0}-{team.current_losses || 0}, ELO{' '}
+                                        {team.current_elo != null ? Math.round(team.current_elo) : '-'}
+                                    </Box>
                                 </Box>
                             </Box>
-                        </Box>
-                    );
-                })}
+                        );
+                    })}
+                </Box>
+                <PagedFooter
+                    page={page}
+                    pageCount={pageCount}
+                    pageSize={pageSize}
+                    total={shown.length}
+                    onChange={setPage}
+                    noun="teams"
+                />
             </Box>
         </PageWrap>
     );

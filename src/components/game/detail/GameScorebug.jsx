@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
 import TvLogo from '../../ui/TvLogo';
+import { stadiumPath } from '../../../utils/stadiumPath';
 import GameTypeLabel from '../cards/GameTypeLabel';
 import { formatScoreboardStatus, formatScoreboardQuarter, formatDownAndDistance } from '../../../utils/gameUtils';
 import { formatBallLocationWithTeam } from '../scoreboard/utils/scoreboardFormatters';
@@ -100,7 +101,10 @@ const GameScorebug = ({
     awayColor,
     homeColor,
     spreadText,
+    subtitle,
     venueText,
+    venueName,
+    venueId,
     threadLink,
     columns,
     awayQuarters,
@@ -115,7 +119,7 @@ const GameScorebug = ({
     const possessionMark = game.possession === 'HOME' ? homeMark : awayMark;
     const situationText =
         inPlay && game.down
-            ? `${formatDownAndDistance(game.down, game.yards_to_go)} · ${formatBallLocationWithTeam(game.ball_location, game.possession, game.home_team, game.away_team, homeMark, awayMark)}`
+            ? `${formatDownAndDistance(game.down, game.yards_to_go)} at ${formatBallLocationWithTeam(game.ball_location, game.possession, game.home_team, game.away_team, homeMark, awayMark)}`
             : null;
     const awayRecord = `${game.away_wins || 0}-${game.away_losses || 0}`;
     const homeRecord = `${game.home_wins || 0}-${game.home_losses || 0}`;
@@ -160,9 +164,10 @@ const GameScorebug = ({
         >
             <Box
                 sx={{
-                    display: 'flex',
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', sm: '1fr auto 1fr' },
                     alignItems: 'center',
-                    gap: '12px',
+                    gap: '6px 12px',
                     px: 2,
                     py: 1.1,
                     background: 'var(--surface-2)',
@@ -173,8 +178,29 @@ const GameScorebug = ({
                     flexWrap: 'wrap',
                 }}
             >
-                <GameTypeLabel game={game} homeTeam={homeTeam} />
-                <Box sx={{ ml: 'auto', display: 'flex', gap: '14px', alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flexWrap: 'wrap' }}>
+                    <GameTypeLabel game={game} homeTeam={homeTeam} />
+                    {subtitle && (
+                        <Box component="span" sx={{ color: 'var(--text-dim)' }}>
+                            {subtitle}
+                        </Box>
+                    )}
+                </Box>
+                <Box sx={{ textAlign: 'center', color: 'var(--text-dim)' }}>
+                    {venueText &&
+                        (venueName ? (
+                            <Box
+                                component={Link}
+                                to={stadiumPath({ id: venueId, name: venueName })}
+                                sx={{ color: 'inherit' }}
+                            >
+                                {venueText}
+                            </Box>
+                        ) : (
+                            venueText
+                        ))}
+                </Box>
+                <Box sx={{ justifySelf: { sm: 'end' }, display: 'flex', gap: '14px', alignItems: 'center' }}>
                     {spreadText && (
                         <Box component="span">
                             <Box
@@ -194,6 +220,17 @@ const GameScorebug = ({
                         </Box>
                     )}
                     {game.tv_channel && <TvLogo channel={game.tv_channel} height={15} />}
+                    {threadLink && (
+                        <Box
+                            component="a"
+                            href={threadLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ color: 'var(--brand)', fontWeight: 700, textDecoration: 'none' }}
+                        >
+                            Game thread ↗
+                        </Box>
+                    )}
                 </Box>
             </Box>
 
@@ -210,7 +247,7 @@ const GameScorebug = ({
                     rowGap: { xs: '8px', md: 0 },
                     alignItems: 'center',
                     px: { xs: 1.5, md: 3 },
-                    py: '18px',
+                    py: '10px',
                 }}
             >
                 <Box
@@ -370,43 +407,6 @@ const GameScorebug = ({
                     )}
                 </Box>
             )}
-
-            {venueText && (
-                <Box
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        pb: threadLink ? 0.75 : 1.25,
-                        fontSize: '0.72rem',
-                        color: 'var(--text-dim)',
-                        fontWeight: 600,
-                    }}
-                >
-                    {venueText}
-                </Box>
-            )}
-
-            {threadLink && (
-                <Box
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        pb: 1.25,
-                        borderTop: '1px solid var(--line-soft)',
-                        pt: 1,
-                    }}
-                >
-                    <Box
-                        component="a"
-                        href={threadLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        sx={{ color: 'var(--brand)', fontWeight: 700, fontSize: '0.75rem', textDecoration: 'none' }}
-                    >
-                        Open game thread in Discord ↗
-                    </Box>
-                </Box>
-            )}
         </Box>
     );
 };
@@ -419,7 +419,10 @@ GameScorebug.propTypes = {
     awayColor: PropTypes.string,
     homeColor: PropTypes.string,
     spreadText: PropTypes.string,
+    subtitle: PropTypes.string,
     venueText: PropTypes.string,
+    venueName: PropTypes.string,
+    venueId: PropTypes.number,
     threadLink: PropTypes.string,
     columns: PropTypes.array.isRequired,
     awayQuarters: PropTypes.array.isRequired,

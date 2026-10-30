@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import DataTable from '../ui/DataTable';
 import TeamMark from '../ui/TeamMark';
@@ -112,8 +111,9 @@ const TeamsTable = ({
     onFireCoach,
     onFireClick,
     onHireCoach,
+    onEditTeam,
 }) => (
-    <DataTable minWidth={760}>
+    <DataTable minWidth={760} dense>
         <thead>
             <tr>
                 <th className="lft stick">Team</th>
@@ -201,8 +201,9 @@ const TeamsTable = ({
                                     </Box>
                                 )}
                                 <Box
-                                    component={Link}
-                                    to={`/admin/edit-team/${team.id}`}
+                                    component="button"
+                                    type="button"
+                                    onClick={() => onEditTeam(team)}
                                     sx={{ ...editBtnSx, px: '8px' }}
                                 >
                                     Edit
@@ -225,6 +226,7 @@ TeamsTable.propTypes = {
     onFireCoach: PropTypes.func.isRequired,
     onFireClick: PropTypes.func.isRequired,
     onHireCoach: PropTypes.func.isRequired,
+    onEditTeam: PropTypes.func.isRequired,
 };
 
 export default TeamsTable;

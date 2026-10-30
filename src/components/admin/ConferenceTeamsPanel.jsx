@@ -5,9 +5,9 @@ import PropTypes from 'prop-types';
 import Panel from '../ui/Panel';
 import DataTable from '../ui/DataTable';
 import SelectPill from '../ui/SelectPill';
+import TeamName from '../ui/TeamName';
+import TeamSelect from '../ui/TeamSelect';
 import { isRealTeam } from '../../utils/teamDataUtils';
-
-const MAX_ADD_RESULTS = 20;
 
 const searchSx = {
     border: '1px solid var(--line)',
@@ -20,16 +20,6 @@ const searchSx = {
     font: 'inherit',
     fontSize: '0.82rem',
     minWidth: 200,
-};
-const rowSx = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '12px',
-    px: '16px',
-    py: '10px',
-    borderBottom: '1px solid var(--line-soft)',
-    '&:last-of-type': { borderBottom: 0 },
 };
 const addBtnSx = {
     border: '1px solid var(--line)',
@@ -76,7 +66,7 @@ const ConferenceTeamsPanel = ({
     onAddTeam,
 }) => {
     const [search, setSearch] = useState('');
-    const [addSearch, setAddSearch] = useState('');
+    const [toAdd, setToAdd] = useState('');
 
     const teamsInConference = useMemo(
         () =>
@@ -98,13 +88,18 @@ const ConferenceTeamsPanel = ({
         [conferences, code]
     );
 
-    const availableTeams = useMemo(() => {
-        const query = addSearch.trim().toLowerCase();
-        return teams
-            .filter((team) => team.conference !== code && team.active && isRealTeam(team))
-            .filter((team) => !query || team.name.toLowerCase().includes(query))
-            .sort((a, b) => a.name.localeCompare(b.name));
-    }, [teams, code, addSearch]);
+    const availableTeams = useMemo(
+        () =>
+            teams
+                .filter((team) => team.conference !== code && team.active && isRealTeam(team))
+                .sort((a, b) => a.name.localeCompare(b.name)),
+        [teams, code]
+    );
+
+    const conferenceOf = (name) => {
+        const current = teams.find((team) => team.name === name)?.conference;
+        return current ? conferences.find((c) => c.code === current)?.label || current : 'No conference';
+    };
 
     return (
         <>
@@ -145,7 +140,7 @@ const ConferenceTeamsPanel = ({
                                             to={`/team-details/${team.id}`}
                                             sx={{ display: 'block', color: 'inherit', textDecoration: 'none' }}
                                         >
-                                            <span className="nm">{team.name}</span>
+                                            <TeamName name={team.name} size={20} sx={{ fontWeight: 700 }} />
                                         </Box>
                                     </td>
                                     {divisionsEnabled && (
@@ -190,50 +185,30 @@ const ConferenceTeamsPanel = ({
             </Panel>
 
             <Panel header="Add a team to this conference">
-                <Box sx={{ p: '16px', pb: 0 }}>
-                    <Box
-                        component="input"
-                        placeholder="Search teams..."
-                        aria-label="Search teams to add"
-                        value={addSearch}
-                        onChange={(e) => setAddSearch(e.target.value)}
-                        sx={{ ...searchSx, width: '100%' }}
-                    />
-                </Box>
-                {availableTeams.length === 0 ? (
-                    <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No matching teams.</Box>
-                ) : (
-                    <Box sx={{ py: '6px' }}>
-                        {availableTeams.slice(0, MAX_ADD_RESULTS).map((team) => (
-                            <Box key={team.name} sx={rowSx}>
-                                <Box>
-                                    <Box sx={{ fontWeight: 700 }}>{team.name}</Box>
-                                    <Box sx={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                                        {team.conference
-                                            ? conferences.find((c) => c.code === team.conference)?.label ||
-                                              team.conference
-                                            : 'No conference'}
-                                    </Box>
-                                </Box>
-                                <Box
-                                    component="button"
-                                    type="button"
-                                    disabled={pendingTeam === team.name}
-                                    onClick={() => onAddTeam(team)}
-                                    sx={addBtnSx}
-                                >
-                                    + Add
-                                </Box>
-                            </Box>
-                        ))}
-                        {availableTeams.length > MAX_ADD_RESULTS && (
-                            <Box sx={{ px: '16px', py: '10px', fontSize: '0.72rem', color: 'var(--text-dim)' }}>
-                                Showing {MAX_ADD_RESULTS} of {availableTeams.length} teams. Refine your search to see
-                                more.
-                            </Box>
-                        )}
+                <Box sx={{ p: '12px 16px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <Box sx={{ flex: '1 1 260px', minWidth: 0 }}>
+                        <TeamSelect
+                            value={toAdd}
+                            onChange={setToAdd}
+                            teams={availableTeams.map((team) => team.name)}
+                            ariaLabel="Team to add"
+                            placeholder="Search teams to add"
+                            detailOf={conferenceOf}
+                        />
                     </Box>
-                )}
+                    <Box
+                        component="button"
+                        type="button"
+                        disabled={!toAdd || pendingTeam === toAdd}
+                        onClick={() => {
+                            onAddTeam(teams.find((team) => team.name === toAdd));
+                            setToAdd('');
+                        }}
+                        sx={addBtnSx}
+                    >
+                        + Add
+                    </Box>
+                </Box>
             </Panel>
         </>
     );

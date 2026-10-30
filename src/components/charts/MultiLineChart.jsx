@@ -7,6 +7,7 @@ const W = 760;
 const MultiLineChart = ({
     lines,
     height = 320,
+    maxHeight,
     yMin,
     yMax,
     invert = false,
@@ -71,7 +72,7 @@ const MultiLineChart = ({
 
     return (
         <Box ref={wrapRef} sx={{ position: 'relative' }}>
-            <Box component="svg" viewBox={`0 0 ${W} ${H}`} width="100%" sx={{ display: 'block' }}>
+            <Box component="svg" viewBox={`0 0 ${W} ${H}`} width="100%" sx={{ display: 'block', maxHeight }}>
                 {ticks.map((tk, i) => {
                     const yy = Y(tk.v);
                     return (
@@ -168,6 +169,7 @@ MultiLineChart.propTypes = {
         })
     ).isRequired,
     height: PropTypes.number,
+    maxHeight: PropTypes.number,
     yMin: PropTypes.number.isRequired,
     yMax: PropTypes.number.isRequired,
     invert: PropTypes.bool,

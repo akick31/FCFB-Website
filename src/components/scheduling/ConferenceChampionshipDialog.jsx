@@ -1,15 +1,8 @@
 import React from 'react';
 import { Box, TextField, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions, Alert } from '@mui/material';
 import PostseasonTeamOption from './PostseasonTeamOption';
-import {
-    btnPrimarySx,
-    ctrlSx,
-    labelSx,
-    selectSx,
-    dialogPaperSx,
-    dialogTitleSx,
-    autocompleteSx,
-} from './postseasonStyles';
+import { dialogPaperSx, dialogTitleSx, autocompleteSx } from './postseasonStyles';
+import { labelSx, primaryButtonSx, secondaryButtonSx, selectSx } from '../../styles/controls';
 
 const ConferenceChampionshipDialog = ({
     open,
@@ -29,7 +22,7 @@ const ConferenceChampionshipDialog = ({
         <DialogTitle sx={dialogTitleSx}>Add Conference Championship Game</DialogTitle>
         <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '6px' }}>
-                <Alert severity="info">Week 13 · Conference Championship</Alert>
+                <Alert severity="info">Week 13: conference championship</Alert>
 
                 <Box>
                     <Box component="label" sx={labelSx}>
@@ -84,7 +77,7 @@ const ConferenceChampionshipDialog = ({
             </Box>
         </DialogContent>
         <DialogActions sx={{ px: '20px', pb: '18px' }}>
-            <Box component="button" type="button" onClick={onClose} sx={ctrlSx}>
+            <Box component="button" type="button" onClick={onClose} sx={secondaryButtonSx}>
                 Cancel
             </Box>
             <Box
@@ -93,7 +86,7 @@ const ConferenceChampionshipDialog = ({
                 onClick={onSubmit}
                 disabled={!homeTeam || !awayTeam}
                 sx={{
-                    ...btnPrimarySx,
+                    ...primaryButtonSx,
                     opacity: !homeTeam || !awayTeam ? 0.6 : 1,
                     pointerEvents: !homeTeam || !awayTeam ? 'none' : 'auto',
                 }}

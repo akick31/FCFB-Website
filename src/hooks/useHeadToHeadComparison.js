@@ -81,7 +81,7 @@ const useHeadToHeadComparison = () => {
         () =>
             [...teams]
                 .sort((a, b) => a.name.localeCompare(b.name))
-                .map((team) => ({ value: team.name, label: team.name })),
+                .map((team) => ({ value: team.name, label: team.name, team: team.name })),
         [teams]
     );
     const coachLabel = (user) => (user.team ? `${user.username} (${user.team})` : user.username);

@@ -13,85 +13,22 @@ import {
 } from '@mui/material';
 import { CloudUpload as UploadIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
+import NumberInput from '../ui/NumberInput';
 import TeamMark from '../ui/TeamMark';
+import VenueField from './VenueField';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { formatGameType, weekLabel } from '../../utils/formatText';
+import { inputSx, labelSx, primaryButtonSx, secondaryButtonSx, selectSx } from '../../styles/controls';
 
 const TOTAL_WEEKS = 12;
 
-const selectSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    cursor: 'pointer',
-    '& option': { background: 'var(--surface)', color: 'var(--text)' },
-};
-const ctrlSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.78rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-};
-const labelSx = {
-    display: 'block',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    mb: '5px',
-};
-const inputSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    width: '100%',
-};
-const btnPrimarySx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
 const dialogPaperSx = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)' };
 const dialogTitleSx = { color: 'var(--text)', fontWeight: 800, fontSize: '1.05rem' };
 const autocompleteSx = { '& .MuiOutlinedInput-root': { borderRadius: 'var(--r-sm)' } };
 const errorTextSx = { mt: '4px', fontSize: '0.7rem', color: 'var(--live)' };
 const hintTextSx = { fontSize: '0.72rem', color: 'var(--text-dim)' };
 
-const AddGameDialog = ({ open, onClose, dialog, allTeams, teamMap, teamWeekOccupiedAll, venueNames = [] }) => {
+const AddGameDialog = ({ open, onClose, dialog, allTeams, teamMap, teamWeekOccupiedAll }) => {
     const {
         addGameWeek,
         setAddGameWeek,
@@ -283,23 +220,11 @@ const AddGameDialog = ({ open, onClose, dialog, allTeams, teamMap, teamWeekOccup
                             <Box component="label" sx={labelSx}>
                                 Venue
                             </Box>
-                            <Autocomplete
-                                freeSolo
-                                options={venueNames}
-                                inputValue={addGameVenue}
-                                onInputChange={(_, v) => setAddGameVenue(v || '')}
-                                sx={autocompleteSx}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        size="small"
-                                        placeholder="e.g., Mercedes-Benz Stadium, Atlanta, GA"
-                                        error={!addGameVenue.trim()}
-                                        helperText={
-                                            !addGameVenue.trim() ? 'Venue is required for a neutral site game' : ' '
-                                        }
-                                    />
-                                )}
+                            <VenueField
+                                value={addGameVenue}
+                                onChange={setAddGameVenue}
+                                error={!addGameVenue.trim()}
+                                helperText={!addGameVenue.trim() ? 'Venue is required for a neutral site game' : ''}
                             />
                         </Box>
                     )}
@@ -378,7 +303,7 @@ const AddGameDialog = ({ open, onClose, dialog, allTeams, teamMap, teamWeekOccup
                                 component="label"
                                 htmlFor="logo-upload-button"
                                 sx={{
-                                    ...ctrlSx,
+                                    ...secondaryButtonSx,
                                     width: '100%',
                                     justifyContent: 'center',
                                     gap: '8px',
@@ -468,24 +393,24 @@ const AddGameDialog = ({ open, onClose, dialog, allTeams, teamMap, teamWeekOccup
                                     <Box component="label" sx={labelSx}>
                                         Home seed
                                     </Box>
-                                    <Box
-                                        component="input"
-                                        type="number"
+                                    <NumberInput
                                         value={addGameHomeSeed || ''}
-                                        onChange={(e) => setAddGameHomeSeed(parseInt(e.target.value) || null)}
-                                        sx={inputSx}
+                                        onChange={(next) => setAddGameHomeSeed(Math.round(next) || null)}
+                                        min={1}
+                                        max={24}
+                                        ariaLabel="Home seed"
                                     />
                                 </Box>
                                 <Box sx={{ flex: 1 }}>
                                     <Box component="label" sx={labelSx}>
                                         Away seed
                                     </Box>
-                                    <Box
-                                        component="input"
-                                        type="number"
+                                    <NumberInput
                                         value={addGameAwaySeed || ''}
-                                        onChange={(e) => setAddGameAwaySeed(parseInt(e.target.value) || null)}
-                                        sx={inputSx}
+                                        onChange={(next) => setAddGameAwaySeed(Math.round(next) || null)}
+                                        min={1}
+                                        max={24}
+                                        ariaLabel="Away seed"
                                     />
                                 </Box>
                             </Box>
@@ -494,10 +419,10 @@ const AddGameDialog = ({ open, onClose, dialog, allTeams, teamMap, teamWeekOccup
                 </Box>
             </DialogContent>
             <DialogActions sx={{ px: '20px', pb: '18px' }}>
-                <Box component="button" type="button" onClick={onClose} sx={ctrlSx}>
+                <Box component="button" type="button" onClick={onClose} sx={secondaryButtonSx}>
                     Cancel
                 </Box>
-                <Box component="button" type="button" onClick={handleAddGame} sx={btnPrimarySx}>
+                <Box component="button" type="button" onClick={handleAddGame} sx={primaryButtonSx}>
                     Add Game
                 </Box>
             </DialogActions>
@@ -512,7 +437,6 @@ AddGameDialog.propTypes = {
     allTeams: PropTypes.array.isRequired,
     teamMap: PropTypes.object.isRequired,
     teamWeekOccupiedAll: PropTypes.instanceOf(Set).isRequired,
-    venueNames: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default AddGameDialog;

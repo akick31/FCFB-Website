@@ -3,6 +3,7 @@ import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import ConferenceScheduleAdminTab from './ConferenceScheduleAdminTab';
 
+jest.mock('../ui/ConferenceMark', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../hooks/useConferencesMap', () => ({ formatConference: (code) => code }));
 jest.mock('./ConferenceScheduleGrid', () => ({ __esModule: true, default: () => null }));
 jest.mock('../ui/Panel', () => ({ __esModule: true, default: ({ children }) => <section>{children}</section> }));
@@ -40,7 +41,7 @@ test('an old conference save failure cannot replace the current editor error or 
             })
         );
     const { rerender } = render(<ConferenceScheduleAdminTab {...props} />);
-    fireEvent.click(screen.getByText('Conference rules: FIRST'));
+    fireEvent.click(screen.getByRole('button', { name: 'Conference rules' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save conference rules' }));
     expect(props.onSaveConferenceRules).toHaveBeenLastCalledWith('FIRST', 8, [], []);
     rerender(<ConferenceScheduleAdminTab {...props} selectedConference="SECOND" />);
@@ -56,7 +57,7 @@ test('an old conference save failure cannot replace the current editor error or 
 test('switching conferences clears an existing rules save error', async () => {
     props.onSaveConferenceRules.mockRejectedValueOnce(new Error('Rejected'));
     const { rerender } = render(<ConferenceScheduleAdminTab {...props} />);
-    fireEvent.click(screen.getByText('Conference rules: FIRST'));
+    fireEvent.click(screen.getByRole('button', { name: 'Conference rules' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save conference rules' }));
     await act(async () => {});
     expect(screen.getByText('Rejected')).toBeTruthy();

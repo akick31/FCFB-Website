@@ -1,73 +1,92 @@
 import React from 'react';
-import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Alert } from '@mui/material';
+import { Box, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import PropTypes from 'prop-types';
+import TeamName from '../ui/TeamName';
 import { camelOrSnakeField } from '../../utils/fieldHelper';
 import { ROUND_LABELS, playoffWeekForRound } from '../../constants/playoffBracket';
-import { btnPrimarySx, ctrlSx, labelSx, selectSx, dialogPaperSx, dialogTitleSx } from './postseasonStyles';
+import { dialogPaperSx, dialogTitleSx } from './postseasonStyles';
+import { primaryButtonSx, secondaryButtonSx } from '../../styles/controls';
+
+const PLACEHOLDERS = ['TBD', 'OPEN'];
+
+const sidesOf = (game) =>
+    [
+        [
+            camelOrSnakeField(game, 'awayTeam', 'away_team'),
+            camelOrSnakeField(game, 'playoffAwaySeed', 'playoff_away_seed'),
+        ],
+        [
+            camelOrSnakeField(game, 'homeTeam', 'home_team'),
+            camelOrSnakeField(game, 'playoffHomeSeed', 'playoff_home_seed'),
+        ],
+    ].filter(([team]) => team && !PLACEHOLDERS.includes(team));
+
+const choiceSx = (picked) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    width: '100%',
+    p: '12px 14px',
+    border: `1px solid ${picked ? 'var(--brand)' : 'var(--line)'}`,
+    borderRadius: 'var(--r-sm)',
+    background: picked ? 'color-mix(in srgb, var(--brand) 14%, var(--surface-2))' : 'var(--surface-2)',
+    color: 'var(--text)',
+    font: 'inherit',
+    fontWeight: 700,
+    textAlign: 'left',
+    cursor: 'pointer',
+});
 
 const AdvanceWinnerDialog = ({ open, onClose, game, winner, onWinnerChange, onSubmit }) => {
     const currentRound = game ? camelOrSnakeField(game, 'playoffRound', 'playoff_round') || 1 : 1;
     const nextRound = currentRound + 1;
-    const nextWeek = playoffWeekForRound(nextRound);
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: dialogPaperSx }}>
-            <DialogTitle sx={dialogTitleSx}>Advance Winner to Next Round</DialogTitle>
+        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+            <DialogTitle sx={dialogTitleSx}>Who won?</DialogTitle>
             <DialogContent>
                 {game && (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '6px' }}>
-                        <Alert severity="info">
-                            Select the winner to advance them to {ROUND_LABELS[nextRound] || `Round ${nextRound}`} (Week{' '}
-                            {nextWeek}).
-                        </Alert>
-
-                        <Box sx={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)' }}>
-                            Current Game: #{camelOrSnakeField(game, 'playoffHomeSeed', 'playoff_home_seed')}{' '}
-                            {camelOrSnakeField(game, 'homeTeam', 'home_team')} vs #
-                            {camelOrSnakeField(game, 'playoffAwaySeed', 'playoff_away_seed')}{' '}
-                            {camelOrSnakeField(game, 'awayTeam', 'away_team')}
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px', mt: '4px' }}>
+                        <Box sx={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            The winner moves on to {ROUND_LABELS[nextRound] || `round ${nextRound}`} (week{' '}
+                            {playoffWeekForRound(nextRound)}).
                         </Box>
-
-                        <Box>
-                            <Box component="label" sx={labelSx}>
-                                Winner
-                            </Box>
+                        {sidesOf(game).map(([team, seed]) => (
                             <Box
-                                component="select"
-                                value={winner}
-                                onChange={(e) => onWinnerChange(e.target.value)}
-                                sx={selectSx}
+                                key={team}
+                                component="button"
+                                type="button"
+                                aria-pressed={winner === team}
+                                onClick={() => onWinnerChange(team)}
+                                sx={choiceSx(winner === team)}
                             >
-                                <option value="">Select winner...</option>
-                                {camelOrSnakeField(game, 'homeTeam', 'home_team') &&
-                                    camelOrSnakeField(game, 'homeTeam', 'home_team') !== 'TBD' &&
-                                    camelOrSnakeField(game, 'homeTeam', 'home_team') !== 'OPEN' && (
-                                        <option value={camelOrSnakeField(game, 'homeTeam', 'home_team')}>
-                                            #{camelOrSnakeField(game, 'playoffHomeSeed', 'playoff_home_seed')}{' '}
-                                            {camelOrSnakeField(game, 'homeTeam', 'home_team')}
-                                        </option>
-                                    )}
-                                {camelOrSnakeField(game, 'awayTeam', 'away_team') &&
-                                    camelOrSnakeField(game, 'awayTeam', 'away_team') !== 'TBD' &&
-                                    camelOrSnakeField(game, 'awayTeam', 'away_team') !== 'OPEN' && (
-                                        <option value={camelOrSnakeField(game, 'awayTeam', 'away_team')}>
-                                            #{camelOrSnakeField(game, 'playoffAwaySeed', 'playoff_away_seed')}{' '}
-                                            {camelOrSnakeField(game, 'awayTeam', 'away_team')}
-                                        </option>
-                                    )}
+                                <Box component="span" sx={{ color: 'var(--text-dim)', minWidth: 26 }}>
+                                    #{seed}
+                                </Box>
+                                <TeamName name={team} size={24} />
                             </Box>
-                        </Box>
+                        ))}
                     </Box>
                 )}
             </DialogContent>
             <DialogActions sx={{ px: '20px', pb: '18px' }}>
-                <Box component="button" type="button" onClick={onClose} sx={ctrlSx}>
+                <Box component="button" type="button" onClick={onClose} sx={secondaryButtonSx}>
                     Cancel
                 </Box>
-                <Box component="button" type="button" onClick={onSubmit} sx={btnPrimarySx}>
-                    Advance Team
+                <Box component="button" type="button" onClick={onSubmit} disabled={!winner} sx={primaryButtonSx}>
+                    Advance winner
                 </Box>
             </DialogActions>
         </Dialog>
     );
+};
+
+AdvanceWinnerDialog.propTypes = {
+    open: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    game: PropTypes.object,
+    winner: PropTypes.string,
+    onWinnerChange: PropTypes.func.isRequired,
+    onSubmit: PropTypes.func.isRequired,
 };
 
 export default AdvanceWinnerDialog;

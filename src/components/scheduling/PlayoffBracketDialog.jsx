@@ -13,7 +13,8 @@ import {
 } from '@mui/material';
 import PostseasonTeamOption from './PostseasonTeamOption';
 import Postseason from '../schedule/Postseason';
-import { btnLiveSx, ctrlSx, dialogPaperSx, dialogTitleSx, autocompleteSx } from './postseasonStyles';
+import { btnLiveSx, dialogPaperSx, dialogTitleSx, autocompleteSx } from './postseasonStyles';
+import { secondaryButtonSx } from '../../styles/controls';
 
 const PlayoffBracketDialog = ({
     open,
@@ -129,7 +130,7 @@ const PlayoffBracketDialog = ({
             </Box>
         </DialogContent>
         <DialogActions sx={{ px: '20px', pb: '18px' }}>
-            <Box component="button" type="button" onClick={onClose} sx={ctrlSx}>
+            <Box component="button" type="button" onClick={onClose} sx={secondaryButtonSx}>
                 Cancel
             </Box>
             <Box component="button" type="button" onClick={onSubmit} sx={btnLiveSx}>

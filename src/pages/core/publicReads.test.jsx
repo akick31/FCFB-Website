@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import Home from './Home';
 import RiceSheet from './RiceSheet';
 import Standings from './Standings';
+import Rankings from './Rankings';
 import { getAllTeams } from '../../api/teamApi';
 import { getTeamSeasonConference } from '../../api/teamSeasonConferenceApi';
 import { getRankingWeeks, getRankings } from '../../api/rankingApi';
@@ -27,6 +28,7 @@ jest.mock('../../api/teamApi', () => ({
 }));
 jest.mock('../../api/seasonApi', () => ({
     getCurrentSeason: jest.fn().mockResolvedValue(12),
+    getCurrentWeek: jest.fn().mockResolvedValue(2),
     getLatestCompletedSeason: jest.fn().mockResolvedValue({ season_number: 11 }),
     getAllSeasons: jest.fn().mockResolvedValue([{ season_number: 12 }, { season_number: 11 }]),
     getCurrentSeasonOrLatest: jest.fn().mockResolvedValue(12),
@@ -40,7 +42,13 @@ jest.mock('../../api/scheduleApi', () => ({
     getPostseasonSchedule: jest.fn().mockResolvedValue([]),
     getScheduleBySeasonAndTeam: jest.fn().mockResolvedValue([]),
     getScheduleBySeason: jest.fn().mockResolvedValue([]),
+    getScheduleBySeasonAndWeek: jest.fn().mockResolvedValue([]),
     getConferenceRules: jest.fn().mockResolvedValue({ divisions: [] }),
+}));
+jest.mock('../../api/playApi', () => ({ getPreviousPlay: jest.fn().mockResolvedValue(null) }));
+jest.mock('../../api/historyApi', () => ({
+    getHistoryWeek: jest.fn().mockResolvedValue(null),
+    getHistoryWeeks: jest.fn().mockResolvedValue([]),
 }));
 jest.mock('../../api/eloHistoryApi.jsx', () => ({ getEloHistory: jest.fn().mockResolvedValue([]) }));
 jest.mock('../../api/seasonStatsApi', () => ({ getFilteredSeasonStats: jest.fn().mockResolvedValue({ content: [] }) }));
@@ -52,10 +60,12 @@ jest.mock('../../api/teamSeasonConferenceApi', () => ({
 }));
 jest.mock('../../api/rankingMetricApi', () => ({
     getValidRankingMetricWeeks: jest.fn().mockResolvedValue([]),
+    getRankingMetricWeeks: jest.fn().mockResolvedValue([]),
     getRankingMetrics: jest.fn().mockResolvedValue([]),
 }));
 jest.mock('../../api/teamResumeMetricApi', () => ({ getTeamResumeMetrics: jest.fn().mockResolvedValue([]) }));
 jest.mock('../../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
     useTeamsMap: () => ({}),
     toEntry: (team) => team,
     ensureTeam: jest.fn(),
@@ -129,9 +139,9 @@ test('Home retains current-season polling and both game categories while mounted
     await open(Home);
     expect(getRankingWeeks).toHaveBeenCalledWith(12, 'COACHES_POLL');
     expect(getRankings).toHaveBeenCalledWith(12, 4, 'COACHES_POLL');
-    expect(getFilteredGames).toHaveBeenCalledTimes(2);
+    expect(getFilteredGames).toHaveBeenCalledTimes(4);
     expect(getPostseasonSchedule).toHaveBeenCalledWith(11);
-    expect(screen.getByText('Season 12')).toBeInTheDocument();
+    expect(screen.getByText('Season 12, Week 2')).toBeInTheDocument();
 });
 test('RiceSheet reloads opponents when changing seasons instead of retaining the old cache', async () => {
     getScheduleBySeasonAndTeam
@@ -221,4 +231,31 @@ test('Standings retains a successful historical lookup and season selection', as
     expect(screen.getByRole('combobox', { name: 'Season' })).toHaveValue('11');
     expect(screen.getByRole('columnheader', { name: 'Overall' })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+const openRankings = () =>
+    act(async () => {
+        render(
+            <MemoryRouter initialEntries={['/rankings']}>
+                <Routes>
+                    <Route path="/rankings" element={<Rankings />} />
+                    <Route path="/rankings/:type" element={<Rankings />} />
+                </Routes>
+            </MemoryRouter>
+        );
+    });
+
+test('Rankings shows a loading row until the selected poll week arrives', async () => {
+    const poll = pending(getRankings);
+    await openRankings();
+    expect(screen.getByLabelText('Loading')).toBeInTheDocument();
+    await poll.resolve([{ rank: 1, teamId: 1, teamName: 'Alpha', wins: 1, losses: 0 }]);
+    expect(screen.queryByLabelText('Loading')).toBeNull();
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+});
+
+test('Rankings explains when a season has no published rankings', async () => {
+    getRankingWeeks.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    await openRankings();
+    expect(screen.getByText('No Coaches Poll rankings have been published for Season 12 yet.')).toBeInTheDocument();
 });

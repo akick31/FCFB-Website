@@ -14,7 +14,11 @@ jest.mock('react-router-dom', () => {
 });
 jest.mock('../api/teamApi', () => ({ getAllTeams: jest.fn() }));
 jest.mock('../api/userApi', () => ({ getAllUsers: jest.fn() }));
-jest.mock('../hooks/useTeamsMap', () => ({ useTeamsMap: () => ({}) }));
+jest.mock('../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    ensureTeam: jest.fn(),
+    useTeamsMap: () => ({}),
+}));
 jest.mock('../hooks/useConferencesMap', () => ({
     useConferencesMap: () => ({}),
     activeConferenceCodes: () => ['SEC'],
@@ -24,6 +28,7 @@ jest.mock('../hooks/useConferencesMap', () => ({
 jest.mock('../hooks/useSeo', () => ({ useSeo: () => {} }));
 jest.mock('../context/ColorModeContext', () => ({ useColorMode: () => ({ mode: 'light' }) }));
 jest.mock('../components/ui/TeamMark', () => ({ __esModule: true, default: () => null }));
+jest.mock('../components/ui/ConferenceMark', () => ({ __esModule: true, default: () => null }));
 const team = { id: 1, name: 'Alpha', active: true, conference: 'SEC', is_taken: false };
 const coach = { id: 1, username: 'AlphaCoach', coach_name: 'Current coach', team: 'Alpha', position: 'HEAD_COACH' };
 const pending = (api) => {

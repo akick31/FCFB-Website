@@ -5,8 +5,15 @@ import PropTypes from 'prop-types';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
+import { weekLabel } from '../../utils/formatText';
+import RankingMovers from '../../components/rankings/RankingMovers';
+import PagedFooter from '../../components/ui/PagedFooter';
+import usePagedRows from '../../hooks/usePagedRows';
+import useFitCount from '../../hooks/useFitCount';
 import SelectPill from '../../components/ui/SelectPill';
+import ConferencePill from '../../components/ui/ConferencePill';
 import DataTable from '../../components/ui/DataTable';
+import TableMessageRow from '../../components/ui/TableMessageRow';
 import LinkCell from '../../components/ui/LinkCell';
 import TeamMark from '../../components/ui/TeamMark';
 import ConferenceMark from '../../components/ui/ConferenceMark';
@@ -71,16 +78,7 @@ const pythagoreanRecord = (value, wins, losses) => {
     return `${pythagWins}-${gamesPlayed - pythagWins}`;
 };
 
-const weekLabel = (week) => {
-    if (week >= 14) {
-        return 'Postseason';
-    }
-    if (week === 13) {
-        return 'Conference Championship Week';
-    }
-    return `Week ${week}`;
-};
-const granularWeekLabel = (week) => (week === 13 ? 'Conference Championship Week' : `Week ${week}`);
+const pollWeekLabel = (week) => (week >= 14 ? 'Postseason' : weekLabel(week));
 
 const RankDelta = ({ prev, rank }) => {
     if (prev == null) {
@@ -118,10 +116,11 @@ const Rankings = () => {
         const urlWeek = Number(searchParams.get('week'));
         return urlWeek || null;
     });
-    const [pollData, setPollData] = useState({ current: [], prevRankByTeamId: {} });
+    const [pollData, setPollData] = useState({ key: null, current: [], prevRankByTeamId: {} });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showAll, setShowAll] = useState(() => searchParams.get('all') !== '0');
+    const [view, setView] = useState(() => (searchParams.get('view') === 'movers' ? 'movers' : 'table'));
     const [teamSearch, setTeamSearch] = useState(() => searchParams.get('q') || '');
     const [conference, setConference] = useState(() => searchParams.get('conference')?.toUpperCase() || 'ALL');
 
@@ -338,11 +337,11 @@ const Rankings = () => {
                 prev.forEach((entry) => {
                     prevRankByTeamId[entry.teamId] = entry.rank;
                 });
-                setPollData({ current, prevRankByTeamId });
+                setPollData({ key: `${mode}:${season}:${week}`, current, prevRankByTeamId });
             })
             .catch(() => {
                 if (active) {
-                    setPollData({ current: [], prevRankByTeamId: {} });
+                    setPollData({ key: `${mode}:${season}:${week}`, current: [], prevRankByTeamId: {} });
                 }
             });
         return () => {
@@ -350,7 +349,7 @@ const Rankings = () => {
         };
     }, [mode, season, week, weeksForMode]);
 
-    const [metricData, setMetricData] = useState({ current: [], prevRankByTeamId: {} });
+    const [metricData, setMetricData] = useState({ key: null, current: [], prevRankByTeamId: {} });
 
     useEffect(() => {
         if (!isMetricMode(mode) || season == null || week == null) {
@@ -371,13 +370,14 @@ const Rankings = () => {
                 const { sorted, rankByTeamId } = rankMetricEntries(current, higherIsBetter);
                 const { rankByTeamId: prevRankByTeamId } = rankMetricEntries(prev, higherIsBetter);
                 setMetricData({
+                    key: `${mode}:${season}:${week}`,
                     current: sorted.map((entry) => ({ ...entry, rank: rankByTeamId[entry.teamId] })),
                     prevRankByTeamId,
                 });
             })
             .catch(() => {
                 if (active) {
-                    setMetricData({ current: [], prevRankByTeamId: {} });
+                    setMetricData({ key: `${mode}:${season}:${week}`, current: [], prevRankByTeamId: {} });
                 }
             });
         return () => {
@@ -484,10 +484,11 @@ const Rankings = () => {
         apply('conference', conference !== 'ALL' ? conference.toLowerCase() : null);
         apply('all', showAll ? null : '0');
         apply('q', teamSearch || null);
+        apply('view', view === 'movers' ? 'movers' : null);
         if (changed) {
             setSearchParams(next, { replace: true });
         }
-    }, [season, week, conference, showAll, teamSearch]);
+    }, [season, week, conference, showAll, teamSearch, view]);
 
     const teamById = useMemo(() => Object.fromEntries(teams.map((team) => [team.id, team])), [teams]);
     const teamByName = useMemo(() => Object.fromEntries(teams.map((team) => [team.name, team])), [teams]);
@@ -568,6 +569,33 @@ const Rankings = () => {
         }
         return showAll ? conferenceRows : conferenceRows.slice(0, 25);
     }, [mode, conferenceRows, teamSearch, showAll, conference]);
+    const [fitRef, pageSize] = useFitCount({ rowHeight: 36, minRows: 8, phoneCount: 25 });
+    const { page, pageCount, pageRows, setPage } = usePagedRows(
+        displayRows,
+        pageSize,
+        `${mode}|${season}|${week}|${conference}|${showAll}|${teamSearch}`
+    );
+
+    const rowsLoading = useMemo(() => {
+        if (!weeksLoaded) {
+            return true;
+        }
+        if (mode === 'elo' || week == null) {
+            return false;
+        }
+        const loadedKey = isMetricMode(mode) ? metricData.key : pollData.key;
+        return loadedKey !== `${mode}:${season}:${week}`;
+    }, [weeksLoaded, mode, week, season, metricData.key, pollData.key]);
+
+    const emptyMessage = () => {
+        if (teamSearch.trim() && hasShowFilter(mode)) {
+            return `No teams match "${teamSearch.trim()}".`;
+        }
+        if (week == null) {
+            return `No ${tabLabel(mode)} rankings have been published for Season ${season} yet.`;
+        }
+        return `No ${tabLabel(mode)} rankings for ${pollWeekLabel(week)}.`;
+    };
 
     useEffect(() => {
         if (!loading && !error) {
@@ -595,94 +623,106 @@ const Rankings = () => {
 
     return (
         <PageWrap>
-            <PageHeading eyebrow="Top 25" title="Rankings">
+            <PageHeading eyebrow="Top 25" title="Rankings" />
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '9px',
+                    flexWrap: 'wrap',
+                    mb: '14px',
+                }}
+            >
                 <SegTabs
                     ariaLabel="Ranking type"
                     value={isMetricMode(mode) ? groupTabFor(mode) : mode}
                     onChange={changeTab}
                     options={segOptions}
                 />
-                {season != null && seasons.length > 0 && (
-                    <SelectPill
-                        label="Season"
-                        value={season}
-                        onChange={(next) => changeSeason(Number(next))}
-                        options={seasons.map((option) => ({ value: option, label: `Season ${option}` }))}
-                        sx={{ height: '38px', boxSizing: 'border-box' }}
-                    />
-                )}
-                {season != null && !hasShowFilter(mode) && (
-                    <SelectPill
-                        label="Conference"
-                        value={conference}
-                        onChange={setConference}
-                        options={[
-                            { value: 'ALL', label: 'All conferences' },
-                            ...availableConferences.map((conf) => ({ value: conf, label: conferenceLabel(conf) })),
-                        ]}
-                        sx={{ height: '38px', boxSizing: 'border-box' }}
-                    />
-                )}
-                {hasShowFilter(mode) && (
-                    <SelectPill
-                        label="Show"
-                        value={conference !== 'ALL' ? conference : showAll ? 'all' : 'top25'}
-                        onChange={(next) => {
-                            if (next === 'top25') {
-                                setShowAll(false);
-                                setConference('ALL');
-                            } else if (next === 'all') {
-                                setShowAll(true);
-                                setConference('ALL');
-                            } else {
-                                setConference(next);
-                                setShowAll(true);
-                            }
-                        }}
-                        options={[
-                            { value: 'top25', label: 'Top 25' },
-                            { value: 'all', label: 'All teams' },
-                            ...availableConferences.map((conf) => ({ value: conf, label: conferenceLabel(conf) })),
-                        ]}
-                        sx={{ height: '38px', boxSizing: 'border-box' }}
-                    />
-                )}
-                {week != null && weeksForMode.length > 0 && (
-                    <SelectPill
-                        label="Week"
-                        value={week}
-                        onChange={(next) => setWeekOverride(Number(next))}
-                        options={weeksForMode.map((option) => ({
-                            value: option,
-                            label: (isMetricMode(mode) || mode === 'elo' ? granularWeekLabel : weekLabel)(option),
-                        }))}
-                        sx={{ height: '38px', boxSizing: 'border-box' }}
-                    />
-                )}
-                {hasShowFilter(mode) && (
-                    <Box
-                        component="input"
-                        placeholder="Search teams…"
-                        aria-label="Search teams"
-                        value={teamSearch}
-                        onChange={(event) => setTeamSearch(event.target.value)}
-                        sx={{
-                            border: '1px solid var(--line)',
-                            background: 'var(--surface)',
-                            color: 'var(--text)',
-                            borderRadius: 'var(--r-sm)',
-                            padding: '6px 10px',
-                            font: 'inherit',
-                            fontSize: '0.8rem',
-                            fontWeight: 700,
-                            minWidth: 190,
-                            height: '38px',
-                            boxSizing: 'border-box',
-                            '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 },
-                        }}
-                    />
-                )}
-            </PageHeading>
+                <Box sx={{ display: 'flex', gap: '9px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {season != null && seasons.length > 0 && (
+                        <SelectPill
+                            label="Season"
+                            value={season}
+                            onChange={(next) => changeSeason(Number(next))}
+                            options={seasons.map((option) => ({ value: option, label: `Season ${option}` }))}
+                            sx={{ height: '38px', boxSizing: 'border-box' }}
+                        />
+                    )}
+                    {season != null && !hasShowFilter(mode) && (
+                        <ConferencePill
+                            label="Conference"
+                            value={conference}
+                            onChange={setConference}
+                            options={[
+                                { value: 'ALL', label: 'All conferences' },
+                                ...availableConferences.map((conf) => ({ value: conf, label: conferenceLabel(conf) })),
+                            ]}
+                            sx={{ height: '38px', boxSizing: 'border-box' }}
+                        />
+                    )}
+                    {hasShowFilter(mode) && (
+                        <SelectPill
+                            label="Show"
+                            value={conference !== 'ALL' ? conference : showAll ? 'all' : 'top25'}
+                            onChange={(next) => {
+                                if (next === 'top25') {
+                                    setShowAll(false);
+                                    setConference('ALL');
+                                } else if (next === 'all') {
+                                    setShowAll(true);
+                                    setConference('ALL');
+                                } else {
+                                    setConference(next);
+                                    setShowAll(true);
+                                }
+                            }}
+                            options={[
+                                { value: 'top25', label: 'Top 25' },
+                                { value: 'all', label: 'All teams' },
+                                ...availableConferences.map((conf) => ({ value: conf, label: conferenceLabel(conf) })),
+                            ]}
+                            sx={{ height: '38px', boxSizing: 'border-box' }}
+                        />
+                    )}
+                    {week != null && weeksForMode.length > 0 && (
+                        <SelectPill
+                            label="Week"
+                            value={week}
+                            onChange={(next) => setWeekOverride(Number(next))}
+                            options={weeksForMode.map((option) => ({
+                                value: option,
+                                label: (isMetricMode(mode) || mode === 'elo' ? weekLabel : pollWeekLabel)(option),
+                            }))}
+                            sx={{ height: '38px', boxSizing: 'border-box' }}
+                        />
+                    )}
+                    {hasShowFilter(mode) && (
+                        <Box
+                            component="input"
+                            placeholder="Search teams…"
+                            aria-label="Search teams"
+                            value={teamSearch}
+                            onChange={(event) => setTeamSearch(event.target.value)}
+                            sx={{
+                                border: '1px solid var(--line)',
+                                background: 'var(--surface)',
+                                color: 'var(--text)',
+                                borderRadius: 'var(--r-sm)',
+                                padding: '6px 10px',
+                                font: 'inherit',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                minWidth: 190,
+                                height: '38px',
+                                boxSizing: 'border-box',
+                                '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 },
+                            }}
+                        />
+                    )}
+                </Box>
+            </Box>
 
             {isMetricMode(mode) && (
                 <Box sx={{ mb: '14px' }}>
@@ -704,100 +744,138 @@ const Rankings = () => {
                 </Box>
             )}
 
-            <DataTable minWidth={640} tableLayout="fixed">
-                <thead>
-                    <tr>
-                        <th className="lft stick" style={{ width: '6%' }}>
-                            Rk
-                        </th>
-                        <th className="lft" style={{ width: '24%' }}>
-                            Team
-                        </th>
-                        <th style={{ width: '11%', textAlign: 'center !important' }}>Record</th>
-                        <th style={{ width: '11%', textAlign: 'center !important' }}>Conference</th>
-                        <th style={{ width: '11%', textAlign: 'center !important' }}>Previous</th>
-                        <th style={{ width: '9%', textAlign: 'center !important' }}>Δ</th>
-                        <th style={{ width: '10%' }}>{isMetricMode(mode) ? rankingMetricColumnLabel(mode) : 'ELO'}</th>
-                        {mode === 'EQUIVALENT_WINS' && (
-                            <th style={{ width: '11%', textAlign: 'center' }}>Pythag Record</th>
-                        )}
-                        <th style={{ width: mode === 'EQUIVALENT_WINS' ? '13%' : '18%' }}>Coach</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {displayRows.length === 0 && hasShowFilter(mode) && teamSearch.trim() && (
+            <Box sx={{ mb: '14px' }}>
+                <SegTabs
+                    ariaLabel="Rankings view"
+                    value={view}
+                    onChange={setView}
+                    options={[
+                        { value: 'table', label: 'Rankings' },
+                        { value: 'movers', label: 'Movers' },
+                    ]}
+                />
+            </Box>
+
+            {view === 'movers' && !rowsLoading && (
+                <RankingMovers
+                    rows={conferenceRows}
+                    resetKey={`${mode}|${season}|${week}|${conference}`}
+                    showNewcomers={mode !== 'elo' && !isMetricMode(mode)}
+                />
+            )}
+
+            <Box ref={fitRef} sx={view === 'movers' ? { display: 'none' } : undefined}>
+                <DataTable minWidth={640} phoneMinWidth={0} tableLayout="fixed" dense>
+                    <thead>
                         <tr>
-                            <Box
-                                component="td"
-                                colSpan={mode === 'EQUIVALENT_WINS' ? 9 : 8}
-                                sx={{ textAlign: 'center', color: 'var(--text-muted)', py: 3 }}
-                            >
-                                No teams match &quot;{teamSearch.trim()}&quot;.
-                            </Box>
+                            <th className="lft stick" style={{ width: '6%' }}>
+                                Rk
+                            </th>
+                            <th className="lft" style={{ width: '24%' }}>
+                                Team
+                            </th>
+                            <th style={{ width: '11%', textAlign: 'center !important' }}>Record</th>
+                            <th className="wide" style={{ width: '11%', textAlign: 'center !important' }}>
+                                Conference
+                            </th>
+                            <th className="wide" style={{ width: '11%', textAlign: 'center !important' }}>
+                                Previous
+                            </th>
+                            <th style={{ width: '9%', textAlign: 'center !important' }}>Δ</th>
+                            <th style={{ width: '10%' }}>
+                                {isMetricMode(mode) ? rankingMetricColumnLabel(mode) : 'ELO'}
+                            </th>
+                            {mode === 'EQUIVALENT_WINS' && (
+                                <th style={{ width: '11%', textAlign: 'center' }}>Pythag Record</th>
+                            )}
+                            <th className="wide" style={{ width: mode === 'EQUIVALENT_WINS' ? '13%' : '18%' }}>
+                                Coach
+                            </th>
                         </tr>
-                    )}
-                    {displayRows.map(({ rank, team, prev, elo, wins, losses }) => {
-                        const mark = teamsMap[team.name] || { name: team.name, abbreviation: team.abbreviation };
-                        const coach = coachByTeam[team.name] ?? team.coach_usernames?.[0];
-                        const teamHref = team.id != null ? `/team-details/${team.id}` : null;
-                        return (
-                            <tr key={team.id ?? team.name}>
-                                <LinkCell to={teamHref} className="lft stick">
-                                    <span style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1rem' }}>
-                                        {rank}
-                                    </span>
-                                </LinkCell>
-                                <LinkCell to={teamHref} className="lft">
-                                    <div className="teamcell">
-                                        <TeamMark team={mark} size={22} />
-                                        <span className="nm">{team.name}</span>
-                                    </div>
-                                </LinkCell>
-                                <LinkCell to={teamHref} className="num" sx={{ textAlign: 'center' }}>
-                                    {wins != null ? `${wins}-${losses ?? 0}` : '-'}
-                                </LinkCell>
-                                <LinkCell to={teamHref} sx={{ textAlign: 'center' }}>
-                                    <ConferenceMark conference={seasonConferenceByTeam[team.name] ?? team.conference} />
-                                </LinkCell>
-                                <LinkCell to={teamHref} className="num" sx={{ textAlign: 'center' }}>
-                                    {prev != null ? prev : '-'}
-                                </LinkCell>
-                                <LinkCell to={teamHref} className="num" sx={{ textAlign: 'center' }}>
-                                    <RankDelta prev={prev} rank={rank} />
-                                </LinkCell>
-                                <LinkCell to={teamHref} className="num">
-                                    {elo != null ? (isMetricMode(mode) ? elo.toFixed(3) : elo) : '-'}
-                                </LinkCell>
-                                {mode === 'EQUIVALENT_WINS' && (
-                                    <LinkCell to={teamHref} className="num" sx={{ textAlign: 'center' }}>
-                                        {pythagoreanRecord(elo, wins, losses) ?? '-'}
-                                    </LinkCell>
-                                )}
-                                <LinkCell to={coach ? null : teamHref}>
-                                    {coach ? (
-                                        <Box
-                                            component={Link}
-                                            to={`/user-details/${coach}`}
-                                            sx={{
-                                                position: 'relative',
-                                                zIndex: 3,
-                                                color: 'var(--brand)',
-                                                fontWeight: 700,
-                                                textDecoration: 'none',
-                                                cursor: 'pointer',
-                                            }}
-                                        >
-                                            @{coach}
-                                        </Box>
-                                    ) : (
-                                        '-'
-                                    )}
-                                </LinkCell>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </DataTable>
+                    </thead>
+                    <tbody>
+                        {(rowsLoading || displayRows.length === 0) && (
+                            <TableMessageRow colSpan={mode === 'EQUIVALENT_WINS' ? 9 : 8} loading={rowsLoading}>
+                                {emptyMessage()}
+                            </TableMessageRow>
+                        )}
+                        {!rowsLoading &&
+                            pageRows.map(({ rank, team, prev, elo, wins, losses }) => {
+                                const mark = teamsMap[team.name] || {
+                                    name: team.name,
+                                    abbreviation: team.abbreviation,
+                                };
+                                const coach = coachByTeam[team.name] ?? team.coach_usernames?.[0];
+                                const teamHref = team.id != null ? `/team-details/${team.id}` : null;
+                                return (
+                                    <tr key={team.id ?? team.name}>
+                                        <LinkCell to={teamHref} className="lft stick">
+                                            <span style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1rem' }}>
+                                                {rank}
+                                            </span>
+                                        </LinkCell>
+                                        <LinkCell to={teamHref} className="lft">
+                                            <div className="teamcell">
+                                                <TeamMark team={mark} size={22} />
+                                                <span className="nm">{team.name}</span>
+                                            </div>
+                                        </LinkCell>
+                                        <LinkCell to={teamHref} className="num" sx={{ textAlign: 'center' }}>
+                                            {wins != null ? `${wins}-${losses ?? 0}` : '-'}
+                                        </LinkCell>
+                                        <LinkCell to={teamHref} className="wide" sx={{ textAlign: 'center' }}>
+                                            <ConferenceMark
+                                                conference={seasonConferenceByTeam[team.name] ?? team.conference}
+                                            />
+                                        </LinkCell>
+                                        <LinkCell to={teamHref} className="num wide" sx={{ textAlign: 'center' }}>
+                                            {prev != null ? prev : '-'}
+                                        </LinkCell>
+                                        <LinkCell to={teamHref} className="num" sx={{ textAlign: 'center' }}>
+                                            <RankDelta prev={prev} rank={rank} />
+                                        </LinkCell>
+                                        <LinkCell to={teamHref} className="num">
+                                            {elo != null ? (isMetricMode(mode) ? elo.toFixed(3) : elo) : '-'}
+                                        </LinkCell>
+                                        {mode === 'EQUIVALENT_WINS' && (
+                                            <LinkCell to={teamHref} className="num" sx={{ textAlign: 'center' }}>
+                                                {pythagoreanRecord(elo, wins, losses) ?? '-'}
+                                            </LinkCell>
+                                        )}
+                                        <LinkCell to={coach ? null : teamHref} className="wide">
+                                            {coach ? (
+                                                <Box
+                                                    component={Link}
+                                                    to={`/user-details/${coach}`}
+                                                    sx={{
+                                                        position: 'relative',
+                                                        zIndex: 3,
+                                                        color: 'var(--brand)',
+                                                        fontWeight: 700,
+                                                        textDecoration: 'none',
+                                                        cursor: 'pointer',
+                                                    }}
+                                                >
+                                                    @{coach}
+                                                </Box>
+                                            ) : (
+                                                '-'
+                                            )}
+                                        </LinkCell>
+                                    </tr>
+                                );
+                            })}
+                    </tbody>
+                </DataTable>
+                <PagedFooter
+                    page={page}
+                    pageCount={pageCount}
+                    pageSize={pageSize}
+                    total={displayRows.length}
+                    onChange={setPage}
+                    noun="teams"
+                />
+            </Box>
         </PageWrap>
     );
 };

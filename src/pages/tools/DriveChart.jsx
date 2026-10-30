@@ -5,10 +5,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import Panel from '../../components/ui/Panel';
-import SectionTitle from '../../components/ui/SectionTitle';
+import PageTabs from '../../components/ui/PageTabs';
+import DrivesTable from '../../components/game/detail/DrivesTable';
 import SearchableSelect from '../../components/ui/SearchableSelect';
-import DataTable from '../../components/ui/DataTable';
-import TeamMark from '../../components/ui/TeamMark';
 import WinProbChart from '../../components/game/detail/WinProbChart';
 import ScoreChart from '../../components/game/detail/ScoreChart';
 import DriveFieldChart from '../../components/game/detail/DriveFieldChart';
@@ -19,8 +18,9 @@ import { getFilteredGames, getGameById } from '../../api/gameApi';
 import { getAllPlaysByGameId } from '../../api/playApi';
 import { buildWinProbSeries, buildScoreSeries, quarterBoundaries, formatClock } from '../../utils/gameDetail';
 import { orderPlaysChronologically, buildDrives } from '../../utils/driveChart';
-import { describePlay, formatDownDistanceSpot, formatBallSpot } from '../../utils/formatPlay';
+import { describePlay, formatDownDistanceSpot } from '../../utils/formatPlay';
 import { useSeo } from '../../hooks/useSeo';
+import { inputSx, labelSx } from '../../styles/controls';
 
 const RECENT_GAMES_LIMIT = 200;
 const SPEED_OPTIONS = [
@@ -29,28 +29,9 @@ const SPEED_OPTIONS = [
     { value: 500, label: '2x' },
 ];
 
-const gameLabel = (game) => `#${game.game_id} · S${game.season} Wk${game.week}: ${game.away_team} @ ${game.home_team}`;
+const gameLabel = (game) => `S${game.season} Wk${game.week}: ${game.away_team} @ ${game.home_team} (#${game.game_id})`;
 
 const CONTROL_HEIGHT = '34px';
-const inputSx = {
-    height: CONTROL_HEIGHT,
-    boxSizing: 'border-box',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    py: 0,
-    font: 'inherit',
-    fontSize: '0.8rem',
-};
-const labelSx = {
-    fontSize: '0.68rem',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
-};
 const ctrlBtnSx = {
     height: CONTROL_HEIGHT,
     boxSizing: 'border-box',
@@ -128,7 +109,12 @@ const DriveChart = () => {
     }, []);
 
     const gameOptions = useMemo(
-        () => games.map((entry) => ({ value: entry.game_id, label: gameLabel(entry) })),
+        () =>
+            games.map((entry) => ({
+                value: entry.game_id,
+                label: gameLabel(entry),
+                teams: [entry.away_team, entry.home_team],
+            })),
         [games]
     );
     const resolvedGameId = useMemo(
@@ -229,6 +215,7 @@ const DriveChart = () => {
     const scoreSeries = useMemo(() => buildScoreSeries(orderedPlays), [orderedPlays]);
     const wpMarks = useMemo(() => quarterBoundaries(wpSeries), [wpSeries]);
     const drives = useMemo(() => buildDrives(allOrderedPlays), [allOrderedPlays]);
+    const [tab, setTab] = useState('charts');
 
     const currentPlay = orderedPlays[index] || null;
     const atEnd = index >= orderedPlays.length - 1;
@@ -278,226 +265,179 @@ const DriveChart = () => {
 
             {!loading && game && orderedPlays.length > 1 && (
                 <>
-                    <Box
-                        sx={{
-                            display: 'grid',
-                            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                            gap: '16px',
-                            mb: '16px',
-                            alignItems: 'stretch',
-                        }}
-                    >
-                        <Panel header="Win probability">
-                            <Box sx={{ p: 2 }}>
-                                <WinProbChart
-                                    series={wpSeries}
-                                    homeColor={homeColor}
-                                    awayColor={awayColor}
-                                    homeMark={homeMark}
-                                    awayMark={awayMark}
-                                    quarterMarks={wpMarks}
-                                />
-                            </Box>
-                        </Panel>
-                        <Panel header="Score">
-                            <Box sx={{ p: 2 }}>
-                                <ScoreChart
-                                    series={scoreSeries}
-                                    homeColor={homeColor}
-                                    awayColor={awayColor}
-                                    homeAbbr={homeMark?.abbreviation}
-                                    awayAbbr={awayMark?.abbreviation}
-                                />
-                            </Box>
-                        </Panel>
-                    </Box>
-
-                    <SectionTitle title="Replay" />
-                    <Panel sx={{ mb: '16px' }}>
-                        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                                <Box
-                                    component="button"
-                                    type="button"
-                                    onClick={() => setIndex((i) => Math.max(0, i - 1))}
-                                    disabled={index === 0}
-                                    sx={ctrlBtnSx}
-                                >
-                                    ◀ Step
-                                </Box>
-                                <Box
-                                    component="button"
-                                    type="button"
-                                    onClick={() => setPlaying((p) => !p)}
-                                    disabled={atEnd && !playing}
-                                    sx={ctrlBtnSx}
-                                >
-                                    {playing ? 'Pause' : 'Play'}
-                                </Box>
-                                <Box
-                                    component="button"
-                                    type="button"
-                                    onClick={() => setIndex((i) => Math.min(orderedPlays.length - 1, i + 1))}
-                                    disabled={atEnd}
-                                    sx={ctrlBtnSx}
-                                >
-                                    Step ▶
-                                </Box>
-                                <Box
-                                    component="select"
-                                    value={speed}
-                                    onChange={(event) => setSpeed(Number(event.target.value))}
-                                    sx={inputSx}
-                                >
-                                    {SPEED_OPTIONS.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </Box>
-                                <Box sx={{ fontSize: '0.76rem', color: 'var(--text-dim)' }}>
-                                    Play {index + 1} of {orderedPlays.length}
-                                </Box>
-                            </Box>
+                    <PageTabs
+                        value={tab}
+                        onChange={setTab}
+                        ariaLabel="Drive chart sections"
+                        options={[
+                            { value: 'charts', label: 'Charts & replay' },
+                            { value: 'drives', label: `Drives (${drives.length})` },
+                        ]}
+                        trailing={
                             <Box
-                                component="input"
-                                type="range"
-                                min={0}
-                                max={orderedPlays.length - 1}
-                                value={index}
-                                onChange={(event) => {
-                                    setPlaying(false);
-                                    setIndex(Number(event.target.value));
+                                component={Link}
+                                to={`/game-details/${game.game_id}`}
+                                sx={{
+                                    color: 'var(--brand)',
+                                    fontWeight: 700,
+                                    fontSize: '0.82rem',
+                                    textDecoration: 'none',
                                 }}
-                                sx={{ width: '100%' }}
-                            />
-                            {currentPlay && (
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        gap: '16px',
-                                        flexWrap: 'wrap',
-                                        alignItems: 'center',
-                                        p: 1.5,
-                                        background: 'var(--surface-2)',
-                                        borderRadius: 'var(--r-sm)',
-                                        fontSize: '0.86rem',
-                                    }}
-                                >
-                                    <Box sx={{ fontWeight: 800 }}>
-                                        Q{currentPlay.quarter} {formatClock(currentPlay.clock)}
+                            >
+                                Full game details ›
+                            </Box>
+                        }
+                    />
+                    {tab === 'charts' && (
+                        <>
+                            <Box
+                                sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: { xs: '1fr', md: '1fr 1fr', lg: 'repeat(3, minmax(0, 1fr))' },
+                                    gap: '16px',
+                                    alignItems: 'stretch',
+                                }}
+                            >
+                                <Panel header="Win probability">
+                                    <Box sx={{ p: 2 }}>
+                                        <WinProbChart
+                                            series={wpSeries}
+                                            homeColor={homeColor}
+                                            awayColor={awayColor}
+                                            homeMark={homeMark}
+                                            awayMark={awayMark}
+                                            quarterMarks={wpMarks}
+                                        />
                                     </Box>
-                                    <Box>
-                                        {awayMark?.abbreviation} {currentPlay.away_score} - {currentPlay.home_score}{' '}
-                                        {homeMark?.abbreviation}
+                                </Panel>
+                                <Panel header="Score">
+                                    <Box sx={{ p: 2 }}>
+                                        <ScoreChart
+                                            series={scoreSeries}
+                                            homeColor={homeColor}
+                                            awayColor={awayColor}
+                                            homeAbbr={homeMark?.abbreviation}
+                                            awayAbbr={awayMark?.abbreviation}
+                                        />
                                     </Box>
-                                    <Box sx={{ color: 'var(--text-muted)' }}>
-                                        {formatDownDistanceSpot(
-                                            currentPlay,
-                                            homeMark?.abbreviation,
-                                            awayMark?.abbreviation
-                                        )}
-                                    </Box>
-                                    <Box sx={{ flex: 1, minWidth: 200 }}>
-                                        {describePlay(currentPlay, {
-                                            homeName: game.home_team,
-                                            awayName: game.away_team,
-                                        })}
-                                    </Box>
-                                </Box>
-                            )}
-                        </Box>
-                    </Panel>
+                                </Panel>
 
-                    <SectionTitle title="Drives" />
-                    <DataTable minWidth={760}>
-                        <thead>
-                            <tr>
-                                <th className="lft stick">Team</th>
-                                <th className="lft">Quarter</th>
-                                <th className="lft">Start</th>
-                                <th>Plays</th>
-                                <th>Net yards</th>
-                                <th className="lft">End</th>
-                                <th className="lft">Result</th>
-                                <th className="lft">Score after</th>
-                                <th className="lft">Chart</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {drives.map((drive) => {
-                                const mark = teamsMap[drive.team] || toEntry({ name: drive.team });
-                                return (
-                                    <tr key={drive.index}>
-                                        <td className="lft stick">
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <TeamMark team={mark} size={18} />
-                                                {drive.team}
-                                            </Box>
-                                        </td>
-                                        <td className="lft">Q{drive.quarter}</td>
-                                        <td className="lft">
-                                            {drive.startReason}
-                                            <Box sx={{ fontSize: '0.68rem', color: 'var(--text-dim)' }}>
-                                                {formatBallSpot(
-                                                    drive.startBallLocation,
-                                                    drive.possession,
-                                                    homeMark?.abbreviation,
-                                                    awayMark?.abbreviation
-                                                )}
-                                            </Box>
-                                        </td>
-                                        <td>{drive.playCount}</td>
-                                        <td>{drive.netYards}</td>
-                                        <td className="lft">
-                                            {formatBallSpot(
-                                                drive.endBallLocation,
-                                                drive.possession,
-                                                homeMark?.abbreviation,
-                                                awayMark?.abbreviation
-                                            )}
-                                        </td>
-                                        <td className="lft">{drive.outcome}</td>
-                                        <td className="lft">
-                                            {awayMark?.abbreviation} {drive.awayScoreAfter} - {drive.homeScoreAfter}{' '}
-                                            {homeMark?.abbreviation}
-                                        </td>
-                                        <td className="lft">
+                                <Panel header="Replay">
+                                    <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '10px',
+                                                flexWrap: 'wrap',
+                                            }}
+                                        >
                                             <Box
                                                 component="button"
                                                 type="button"
-                                                onClick={() => setViewedDrive(drive)}
+                                                onClick={() => setIndex((i) => Math.max(0, i - 1))}
+                                                disabled={index === 0}
+                                                sx={ctrlBtnSx}
+                                            >
+                                                ◀ Step
+                                            </Box>
+                                            <Box
+                                                component="button"
+                                                type="button"
+                                                onClick={() => setPlaying((p) => !p)}
+                                                disabled={atEnd && !playing}
+                                                sx={ctrlBtnSx}
+                                            >
+                                                {playing ? 'Pause' : 'Play'}
+                                            </Box>
+                                            <Box
+                                                component="button"
+                                                type="button"
+                                                onClick={() =>
+                                                    setIndex((i) => Math.min(orderedPlays.length - 1, i + 1))
+                                                }
+                                                disabled={atEnd}
+                                                sx={ctrlBtnSx}
+                                            >
+                                                Step ▶
+                                            </Box>
+                                            <Box
+                                                component="select"
+                                                value={speed}
+                                                onChange={(event) => setSpeed(Number(event.target.value))}
+                                                sx={inputSx}
+                                            >
+                                                {SPEED_OPTIONS.map((option) => (
+                                                    <option key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </Box>
+                                            <Box sx={{ fontSize: '0.76rem', color: 'var(--text-dim)' }}>
+                                                Play {index + 1} of {orderedPlays.length}
+                                            </Box>
+                                        </Box>
+                                        <Box
+                                            component="input"
+                                            type="range"
+                                            min={0}
+                                            max={orderedPlays.length - 1}
+                                            value={index}
+                                            onChange={(event) => {
+                                                setPlaying(false);
+                                                setIndex(Number(event.target.value));
+                                            }}
+                                            sx={{ width: '100%' }}
+                                        />
+                                        {currentPlay && (
+                                            <Box
                                                 sx={{
-                                                    border: '1px solid var(--line)',
+                                                    display: 'flex',
+                                                    gap: '16px',
+                                                    flexWrap: 'wrap',
+                                                    alignItems: 'center',
+                                                    p: 1.5,
                                                     background: 'var(--surface-2)',
-                                                    color: 'var(--text)',
                                                     borderRadius: 'var(--r-sm)',
-                                                    px: '10px',
-                                                    py: '5px',
-                                                    font: 'inherit',
-                                                    fontSize: '0.72rem',
-                                                    fontWeight: 700,
-                                                    cursor: 'pointer',
+                                                    fontSize: '0.86rem',
                                                 }}
                                             >
-                                                View drive chart
+                                                <Box sx={{ fontWeight: 800 }}>
+                                                    Q{currentPlay.quarter} {formatClock(currentPlay.clock)}
+                                                </Box>
+                                                <Box>
+                                                    {awayMark?.abbreviation} {currentPlay.away_score} -{' '}
+                                                    {currentPlay.home_score} {homeMark?.abbreviation}
+                                                </Box>
+                                                <Box sx={{ color: 'var(--text-muted)' }}>
+                                                    {formatDownDistanceSpot(
+                                                        currentPlay,
+                                                        homeMark?.abbreviation,
+                                                        awayMark?.abbreviation
+                                                    )}
+                                                </Box>
+                                                <Box sx={{ flex: 1, minWidth: 200 }}>
+                                                    {describePlay(currentPlay, {
+                                                        homeName: game.home_team,
+                                                        awayName: game.away_team,
+                                                    })}
+                                                </Box>
                                             </Box>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </DataTable>
-
-                    <Box sx={{ mt: '16px' }}>
-                        <Box
-                            component={Link}
-                            to={`/game-details/${game.game_id}`}
-                            sx={{ color: 'var(--brand)', fontWeight: 700, fontSize: '0.82rem', textDecoration: 'none' }}
-                        >
-                            View full game details →
-                        </Box>
-                    </Box>
+                                        )}
+                                    </Box>
+                                </Panel>
+                            </Box>
+                        </>
+                    )}
+                    {tab === 'drives' && (
+                        <DrivesTable
+                            drives={drives}
+                            homeTeam={game.home_team}
+                            homeMark={homeMark}
+                            awayMark={awayMark}
+                            onViewDrive={setViewedDrive}
+                        />
+                    )}
                 </>
             )}
 
@@ -513,7 +453,7 @@ const DriveChart = () => {
                         letterSpacing: '0.01em',
                     }}
                 >
-                    {viewedDrive ? `${viewedDrive.team} drive · Q${viewedDrive.quarter}` : 'Drive'}
+                    {viewedDrive ? `${viewedDrive.team} drive, Q${viewedDrive.quarter}` : 'Drive'}
                     <IconButton size="small" onClick={() => setViewedDrive(null)} aria-label="Close">
                         <Close fontSize="small" />
                     </IconButton>

@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
 import { Link } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import Panel from '../../components/ui/Panel';
-import SectionTitle from '../../components/ui/SectionTitle';
+import PageTabs from '../../components/ui/PageTabs';
 import SearchableSelect from '../../components/ui/SearchableSelect';
 import SelectPill from '../../components/ui/SelectPill';
 import TeamMark from '../../components/ui/TeamMark';
@@ -19,10 +19,11 @@ import {
 } from '../../utils/headToHead';
 import { useSeo } from '../../hooks/useSeo';
 import useHeadToHeadComparison from '../../hooks/useHeadToHeadComparison';
-import { inputSx, btnSx, labelSx } from '../../components/headToHead/headToHeadStyles';
+
 import EntityRankGrid from '../../components/headToHead/EntityRankGrid';
 import WinPctTrendChart from '../../components/headToHead/WinPctTrendChart';
 import MarginBarChart from '../../components/headToHead/MarginBarChart';
+import { inputSx, labelSx, primaryButtonSx } from '../../styles/controls';
 const seasonRange = (start, end) => (start === end ? `Season ${start}` : `Season ${start}-Season ${end}`);
 const MODE_OPTIONS = [
     { value: 'team', label: 'Team' },
@@ -60,6 +61,7 @@ const HeadToHead = () => {
         userByDiscordId,
         compare,
     } = useHeadToHeadComparison();
+    const [tab, setTab] = useState('h2h');
     const markFor = (name) => teamsMap[name] || toEntry({ name });
     const colorFor = (name) => pickTeamColor(markFor(name), mode);
 
@@ -199,7 +201,7 @@ const HeadToHead = () => {
                             type="button"
                             onClick={() => compare()}
                             disabled={loading || !resolvedA || !resolvedB}
-                            sx={btnSx}
+                            sx={primaryButtonSx}
                         >
                             {loading ? 'Comparing…' : 'Compare'}
                         </Box>
@@ -216,319 +218,346 @@ const HeadToHead = () => {
 
             {!loading && resultA && resultB && (
                 <>
-                    <SectionTitle title="Standings" />
-                    <Box
-                        sx={{
-                            display: 'grid',
-                            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                            gap: '16px',
-                            mb: '16px',
-                        }}
-                    >
-                        <Box>
-                            <Box sx={{ mb: '10px' }}>{entityHeader(resultA)}</Box>
-                            <EntityRankGrid
-                                entityName={entityDisplayName(resultA.mode, resultA.id)}
-                                rankings={(resultA.mode === 'coach' ? coachRankings : teamRankings).get(resultA.id)}
-                                accent={entityColor(resultA.mode, resultA.id)}
-                                rankLabel={resultA.mode === 'coach' ? 'Coach ranks' : 'Team ranks'}
-                            />
-                        </Box>
-                        <Box>
-                            <Box sx={{ mb: '10px' }}>{entityHeader(resultB)}</Box>
-                            <EntityRankGrid
-                                entityName={entityDisplayName(resultB.mode, resultB.id)}
-                                rankings={(resultB.mode === 'coach' ? coachRankings : teamRankings).get(resultB.id)}
-                                accent={entityColor(resultB.mode, resultB.id)}
-                                rankLabel={resultB.mode === 'coach' ? 'Coach ranks' : 'Team ranks'}
-                            />
-                        </Box>
-                    </Box>
-
-                    <SectionTitle title="Record (win %)" />
-                    <Panel sx={{ mb: '16px' }}>
-                        <Box sx={{ p: 2 }}>
-                            <WinPctTrendChart
-                                seriesA={resultA.seasonRows}
-                                seriesB={resultB.seasonRows}
-                                nameA={entityDisplayName(resultA.mode, resultA.id)}
-                                nameB={entityDisplayName(resultB.mode, resultB.id)}
-                                colorA={entityColor(resultA.mode, resultA.id)}
-                                colorB={entityColor(resultB.mode, resultB.id)}
-                            />
-                        </Box>
-                    </Panel>
-
-                    <SectionTitle title="Head-to-head" />
-                    <Panel sx={{ mb: '16px' }}>
-                        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            {seriesTotals && seriesTotals.total > 0 ? (
-                                <>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                gap: 0.5,
-                                                minWidth: 70,
-                                            }}
-                                        >
-                                            {resultA.mode === 'team' && (
-                                                <TeamMark team={markFor(resultA.id)} size={32} />
-                                            )}
-                                            <Box sx={{ fontWeight: 800, fontSize: '1.1rem' }}>{seriesTotals.winsA}</Box>
-                                            <Box sx={{ fontSize: '0.66rem', color: 'var(--text-dim)' }}>
-                                                Wins ({formatWinPercentage(seriesTotals.winsA / seriesTotals.total)})
-                                            </Box>
-                                        </Box>
-                                        <Box sx={{ flex: 1 }}>
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    height: 26,
-                                                    borderRadius: 'var(--r-sm)',
-                                                    overflow: 'hidden',
-                                                    border: '1px solid var(--line)',
-                                                }}
-                                            >
+                    <PageTabs
+                        value={tab}
+                        onChange={setTab}
+                        ariaLabel="Winsipedia sections"
+                        options={[
+                            { value: 'h2h', label: 'Head-to-head' },
+                            { value: 'standings', label: 'Standings' },
+                            { value: 'trend', label: 'Record trend' },
+                        ]}
+                    />
+                    {tab === 'h2h' && (
+                        <>
+                            <Panel sx={{ mb: '16px' }}>
+                                <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    {seriesTotals && seriesTotals.total > 0 ? (
+                                        <>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                                 <Box
                                                     sx={{
-                                                        width: `${(seriesTotals.winsA / seriesTotals.total) * 100}%`,
-                                                        background: entityColor(resultA.mode, resultA.id),
-                                                    }}
-                                                />
-                                                {seriesTotals.ties > 0 && (
-                                                    <Box
-                                                        sx={{
-                                                            width: `${(seriesTotals.ties / seriesTotals.total) * 100}%`,
-                                                            background: 'var(--text-dim)',
-                                                        }}
-                                                    />
-                                                )}
-                                                <Box
-                                                    sx={{
-                                                        width: `${(seriesTotals.winsB / seriesTotals.total) * 100}%`,
-                                                        background: entityColor(resultB.mode, resultB.id),
-                                                    }}
-                                                />
-                                            </Box>
-                                            {seriesTotals.ties > 0 && (
-                                                <Box
-                                                    sx={{
-                                                        textAlign: 'center',
-                                                        fontSize: '0.66rem',
-                                                        color: 'var(--text-dim)',
-                                                        mt: '4px',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        gap: 0.5,
+                                                        minWidth: 70,
                                                     }}
                                                 >
-                                                    {seriesTotals.ties} tie{seriesTotals.ties !== 1 ? 's' : ''}
+                                                    {resultA.mode === 'team' && (
+                                                        <TeamMark team={markFor(resultA.id)} size={32} />
+                                                    )}
+                                                    <Box sx={{ fontWeight: 800, fontSize: '1.1rem' }}>
+                                                        {seriesTotals.winsA}
+                                                    </Box>
+                                                    <Box sx={{ fontSize: '0.66rem', color: 'var(--text-dim)' }}>
+                                                        Wins (
+                                                        {formatWinPercentage(seriesTotals.winsA / seriesTotals.total)})
+                                                    </Box>
+                                                </Box>
+                                                <Box sx={{ flex: 1 }}>
+                                                    <Box
+                                                        sx={{
+                                                            display: 'flex',
+                                                            height: 26,
+                                                            borderRadius: 'var(--r-sm)',
+                                                            overflow: 'hidden',
+                                                            border: '1px solid var(--line)',
+                                                        }}
+                                                    >
+                                                        <Box
+                                                            sx={{
+                                                                width: `${(seriesTotals.winsA / seriesTotals.total) * 100}%`,
+                                                                background: entityColor(resultA.mode, resultA.id),
+                                                            }}
+                                                        />
+                                                        {seriesTotals.ties > 0 && (
+                                                            <Box
+                                                                sx={{
+                                                                    width: `${(seriesTotals.ties / seriesTotals.total) * 100}%`,
+                                                                    background: 'var(--text-dim)',
+                                                                }}
+                                                            />
+                                                        )}
+                                                        <Box
+                                                            sx={{
+                                                                width: `${(seriesTotals.winsB / seriesTotals.total) * 100}%`,
+                                                                background: entityColor(resultB.mode, resultB.id),
+                                                            }}
+                                                        />
+                                                    </Box>
+                                                    {seriesTotals.ties > 0 && (
+                                                        <Box
+                                                            sx={{
+                                                                textAlign: 'center',
+                                                                fontSize: '0.66rem',
+                                                                color: 'var(--text-dim)',
+                                                                mt: '4px',
+                                                            }}
+                                                        >
+                                                            {seriesTotals.ties} tie{seriesTotals.ties !== 1 ? 's' : ''}
+                                                        </Box>
+                                                    )}
+                                                </Box>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        gap: 0.5,
+                                                        minWidth: 70,
+                                                    }}
+                                                >
+                                                    {resultB.mode === 'team' && (
+                                                        <TeamMark team={markFor(resultB.id)} size={32} />
+                                                    )}
+                                                    <Box sx={{ fontWeight: 800, fontSize: '1.1rem' }}>
+                                                        {seriesTotals.winsB}
+                                                    </Box>
+                                                    <Box sx={{ fontSize: '0.66rem', color: 'var(--text-dim)' }}>
+                                                        Wins (
+                                                        {formatWinPercentage(seriesTotals.winsB / seriesTotals.total)})
+                                                    </Box>
+                                                </Box>
+                                            </Box>
+
+                                            {streak && (
+                                                <Box sx={{ textAlign: 'center' }}>
+                                                    <Box sx={{ ...labelSx, mb: '4px' }}>Current win streak</Box>
+                                                    <Box
+                                                        sx={{
+                                                            fontFamily: 'var(--cond)',
+                                                            fontWeight: 800,
+                                                            fontSize: '1.4rem',
+                                                            color: streakColor(streak.winner),
+                                                        }}
+                                                    >
+                                                        {streak.length} {streakLabel(streak.winner)} (
+                                                        {seasonRange(streak.startSeason, streak.endSeason)})
+                                                    </Box>
                                                 </Box>
                                             )}
-                                        </Box>
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                gap: 0.5,
-                                                minWidth: 70,
-                                            }}
-                                        >
-                                            {resultB.mode === 'team' && (
-                                                <TeamMark team={markFor(resultB.id)} size={32} />
-                                            )}
-                                            <Box sx={{ fontWeight: 800, fontSize: '1.1rem' }}>{seriesTotals.winsB}</Box>
-                                            <Box sx={{ fontSize: '0.66rem', color: 'var(--text-dim)' }}>
-                                                Wins ({formatWinPercentage(seriesTotals.winsB / seriesTotals.total)})
-                                            </Box>
-                                        </Box>
-                                    </Box>
 
-                                    {streak && (
-                                        <Box sx={{ textAlign: 'center' }}>
-                                            <Box sx={{ ...labelSx, mb: '4px' }}>Current win streak</Box>
+                                            <Box>
+                                                <Box sx={{ ...labelSx, mb: '8px', textAlign: 'center' }}>
+                                                    Head-to-head results
+                                                </Box>
+                                                <MarginBarChart
+                                                    matchups={matchups}
+                                                    colorA={entityColor(resultA.mode, resultA.id)}
+                                                    colorB={entityColor(resultB.mode, resultB.id)}
+                                                />
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        justifyContent: 'center',
+                                                        gap: 2,
+                                                        mt: 1,
+                                                        fontSize: '0.72rem',
+                                                        color: 'var(--text-muted)',
+                                                    }}
+                                                >
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                                        <Box
+                                                            sx={{
+                                                                width: 11,
+                                                                height: 11,
+                                                                borderRadius: '2px',
+                                                                background: entityColor(resultA.mode, resultA.id),
+                                                            }}
+                                                        />
+                                                        {entityDisplayName(resultA.mode, resultA.id)}
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                                        <Box
+                                                            sx={{
+                                                                width: 11,
+                                                                height: 11,
+                                                                borderRadius: '2px',
+                                                                background: entityColor(resultB.mode, resultB.id),
+                                                            }}
+                                                        />
+                                                        {entityDisplayName(resultB.mode, resultB.id)}
+                                                    </Box>
+                                                </Box>
+                                            </Box>
+
                                             <Box
                                                 sx={{
-                                                    fontFamily: 'var(--cond)',
-                                                    fontWeight: 800,
-                                                    fontSize: '1.4rem',
-                                                    color: streakColor(streak.winner),
+                                                    display: 'grid',
+                                                    gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
+                                                    gap: '12px',
+                                                    textAlign: 'center',
                                                 }}
                                             >
-                                                {streak.length} · {streakLabel(streak.winner)} (
-                                                {seasonRange(streak.startSeason, streak.endSeason)})
+                                                <Box>
+                                                    <Box sx={{ ...labelSx, mb: '4px' }}>
+                                                        Largest margin ({streakLabel('A')})
+                                                    </Box>
+                                                    {marginA ? (
+                                                        <Box
+                                                            component={Link}
+                                                            to={`/game-details/${marginA.gameId}`}
+                                                            sx={{
+                                                                color: entityColor(resultA.mode, resultA.id),
+                                                                textDecoration: 'none',
+                                                                fontFamily: 'var(--cond)',
+                                                                fontWeight: 800,
+                                                                fontSize: '1.6rem',
+                                                                display: 'block',
+                                                            }}
+                                                        >
+                                                            {marginA.margin}
+                                                            <Box
+                                                                sx={{
+                                                                    fontSize: '0.66rem',
+                                                                    color: 'var(--text-dim)',
+                                                                    fontFamily: 'inherit',
+                                                                    fontWeight: 700,
+                                                                }}
+                                                            >
+                                                                Season {marginA.season}, Wk {marginA.week}
+                                                            </Box>
+                                                        </Box>
+                                                    ) : (
+                                                        <Box sx={{ color: 'var(--text-dim)' }}>-</Box>
+                                                    )}
+                                                </Box>
+                                                <Box>
+                                                    <Box sx={{ ...labelSx, mb: '4px' }}>
+                                                        Longest streak ({streakLabel('A')})
+                                                    </Box>
+                                                    <Box
+                                                        sx={{
+                                                            fontFamily: 'var(--cond)',
+                                                            fontWeight: 800,
+                                                            fontSize: '1.6rem',
+                                                            color: entityColor(resultA.mode, resultA.id),
+                                                        }}
+                                                    >
+                                                        {longestA?.length || 0}
+                                                    </Box>
+                                                    {longestA?.length > 0 && (
+                                                        <Box sx={{ fontSize: '0.66rem', color: 'var(--text-dim)' }}>
+                                                            {seasonRange(longestA.startSeason, longestA.endSeason)}
+                                                        </Box>
+                                                    )}
+                                                </Box>
+                                                <Box>
+                                                    <Box sx={{ ...labelSx, mb: '4px' }}>
+                                                        Largest margin ({streakLabel('B')})
+                                                    </Box>
+                                                    {marginB ? (
+                                                        <Box
+                                                            component={Link}
+                                                            to={`/game-details/${marginB.gameId}`}
+                                                            sx={{
+                                                                color: entityColor(resultB.mode, resultB.id),
+                                                                textDecoration: 'none',
+                                                                fontFamily: 'var(--cond)',
+                                                                fontWeight: 800,
+                                                                fontSize: '1.6rem',
+                                                                display: 'block',
+                                                            }}
+                                                        >
+                                                            {marginB.margin}
+                                                            <Box
+                                                                sx={{
+                                                                    fontSize: '0.66rem',
+                                                                    color: 'var(--text-dim)',
+                                                                    fontFamily: 'inherit',
+                                                                    fontWeight: 700,
+                                                                }}
+                                                            >
+                                                                Season {marginB.season}, Wk {marginB.week}
+                                                            </Box>
+                                                        </Box>
+                                                    ) : (
+                                                        <Box sx={{ color: 'var(--text-dim)' }}>-</Box>
+                                                    )}
+                                                </Box>
+                                                <Box>
+                                                    <Box sx={{ ...labelSx, mb: '4px' }}>
+                                                        Longest streak ({streakLabel('B')})
+                                                    </Box>
+                                                    <Box
+                                                        sx={{
+                                                            fontFamily: 'var(--cond)',
+                                                            fontWeight: 800,
+                                                            fontSize: '1.6rem',
+                                                            color: entityColor(resultB.mode, resultB.id),
+                                                        }}
+                                                    >
+                                                        {longestB?.length || 0}
+                                                    </Box>
+                                                    {longestB?.length > 0 && (
+                                                        <Box sx={{ fontSize: '0.66rem', color: 'var(--text-dim)' }}>
+                                                            {seasonRange(longestB.startSeason, longestB.endSeason)}
+                                                        </Box>
+                                                    )}
+                                                </Box>
                                             </Box>
+                                        </>
+                                    ) : (
+                                        <Box sx={{ p: 2, textAlign: 'center', color: 'var(--text-muted)' }}>
+                                            No meetings on record between these two.
                                         </Box>
                                     )}
-
-                                    <Box>
-                                        <Box sx={{ ...labelSx, mb: '8px', textAlign: 'center' }}>
-                                            Head-to-head results
-                                        </Box>
-                                        <MarginBarChart
-                                            matchups={matchups}
-                                            colorA={entityColor(resultA.mode, resultA.id)}
-                                            colorB={entityColor(resultB.mode, resultB.id)}
-                                        />
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                                gap: 2,
-                                                mt: 1,
-                                                fontSize: '0.72rem',
-                                                color: 'var(--text-muted)',
-                                            }}
-                                        >
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                                                <Box
-                                                    sx={{
-                                                        width: 11,
-                                                        height: 11,
-                                                        borderRadius: '2px',
-                                                        background: entityColor(resultA.mode, resultA.id),
-                                                    }}
-                                                />
-                                                {entityDisplayName(resultA.mode, resultA.id)}
-                                            </Box>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                                                <Box
-                                                    sx={{
-                                                        width: 11,
-                                                        height: 11,
-                                                        borderRadius: '2px',
-                                                        background: entityColor(resultB.mode, resultB.id),
-                                                    }}
-                                                />
-                                                {entityDisplayName(resultB.mode, resultB.id)}
-                                            </Box>
-                                        </Box>
-                                    </Box>
-
-                                    <Box
-                                        sx={{
-                                            display: 'grid',
-                                            gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
-                                            gap: '12px',
-                                            textAlign: 'center',
-                                        }}
-                                    >
-                                        <Box>
-                                            <Box sx={{ ...labelSx, mb: '4px' }}>
-                                                Largest margin ({streakLabel('A')})
-                                            </Box>
-                                            {marginA ? (
-                                                <Box
-                                                    component={Link}
-                                                    to={`/game-details/${marginA.gameId}`}
-                                                    sx={{
-                                                        color: entityColor(resultA.mode, resultA.id),
-                                                        textDecoration: 'none',
-                                                        fontFamily: 'var(--cond)',
-                                                        fontWeight: 800,
-                                                        fontSize: '1.6rem',
-                                                        display: 'block',
-                                                    }}
-                                                >
-                                                    {marginA.margin}
-                                                    <Box
-                                                        sx={{
-                                                            fontSize: '0.66rem',
-                                                            color: 'var(--text-dim)',
-                                                            fontFamily: 'inherit',
-                                                            fontWeight: 700,
-                                                        }}
-                                                    >
-                                                        Season {marginA.season}, Wk {marginA.week}
-                                                    </Box>
-                                                </Box>
-                                            ) : (
-                                                <Box sx={{ color: 'var(--text-dim)' }}>-</Box>
-                                            )}
-                                        </Box>
-                                        <Box>
-                                            <Box sx={{ ...labelSx, mb: '4px' }}>
-                                                Longest streak ({streakLabel('A')})
-                                            </Box>
-                                            <Box
-                                                sx={{
-                                                    fontFamily: 'var(--cond)',
-                                                    fontWeight: 800,
-                                                    fontSize: '1.6rem',
-                                                    color: entityColor(resultA.mode, resultA.id),
-                                                }}
-                                            >
-                                                {longestA?.length || 0}
-                                            </Box>
-                                            {longestA?.length > 0 && (
-                                                <Box sx={{ fontSize: '0.66rem', color: 'var(--text-dim)' }}>
-                                                    {seasonRange(longestA.startSeason, longestA.endSeason)}
-                                                </Box>
-                                            )}
-                                        </Box>
-                                        <Box>
-                                            <Box sx={{ ...labelSx, mb: '4px' }}>
-                                                Largest margin ({streakLabel('B')})
-                                            </Box>
-                                            {marginB ? (
-                                                <Box
-                                                    component={Link}
-                                                    to={`/game-details/${marginB.gameId}`}
-                                                    sx={{
-                                                        color: entityColor(resultB.mode, resultB.id),
-                                                        textDecoration: 'none',
-                                                        fontFamily: 'var(--cond)',
-                                                        fontWeight: 800,
-                                                        fontSize: '1.6rem',
-                                                        display: 'block',
-                                                    }}
-                                                >
-                                                    {marginB.margin}
-                                                    <Box
-                                                        sx={{
-                                                            fontSize: '0.66rem',
-                                                            color: 'var(--text-dim)',
-                                                            fontFamily: 'inherit',
-                                                            fontWeight: 700,
-                                                        }}
-                                                    >
-                                                        Season {marginB.season}, Wk {marginB.week}
-                                                    </Box>
-                                                </Box>
-                                            ) : (
-                                                <Box sx={{ color: 'var(--text-dim)' }}>-</Box>
-                                            )}
-                                        </Box>
-                                        <Box>
-                                            <Box sx={{ ...labelSx, mb: '4px' }}>
-                                                Longest streak ({streakLabel('B')})
-                                            </Box>
-                                            <Box
-                                                sx={{
-                                                    fontFamily: 'var(--cond)',
-                                                    fontWeight: 800,
-                                                    fontSize: '1.6rem',
-                                                    color: entityColor(resultB.mode, resultB.id),
-                                                }}
-                                            >
-                                                {longestB?.length || 0}
-                                            </Box>
-                                            {longestB?.length > 0 && (
-                                                <Box sx={{ fontSize: '0.66rem', color: 'var(--text-dim)' }}>
-                                                    {seasonRange(longestB.startSeason, longestB.endSeason)}
-                                                </Box>
-                                            )}
-                                        </Box>
-                                    </Box>
-                                </>
-                            ) : (
-                                <Box sx={{ p: 2, textAlign: 'center', color: 'var(--text-muted)' }}>
-                                    No meetings on record between these two.
                                 </Box>
-                            )}
-                        </Box>
-                    </Panel>
+                            </Panel>
+                        </>
+                    )}
+                    {tab === 'standings' && (
+                        <>
+                            <Box
+                                sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                                    gap: '16px',
+                                    mb: '16px',
+                                }}
+                            >
+                                <Box>
+                                    <Box sx={{ mb: '10px' }}>{entityHeader(resultA)}</Box>
+                                    <EntityRankGrid
+                                        entityName={entityDisplayName(resultA.mode, resultA.id)}
+                                        rankings={(resultA.mode === 'coach' ? coachRankings : teamRankings).get(
+                                            resultA.id
+                                        )}
+                                        accent={entityColor(resultA.mode, resultA.id)}
+                                        rankLabel={resultA.mode === 'coach' ? 'Coach ranks' : 'Team ranks'}
+                                    />
+                                </Box>
+                                <Box>
+                                    <Box sx={{ mb: '10px' }}>{entityHeader(resultB)}</Box>
+                                    <EntityRankGrid
+                                        entityName={entityDisplayName(resultB.mode, resultB.id)}
+                                        rankings={(resultB.mode === 'coach' ? coachRankings : teamRankings).get(
+                                            resultB.id
+                                        )}
+                                        accent={entityColor(resultB.mode, resultB.id)}
+                                        rankLabel={resultB.mode === 'coach' ? 'Coach ranks' : 'Team ranks'}
+                                    />
+                                </Box>
+                            </Box>
+                        </>
+                    )}
+                    {tab === 'trend' && (
+                        <>
+                            <Panel sx={{ mb: '16px' }}>
+                                <Box sx={{ p: 2 }}>
+                                    <WinPctTrendChart
+                                        seriesA={resultA.seasonRows}
+                                        seriesB={resultB.seasonRows}
+                                        nameA={entityDisplayName(resultA.mode, resultA.id)}
+                                        nameB={entityDisplayName(resultB.mode, resultB.id)}
+                                        colorA={entityColor(resultA.mode, resultA.id)}
+                                        colorB={entityColor(resultB.mode, resultB.id)}
+                                    />
+                                </Box>
+                            </Panel>
+                        </>
+                    )}
                 </>
             )}
         </PageWrap>

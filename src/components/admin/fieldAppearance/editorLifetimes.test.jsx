@@ -4,12 +4,16 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import FieldSettingsEditor from './FieldSettingsEditor';
 import BowlMetaEditor from './BowlMetaEditor';
 import { updateBowlMeta } from '../../../api/fieldAppearanceApi';
+import { getBowl } from '../../../api/scheduleApi';
 jest.mock('../../team/appearance/FontControl', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../../api/fieldAppearanceApi', () => ({ updateBowlMeta: jest.fn(), renderPostseasonPreview: jest.fn() }));
+jest.mock('../../../api/scheduleApi', () => ({ getBowl: jest.fn(() => Promise.resolve(null)) }));
 jest.mock('../../ui/Panel', () => ({ __esModule: true, default: ({ children }) => <div>{children}</div> }));
 jest.mock('../LogoUrlField', () => ({
     __esModule: true,
-    default: ({ value, onChange }) => <input aria-label="Logo" value={value} onChange={onChange} />,
+    default: ({ value, onChange }) => (
+        <input aria-label="Logo" value={value} onChange={(e) => onChange(e.target.value)} />
+    ),
 }));
 const sections = [{ title: 'Settings', fields: [{ key: 'wall_text', label: 'Wall text', type: 'text' }] }];
 const FieldHost = ({ write }) => {
@@ -140,10 +144,7 @@ test('an old metadata failure cannot finish the new bowl’s pending save', asyn
     expect(screen.queryByText('obsolete')).toBeNull();
 });
 
-test.each([
-    ['name', 'Later name', { name: 'Later name', logo: '' }],
-    ['logo', 'later.png', { name: 'Renamed', logo: 'later.png' }],
-])('a pending rename transfers the newer %s draft', async (field, value, draft) => {
+test('a pending rename transfers the newer name draft', async () => {
     let finish;
     updateBowlMeta.mockReturnValueOnce(
         new Promise((resolve) => {
@@ -153,15 +154,22 @@ test.each([
     const onSaved = jest.fn();
     render(<BowlMetaEditor bowl="Alpha" onSaved={onSaved} />);
     fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: 'Renamed' } });
-    fireEvent.change(screen.getByLabelText('Logo'), { target: { value: 'submitted.png' } });
     fireEvent.click(screen.getByText('Save bowl details'));
-    fireEvent.change(field === 'name' ? screen.getAllByRole('textbox')[0] : screen.getByLabelText('Logo'), {
-        target: { value },
-    });
+    fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: 'Later name' } });
     await act(async () => finish({ bowl: 'Renamed' }));
-    expect(onSaved).toHaveBeenCalledWith('Renamed', draft);
+    expect(onSaved).toHaveBeenCalledWith('Renamed', { name: 'Later name', logo: '' });
     expect(screen.queryByText('Saved')).toBeNull();
-    expect(updateBowlMeta).toHaveBeenCalledWith('Alpha', { name: 'Renamed', logo: 'submitted.png' });
+    expect(updateBowlMeta).toHaveBeenCalledWith('Alpha', { name: 'Renamed', logo: null });
+});
+
+test('the details form starts from the current bowl logo and saves it with the name', async () => {
+    getBowl.mockResolvedValueOnce({ logo: 'current.png' });
+    updateBowlMeta.mockResolvedValueOnce({ bowl: 'Alpha' });
+    render(<BowlMetaEditor bowl="Alpha" onSaved={jest.fn()} />);
+    expect((await screen.findByDisplayValue('current.png')).getAttribute('aria-label')).toBe('Logo');
+    fireEvent.change(screen.getByLabelText('Logo'), { target: { value: 'new.png' } });
+    await act(async () => fireEvent.click(screen.getByText('Save bowl details')));
+    expect(updateBowlMeta).toHaveBeenCalledWith('Alpha', { name: 'Alpha', logo: 'new.png' });
 });
 
 test('transferred metadata drafts are used on the renamed bowl', async () => {
@@ -170,7 +178,6 @@ test('transferred metadata drafts are used on the renamed bowl', async () => {
         <BowlMetaEditor bowl="Renamed" initialDraft={{ name: 'Later name', logo: 'later.png' }} onSaved={jest.fn()} />
     );
     expect(screen.getAllByRole('textbox')[0].value).toBe('Later name');
-    expect(screen.getByLabelText('Logo').value).toBe('later.png');
     await act(async () => fireEvent.click(screen.getByText('Save bowl details')));
     expect(updateBowlMeta).toHaveBeenCalledWith('Renamed', { name: 'Later name', logo: 'later.png' });
 });

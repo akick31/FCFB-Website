@@ -1,18 +1,16 @@
 export { Login, Registration, ResetPassword, Verify } from './auth';
 
-export { GameDetails, GameAppearance, Scoreboard } from './game';
+export { GameDetails, GameAppearance, PlayDetails, Scoreboard } from './game';
 
 export { Teams, TeamDetails, ModifyTeam, TeamAppearance } from './team';
+
+export { StadiumPage, Stadiums } from './stadium';
 
 export {
     Admin,
     UserManagement,
     GameManagement,
     TeamManagement,
-    EditTeam,
-    EditCoach,
-    CoachTransactionLog,
-    EditGame,
     StatsManagement,
     Reports,
     Scheduling,
@@ -20,7 +18,7 @@ export {
     GameWeek,
     RankingsManagement,
     AdminConferences,
-    AdminConferenceDetail,
+    AdminEditRedirect,
     AdminApiDocs,
     AdminFieldAppearance,
     AdminTeamAppearance,
@@ -38,3 +36,4 @@ export { ScoutingReport, MatchupPreview, CoachTendencyCard, DriveChart, HeadToHe
 
 export { default as Complete } from './register/Complete';
 export { default as RegistrationSuccess } from './register/Success';
+export { History } from './history';

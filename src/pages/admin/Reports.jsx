@@ -5,14 +5,18 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
+import PagedFooter from '../../components/ui/PagedFooter';
+import usePagedRows from '../../hooks/usePagedRows';
+import useFitCount from '../../hooks/useFitCount';
 import SelectPill from '../../components/ui/SelectPill';
 import SegTabs from '../../components/ui/SegTabs';
-import TeamMark from '../../components/ui/TeamMark';
+import TeamName from '../../components/ui/TeamName';
+import TeamFilterPill from '../../components/ui/TeamFilterPill';
+import CoachTransactionReport from '../../components/reports/CoachTransactionReport';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
 import { getUserDelayOfGameInstances } from '../../api/playApi';
 import { getAllSeasons, getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
-import { useTeamsMap } from '../../hooks/useTeamsMap';
-import { formatPosition, weekLabel } from '../../utils/formatText';
+import { weekLabel } from '../../utils/formatText';
 
 const searchSx = {
     border: '1px solid var(--line)',
@@ -56,16 +60,6 @@ const thBtnSx = {
     padding: 0,
 };
 
-const transactionColor = (type) => {
-    if (type === 'FIRED') {
-        return 'var(--live)';
-    }
-    if (type === 'HIRED_INTERIM') {
-        return 'var(--gold)';
-    }
-    return 'var(--field)';
-};
-
 const MAX_WEEK = 13;
 const FULL_SEASON = 'full-season';
 const DELAY_OF_GAME_REPORT = 'delay-of-game';
@@ -105,17 +99,6 @@ const delayColor = (count) => {
     return 'var(--field)';
 };
 
-const formatDate = (dateString) => {
-    if (!dateString) {
-        return '-';
-    }
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) {
-        return dateString;
-    }
-    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-};
-
 const SortHeader = ({ label, field, sortField, sortDirection, onSort }) => (
     <Box component="button" type="button" onClick={() => onSort(field)} sx={thBtnSx}>
         {label}
@@ -143,7 +126,6 @@ SortHeader.propTypes = {
 
 const Reports = ({ user }) => {
     const navigate = useNavigate();
-    const teamsMap = useTeamsMap();
     const [searchParams, setSearchParams] = useSearchParams();
 
     const updateParam = (key, value, defaultValue) => {
@@ -308,45 +290,11 @@ const Reports = ({ user }) => {
         };
     }, [user, delaySeason, delayWeek]);
 
-    const uniqueTeams = useMemo(
-        () => [...new Set(transactions.map((t) => t.team))].filter(Boolean).sort(),
-        [transactions]
-    );
-    const uniquePositions = useMemo(
-        () => [...new Set(transactions.map((t) => t.position))].filter(Boolean).sort(),
-        [transactions]
-    );
-    const uniqueTransactionTypes = useMemo(
-        () => [...new Set(transactions.map((t) => t.transaction))].filter(Boolean).sort(),
-        [transactions]
-    );
     const uniqueDelayTeams = useMemo(
         () => [...new Set(userDelayData.map((u) => u.team))].filter(Boolean).sort(),
         [userDelayData]
     );
 
-    const teamOptions = useMemo(
-        () => [{ value: 'ALL', label: 'All teams' }, ...uniqueTeams.map((t) => ({ value: t, label: t }))],
-        [uniqueTeams]
-    );
-    const positionOptions = useMemo(
-        () => [
-            { value: 'ALL', label: 'All positions' },
-            ...uniquePositions.map((p) => ({ value: p, label: formatPosition(p) })),
-        ],
-        [uniquePositions]
-    );
-    const typeOptions = useMemo(
-        () => [
-            { value: 'ALL', label: 'All transactions' },
-            ...uniqueTransactionTypes.map((t) => ({ value: t, label: t.replace(/_/g, ' ') })),
-        ],
-        [uniqueTransactionTypes]
-    );
-    const delayTeamOptions = useMemo(
-        () => [{ value: 'ALL', label: 'All teams' }, ...uniqueDelayTeams.map((t) => ({ value: t, label: t }))],
-        [uniqueDelayTeams]
-    );
     const delaySeasonOptions = useMemo(() => {
         if (seasons.length > 0) {
             return seasons.map((entry) => ({ value: seasonNumberOf(entry), label: `Season ${seasonNumberOf(entry)}` }));
@@ -360,29 +308,6 @@ const Reports = ({ user }) => {
         ],
         [availableWeeks]
     );
-
-    const filteredTransactions = useMemo(() => {
-        let filtered = transactions;
-        if (teamFilter !== 'ALL') {
-            filtered = filtered.filter((t) => t.team === teamFilter);
-        }
-        if (positionFilter !== 'ALL') {
-            filtered = filtered.filter((t) => t.position === positionFilter);
-        }
-        if (transactionTypeFilter !== 'ALL') {
-            filtered = filtered.filter((t) => t.transaction === transactionTypeFilter);
-        }
-        if (searchTerm) {
-            const searchLower = searchTerm.toLowerCase();
-            filtered = filtered.filter(
-                (t) =>
-                    t.team?.toLowerCase().includes(searchLower) ||
-                    t.processed_by?.toLowerCase().includes(searchLower) ||
-                    (t.coach && t.coach.some((coach) => coach.toLowerCase().includes(searchLower)))
-            );
-        }
-        return filtered;
-    }, [transactions, teamFilter, positionFilter, transactionTypeFilter, searchTerm]);
 
     const filteredUserDelayData = useMemo(() => {
         let filtered = userDelayData;
@@ -414,6 +339,12 @@ const Reports = ({ user }) => {
             return 0;
         });
     }, [userDelayData, teamFilter, searchTerm, delaySortField, delaySortDirection]);
+    const [delayFitRef, delayPageSize] = useFitCount({ rowHeight: 36 });
+    const delayPaging = usePagedRows(
+        filteredUserDelayData,
+        delayPageSize,
+        `${teamFilter}|${searchTerm}|${delayWeek}|${delaySortField}`
+    );
 
     const handleDelaySort = (field) => {
         const next = new URLSearchParams(searchParams);
@@ -488,12 +419,10 @@ const Reports = ({ user }) => {
                             options={delayWeekOptions}
                             sx={pillHeightSx}
                         />
-                        <SelectPill
-                            label="Team"
+                        <TeamFilterPill
                             value={teamFilter}
                             onChange={(value) => updateParam('team', value, 'ALL')}
-                            options={delayTeamOptions}
-                            sx={pillHeightSx}
+                            teams={uniqueDelayTeams.filter((team) => team !== 'No team')}
                         />
                     </Box>
 
@@ -517,176 +446,111 @@ const Reports = ({ user }) => {
                         }
                         more={`${filteredUserDelayData.length} users`}
                     >
-                        <DataTable minWidth={560}>
-                            <thead>
-                                <tr>
-                                    <th className="lft stick">
-                                        <SortHeader
-                                            label="Username"
-                                            field="username"
-                                            sortField={delaySortField}
-                                            sortDirection={delaySortDirection}
-                                            onSort={handleDelaySort}
-                                        />
-                                    </th>
-                                    <th className="lft">
-                                        <SortHeader
-                                            label="Discord tag"
-                                            field="discordTag"
-                                            sortField={delaySortField}
-                                            sortDirection={delaySortDirection}
-                                            onSort={handleDelaySort}
-                                        />
-                                    </th>
-                                    <th className="lft">
-                                        <SortHeader
-                                            label="Team"
-                                            field="team"
-                                            sortField={delaySortField}
-                                            sortDirection={delaySortDirection}
-                                            onSort={handleDelaySort}
-                                        />
-                                    </th>
-                                    <th>
-                                        <SortHeader
-                                            label="Delay instances"
-                                            field="delayInstances"
-                                            sortField={delaySortField}
-                                            sortDirection={delaySortDirection}
-                                            onSort={handleDelaySort}
-                                        />
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {delayLoading && (
+                        <Box ref={delayFitRef}>
+                            <DataTable minWidth={560} dense>
+                                <thead>
                                     <tr>
-                                        <Box component="td" colSpan={4} sx={{ py: 3, textAlign: 'center' }}>
-                                            <CircularProgress size={22} />
-                                        </Box>
+                                        <th className="lft stick">
+                                            <SortHeader
+                                                label="Username"
+                                                field="username"
+                                                sortField={delaySortField}
+                                                sortDirection={delaySortDirection}
+                                                onSort={handleDelaySort}
+                                            />
+                                        </th>
+                                        <th className="lft">
+                                            <SortHeader
+                                                label="Discord tag"
+                                                field="discordTag"
+                                                sortField={delaySortField}
+                                                sortDirection={delaySortDirection}
+                                                onSort={handleDelaySort}
+                                            />
+                                        </th>
+                                        <th className="lft">
+                                            <SortHeader
+                                                label="Team"
+                                                field="team"
+                                                sortField={delaySortField}
+                                                sortDirection={delaySortDirection}
+                                                onSort={handleDelaySort}
+                                            />
+                                        </th>
+                                        <th>
+                                            <SortHeader
+                                                label="Delay instances"
+                                                field="delayInstances"
+                                                sortField={delaySortField}
+                                                sortDirection={delaySortDirection}
+                                                onSort={handleDelaySort}
+                                            />
+                                        </th>
                                     </tr>
-                                )}
-                                {!delayLoading && filteredUserDelayData.length === 0 && (
-                                    <tr>
-                                        <Box
-                                            component="td"
-                                            colSpan={4}
-                                            sx={{ textAlign: 'center', color: 'var(--text-muted)', py: 3 }}
-                                        >
-                                            No delay of game instances for this{' '}
-                                            {delayWeek === FULL_SEASON ? 'season' : 'week'}.
-                                        </Box>
-                                    </tr>
-                                )}
-                                {!delayLoading &&
-                                    filteredUserDelayData.map((row) => (
-                                        <tr key={row.username}>
-                                            <td className="lft stick">@{row.username}</td>
-                                            <td className="lft">{row.discordTag}</td>
-                                            <td className="lft">
-                                                <Box className="teamcell">
-                                                    {teamsMap[row.team] && (
-                                                        <TeamMark team={teamsMap[row.team]} size={20} />
-                                                    )}
-                                                    {row.team}
-                                                </Box>
-                                            </td>
-                                            <td>
-                                                <Box
-                                                    component="span"
-                                                    sx={{
-                                                        ...pillSx,
-                                                        background: 'var(--surface-2)',
-                                                        color: delayColor(row.delayInstances),
-                                                    }}
-                                                >
-                                                    {row.delayInstances}
-                                                </Box>
-                                            </td>
+                                </thead>
+                                <tbody>
+                                    {delayLoading && (
+                                        <tr>
+                                            <Box component="td" colSpan={4} sx={{ py: 3, textAlign: 'center' }}>
+                                                <CircularProgress size={22} />
+                                            </Box>
                                         </tr>
-                                    ))}
-                            </tbody>
-                        </DataTable>
+                                    )}
+                                    {!delayLoading && filteredUserDelayData.length === 0 && (
+                                        <tr>
+                                            <Box
+                                                component="td"
+                                                colSpan={4}
+                                                sx={{ textAlign: 'center', color: 'var(--text-muted)', py: 3 }}
+                                            >
+                                                No delay of game instances for this{' '}
+                                                {delayWeek === FULL_SEASON ? 'season' : 'week'}.
+                                            </Box>
+                                        </tr>
+                                    )}
+                                    {!delayLoading &&
+                                        delayPaging.pageRows.map((row) => (
+                                            <tr key={row.username}>
+                                                <td className="lft stick">@{row.username}</td>
+                                                <td className="lft">{row.discordTag}</td>
+                                                <td className="lft">
+                                                    {row.team === 'No team' ? row.team : <TeamName name={row.team} />}
+                                                </td>
+                                                <td>
+                                                    <Box
+                                                        component="span"
+                                                        sx={{
+                                                            ...pillSx,
+                                                            background: 'var(--surface-2)',
+                                                            color: delayColor(row.delayInstances),
+                                                        }}
+                                                    >
+                                                        {row.delayInstances}
+                                                    </Box>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </DataTable>
+                            <PagedFooter
+                                page={delayPaging.page}
+                                pageCount={delayPaging.pageCount}
+                                pageSize={delayPageSize}
+                                total={filteredUserDelayData.length}
+                                onChange={delayPaging.setPage}
+                                noun="users"
+                            />
+                        </Box>
                     </Panel>
                 </>
             )}
 
             {report === COACH_TRANSACTION_REPORT && (
-                <>
-                    <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', mb: '16px' }}>
-                        <Box
-                            component="input"
-                            placeholder="Search transactions..."
-                            aria-label="Search transactions"
-                            value={searchTerm}
-                            onChange={(e) => updateParam('q', e.target.value)}
-                            sx={searchSx}
-                        />
-                        <SelectPill
-                            label="Team"
-                            value={teamFilter}
-                            onChange={(value) => updateParam('team', value, 'ALL')}
-                            options={teamOptions}
-                            sx={pillHeightSx}
-                        />
-                        <SelectPill
-                            label="Position"
-                            value={positionFilter}
-                            onChange={(value) => updateParam('position', value, 'ALL')}
-                            options={positionOptions}
-                            sx={pillHeightSx}
-                        />
-                        <SelectPill
-                            label="Type"
-                            value={transactionTypeFilter}
-                            onChange={(value) => updateParam('type', value, 'ALL')}
-                            options={typeOptions}
-                            sx={pillHeightSx}
-                        />
-                    </Box>
-
-                    <Panel header="Coach transaction log" more={`${filteredTransactions.length} transactions`}>
-                        <DataTable minWidth={720}>
-                            <thead>
-                                <tr>
-                                    <th className="lft stick">Team</th>
-                                    <th className="lft">Position</th>
-                                    <th className="lft">Coach(es)</th>
-                                    <th className="lft">Transaction</th>
-                                    <th className="lft">Date</th>
-                                    <th className="lft">Processed by</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredTransactions.map((transaction, index) => (
-                                    <tr key={`${transaction.team}-${transaction.transaction_date}-${index}`}>
-                                        <td className="lft stick">{transaction.team || '-'}</td>
-                                        <td className="lft">{formatPosition(transaction.position)}</td>
-                                        <td className="lft">
-                                            {Array.isArray(transaction.coach)
-                                                ? transaction.coach.join(', ')
-                                                : transaction.coach || '-'}
-                                        </td>
-                                        <td className="lft">
-                                            <Box
-                                                component="span"
-                                                sx={{
-                                                    ...pillSx,
-                                                    background: 'var(--surface-2)',
-                                                    color: transactionColor(transaction.transaction),
-                                                }}
-                                            >
-                                                {transaction.transaction?.replace(/_/g, ' ') || '-'}
-                                            </Box>
-                                        </td>
-                                        <td className="lft">{formatDate(transaction.transaction_date)}</td>
-                                        <td className="lft">{transaction.processed_by || '-'}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </DataTable>
-                    </Panel>
-                </>
+                <CoachTransactionReport
+                    transactions={transactions}
+                    filters={{ q: searchTerm, team: teamFilter, position: positionFilter, type: transactionTypeFilter }}
+                    onFilterChange={(key, value) => updateParam(key, value, key === 'q' ? '' : 'ALL')}
+                />
             )}
         </AdminLayout>
     );

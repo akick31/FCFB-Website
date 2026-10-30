@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 import { useVenuesMap } from '../../hooks/useVenuesMap';
+import { stadiumPath } from '../../utils/stadiumPath';
+import BannerFacts from '../ui/BannerFacts';
 
 const luminance = (hex) => {
     if (!hex) {
@@ -29,11 +31,7 @@ const TeamHeader = ({ team, mark, pollRank }) => {
     const logo = luminance(primary) < 0.62 ? mark?.logoDark || mark?.logo : mark?.logo || mark?.logoDark;
     const coach = team.coach_usernames?.[0];
     const venueLocation = team.stadium ? venuesMap[team.stadium] : null;
-    const venueText = team.stadium
-        ? venueLocation?.city && venueLocation?.state
-            ? `${team.stadium} - ${venueLocation.city}, ${venueLocation.state}`
-            : team.stadium
-        : null;
+    const locationText = [venueLocation?.city, venueLocation?.state].filter(Boolean).join(', ');
 
     return (
         <Box
@@ -47,10 +45,11 @@ const TeamHeader = ({ team, mark, pollRank }) => {
             <Box
                 sx={{
                     px: 3,
-                    py: '26px',
+                    py: '14px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '20px',
+                    flexWrap: 'wrap',
+                    gap: '18px',
                     position: 'relative',
                     background: `linear-gradient(120deg, ${primary}, #0a1620)`,
                     '&::after': {
@@ -68,8 +67,8 @@ const TeamHeader = ({ team, mark, pollRank }) => {
             >
                 <Box
                     sx={{
-                        width: 80,
-                        height: 80,
+                        width: 60,
+                        height: 60,
                         flexShrink: 0,
                         zIndex: 1,
                         display: 'flex',
@@ -89,7 +88,7 @@ const TeamHeader = ({ team, mark, pollRank }) => {
                         </Box>
                     )}
                 </Box>
-                <Box sx={{ zIndex: 1, color: '#fff', minWidth: 0 }}>
+                <Box sx={{ zIndex: 1, color: '#fff', minWidth: 0, flex: '1 1 240px' }}>
                     <Box
                         sx={{
                             fontSize: '0.72rem',
@@ -110,43 +109,55 @@ const TeamHeader = ({ team, mark, pollRank }) => {
                             fontWeight: 800,
                             textTransform: 'uppercase',
                             letterSpacing: '0.01em',
-                            fontSize: '2rem',
+                            fontSize: '1.7rem',
                             lineHeight: 1,
                         }}
                     >
                         {team.name}
                     </Box>
-                    <Box sx={{ fontWeight: 700 }}>
-                        {team.current_wins || 0}-{team.current_losses || 0} ({team.current_conference_wins || 0}-
-                        {team.current_conference_losses || 0})
-                    </Box>
-                    <Box sx={{ opacity: 0.85, fontWeight: 600, fontSize: '0.92rem' }}>
-                        Current ELO: {team.current_elo != null ? Math.round(team.current_elo) : '-'}
-                    </Box>
-                    {coach ? (
-                        <Box
-                            component={Link}
-                            to={`/user-details/${coach}`}
-                            sx={{
-                                display: 'block',
-                                opacity: 0.82,
-                                fontSize: '0.82rem',
-                                mt: '5px',
-                                color: 'inherit',
-                                textDecoration: 'none',
-                            }}
-                        >
-                            Head Coach @{coach}, {formatOffensivePlaybook(team.offensive_playbook)} /{' '}
-                            {formatDefensivePlaybook(team.defensive_playbook)}
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'baseline',
+                            columnGap: '18px',
+                            rowGap: '2px',
+                            fontSize: '0.84rem',
+                            '& a': { color: 'inherit' },
+                        }}
+                    >
+                        <Box component="span" sx={{ fontWeight: 800 }}>
+                            {team.current_wins || 0}-{team.current_losses || 0} ({team.current_conference_wins || 0}-
+                            {team.current_conference_losses || 0})
                         </Box>
-                    ) : (
-                        <Box sx={{ opacity: 0.82, fontSize: '0.82rem', mt: '5px' }}>
-                            Head Coach vacant, {formatOffensivePlaybook(team.offensive_playbook)} /{' '}
-                            {formatDefensivePlaybook(team.defensive_playbook)}
+                        <Box component="span" sx={{ opacity: 0.85, fontWeight: 600 }}>
+                            ELO {team.current_elo != null ? Math.round(team.current_elo) : '-'}
                         </Box>
-                    )}
-                    {venueText && <Box sx={{ opacity: 0.82, fontSize: '0.82rem', mt: '3px' }}>{venueText}</Box>}
+                    </Box>
                 </Box>
+                <BannerFacts
+                    facts={[
+                        {
+                            label: 'Head coach',
+                            value: coach ? <Link to={`/user-details/${coach}`}>@{coach}</Link> : 'Vacant',
+                        },
+                        {
+                            label: 'Playbooks',
+                            value: `${formatOffensivePlaybook(team.offensive_playbook)} / ${formatDefensivePlaybook(
+                                team.defensive_playbook
+                            )}`,
+                        },
+                        team.stadium && {
+                            label: 'Stadium',
+                            value: (
+                                <Link to={stadiumPath({ id: venueLocation?.venue_id, name: team.stadium })}>
+                                    {team.stadium}
+                                </Link>
+                            ),
+                        },
+                        locationText && { label: 'Location', value: locationText },
+                    ]}
+                />
             </Box>
         </Box>
     );

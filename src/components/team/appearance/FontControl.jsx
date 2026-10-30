@@ -4,19 +4,8 @@ import PropTypes from 'prop-types';
 import { addFont, deleteFont } from '../../../api/fontApi';
 import { useFonts, registerUploadedFont, removeFont } from './fontStore';
 import { checkIfUserIsAdmin } from '../../../utils/utils';
+import { inputSx } from '../../../styles/controls';
 
-const inputSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-};
 const smallInputSx = { ...inputSx, height: '32px', fontSize: '0.8rem' };
 const linkSx = {
     alignSelf: 'flex-start',
@@ -46,6 +35,8 @@ const addSx = {
 };
 
 const BOLD_SUFFIX = '|BOLD';
+
+const ADD_FONT = '__add_font__';
 
 const FontControl = ({ value, onChange, disabled, allowDefault }) => {
     const fonts = useFonts();
@@ -100,14 +91,15 @@ const FontControl = ({ value, onChange, disabled, allowDefault }) => {
                     component="select"
                     disabled={disabled}
                     value={baseValue}
-                    onChange={(e) => emit(e.target.value, bold)}
-                    sx={{ ...inputSx, flex: 1, width: 'auto' }}
+                    onChange={(e) => (e.target.value === ADD_FONT ? setOpen(true) : emit(e.target.value, bold))}
+                    sx={{ ...inputSx, flex: 1, width: 'auto', minWidth: 0 }}
                 >
                     {options.map((option) => (
                         <option key={option.value || 'default'} value={option.value}>
                             {option.label}
                         </option>
                     ))}
+                    {!disabled && <option value={ADD_FONT}>+ Add a font…</option>}
                 </Box>
                 <Box
                     component="label"
@@ -118,6 +110,7 @@ const FontControl = ({ value, onChange, disabled, allowDefault }) => {
                         fontSize: '0.72rem',
                         color: 'var(--text-dim)',
                         whiteSpace: 'nowrap',
+                        flexShrink: 0,
                         cursor: disabled ? 'default' : 'pointer',
                     }}
                 >
@@ -130,19 +123,19 @@ const FontControl = ({ value, onChange, disabled, allowDefault }) => {
                     />
                     Bold
                 </Box>
-            </Box>
-            {!disabled && !open && (
-                <Box sx={{ display: 'flex', gap: '12px' }}>
-                    <Box component="button" type="button" onClick={() => setOpen(true)} sx={linkSx}>
-                        + Add a font
+                {!disabled && canRemove && (
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={remove}
+                        aria-label="Remove font"
+                        title="Remove font"
+                        sx={{ ...linkSx, color: 'var(--live)', flexShrink: 0 }}
+                    >
+                        Remove
                     </Box>
-                    {canRemove && (
-                        <Box component="button" type="button" onClick={remove} sx={{ ...linkSx, color: 'var(--live)' }}>
-                            Remove font
-                        </Box>
-                    )}
-                </Box>
-            )}
+                )}
+            </Box>
             {!disabled && open && (
                 <Box
                     sx={{

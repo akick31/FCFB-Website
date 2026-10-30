@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
+import { PILL_HEIGHT } from '../../styles/controls';
 
 const renderOption = ({ value, label }) => (
     <option key={value} value={value}>
@@ -14,12 +15,14 @@ const SelectPill = ({ label, value, onChange, options, ariaLabel, sx }) => (
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            height: '34px',
+            height: PILL_HEIGHT,
             boxSizing: 'border-box',
             border: '1px solid var(--line)',
             background: 'var(--surface)',
             borderRadius: 'var(--r-sm)',
             padding: '0 10px',
+            maxWidth: '100%',
+            minWidth: 0,
             ...sx,
         }}
     >
@@ -32,6 +35,7 @@ const SelectPill = ({ label, value, onChange, options, ariaLabel, sx }) => (
                     textTransform: 'uppercase',
                     fontSize: '0.6rem',
                     letterSpacing: '0.04em',
+                    flexShrink: 0,
                 }}
             >
                 {label}

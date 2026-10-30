@@ -2,6 +2,7 @@ import { formatConference } from '../../hooks/useConferencesMap';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
+import TeamSelect from '../ui/TeamSelect';
 import Panel from '../ui/Panel';
 import DataTable from '../ui/DataTable';
 import TeamMark from '../ui/TeamMark';
@@ -9,41 +10,11 @@ import { formatGameType } from '../../utils/formatText';
 import { camelOrSnakeField } from '../../utils/fieldHelper';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { getConferenceRules } from '../../api/scheduleApi';
+import { secondaryButtonSx } from '../../styles/controls';
 
 const TOTAL_WEEKS = 12;
 const DEFAULT_CONFERENCE_GAMES = 9;
 
-const selectSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    cursor: 'pointer',
-    minWidth: 240,
-    '& option': { background: 'var(--surface)', color: 'var(--text)' },
-};
-const ctrlSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.78rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
 const pillSx = {
     display: 'inline-flex',
     alignItems: 'center',
@@ -122,25 +93,20 @@ const TeamScheduleAdminTab = ({
     return (
         <Box>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', mb: '16px', alignItems: 'center' }}>
-                <Box
-                    component="select"
+                <TeamSelect
                     value={selectedTeam?.name || ''}
-                    onChange={(e) => onTeamChange(activeTeams.find((t) => t.name === e.target.value) || null)}
-                    sx={selectSx}
-                >
-                    <option value="">Select team...</option>
-                    {activeTeams.map((t) => (
-                        <option key={t.name} value={t.name}>
-                            {t.name}
-                        </option>
-                    ))}
-                </Box>
+                    onChange={(name) => onTeamChange(activeTeams.find((t) => t.name === name) || null)}
+                    teams={activeTeams.map((t) => t.name)}
+                    ariaLabel="Team"
+                    placeholder="Select a team"
+                    sx={{ width: { xs: '100%', sm: 320 } }}
+                />
                 <Box
                     component="button"
                     type="button"
                     onClick={onAddGameForTeam}
                     disabled={!selectedTeam || scheduleLocked}
-                    sx={ctrlSx}
+                    sx={secondaryButtonSx}
                 >
                     + Add game
                 </Box>
@@ -149,7 +115,7 @@ const TeamScheduleAdminTab = ({
             {selectedTeam && (
                 <Panel
                     header={`${selectedTeam.name}: full schedule`}
-                    more={`${formatConference(selectedTeam.conference)} · OOC games ${oocGamesOnly.length}/${expectedOocGames}`}
+                    more={`${formatConference(selectedTeam.conference)}, OOC games ${oocGamesOnly.length}/${expectedOocGames}`}
                 >
                     {teamLoading ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
+import TeamSelect from '../ui/TeamSelect';
 import { registerUser } from '../../api/authApi';
 import { validateEmail, isStrongPassword } from '../../utils/validations';
 import { getOpenTeams } from '../../api/teamApi';
@@ -10,35 +11,10 @@ import { formatOffensivePlaybook, formatDefensivePlaybook, formatPosition } from
 import { OFFENSIVE_PLAYBOOKS, DEFENSIVE_PLAYBOOKS } from '../../constants/teamEnums';
 import logo from '../../assets/graphics/main_logo.png';
 import { slugId } from '../../utils/a11y';
+import { inputSx, labelSx, selectSx } from '../../styles/controls';
 
 const POSITIONS = ['HEAD_COACH', 'OFFENSIVE_COORDINATOR', 'DEFENSIVE_COORDINATOR', 'SPECIAL_TEAMS_COORDINATOR'];
 
-const labelSx = {
-    display: 'block',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    mb: '5px',
-};
-const inputSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    py: '10px',
-    font: 'inherit',
-    fontSize: '0.88rem',
-    '&:disabled': { opacity: 0.6 },
-};
-const selectSx = {
-    ...inputSx,
-    cursor: 'pointer',
-    '& option': { background: 'var(--surface-2)', color: 'var(--text)' },
-};
 const btnBaseSx = {
     width: '100%',
     border: 0,
@@ -69,6 +45,8 @@ const Field = ({ label, helper, children }) => {
 };
 
 Field.propTypes = { label: PropTypes.string.isRequired, helper: PropTypes.string, children: PropTypes.node.isRequired };
+
+const isPlainUsername = (username) => username.trim() !== '' && !/<[@#:]/.test(username);
 
 const CompleteRegistrationForm = () => {
     const navigate = useNavigate();
@@ -169,6 +147,13 @@ const CompleteRegistrationForm = () => {
             setValidation((prev) => ({ ...prev, errorMessage: 'Please fix the highlighted errors.' }));
             return;
         }
+        if (!isPlainUsername(formData.username)) {
+            setValidation((prev) => ({
+                ...prev,
+                errorMessage: 'Username must be a plain name, not a Discord mention.',
+            }));
+            return;
+        }
         if (email !== confirm_email) {
             setValidation((prev) => ({ ...prev, errorMessage: 'Emails do not match.' }));
             return;
@@ -220,23 +205,6 @@ const CompleteRegistrationForm = () => {
     };
 
     const teamChoiceError = !validation.teamChoicesValid;
-    const teamOptions = (excludeA, excludeB) => (
-        <>
-            <option value="">No selection</option>
-            {openTeams.length > 0 ? (
-                openTeams.map((team) => (
-                    <option key={team} value={team} disabled={team === excludeA || team === excludeB}>
-                        {team}
-                    </option>
-                ))
-            ) : (
-                <option value="" disabled>
-                    Loading teams…
-                </option>
-            )}
-        </>
-    );
-
     return (
         <Box
             sx={{
@@ -362,37 +330,52 @@ const CompleteRegistrationForm = () => {
 
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                         <Field label="1st choice">
-                            <Box
-                                component="select"
-                                name="team_choice_one"
+                            <TeamSelect
                                 value={formData.team_choice_one}
-                                onChange={handleChange}
-                                sx={{ ...selectSx, borderColor: teamChoiceError ? 'var(--live)' : 'var(--line)' }}
-                            >
-                                {teamOptions(formData.team_choice_two, formData.team_choice_three)}
-                            </Box>
+                                onChange={(team) => setFormData((prev) => ({ ...prev, team_choice_one: team }))}
+                                teams={openTeams}
+                                exclude={[formData.team_choice_two, formData.team_choice_three]}
+                                noneLabel="No selection"
+                                placeholder={openTeams.length > 0 ? 'Search teams' : 'Loading teams…'}
+                                ariaLabel="1st choice"
+                                sx={{
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: teamChoiceError ? 'var(--live)' : 'var(--line)',
+                                    },
+                                }}
+                            />
                         </Field>
                         <Field label="2nd choice">
-                            <Box
-                                component="select"
-                                name="team_choice_two"
+                            <TeamSelect
                                 value={formData.team_choice_two}
-                                onChange={handleChange}
-                                sx={{ ...selectSx, borderColor: teamChoiceError ? 'var(--live)' : 'var(--line)' }}
-                            >
-                                {teamOptions(formData.team_choice_one, formData.team_choice_three)}
-                            </Box>
+                                onChange={(team) => setFormData((prev) => ({ ...prev, team_choice_two: team }))}
+                                teams={openTeams}
+                                exclude={[formData.team_choice_one, formData.team_choice_three]}
+                                noneLabel="No selection"
+                                placeholder={openTeams.length > 0 ? 'Search teams' : 'Loading teams…'}
+                                ariaLabel="2nd choice"
+                                sx={{
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: teamChoiceError ? 'var(--live)' : 'var(--line)',
+                                    },
+                                }}
+                            />
                         </Field>
                         <Field label="3rd choice">
-                            <Box
-                                component="select"
-                                name="team_choice_three"
+                            <TeamSelect
                                 value={formData.team_choice_three}
-                                onChange={handleChange}
-                                sx={{ ...selectSx, borderColor: teamChoiceError ? 'var(--live)' : 'var(--line)' }}
-                            >
-                                {teamOptions(formData.team_choice_one, formData.team_choice_two)}
-                            </Box>
+                                onChange={(team) => setFormData((prev) => ({ ...prev, team_choice_three: team }))}
+                                teams={openTeams}
+                                exclude={[formData.team_choice_one, formData.team_choice_two]}
+                                noneLabel="No selection"
+                                placeholder={openTeams.length > 0 ? 'Search teams' : 'Loading teams…'}
+                                ariaLabel="3rd choice"
+                                sx={{
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: teamChoiceError ? 'var(--live)' : 'var(--line)',
+                                    },
+                                }}
+                            />
                         </Field>
                     </Box>
 

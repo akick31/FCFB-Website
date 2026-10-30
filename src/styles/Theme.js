@@ -39,14 +39,18 @@ export const createAppTheme = (mode = 'dark') => {
         components: {
             MuiCssBaseline: {
                 styleOverrides: {
-                    'html, body, #root': {
-                        height: '100%',
+                    'html, body': {
                         margin: 0,
                         padding: 0,
-                        overflowX: 'hidden',
+                        overflowX: 'clip',
                         backgroundColor: t.ground,
                         color: t.text,
                         fontFamily: SANS,
+                    },
+                    'input[type=number]': { MozAppearance: 'textfield', appearance: 'textfield' },
+                    'input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button': {
+                        WebkitAppearance: 'none',
+                        margin: 0,
                     },
                     '::-webkit-scrollbar': { width: '8px', height: '8px' },
                     '::-webkit-scrollbar-track': { background: t.lineSoft },
@@ -62,6 +66,32 @@ export const createAppTheme = (mode = 'dark') => {
             MuiPaper: {
                 styleOverrides: {
                     root: { backgroundImage: 'none', border: `1px solid ${t.line}` },
+                },
+            },
+            MuiDialog: {
+                styleOverrides: {
+                    paper: {
+                        background: t.surface,
+                        borderRadius: 10,
+                        '@media (max-width:599.95px)': {
+                            margin: 0,
+                            width: '100%',
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            height: '100%',
+                            borderRadius: 0,
+                        },
+                    },
+                },
+            },
+            MuiDialogTitle: {
+                styleOverrides: {
+                    root: { color: t.text, fontWeight: 800, fontSize: '1.05rem' },
+                },
+            },
+            MuiDialogActions: {
+                styleOverrides: {
+                    root: { padding: '12px 20px 16px', gap: '8px' },
                 },
             },
         },

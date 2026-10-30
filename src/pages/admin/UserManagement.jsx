@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
+import CoachEditDialog from '../../components/admin/CoachEditDialog';
+import TeamName from '../../components/ui/TeamName';
+import PagedFooter from '../../components/ui/PagedFooter';
+import usePagedRows from '../../hooks/usePagedRows';
+import useFitCount from '../../hooks/useFitCount';
+import { compact, secondaryButtonSx } from '../../styles/controls';
 import Panel from '../../components/ui/Panel';
 import DataTable from '../../components/ui/DataTable';
 import LinkCell from '../../components/ui/LinkCell';
@@ -22,19 +28,6 @@ const searchSx = {
     boxSizing: 'border-box',
 };
 const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
-const editBtnSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    py: '5px',
-    font: 'inherit',
-    fontSize: '0.72rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-};
 
 const ROLE_OPTIONS = [
     { value: 'ALL', label: 'All roles' },
@@ -50,6 +43,9 @@ const UserManagement = ({ user }) => {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('ALL');
+    const [version, setVersion] = useState(0);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const editing = searchParams.get('edit');
 
     useEffect(() => {
         if (!user || !user.role) {
@@ -81,7 +77,14 @@ const UserManagement = ({ user }) => {
         return () => {
             active = false;
         };
-    }, []);
+    }, [version]);
+
+    const closeEditor = () => setSearchParams({}, { replace: true });
+
+    const coachSaved = () => {
+        closeEditor();
+        setVersion((current) => current + 1);
+    };
 
     const filteredUsers = useMemo(() => {
         let filtered = users;
@@ -100,6 +103,8 @@ const UserManagement = ({ user }) => {
         }
         return filtered;
     }, [users, searchTerm, roleFilter]);
+    const [fitRef, pageSize] = useFitCount({ rowHeight: 36 });
+    const { page, pageCount, pageRows, setPage } = usePagedRows(filteredUsers, pageSize, `${searchTerm}|${roleFilter}`);
 
     if (loading) {
         return (
@@ -140,54 +145,66 @@ const UserManagement = ({ user }) => {
                 </Alert>
             )}
             <Panel header="Users" more={`${filteredUsers.length} users`}>
-                <DataTable minWidth={680}>
-                    <thead>
-                        <tr>
-                            <th className="lft stick">Username</th>
-                            <th className="lft">Coach</th>
-                            <th className="lft">Discord</th>
-                            <th className="lft">Team</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredUsers.map((row) => {
-                            const userHref = `/user-details/${row.username}`;
-                            return (
-                                <tr key={row.id}>
-                                    <LinkCell to={userHref} className="lft stick">
-                                        @{row.username}
-                                    </LinkCell>
-                                    <LinkCell to={userHref} className="lft">
-                                        {row.coach_name}
-                                    </LinkCell>
-                                    <LinkCell to={userHref} className="lft">
-                                        {row.discord_tag}
-                                    </LinkCell>
-                                    <LinkCell to={userHref} className="lft">
-                                        {row.team || 'Free agent'}
-                                    </LinkCell>
-                                    <LinkCell to={null}>
-                                        <Box
-                                            component={Link}
-                                            to={`/admin/edit-coach/${row.username}`}
-                                            sx={{
-                                                ...editBtnSx,
-                                                position: 'relative',
-                                                zIndex: 3,
-                                                display: 'inline-block',
-                                                textDecoration: 'none',
-                                            }}
-                                        >
-                                            Edit
-                                        </Box>
-                                    </LinkCell>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </DataTable>
+                <Box ref={fitRef}>
+                    <DataTable minWidth={640} phoneMinWidth={0} tableLayout="fixed" dense>
+                        <thead>
+                            <tr>
+                                <th className="lft stick" style={{ width: '22%' }}>
+                                    Username
+                                </th>
+                                <th className="lft wide" style={{ width: '22%' }}>
+                                    Coach
+                                </th>
+                                <th className="lft wide" style={{ width: '22%' }}>
+                                    Discord
+                                </th>
+                                <th className="lft">Team</th>
+                                <th style={{ width: 72 }}></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pageRows.map((row) => {
+                                const userHref = `/user-details/${row.username}`;
+                                return (
+                                    <tr key={row.id}>
+                                        <LinkCell to={userHref} className="lft stick">
+                                            @{row.username}
+                                        </LinkCell>
+                                        <LinkCell to={userHref} className="lft wide">
+                                            {row.coach_name}
+                                        </LinkCell>
+                                        <LinkCell to={userHref} className="lft wide">
+                                            {row.discord_tag}
+                                        </LinkCell>
+                                        <LinkCell to={userHref} className="lft">
+                                            {row.team ? <TeamName name={row.team} /> : 'Free agent'}
+                                        </LinkCell>
+                                        <LinkCell to={null}>
+                                            <Box
+                                                component="button"
+                                                type="button"
+                                                onClick={() => setSearchParams({ edit: row.username })}
+                                                sx={{ ...compact(secondaryButtonSx), position: 'relative', zIndex: 3 }}
+                                            >
+                                                Edit
+                                            </Box>
+                                        </LinkCell>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </DataTable>
+                    <PagedFooter
+                        page={page}
+                        pageCount={pageCount}
+                        pageSize={pageSize}
+                        total={filteredUsers.length}
+                        onChange={setPage}
+                        noun="users"
+                    />
+                </Box>
             </Panel>
+            {editing && <CoachEditDialog username={editing} user={user} onClose={closeEditor} onSaved={coachSaved} />}
         </AdminLayout>
     );
 };

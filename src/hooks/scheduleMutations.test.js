@@ -19,7 +19,7 @@ jest.mock('../api/scheduleApi', () => ({
     generateOutOfConferenceSchedule: jest.fn().mockResolvedValue({ gamesScheduled: 0 }),
     getBowl: jest.fn().mockResolvedValue(null),
 }));
-jest.mock('../api/uploadApi', () => ({ uploadPostseasonLogo: jest.fn() }));
+jest.mock('../api/uploadApi', () => ({ uploadLogo: jest.fn() }));
 jest.mock('./useConferencesMap', () => ({ getConference: jest.fn() }));
 jest.mock('../utils/logoUrl', () => ({ resolveLogoUrl: jest.fn() }));
 

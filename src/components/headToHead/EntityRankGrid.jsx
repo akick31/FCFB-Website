@@ -3,8 +3,9 @@ import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import { TileGrid } from '../ui/StatTile';
 import RankCard from './RankCard';
-import { labelSx } from './headToHeadStyles';
+
 import { formatWinPercentage } from '../../utils/headToHead';
+import { labelSx } from '../../styles/controls';
 const EntityRankGrid = ({ entityName, rankings, accent, rankLabel }) => {
     if (!rankings) {
         return (
@@ -14,7 +15,7 @@ const EntityRankGrid = ({ entityName, rankings, accent, rankLabel }) => {
     const cards = [
         {
             label: 'All-time record',
-            value: `${formatWinPercentage(rankings.winPct.value)} · ${rankings.record.wins}-${rankings.record.losses}`,
+            value: `${formatWinPercentage(rankings.winPct.value)} (${rankings.record.wins}-${rankings.record.losses})`,
             rank: rankings.winPct.rank,
         },
         {
@@ -32,7 +33,7 @@ const EntityRankGrid = ({ entityName, rankings, accent, rankLabel }) => {
         { label: 'Losses all time', value: rankings.losses.value, rank: rankings.losses.rank },
         {
             label: 'Bowl record',
-            value: `${formatWinPercentage(rankings.bowlWinPct.value)} · ${rankings.bowlRecord.wins}-${rankings.bowlRecord.losses}`,
+            value: `${formatWinPercentage(rankings.bowlWinPct.value)} (${rankings.bowlRecord.wins}-${rankings.bowlRecord.losses})`,
             rank: rankings.bowlWinPct.rank,
         },
         { label: 'Weeks in coaches poll', value: rankings.weeksRanked.value, rank: rankings.weeksRanked.rank },

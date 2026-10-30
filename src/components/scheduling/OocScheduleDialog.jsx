@@ -1,39 +1,8 @@
 import React from 'react';
 import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
+import { primaryButtonSx, secondaryButtonSx } from '../../styles/controls';
 
-const ctrlSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.78rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-};
-const btnPrimarySx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
 const dialogPaperSx = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)' };
 const dialogTitleSx = { color: 'var(--text)', fontWeight: 800, fontSize: '1.05rem' };
 
@@ -100,11 +69,11 @@ const OocScheduleDialog = ({ open, onClose, season, oocLoading, oocResult, onGen
             </Box>
         </DialogContent>
         <DialogActions sx={{ px: '20px', pb: '18px' }}>
-            <Box component="button" type="button" onClick={onClose} disabled={oocLoading} sx={ctrlSx}>
+            <Box component="button" type="button" onClick={onClose} disabled={oocLoading} sx={secondaryButtonSx}>
                 {oocResult ? 'Close' : 'Cancel'}
             </Box>
             {!oocResult && (
-                <Box component="button" type="button" onClick={onGenerate} disabled={oocLoading} sx={btnPrimarySx}>
+                <Box component="button" type="button" onClick={onGenerate} disabled={oocLoading} sx={primaryButtonSx}>
                     {oocLoading ? 'Generating...' : 'Generate OOC Schedule'}
                 </Box>
             )}

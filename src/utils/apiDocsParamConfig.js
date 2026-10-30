@@ -1,3 +1,4 @@
+import { weekLabel } from './formatText';
 import { humanizeEnumValue, humanizeParamName } from './humanize';
 import { STAT_CATALOG } from './statsCatalog';
 import { camelOrSnakeField } from './fieldHelper';
@@ -148,7 +149,7 @@ export const paramConfig = (param, lookups, siblingValues, operationPath) => {
         const isCurrentSeason = selectedSeason == null || Number(selectedSeason) === lookups.currentSeasonNumber;
         const max = (isCurrentSeason ? lookups.currentWeekNumber : null) || 18;
         const weeks = Array.from({ length: max }, (_, index) => index + 1);
-        return { uiType: 'select', options: weeks.map((week) => ({ value: week, label: `Week ${week}` })) };
+        return { uiType: 'select', options: weeks.map((week) => ({ value: week, label: weekLabel(week) })) };
     }
 
     if (isConferenceParam(name)) {
@@ -204,7 +205,7 @@ export const paramConfig = (param, lookups, siblingValues, operationPath) => {
         if (scope === 'TEAM') {
             const teams = [...lookups.rawTeams].sort((a, b) => a.name.localeCompare(b.name));
             return searchConfig(
-                teams.map((team) => ({ value: team.name, label: team.name })),
+                teams.map((team) => ({ value: team.name, label: team.name, team: team.name })),
                 'Team'
             );
         }
@@ -215,7 +216,11 @@ export const paramConfig = (param, lookups, siblingValues, operationPath) => {
         const options = lookups.rawTeams
             .filter((team) => team.current_elo != null)
             .sort((a, b) => a.name.localeCompare(b.name))
-            .map((team) => ({ value: team.current_elo, label: `${team.name} (${team.current_elo})` }));
+            .map((team) => ({
+                value: team.current_elo,
+                label: `${team.name} (${team.current_elo})`,
+                team: team.name,
+            }));
         return searchConfig(options, name.toLowerCase() === 'homeelo' ? 'Home Team ELO' : 'Away Team ELO');
     }
 
@@ -250,8 +255,8 @@ export const paramConfig = (param, lookups, siblingValues, operationPath) => {
     if (isTeamParam(name, operationPath)) {
         const teams = [...lookups.rawTeams].sort((a, b) => a.name.localeCompare(b.name));
         const options = isIdParam(name)
-            ? teams.map((team) => ({ value: team.id, label: team.name }))
-            : teams.map((team) => ({ value: team.name, label: team.name }));
+            ? teams.map((team) => ({ value: team.id, label: team.name, team: team.name }))
+            : teams.map((team) => ({ value: team.name, label: team.name, team: team.name }));
         return searchConfig(options, isBareNameParam(name) ? 'Team' : undefined);
     }
 

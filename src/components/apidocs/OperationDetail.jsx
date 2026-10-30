@@ -1,4 +1,3 @@
-import { inputSx, labelSx } from './apiExplorerStyles';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Box, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
@@ -11,6 +10,7 @@ import { MethodBadge } from './OperationList';
 import JsonViewer from './JsonViewer';
 import RequestPreview from './RequestPreview';
 import ParamGroup from './ParamGroup';
+import { inputSx, labelSx, textareaSx } from '../../styles/controls';
 
 const sendBtnSx = {
     border: 0,
@@ -241,11 +241,7 @@ const OperationDetail = ({ operation, apiKey }) => {
                         rows={6}
                         value={bodyText}
                         onChange={(e) => setBodyText(e.target.value)}
-                        sx={{
-                            ...inputSx,
-                            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-                            resize: 'vertical',
-                        }}
+                        sx={textareaSx}
                     />
                 </Box>
             )}

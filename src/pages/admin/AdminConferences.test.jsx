@@ -1,15 +1,18 @@
 /** @jest-environment jsdom */
 import React, { StrictMode } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import AdminConferences from './AdminConferences';
-import { getConferences, createConference, setConferenceActive } from '../../api/conferenceApi';
+import { getConferences, setConferenceActive } from '../../api/conferenceApi';
 import { getAllTeams } from '../../api/teamApi';
 import { refreshConferences } from '../../hooks/useConferencesMap';
 
-jest.mock('react-router-dom', () => ({ Link: ({ children }) => <span>{children}</span> }));
+jest.mock('react-router-dom', () => {
+    global.TextEncoder = require('util').TextEncoder;
+    return jest.requireActual('react-router-dom');
+});
 jest.mock('../../api/conferenceApi', () => ({
     getConferences: jest.fn(),
-    createConference: jest.fn(),
     setConferenceActive: jest.fn(),
 }));
 jest.mock('../../api/teamApi', () => ({ getAllTeams: jest.fn() }));
@@ -18,7 +21,15 @@ jest.mock('../../components/layout/AdminLayout', () => ({
     __esModule: true,
     default: ({ children }) => <div>{children}</div>,
 }));
-jest.mock('../../components/ui/Panel', () => ({ __esModule: true, default: ({ children }) => <div>{children}</div> }));
+jest.mock('../../components/ui/Panel', () => ({
+    __esModule: true,
+    default: ({ more, children }) => (
+        <div>
+            {more}
+            {children}
+        </div>
+    ),
+}));
 jest.mock('../../components/ui/ConferenceMark', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../components/ui/DataTable', () => ({
     __esModule: true,
@@ -29,7 +40,19 @@ jest.mock('../../components/ui/Toggle', () => ({
     default: ({ onClick }) => <button onClick={onClick}>Toggle</button>,
 }));
 jest.mock('../../components/ui/SelectPill', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../components/admin/LogoUrlField', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../components/admin/ConferenceEditDialog', () => ({
+    __esModule: true,
+    default: ({ code, onClose }) => (
+        <div>
+            <span>Editing {code}</span>
+            <button onClick={onClose}>Close editor</button>
+        </div>
+    ),
+}));
+jest.mock('../../components/admin/ConferenceCreateDialog', () => ({
+    __esModule: true,
+    default: ({ open, onCreated }) => open && <button onClick={onCreated}>Finish create</button>,
+}));
 
 const conferences = [
     { code: 'A', label: 'Alpha', active: true },
@@ -65,7 +88,7 @@ test('overlapping mutation reloads retain the newest read result', async () => {
             })
         )
         .mockResolvedValueOnce([{ code: 'B', label: 'Latest' }]);
-    render(<AdminConferences />);
+    render(<AdminConferences />, { wrapper: MemoryRouter });
     await act(async () => {});
     const toggles = screen.getAllByText('Toggle');
     fireEvent.click(toggles[0]);
@@ -91,7 +114,9 @@ test('StrictMode obsolete failure cannot override successful data', async () => 
     );
     render(
         <StrictMode>
-            <AdminConferences />
+            <MemoryRouter>
+                <AdminConferences />
+            </MemoryRouter>
         </StrictMode>
     );
     await act(async () => {});
@@ -107,7 +132,7 @@ test('a mutation completed after unmount refreshes the shared cache without relo
             resolveToggle = resolve;
         })
     );
-    const { unmount } = render(<AdminConferences />);
+    const { unmount } = render(<AdminConferences />, { wrapper: MemoryRouter });
     await act(async () => {});
     fireEvent.click(screen.getAllByText('Toggle')[0]);
     unmount();
@@ -116,21 +141,32 @@ test('a mutation completed after unmount refreshes the shared cache without relo
     expect(getConferences).toHaveBeenCalledTimes(1);
 });
 
-test('creating a conference preserves normalized arguments, feedback, and reload behavior', async () => {
-    createConference.mockResolvedValueOnce(undefined);
-    render(<AdminConferences />);
+test('creating a conference shows feedback and reloads the list', async () => {
+    render(<AdminConferences />, { wrapper: MemoryRouter });
     await act(async () => {});
-    const inputs = screen.getAllByRole('textbox');
-    fireEvent.change(inputs[0], { target: { value: ' new code ' } });
-    fireEvent.change(inputs[1], { target: { value: ' New Conference ' } });
-    await act(async () => fireEvent.submit(inputs[0].closest('form')));
-    expect(createConference).toHaveBeenCalledWith({
-        code: 'NEW_CODE',
-        label: 'New Conference',
-        logoUrl: null,
-        logoUrlDark: null,
-    });
+    fireEvent.click(screen.getByText('Add conference'));
+    await act(async () => fireEvent.click(screen.getByText('Finish create')));
     expect(screen.getByText('Conference created')).toBeTruthy();
+    expect(screen.queryByText('Finish create')).toBeNull();
     expect(getConferences).toHaveBeenCalledTimes(2);
-    expect(refreshConferences).toHaveBeenCalledTimes(1);
+});
+
+test('edit opens the conference in a dialog and closing it reloads the list', async () => {
+    render(<AdminConferences />, { wrapper: MemoryRouter });
+    await act(async () => {});
+    fireEvent.click(screen.getAllByText('Edit')[1]);
+    expect(screen.getByText('Editing B')).toBeTruthy();
+    await act(async () => fireEvent.click(screen.getByText('Close editor')));
+    expect(screen.queryByText('Editing B')).toBeNull();
+    expect(getConferences).toHaveBeenCalledTimes(2);
+});
+
+test('an edit link opens that conference directly', async () => {
+    render(
+        <MemoryRouter initialEntries={['/admin/conferences?edit=A']}>
+            <AdminConferences />
+        </MemoryRouter>
+    );
+    await act(async () => {});
+    expect(screen.getByText('Editing A')).toBeTruthy();
 });

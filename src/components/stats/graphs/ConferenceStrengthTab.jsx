@@ -146,7 +146,7 @@ const ConferenceStrengthTab = ({ season, teams, scope, sub, onSubChange }) => {
                                     gridTemplateColumns: { xs: '110px 1fr 50px', sm: '170px 1fr 70px' },
                                     alignItems: 'center',
                                     gap: 1.25,
-                                    py: 0.75,
+                                    py: '3px',
                                     fontSize: '0.8rem',
                                 }}
                             >

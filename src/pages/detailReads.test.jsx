@@ -7,10 +7,13 @@ import { getTeamById } from '../api/teamApi';
 import { getAllUsers, getUserByUsernameOrCoachName, getUsernameHistory } from '../api/userApi';
 import { getLatestRankings } from '../api/rankingApi';
 import { getCoachStats } from '../api/coachStatsApi';
+import { getFilteredSeasonStats } from '../api/seasonStatsApi';
 import { getCurrentSeason, getLatestCompletedSeason, getAllSeasons } from '../api/seasonApi';
 let mockId;
 let mockParams;
 const mockSetParams = jest.fn();
+jest.mock('../components/admin/CoachEditDialog', () => ({ __esModule: true, default: () => null }));
+jest.mock('../components/admin/TeamEditDialog', () => ({ __esModule: true, default: () => null }));
 jest.mock('react-router-dom', () => ({
     useParams: () => ({ teamId: mockId, coachName: mockId }),
     useSearchParams: () => [mockParams, mockSetParams],
@@ -33,7 +36,7 @@ jest.mock('../api/rankingMetricApi', () => ({
     getTeamRankingMetrics: async () => [],
     getTeamRankingMetricTrends: async () => [],
 }));
-jest.mock('../api/seasonStatsApi', () => ({ getFilteredSeasonStats: async () => null }));
+jest.mock('../api/seasonStatsApi', () => ({ getFilteredSeasonStats: jest.fn() }));
 jest.mock('../api/scheduleApi', () => ({ getScheduleBySeasonAndTeam: async () => [] }));
 jest.mock('../api/seasonApi', () => ({
     getCurrentSeason: jest.fn(),
@@ -42,7 +45,12 @@ jest.mock('../api/seasonApi', () => ({
 }));
 jest.mock('../api/coachTransactionLogApi', () => ({ getEntireCoachTransactionLog: async () => [] }));
 jest.mock('../api/coachStatsApi', () => ({ getCoachStats: jest.fn() }));
-jest.mock('../hooks/useTeamsMap', () => ({ useTeamsMap: () => ({}), toEntry: (team) => team }));
+jest.mock('../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    ensureTeam: jest.fn(),
+    useTeamsMap: () => ({}),
+    toEntry: (team) => team,
+}));
 jest.mock('../hooks/useConferencesMap', () => ({ conferenceLabel: (code) => code }));
 jest.mock('../hooks/useSeo', () => ({ useSeo: () => {} }));
 jest.mock('../context/ColorModeContext', () => ({ useColorMode: () => ({ mode: 'dark' }) }));
@@ -88,6 +96,7 @@ beforeEach(() => {
     getLatestCompletedSeason.mockResolvedValue({ season_number: 11, national_championship_winning_team: 'Alpha' });
     getAllSeasons.mockResolvedValue([]);
     getLatestRankings.mockResolvedValue([]);
+    getFilteredSeasonStats.mockResolvedValue(null);
 });
 
 test('team details recover after a previous team fails to load', async () => {
@@ -166,4 +175,28 @@ test('username history completed after unmount cannot start more profile request
     unmount();
     await act(async () => finish([]));
     expect(getCoachStats).not.toHaveBeenCalled();
+});
+
+test.each([
+    ['trends', 'Trends need at least two weeks of data.'],
+    ['coaches', 'No coaching history on record.'],
+])('the team %s tab explains when there is nothing to show yet', async (tab, message) => {
+    mockParams = new URLSearchParams(`tab=${tab}`);
+    render(<TeamDetails />);
+    await act(async () => {});
+    expect(screen.getByText(message)).toBeTruthy();
+});
+
+test.each([
+    ['never played a postseason game', [], false],
+    ['played in the postseason', [{ season_number: 11, team: 'A' }], true],
+])('the stats postseason switch shows only for a team that %s', async (_, postRows, shown) => {
+    getAllSeasons.mockResolvedValue([{ season_number: 12 }, { season_number: 11 }]);
+    getFilteredSeasonStats.mockImplementation(async (team, conference, season, stat, page, size, scope) =>
+        scope === 'postseason' ? { content: postRows } : null
+    );
+    mockParams = new URLSearchParams('tab=stats&season=alltime');
+    render(<TeamDetails />);
+    await act(async () => {});
+    expect(Boolean(screen.queryByRole('tab', { name: 'Postseason' }))).toBe(shown);
 });

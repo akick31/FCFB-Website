@@ -251,7 +251,7 @@ const postseasonField = {
         turf,
         endZoneFont,
         endZoneOutlineWidth,
-        { key: 'center_logo_url', label: 'Midfield logo', type: 'logo', help: 'Blank uses the built-in logo.' },
+        { key: 'center_logo_url', label: 'Midfield logo', type: 'logo', eventLogoFallback: true },
     ],
 };
 const postseasonMarkings = {
@@ -482,22 +482,3 @@ export const payloadFrom = (sections, form) => {
     );
     return payload;
 };
-
-export const bowlSectionsWithStadiums = (teamNames) => [
-    {
-        title: 'Stadium',
-        fields: [
-            {
-                key: 'stadium_team',
-                label: "Play in a team's stadium",
-                type: 'select',
-                options: [
-                    { value: '', label: 'Standard bowl crowd' },
-                    ...teamNames.map((name) => ({ value: name, label: name })),
-                ],
-                help: "Uses that team's backdrop, scoreboard and distant scenery. End zones, wall text and colors stay the bowl's.",
-            },
-        ],
-    },
-    ...BOWL_SECTIONS,
-];

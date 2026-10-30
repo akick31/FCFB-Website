@@ -1,13 +1,19 @@
 /** @jest-environment jsdom */
 import React, { StrictMode } from 'react';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import UserManagement from './UserManagement';
 import { getAllUsers } from '../../api/userApi';
 
-jest.mock('react-router-dom', () => ({
-    useNavigate: () => jest.fn(),
-    Link: ({ children }) => <span>{children}</span>,
+jest.mock('react-router-dom', () => {
+    global.TextEncoder = require('util').TextEncoder;
+    return jest.requireActual('react-router-dom');
+});
+jest.mock('../../components/admin/CoachEditDialog', () => ({
+    __esModule: true,
+    default: ({ username, onSaved }) => <button onClick={onSaved}>Save {username}</button>,
 }));
+jest.mock('../../components/ui/TeamName', () => ({ __esModule: true, default: ({ name }) => <span>{name}</span> }));
 jest.mock('../../api/userApi', () => ({ getAllUsers: jest.fn() }));
 jest.mock('../../components/layout/AdminLayout', () => ({
     __esModule: true,
@@ -23,7 +29,11 @@ jest.mock('../../components/ui/LinkCell', () => ({
     default: ({ children }) => <td>{children}</td>,
 }));
 jest.mock('../../components/ui/SelectPill', () => ({ __esModule: true, default: () => null }));
-const page = <UserManagement user={{ role: 'ADMIN' }} />;
+const page = (
+    <MemoryRouter>
+        <UserManagement user={{ role: 'ADMIN' }} />
+    </MemoryRouter>
+);
 beforeEach(() => {
     jest.resetAllMocks();
     getAllUsers.mockResolvedValue([{ id: 1, username: 'Current', role: 'USER' }]);
@@ -63,4 +73,13 @@ test('current failures retain the existing user-visible message', async () => {
     render(page);
     await act(async () => {});
     expect(screen.getByText('Directory unavailable')).toBeTruthy();
+});
+
+test('edit opens the coach dialog and a save reloads the users', async () => {
+    render(page);
+    await act(async () => {});
+    fireEvent.click(screen.getByText('Edit'));
+    await act(async () => fireEvent.click(screen.getByText('Save Current')));
+    expect(screen.queryByText('Save Current')).toBeNull();
+    expect(getAllUsers).toHaveBeenCalledTimes(2);
 });

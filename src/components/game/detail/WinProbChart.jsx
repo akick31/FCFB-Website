@@ -46,6 +46,18 @@ const buildSegments = (series) => {
     return segments;
 };
 
+const WinShare = ({ mark, percent, alignEnd = false }) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', flexDirection: alignEnd ? 'row-reverse' : 'row' }}>
+        <TeamMark team={mark} size={18} />
+        <Box component="span">{mark?.abbreviation}</Box>
+        <Box component="span" sx={{ color: 'var(--text-muted)' }}>
+            {Math.round(percent)}%
+        </Box>
+    </Box>
+);
+
+WinShare.propTypes = { mark: PropTypes.object, percent: PropTypes.number.isRequired, alignEnd: PropTypes.bool };
+
 const WinProbChart = ({ series, homeColor, awayColor, homeMark, awayMark, quarterMarks }) => {
     const [hover, setHover] = useState(null);
     const { mode } = useColorMode();
@@ -87,145 +99,153 @@ const WinProbChart = ({ series, homeColor, awayColor, homeMark, awayMark, quarte
 
     const point = hover ? series[hover.index] : null;
 
+    const latestHome = series[count - 1].homeWinProb;
+
     return (
-        <Box
-            sx={{ position: 'relative' }}
-            onMouseMove={onMove}
-            onMouseLeave={() => setHover(null)}
-            onTouchMove={onMove}
-        >
+        <Box>
             <Box
                 sx={{
-                    position: 'absolute',
-                    top: 4,
-                    left: 2,
                     display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '3px',
-                    pointerEvents: 'none',
+                    mb: '8px',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
                 }}
             >
-                <TeamMark team={awayMark} size={16} />
-                <Box component="span" sx={{ fontSize: '0.6rem', color: 'var(--text-dim)', fontWeight: 700 }}>
-                    100%
-                </Box>
+                <WinShare mark={awayMark} percent={100 - latestHome} />
+                <WinShare mark={homeMark} percent={latestHome} alignEnd />
             </Box>
             <Box
-                sx={{
-                    position: 'absolute',
-                    bottom: 22,
-                    left: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '3px',
-                    pointerEvents: 'none',
-                }}
+                sx={{ position: 'relative' }}
+                onMouseMove={onMove}
+                onMouseLeave={() => setHover(null)}
+                onTouchMove={onMove}
             >
-                <TeamMark team={homeMark} size={16} />
-                <Box component="span" sx={{ fontSize: '0.6rem', color: 'var(--text-dim)', fontWeight: 700 }}>
-                    100%
+                <Box sx={{ position: 'absolute', top: 4, left: 2, pointerEvents: 'none' }}>
+                    <TeamMark team={awayMark} size={16} />
                 </Box>
-            </Box>
-            <Box
-                component="svg"
-                viewBox={`0 0 ${W} ${H}`}
-                preserveAspectRatio="none"
-                sx={{ width: '100%', height: 200, display: 'block' }}
-            >
-                {segments.map((segment, i) => {
-                    const linePoints = segment.points
-                        .map((p) => `${p[0].toFixed(1)},${yOf(p[1]).toFixed(1)}`)
-                        .join(' ');
-                    const first = segment.points[0];
-                    const last = segment.points[segment.points.length - 1];
-                    return (
-                        <polygon
-                            key={i}
-                            points={`${first[0].toFixed(1)},${midY} ${linePoints} ${last[0].toFixed(1)},${midY}`}
-                            fill={segment.side === 1 ? homePlotColor : awayPlotColor}
-                            opacity="0.16"
-                        />
-                    );
-                })}
-                <line x1={PAD_L} x2={W - PAD_R} y1={midY} y2={midY} stroke="var(--text-dim)" strokeDasharray="4 4" />
-                {quarterMarks.map((mark) => {
-                    const x = xOf(mark.index, count);
-                    return (
-                        <g key={mark.index}>
-                            <line
-                                x1={x.toFixed(1)}
-                                x2={x.toFixed(1)}
-                                y1={PAD_T}
-                                y2={H - PAD_B}
-                                stroke="var(--line)"
-                                strokeDasharray="3 3"
-                                opacity="0.6"
+                <Box sx={{ position: 'absolute', bottom: 22, left: 2, pointerEvents: 'none' }}>
+                    <TeamMark team={homeMark} size={16} />
+                </Box>
+                <Box
+                    component="svg"
+                    viewBox={`0 0 ${W} ${H}`}
+                    preserveAspectRatio="none"
+                    sx={{ width: '100%', height: 200, display: 'block' }}
+                >
+                    {segments.map((segment, i) => {
+                        const linePoints = segment.points
+                            .map((p) => `${p[0].toFixed(1)},${yOf(p[1]).toFixed(1)}`)
+                            .join(' ');
+                        const first = segment.points[0];
+                        const last = segment.points[segment.points.length - 1];
+                        return (
+                            <polygon
+                                key={i}
+                                points={`${first[0].toFixed(1)},${midY} ${linePoints} ${last[0].toFixed(1)},${midY}`}
+                                fill={segment.side === 1 ? homePlotColor : awayPlotColor}
+                                opacity="0.16"
                             />
-                            <text
-                                x={x.toFixed(1)}
-                                y={H - 6}
-                                textAnchor="middle"
-                                fill="var(--text-dim)"
-                                fontSize="9"
-                                fontWeight="700"
-                            >
-                                {mark.label}
-                            </text>
-                        </g>
-                    );
-                })}
-                {segments.map((segment, i) => (
-                    <polyline
-                        key={i}
-                        points={segment.points.map((p) => `${p[0].toFixed(1)},${yOf(p[1]).toFixed(1)}`).join(' ')}
-                        fill="none"
-                        stroke={segment.side === 1 ? homePlotColor : awayPlotColor}
-                        strokeWidth="2.6"
+                        );
+                    })}
+                    <line
+                        x1={PAD_L}
+                        x2={W - PAD_R}
+                        y1={midY}
+                        y2={midY}
+                        stroke="var(--text-dim)"
+                        strokeDasharray="4 4"
                     />
-                ))}
-            </Box>
-            {point && (
-                <>
-                    <Box
-                        sx={{
-                            position: 'absolute',
-                            top: 8,
-                            bottom: 26,
-                            width: '1px',
-                            background: 'var(--brand)',
-                            left: `${hover.left}px`,
-                            pointerEvents: 'none',
-                        }}
-                    />
-                    <Box
-                        sx={{
-                            position: 'absolute',
-                            top: 4,
-                            left: `${Math.min(hover.left + 10, hover.width - 130)}px`,
-                            background: 'var(--surface-2)',
-                            border: '1px solid var(--line)',
-                            borderRadius: 'var(--r-sm)',
-                            px: 1,
-                            py: 0.75,
-                            fontSize: '0.66rem',
-                            lineHeight: 1.4,
-                            pointerEvents: 'none',
-                            whiteSpace: 'nowrap',
-                            boxShadow: 'var(--shadow)',
-                            color: 'var(--text)',
-                        }}
+                    <text
+                        x={PAD_L - 6}
+                        y={Number(midY) + 3}
+                        textAnchor="end"
+                        fill="var(--text-dim)"
+                        fontSize="9"
+                        fontWeight="700"
                     >
-                        <b>
-                            Q{point.quarter} {point.clock}
-                        </b>
-                        <br />
-                        {awayAbbr} {point.awayScore} - {point.homeScore} {homeAbbr}
-                        <br />
-                        Win Prob: {Math.max(point.homeWinProb, 100 - point.homeWinProb)}%{' '}
-                        {point.homeWinProb >= 50 ? homeAbbr : awayAbbr}
-                    </Box>
-                </>
-            )}
+                        50%
+                    </text>
+                    {quarterMarks.map((mark) => {
+                        const x = xOf(mark.index, count);
+                        return (
+                            <g key={mark.index}>
+                                <line
+                                    x1={x.toFixed(1)}
+                                    x2={x.toFixed(1)}
+                                    y1={PAD_T}
+                                    y2={H - PAD_B}
+                                    stroke="var(--line)"
+                                    strokeDasharray="3 3"
+                                    opacity="0.6"
+                                />
+                                <text
+                                    x={x.toFixed(1)}
+                                    y={H - 6}
+                                    textAnchor="middle"
+                                    fill="var(--text-dim)"
+                                    fontSize="9"
+                                    fontWeight="700"
+                                >
+                                    {mark.label}
+                                </text>
+                            </g>
+                        );
+                    })}
+                    {segments.map((segment, i) => (
+                        <polyline
+                            key={i}
+                            points={segment.points.map((p) => `${p[0].toFixed(1)},${yOf(p[1]).toFixed(1)}`).join(' ')}
+                            fill="none"
+                            stroke={segment.side === 1 ? homePlotColor : awayPlotColor}
+                            strokeWidth="2.6"
+                        />
+                    ))}
+                </Box>
+                {point && (
+                    <>
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: 8,
+                                bottom: 26,
+                                width: '1px',
+                                background: 'var(--brand)',
+                                left: `${hover.left}px`,
+                                pointerEvents: 'none',
+                            }}
+                        />
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: 4,
+                                left: `${Math.min(hover.left + 10, hover.width - 130)}px`,
+                                background: 'var(--surface-2)',
+                                border: '1px solid var(--line)',
+                                borderRadius: 'var(--r-sm)',
+                                px: 1,
+                                py: 0.75,
+                                fontSize: '0.66rem',
+                                lineHeight: 1.4,
+                                pointerEvents: 'none',
+                                whiteSpace: 'nowrap',
+                                boxShadow: 'var(--shadow)',
+                                color: 'var(--text)',
+                            }}
+                        >
+                            <b>
+                                Q{point.quarter} {point.clock}
+                            </b>
+                            <br />
+                            {awayAbbr} {point.awayScore} - {point.homeScore} {homeAbbr}
+                            <br />
+                            Win Prob: {Math.max(point.homeWinProb, 100 - point.homeWinProb)}%{' '}
+                            {point.homeWinProb >= 50 ? homeAbbr : awayAbbr}
+                        </Box>
+                    </>
+                )}
+            </Box>
         </Box>
     );
 };

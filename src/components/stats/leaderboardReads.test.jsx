@@ -6,7 +6,11 @@ import StatLeaderboardCard from './StatLeaderboardCard';
 import StatLeaderboardDetail from './StatLeaderboardDetail';
 import { ensureTeam } from '../../hooks/useTeamsMap';
 
-jest.mock('../../hooks/useTeamsMap', () => ({ useTeamsMap: () => ({}), ensureTeam: jest.fn() }));
+jest.mock('../../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    useTeamsMap: () => ({}),
+    ensureTeam: jest.fn(),
+}));
 jest.mock('react-router-dom', () => ({ Link: ({ children, to }) => <a href={to}>{children}</a> }));
 jest.mock('../ui/Panel', () => ({
     __esModule: true,

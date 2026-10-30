@@ -2,9 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import Header from './components/header/Header';
 import Footer from './components/layout/Footer';
+import ScrollToTop from './components/layout/ScrollToTop';
 import {
     Home,
     GameDetails,
+    PlayDetails,
+    History,
     GameAppearance,
     Scoreboard,
     Teams,
@@ -21,6 +24,8 @@ import {
     UserDetails,
     Coaches,
     ApiDocs,
+    StadiumPage,
+    Stadiums,
 } from './pages';
 import useSessionRefresh from './hooks/useSessionRefresh';
 import { getUserById } from './api/userApi';
@@ -38,14 +43,10 @@ import {
     RiceSheet,
     Schedule,
     TeamManagement,
-    EditTeam,
-    EditCoach,
     AdminConferences,
-    AdminConferenceDetail,
+    AdminEditRedirect,
     GameManagement,
     UserManagement,
-    CoachTransactionLog,
-    EditGame,
     StatsManagement,
     Reports,
     Scheduling,
@@ -154,6 +155,7 @@ const AppRoutes = () => {
 
     return (
         <ColorModeProvider>
+            <ScrollToTop />
             <Box
                 sx={{
                     display: 'flex',
@@ -329,7 +331,7 @@ const AppRoutes = () => {
                                     isAdmin={isAdmin}
                                     loading={loading}
                                 >
-                                    <CoachTransactionLog user={user} />
+                                    <Navigate to="/admin/reports?report=coach-transactions" replace />
                                 </ProtectedRoute>
                             }
                         />
@@ -343,7 +345,7 @@ const AppRoutes = () => {
                                     isAdmin={isAdmin}
                                     loading={loading}
                                 >
-                                    <EditGame user={user} />
+                                    <AdminEditRedirect listPath="/admin/game-management" param="gameId" />
                                 </ProtectedRoute>
                             }
                         />
@@ -357,7 +359,7 @@ const AppRoutes = () => {
                                     isAdmin={isAdmin}
                                     loading={loading}
                                 >
-                                    <EditTeam user={user} />
+                                    <AdminEditRedirect listPath="/admin/team-management" param="teamId" />
                                 </ProtectedRoute>
                             }
                         />
@@ -371,7 +373,7 @@ const AppRoutes = () => {
                                     isAdmin={isAdmin}
                                     loading={loading}
                                 >
-                                    <EditCoach user={user} />
+                                    <AdminEditRedirect listPath="/admin/user-management" param="username" />
                                 </ProtectedRoute>
                             }
                         />
@@ -399,7 +401,7 @@ const AppRoutes = () => {
                                     isAdmin={isAdmin}
                                     loading={loading}
                                 >
-                                    <AdminConferenceDetail />
+                                    <AdminEditRedirect listPath="/admin/conferences" param="code" />
                                 </ProtectedRoute>
                             }
                         />
@@ -541,10 +543,15 @@ const AppRoutes = () => {
                         <Route path="/tools/head-to-head" element={<HeadToHead />} />
                         <Route path="/verify" element={<Verify />} />
                         <Route path="/game-details/:gameId" element={<GameDetails isAdmin={isAdmin} />} />
+                        <Route path="/play-details/:playId" element={<PlayDetails />} />
+                        <Route path="/history" element={<History />} />
                         <Route path="/game-details/:gameId/appearance" element={<GameAppearance />} />
+                        <Route path="/stadium" element={<StadiumPage />} />
+                        <Route path="/stadium/:id" element={<StadiumPage />} />
+                        <Route path="/stadiums" element={<Stadiums />} />
                         <Route path="/team/:teamId" element={<TeamDetails />} />
                         <Route path="/team-details/:teamId" element={<TeamDetails user={user} />} />
-                        <Route path="/user-details/:coachName" element={<UserDetails />} />
+                        <Route path="/user-details/:coachName" element={<UserDetails user={user} />} />
                         <Route
                             path="/team-appearance/:teamId/:tab?"
                             element={

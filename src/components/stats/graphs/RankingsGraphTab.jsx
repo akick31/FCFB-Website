@@ -1,3 +1,4 @@
+import { weekLabel } from '../../../utils/formatText';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, CircularProgress, FormControlLabel, Checkbox } from '@mui/material';
@@ -5,6 +6,8 @@ import { useSearchParams } from 'react-router-dom';
 import Panel from '../../ui/Panel';
 import SelectPill from '../../ui/SelectPill';
 import MultiLineChart from '../../charts/MultiLineChart';
+import SingleWeekBars from '../../charts/SingleWeekBars';
+import useRoomBelow from '../../../hooks/useRoomBelow';
 import { getEloHistory } from '../../../api/eloHistoryApi.jsx';
 import { getRankingWeeks, getRankings } from '../../../api/rankingApi';
 import { getRankingMetricWeeks, getRankingMetrics } from '../../../api/rankingMetricApi';
@@ -336,14 +339,17 @@ const RankingsGraphTab = ({ season, teams, teamsMap, mode, sub, onSubChange }) =
         return { yMin: min - pad, yMax: max + pad, yTicks: undefined, invert: false };
     }, [lines, isPoll, isElo]);
 
-    const weekLabel = (x) => (combinePostseason && x === POSTSEASON_START_WEEK ? 'Postseason' : `Week ${x}`);
+    const pointWeekLabel = (x) => (combinePostseason && x === POSTSEASON_START_WEEK ? 'Postseason' : weekLabel(x));
     const labelFn = isPoll
-        ? (p) => `${weekLabel(p.x)}, #${p.val}`
+        ? (p) => `${pointWeekLabel(p.x)}, #${p.val}`
         : isElo
-          ? (p) => `${weekLabel(p.x)}, ELO ${p.val}`
-          : (p) => `${weekLabel(p.x)}: ${p.val.toFixed(1)}`;
+          ? (p) => `${pointWeekLabel(p.x)}, ELO ${p.val}`
+          : (p) => `${pointWeekLabel(p.x)}: ${p.val.toFixed(1)}`;
     const panelHeader = isPoll ? 'Coaches Poll' : isElo ? 'ELO' : rankingMetricLabel(ranking);
     const showLegend = !isElo || lines.length <= 16;
+    const [chartRoomRef, chartRoom] = useRoomBelow({ reserve: showLegend ? 90 : 24, min: 220, max: 520 });
+    const singleWeek = lines.every((line) => new Set(line.pts.map((p) => p.x)).size <= 1);
+    const valueText = isPoll ? (val) => `#${val}` : isElo ? (val) => `${Math.round(val)}` : (val) => val.toFixed(1);
 
     return (
         <Box>
@@ -399,10 +405,10 @@ const RankingsGraphTab = ({ season, teams, teamsMap, mode, sub, onSubChange }) =
             )}
             <Panel
                 header={`${panelHeader} history`}
-                more={`${lines.length} teams, hover a line`}
+                more={singleWeek ? `${lines.length} teams` : `${lines.length} teams, hover a line`}
                 sx={{ overflow: 'visible' }}
             >
-                <Box sx={{ p: 2 }}>
+                <Box sx={{ p: 1.5 }}>
                     {loading ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                             <CircularProgress />
@@ -413,18 +419,25 @@ const RankingsGraphTab = ({ season, teams, teamsMap, mode, sub, onSubChange }) =
                         </Box>
                     ) : (
                         <>
-                            <MultiLineChart
-                                lines={visibleLines}
-                                height={320}
-                                yMin={yMin}
-                                yMax={yMax}
-                                invert={invert}
-                                yTicks={yTicks}
-                                padL={isPoll ? 30 : 40}
-                                padT={14}
-                                label={labelFn}
-                            />
-                            {showLegend && (
+                            {singleWeek ? (
+                                <SingleWeekBars lines={visibleLines} invert={invert} format={valueText} />
+                            ) : (
+                                <Box ref={chartRoomRef}>
+                                    <MultiLineChart
+                                        lines={visibleLines}
+                                        height={320}
+                                        maxHeight={chartRoom}
+                                        yMin={yMin}
+                                        yMax={yMax}
+                                        invert={invert}
+                                        yTicks={yTicks}
+                                        padL={isPoll ? 30 : 40}
+                                        padT={14}
+                                        label={labelFn}
+                                    />
+                                </Box>
+                            )}
+                            {showLegend && !singleWeek && (
                                 <Box
                                     sx={{
                                         display: 'flex',

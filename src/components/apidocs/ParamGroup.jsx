@@ -1,10 +1,11 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
+import NumberInput from '../ui/NumberInput';
 import SearchableSelect from '../ui/SearchableSelect';
 import { paramConfig, PAGE_SIZE_PRESETS } from '../../utils/apiDocsParamConfig';
 import { humanizeParamName } from '../../utils/humanize';
-import { inputSx, labelSx } from './apiExplorerStyles';
+import { inputSx, labelSx } from '../../styles/controls';
 
 const ParamInput = ({ param, value, onChange, config }) => {
     const displayLabel = config.label || humanizeParamName(param.name);
@@ -47,15 +48,13 @@ const ParamInput = ({ param, value, onChange, config }) => {
                 />
             ) : config.uiType === 'pageable' ? (
                 <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    <Box sx={{ flex: '0 0 90px' }}>
+                    <Box sx={{ flex: '0 0 120px' }}>
                         <Box sx={{ ...labelSx, mb: '4px', fontWeight: 400 }}>Page</Box>
-                        <Box
-                            component="input"
-                            type="number"
-                            min={0}
-                            sx={inputSx}
+                        <NumberInput
                             value={value.page}
-                            onChange={(e) => onChange({ ...value, page: e.target.value })}
+                            min={0}
+                            ariaLabel="Page"
+                            onChange={(page) => onChange({ ...value, page })}
                         />
                     </Box>
                     <Box sx={{ flex: '0 0 110px' }}>

@@ -2,7 +2,6 @@ import React from 'react';
 import {
     Box,
     TextField,
-    Autocomplete,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -12,6 +11,8 @@ import {
     CircularProgress,
 } from '@mui/material';
 import PropTypes from 'prop-types';
+import FormField from '../admin/form/FormField';
+import TeamSelect from '../ui/TeamSelect';
 
 const TV_CHANNELS = [
     'ABC',
@@ -90,24 +91,28 @@ const StartGameDialog = ({ open, availableTeams, startGameData, onFieldChange, o
                     Team Selection
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                    <Autocomplete
-                        sx={{ flex: '1 1 220px' }}
-                        options={availableTeams}
-                        getOptionLabel={(option) => option.name || ''}
-                        value={availableTeams.find((team) => team.name === startGameData.homeTeam) || null}
-                        onChange={(event, newValue) => onFieldChange('homeTeam', newValue ? newValue.name : '')}
-                        renderInput={(params) => <TextField {...params} label="Home Team" fullWidth />}
-                        isOptionDisabled={(option) => option.name === startGameData.awayTeam}
-                    />
-                    <Autocomplete
-                        sx={{ flex: '1 1 220px' }}
-                        options={availableTeams}
-                        getOptionLabel={(option) => option.name || ''}
-                        value={availableTeams.find((team) => team.name === startGameData.awayTeam) || null}
-                        onChange={(event, newValue) => onFieldChange('awayTeam', newValue ? newValue.name : '')}
-                        renderInput={(params) => <TextField {...params} label="Away Team" fullWidth />}
-                        isOptionDisabled={(option) => option.name === startGameData.homeTeam}
-                    />
+                    <Box sx={{ flex: '1 1 220px' }}>
+                        <FormField label="Home team">
+                            <TeamSelect
+                                value={startGameData.homeTeam}
+                                onChange={(value) => onFieldChange('homeTeam', value)}
+                                teams={availableTeams.map((team) => team.name)}
+                                exclude={startGameData.awayTeam}
+                                ariaLabel="Home team"
+                            />
+                        </FormField>
+                    </Box>
+                    <Box sx={{ flex: '1 1 220px' }}>
+                        <FormField label="Away team">
+                            <TeamSelect
+                                value={startGameData.awayTeam}
+                                onChange={(value) => onFieldChange('awayTeam', value)}
+                                teams={availableTeams.map((team) => team.name)}
+                                exclude={startGameData.homeTeam}
+                                ariaLabel="Away team"
+                            />
+                        </FormField>
+                    </Box>
                 </Box>
             </Box>
         </DialogContent>

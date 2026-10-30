@@ -13,7 +13,7 @@ jest.mock('react-router-dom', () => {
 });
 jest.mock('../../../api/gameStatsApi', () => ({ getGameStatsByIdAndTeam: jest.fn() }));
 jest.mock('../../../api/playApi', () => ({ getPreviousPlay: jest.fn() }));
-jest.mock('../../../hooks/useTeamsMap', () => ({ ensureTeam: jest.fn() }));
+jest.mock('../../../hooks/useTeamsMap', () => ({ isTeamsListLoading: () => false, ensureTeam: jest.fn() }));
 jest.mock('../../../context/ColorModeContext', () => ({ useColorMode: () => ({ mode: 'light' }) }));
 jest.mock('../../../utils/formatPlay', () => ({ describePlay: (play) => play.description }));
 jest.mock('../../ui/TeamMark', () => ({ __esModule: true, default: () => null }));

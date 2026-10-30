@@ -12,7 +12,11 @@ jest.mock('../../api/newSignupsApi', () => ({
     hireFromSignup: jest.fn(),
 }));
 jest.mock('../../api/teamApi', () => ({ getAllTeams: jest.fn() }));
-jest.mock('../../hooks/useTeamsMap', () => ({ useTeamsMap: () => ({}) }));
+jest.mock('../../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    ensureTeam: jest.fn(),
+    useTeamsMap: () => ({}),
+}));
 jest.mock('../../components/layout/AdminLayout', () => ({
     __esModule: true,
     default: ({ children }) => <div>{children}</div>,
@@ -126,7 +130,7 @@ const openHire = async (username) => {
 
 const submitHire = async () => {
     fireEvent.mouseDown(screen.getAllByRole('combobox')[0]);
-    fireEvent.click(await screen.findByRole('option', { name: 'Available Team (vacant)' }));
+    fireEvent.click(await screen.findByRole('option', { name: /Available Team/ }));
     fireEvent.mouseDown(screen.getAllByRole('combobox')[1]);
     fireEvent.click(await screen.findByRole('option', { name: 'Head Coach' }));
     fireEvent.click(screen.getByRole('button', { name: 'Hire Coach' }));

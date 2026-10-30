@@ -4,7 +4,8 @@ import { useSearchParams } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import Panel from '../../components/ui/Panel';
-import SectionTitle from '../../components/ui/SectionTitle';
+import PageTabs from '../../components/ui/PageTabs';
+import GameStatComparison from '../../components/game/detail/GameStatComparison';
 import SelectPill from '../../components/ui/SelectPill';
 import SearchableSelect from '../../components/ui/SearchableSelect';
 import ComparisonTable from '../../components/ui/ComparisonTable';
@@ -19,12 +20,12 @@ import { getAllSeasons, getCurrentSeason } from '../../api/seasonApi';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getVegasOdds } from '../../api/vegasOddsApi';
 import { aggregateSeasonStats } from '../../utils/aggregateStats';
-import { STAT_GROUPS, statCell } from '../../utils/teamStatFields';
 import { orderedGameIdsFromPlays } from '../../utils/scoutingReport';
 import { playCallSplit, playCallByDown, fourthDownTendency, kickoffTypeSplit } from '../../utils/tendencies';
 import { teamHeadToHead, coachHeadToHead, resolveHeadCoach } from '../../utils/headToHead';
 import { humanizeEnumValue } from '../../utils/humanize';
 import { useSeo } from '../../hooks/useSeo';
+import { inputSx, labelSx, primaryButtonSx } from '../../styles/controls';
 
 const statsRows = (result) => {
     if (Array.isArray(result)) {
@@ -54,43 +55,6 @@ const computeSeasonRecord = (scheduleRows, teamName) => {
         }
     });
     return { wins, losses };
-};
-
-const CONTROL_HEIGHT = '34px';
-const inputSx = {
-    height: CONTROL_HEIGHT,
-    boxSizing: 'border-box',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    py: 0,
-    font: 'inherit',
-    fontSize: '0.8rem',
-};
-const btnSx = {
-    height: CONTROL_HEIGHT,
-    boxSizing: 'border-box',
-    display: 'flex',
-    alignItems: 'center',
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:disabled': { opacity: 0.5, cursor: 'not-allowed' },
-};
-const labelSx = {
-    fontSize: '0.68rem',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
 };
 
 const pct = (value) => (value == null ? '-' : `${(value * 100).toFixed(1)}%`);
@@ -164,6 +128,7 @@ const MatchupPreview = () => {
     const [users, setUsers] = useState([]);
     const [seasons, setSeasons] = useState([]);
     const [seasonView, setSeasonView] = useState('alltime');
+    const [tab, setTab] = useState('overview');
     const [loadingLookups, setLoadingLookups] = useState(true);
 
     const [labelA, setLabelA] = useState('');
@@ -216,7 +181,7 @@ const MatchupPreview = () => {
         () =>
             [...teams]
                 .sort((a, b) => a.name.localeCompare(b.name))
-                .map((team) => ({ value: team.name, label: team.name })),
+                .map((team) => ({ value: team.name, label: team.name, team: team.name })),
         [teams]
     );
     const resolvedA = useMemo(
@@ -498,7 +463,7 @@ const MatchupPreview = () => {
                             type="button"
                             onClick={() => compare()}
                             disabled={loading || !resolvedA || !resolvedB}
-                            sx={btnSx}
+                            sx={primaryButtonSx}
                         >
                             {loading ? 'Comparing…' : 'Compare'}
                         </Box>
@@ -515,76 +480,65 @@ const MatchupPreview = () => {
 
             {!loading && resultA && resultB && (
                 <>
-                    {spread && (
-                        <Box sx={{ textAlign: 'center', mb: '16px' }}>
-                            <Box sx={{ ...labelSx, mb: '4px' }}>Projected spread</Box>
-                            <Box
-                                sx={{
-                                    fontFamily: 'var(--cond)',
-                                    fontWeight: 800,
-                                    fontSize: '1.4rem',
-                                    color: 'var(--text)',
-                                }}
-                            >
-                                {spread.home_spread === 0
-                                    ? 'Even matchup'
-                                    : `${spread.home_spread < 0 ? resultA.team : resultB.team} favored by ${Math.abs(spread.home_spread)}`}
-                            </Box>
+                    <PageTabs
+                        value={tab}
+                        onChange={setTab}
+                        ariaLabel="Matchup sections"
+                        options={[
+                            { value: 'overview', label: 'Overview' },
+                            ...(resultA.statsRow && resultB.statsRow
+                                ? [{ value: 'stats', label: 'Season statistics' }]
+                                : []),
+                        ]}
+                        trailing={
+                            spread && (
+                                <Box sx={{ fontFamily: 'var(--cond)', fontWeight: 800, fontSize: '1.05rem' }}>
+                                    {spread.home_spread === 0
+                                        ? 'Even matchup'
+                                        : `${spread.home_spread < 0 ? resultA.team : resultB.team} favored by ${Math.abs(spread.home_spread)}`}
+                                </Box>
+                            )
+                        }
+                    />
+                    {tab === 'overview' && (
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, minmax(0, 1fr))' },
+                                gap: '16px',
+                                alignItems: 'start',
+                            }}
+                        >
+                            <Panel header="Overview">
+                                <ComparisonTable
+                                    awayHeader={teamHeader(resultA.team)}
+                                    homeHeader={teamHeader(resultB.team)}
+                                    sections={[{ rows: recordRows }]}
+                                />
+                            </Panel>
+                            <Panel header="Head-to-head" more="All-time">
+                                <ComparisonTable
+                                    awayHeader={teamHeader(resultA.team)}
+                                    homeHeader={teamHeader(resultB.team)}
+                                    sections={[{ rows: headToHeadRows }]}
+                                />
+                            </Panel>
+                            <Panel header="Play calling by down">
+                                <ComparisonTable
+                                    awayHeader={teamHeader(resultA.team)}
+                                    homeHeader={teamHeader(resultB.team)}
+                                    sections={[{ rows: byDownRows }]}
+                                />
+                            </Panel>
                         </Box>
                     )}
-
-                    <SectionTitle title="Overview" />
-                    <Panel sx={{ mb: '16px' }}>
-                        <ComparisonTable
-                            awayHeader={teamHeader(resultA.team)}
-                            homeHeader={teamHeader(resultB.team)}
-                            sections={[{ rows: recordRows }]}
+                    {tab === 'stats' && resultA.statsRow && resultB.statsRow && (
+                        <GameStatComparison
+                            awayStats={resultA.statsRow}
+                            homeStats={resultB.statsRow}
+                            awayMark={teamsMap[resultA.team] || toEntry({ name: resultA.team })}
+                            homeMark={teamsMap[resultB.team] || toEntry({ name: resultB.team })}
                         />
-                    </Panel>
-
-                    <SectionTitle title="Head-to-head" note="All-time" />
-                    <Panel sx={{ mb: '16px' }}>
-                        <ComparisonTable
-                            awayHeader={teamHeader(resultA.team)}
-                            homeHeader={teamHeader(resultB.team)}
-                            sections={[{ rows: headToHeadRows }]}
-                        />
-                    </Panel>
-
-                    <SectionTitle title="Play calling by down" />
-                    <Panel sx={{ mb: '16px' }}>
-                        <ComparisonTable
-                            awayHeader={teamHeader(resultA.team)}
-                            homeHeader={teamHeader(resultB.team)}
-                            sections={[{ rows: byDownRows }]}
-                        />
-                    </Panel>
-
-                    {resultA.statsRow && resultB.statsRow && (
-                        <>
-                            <SectionTitle title="Season statistics" />
-                            <Box sx={{ columnCount: { xs: 1, sm: 2, lg: 3 }, columnGap: '16px' }}>
-                                {STAT_GROUPS.map(([group, rows]) => (
-                                    <Box key={group} sx={{ breakInside: 'avoid', mb: '16px' }}>
-                                        <Panel header={group}>
-                                            <ComparisonTable
-                                                awayHeader={teamHeader(resultA.team)}
-                                                homeHeader={teamHeader(resultB.team)}
-                                                sections={[
-                                                    {
-                                                        rows: rows.map((row) => ({
-                                                            label: row.label,
-                                                            away: statCell(row, resultA.statsRow),
-                                                            home: statCell(row, resultB.statsRow),
-                                                        })),
-                                                    },
-                                                ]}
-                                            />
-                                        </Panel>
-                                    </Box>
-                                ))}
-                            </Box>
-                        </>
                     )}
                 </>
             )}

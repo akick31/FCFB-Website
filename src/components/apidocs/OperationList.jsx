@@ -54,7 +54,7 @@ const OperationList = ({ groups, query, onQueryChange, selectedId, onSelect }) =
                 }}
             />
         </Box>
-        <Box sx={{ maxHeight: '640px', overflowY: 'auto' }}>
+        <Box sx={{ maxHeight: { xs: '420px', md: 'max(240px, calc(100vh - 470px))' }, overflowY: 'auto' }}>
             {groups.length === 0 && (
                 <Box sx={{ p: 2, color: 'var(--text-muted)', fontSize: '0.8rem' }}>No endpoints match your search.</Box>
             )}

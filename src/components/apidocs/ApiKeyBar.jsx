@@ -2,34 +2,7 @@ import React, { useState } from 'react';
 import { Box, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
 import { generateApiKey } from '../../api/userApi';
-
-const inputSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    py: '7px',
-    font: 'inherit',
-    fontSize: '0.8rem',
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-    width: '260px',
-    maxWidth: '100%',
-};
-const btnSx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    py: '8px',
-    font: 'inherit',
-    fontSize: '0.78rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    '&:disabled': { opacity: 0.5, cursor: 'not-allowed' },
-};
+import { inputSx, labelSx, primaryButtonSx } from '../../styles/controls';
 
 const ApiKeyBar = ({ apiKey, onChange, isLoggedIn }) => {
     const [generating, setGenerating] = useState(false);
@@ -49,24 +22,38 @@ const ApiKeyBar = ({ apiKey, onChange, isLoggedIn }) => {
 
     return (
         <Box
-            sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}
+            sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                flexWrap: 'wrap',
+                mb: '16px',
+                p: '10px 12px',
+                border: '1px solid var(--line)',
+                borderRadius: 'var(--r-md, 10px)',
+                background: 'var(--surface)',
+            }}
         >
-            <Box component="label" sx={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+            <Box component="label" htmlFor="api-key" sx={{ ...labelSx, mb: 0 }}>
                 API key
             </Box>
             <Box
                 component="input"
+                id="api-key"
                 type="text"
                 value={apiKey}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder="fcfb_pat_..."
                 aria-label="API key"
-                sx={inputSx}
+                sx={{ ...inputSx, flex: '1 1 260px', maxWidth: 520 }}
             />
             {isLoggedIn && !apiKey && (
-                <Box component="button" onClick={generate} disabled={generating} sx={btnSx}>
+                <Box component="button" onClick={generate} disabled={generating} sx={primaryButtonSx}>
                     {generating ? 'Generating…' : 'Generate API key'}
                 </Box>
+            )}
+            {!isLoggedIn && !apiKey && (
+                <Box sx={{ fontSize: '0.76rem', color: 'var(--text-dim)' }}>Sign in to generate a key.</Box>
             )}
             {error && (
                 <Alert severity="error" sx={{ width: '100%' }}>

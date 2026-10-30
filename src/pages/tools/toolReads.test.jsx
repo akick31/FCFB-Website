@@ -41,7 +41,12 @@ jest.mock('../../api/seasonApi', () => ({
 jest.mock('../../api/scheduleApi', () => ({ getScheduleBySeasonAndTeam: jest.fn() }));
 jest.mock('../../api/seasonStatsApi', () => ({ getFilteredSeasonStats: jest.fn() }));
 jest.mock('../../api/vegasOddsApi', () => ({ getVegasOdds: jest.fn() }));
-jest.mock('../../hooks/useTeamsMap', () => ({ useTeamsMap: () => ({}), toEntry: (team) => team }));
+jest.mock('../../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    ensureTeam: jest.fn(),
+    useTeamsMap: () => ({}),
+    toEntry: (team) => team,
+}));
 jest.mock('../../hooks/useSeo', () => ({ useSeo: () => {} }));
 jest.mock('../../components/layout/PageWrap', () => ({
     __esModule: true,
@@ -144,6 +149,8 @@ test.each(['matchup', 'scouting'])('unmounted %s play read cannot start another 
     expect(getGamesByIds).not.toHaveBeenCalled();
     expect(mockSetParams).not.toHaveBeenCalled();
 });
+
+const openColumns = () => fireEvent.click(screen.getByRole('button', { name: /^Columns/ }));
 
 test('unmounted matchup odds read cannot rewrite the URL', async () => {
     const finish = pending(getVegasOdds);
@@ -310,6 +317,7 @@ test('preference failure is handled in the existing error area and can be retrie
     updateScoutingReportHiddenColumns.mockRejectedValueOnce(new Error('preferences unavailable'));
     render(<ScoutingReport />);
     await startScouting();
+    openColumns();
     fireEvent.click(screen.getByRole('button', { name: 'Hide all' }));
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save as default' })));
     expect(screen.getByText('preferences unavailable')).toBeTruthy();
@@ -334,6 +342,7 @@ test.each(['success', 'failure'])('old preference %s cannot affect a replacement
     updateScoutingReportHiddenColumns.mockReturnValueOnce(new Promise(() => {}));
     const { rerender } = render(<ScoutingReport />);
     await startScouting();
+    openColumns();
     fireEvent.click(screen.getByRole('button', { name: 'Save as default' }));
     localStorage.setItem('userId', '2');
     localStorage.setItem('token', 'replacement-session');
@@ -355,6 +364,7 @@ test('preference rejection after unmount is handled', async () => {
     );
     const { unmount } = render(<ScoutingReport />);
     await startScouting();
+    openColumns();
     fireEvent.click(screen.getByRole('button', { name: 'Save as default' }));
     unmount();
     await act(async () => reject(new Error('obsolete preferences')));
@@ -415,7 +425,7 @@ test('scouting current-season scope keeps current plays and excludes previous-se
     fireEvent.change(screen.getByLabelText('scouting-target'), { target: { value: 'AlphaCoach (Alpha)' } });
     fireEvent.click(screen.getByRole('checkbox', { name: 'Current season only' }));
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Generate report' })));
-    expect(screen.getByText('Showing 1 of 1 plays')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Plays (1 of 1)' })).toBeTruthy();
     expect(screen.getByText('Current season play')).toBeTruthy();
     expect(screen.queryByText('Previous season play')).toBeNull();
 });
@@ -426,6 +436,7 @@ test('current account column defaults retain their existing save payload', async
     getUserById.mockResolvedValue({ scouting_report_hidden_columns: ['play_id'] });
     render(<ScoutingReport />);
     await startScouting();
+    openColumns();
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save as default' })));
     expect(updateScoutingReportHiddenColumns).toHaveBeenCalledWith('1', ['play_id']);
 });
@@ -443,6 +454,7 @@ test.each(['account', 'token'])('late column defaults are discarded after a %s r
     rerender(<ScoutingReport />);
     await finish({ scouting_report_hidden_columns: ['play_id'] });
     await startScouting();
+    openColumns();
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save as default' })));
     expect(updateScoutingReportHiddenColumns).toHaveBeenCalledWith(replacement === 'account' ? '2' : '1', []);
 });
@@ -453,6 +465,7 @@ test('explicit URL columns still take precedence over account defaults', async (
     getUserById.mockResolvedValue({ scouting_report_hidden_columns: ['play_id'] });
     render(<ScoutingReport />);
     await startScouting();
+    openColumns();
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save as default' })));
     expect(updateScoutingReportHiddenColumns).toHaveBeenCalledWith('1', ['game_id']);
 });

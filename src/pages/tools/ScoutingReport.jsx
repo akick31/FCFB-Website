@@ -4,7 +4,11 @@ import { useSearchParams } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import Panel from '../../components/ui/Panel';
-import SectionTitle from '../../components/ui/SectionTitle';
+import PageTabs from '../../components/ui/PageTabs';
+import PagedFooter from '../../components/ui/PagedFooter';
+import EditDialog from '../../components/ui/EditDialog';
+import NumberInput from '../../components/ui/NumberInput';
+import usePagedRows from '../../hooks/usePagedRows';
 import SearchableSelect from '../../components/ui/SearchableSelect';
 import {
     PLAY_COLUMNS,
@@ -25,7 +29,10 @@ import useScoutingFilters from '../../hooks/useScoutingFilters';
 import useScoutingColumns from '../../hooks/useScoutingColumns';
 import useScoutingReportData from '../../hooks/useScoutingReportData';
 import useScoutingReportUrl from '../../hooks/useScoutingReportUrl';
-import { inputSx, btnSx, stepBtnSx, labelSx, CONTROL_HEIGHT } from '../../components/scouting/scoutingStyles';
+import { CONTROL_HEIGHT } from '../../styles/controls';
+import { compact, inputSx, labelSx, primaryButtonSx, secondaryButtonSx } from '../../styles/controls';
+const PLAYS_PER_PAGE = 25;
+
 const ScoutingReport = () => {
     useSeo({
         title: 'Scouting Report | Fake College Football',
@@ -34,8 +41,8 @@ const ScoutingReport = () => {
 
     const [searchParams, setSearchParams] = useSearchParams();
     const [error, setError] = useState('');
-    const [columnsOpen, setColumnsOpen] = useState(true);
-    const [numbersOpen, setNumbersOpen] = useState(true);
+    const [columnsOpen, setColumnsOpen] = useState(false);
+    const [resultsTab, setResultsTab] = useState('plays');
     const [bucketSize, setBucketSize] = useState(DEFAULT_NUMBER_BUCKET_SIZE);
     const filters = useScoutingFilters();
     const {
@@ -116,6 +123,8 @@ const ScoutingReport = () => {
         ]
     );
 
+    const { page, pageCount, pageRows, setPage } = usePagedRows(filteredPlays, PLAYS_PER_PAGE, filteredPlays.length);
+
     const favoriteNumbersList = useMemo(
         () => favoriteNumbers(filteredPlays, reportTarget, 10),
         [filteredPlays, reportTarget]
@@ -151,37 +160,13 @@ const ScoutingReport = () => {
                         </Box>
                         <Box sx={{ flex: '0 0 auto' }}>
                             <Box sx={{ ...labelSx, mb: '6px' }}>Games</Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Box
-                                    component="button"
-                                    type="button"
-                                    onClick={() => setGameCount((n) => Math.max(1, n - 1))}
-                                    disabled={rangeMode === 'season' || gameCount <= 1}
-                                    sx={stepBtnSx}
-                                >
-                                    −
-                                </Box>
-                                <Box
-                                    component="input"
-                                    type="number"
-                                    min={1}
-                                    value={gameCount}
-                                    disabled={rangeMode === 'season'}
-                                    onChange={(event) =>
-                                        setGameCount(Math.max(1, Math.floor(Number(event.target.value)) || 1))
-                                    }
-                                    sx={{ ...inputSx, width: '64px', textAlign: 'center' }}
-                                />
-                                <Box
-                                    component="button"
-                                    type="button"
-                                    onClick={() => setGameCount((n) => n + 1)}
-                                    disabled={rangeMode === 'season'}
-                                    sx={stepBtnSx}
-                                >
-                                    +
-                                </Box>
-                            </Box>
+                            <NumberInput
+                                value={gameCount}
+                                min={1}
+                                ariaLabel="Games"
+                                disabled={rangeMode === 'season'}
+                                onChange={(next) => setGameCount(Math.max(1, Math.floor(Number(next)) || 1))}
+                            />
                         </Box>
                         <Box sx={{ flex: '0 0 auto' }}>
                             <Box sx={{ ...labelSx, mb: '6px' }}>&nbsp;</Box>
@@ -211,7 +196,7 @@ const ScoutingReport = () => {
                             type="button"
                             onClick={() => generate()}
                             disabled={loading || !resolvedTarget}
-                            sx={btnSx}
+                            sx={primaryButtonSx}
                         >
                             {loading ? 'Generating…' : 'Generate report'}
                         </Box>
@@ -235,68 +220,74 @@ const ScoutingReport = () => {
                 <>
                     <ScoutingScenarioFilters filters={filters} />
 
-                    <SectionTitle
-                        title="Numbers"
-                        collapsible
-                        collapsed={!numbersOpen}
-                        onToggle={() => setNumbersOpen((prev) => !prev)}
-                        note={
-                            numbersFiltered
-                                ? `Matches the filters above (${filterSummary})`
-                                : 'Overall (no filters chosen)'
+                    <PageTabs
+                        value={resultsTab}
+                        onChange={setResultsTab}
+                        ariaLabel="Report sections"
+                        options={[
+                            { value: 'plays', label: `Plays (${filteredPlays.length} of ${plays.length})` },
+                            { value: 'numbers', label: 'Numbers' },
+                        ]}
+                        trailing={
+                            <>
+                                <Box
+                                    component="button"
+                                    type="button"
+                                    onClick={() => setColumnsOpen(true)}
+                                    sx={compact(secondaryButtonSx)}
+                                >
+                                    Columns ({visibleColumns.length} of {PLAY_COLUMNS.length})
+                                </Box>
+                                <Box
+                                    component="button"
+                                    type="button"
+                                    onClick={exportCsv}
+                                    disabled={filteredPlays.length === 0}
+                                    sx={compact(primaryButtonSx)}
+                                >
+                                    Export CSV
+                                </Box>
+                            </>
                         }
                     />
-                    {numbersOpen && (
-                        <ScoutingNumberSummary
-                            favoriteNumbersList={favoriteNumbersList}
-                            bucketSize={bucketSize}
-                            setBucketSize={setBucketSize}
-                            numberBuckets={numberBuckets}
-                        />
-                    )}
-
-                    <SectionTitle
-                        title="Columns"
-                        collapsible
-                        collapsed={!columnsOpen}
-                        onToggle={() => setColumnsOpen((prev) => !prev)}
-                        note={`${visibleColumns.length} of ${PLAY_COLUMNS.length} shown`}
-                    />
-                    {columnsOpen && <ScoutingColumnsPanel columns={columns} />}
-
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            mb: '10px',
-                            flexWrap: 'wrap',
-                            gap: '10px',
-                        }}
-                    >
-                        <Box sx={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                            Showing {filteredPlays.length} of {plays.length} plays
-                        </Box>
-                        <Box
-                            component="button"
-                            type="button"
-                            onClick={exportCsv}
-                            disabled={filteredPlays.length === 0}
-                            sx={btnSx}
-                        >
-                            Export CSV
-                        </Box>
-                    </Box>
-
-                    {filteredPlays.length === 0 ? (
-                        <Panel>
-                            <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>
-                                No plays match these filters.
+                    {resultsTab === 'numbers' && (
+                        <>
+                            <Box sx={{ fontSize: '0.78rem', color: 'var(--text-dim)', mb: '10px' }}>
+                                {numbersFiltered
+                                    ? `Matches the filters above (${filterSummary})`
+                                    : 'Overall (no filters chosen)'}
                             </Box>
-                        </Panel>
-                    ) : (
-                        <ScoutingPlaysTable visibleColumns={visibleColumns} filteredPlays={filteredPlays} />
+                            <ScoutingNumberSummary
+                                favoriteNumbersList={favoriteNumbersList}
+                                bucketSize={bucketSize}
+                                setBucketSize={setBucketSize}
+                                numberBuckets={numberBuckets}
+                            />
+                        </>
                     )}
+                    {resultsTab === 'plays' &&
+                        (filteredPlays.length === 0 ? (
+                            <Panel>
+                                <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>
+                                    No plays match these filters.
+                                </Box>
+                            </Panel>
+                        ) : (
+                            <>
+                                <ScoutingPlaysTable visibleColumns={visibleColumns} filteredPlays={pageRows} />
+                                <PagedFooter
+                                    page={page}
+                                    pageCount={pageCount}
+                                    pageSize={PLAYS_PER_PAGE}
+                                    total={filteredPlays.length}
+                                    onChange={setPage}
+                                    noun="plays"
+                                />
+                            </>
+                        ))}
+                    <EditDialog open={columnsOpen} title="Columns" onClose={() => setColumnsOpen(false)} maxWidth="lg">
+                        <ScoutingColumnsPanel columns={columns} />
+                    </EditDialog>
                 </>
             )}
         </PageWrap>

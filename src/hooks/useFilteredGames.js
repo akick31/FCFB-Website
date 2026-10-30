@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useLayoutEffect, useRef } from 'react';
 import { getFilteredGames } from '../api/gameApi';
 
-const PAGE_SIZE = 50;
+const DEFAULT_PAGE_SIZE = 15;
 
-const useFilteredGames = (initialSeason, initialWeek, onError) => {
+const useFilteredGames = (initialSeason, initialWeek, onError, pageSize = DEFAULT_PAGE_SIZE) => {
+    const pageSizeRef = useRef(pageSize);
+    pageSizeRef.current = pageSize;
     const [filters, setFilters] = useState({ season: null, week: null, gameType: null, gameStatus: null });
     const [filteredGames, setFilteredGames] = useState([]);
     const [gamesLoading, setGamesLoading] = useState(true);
@@ -49,7 +51,7 @@ const useFilteredGames = (initialSeason, initialWeek, onError) => {
                 gameStatus: selected.gameStatus,
                 sort: 'MOST_TIME_REMAINING',
                 page,
-                size: PAGE_SIZE,
+                size: pageSizeRef.current,
             });
             if (controller.signal.aborted) {
                 return;
@@ -104,14 +106,25 @@ const useFilteredGames = (initialSeason, initialWeek, onError) => {
 
     const refetch = useCallback(() => fetchGames(), [fetchGames]);
 
+    const firstPageSizeRef = useRef(true);
+    useEffect(() => {
+        if (firstPageSizeRef.current) {
+            firstPageSizeRef.current = false;
+            return;
+        }
+        selectionRef.current = { ...selectionRef.current, page: 0 };
+        setCurrentPage(0);
+        fetchGames(selectionRef.current.filters, 0);
+    }, [pageSize, fetchGames]);
+
     return {
         filters,
         filteredGames,
         gamesLoading,
         currentPage,
         totalGames,
-        pageSize: PAGE_SIZE,
-        pageCount: Math.ceil(totalGames / PAGE_SIZE),
+        pageSize,
+        pageCount: Math.ceil(totalGames / pageSize),
         handleFilterChange,
         handlePageChange,
         refetch,

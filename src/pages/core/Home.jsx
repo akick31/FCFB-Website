@@ -1,28 +1,31 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDiscord, faPatreon } from '@fortawesome/free-brands-svg-icons';
-import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
 import { getAllTeams } from '../../api/teamApi';
 import { getFilteredGames } from '../../api/gameApi';
-import { getRankings, getRankingWeeks } from '../../api/rankingApi';
 import { getCurrentSeason, getLatestCompletedSeason } from '../../api/seasonApi';
 import { getPostseasonSchedule } from '../../api/scheduleApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
-import { useTeamsMap } from '../../hooks/useTeamsMap';
-import { useConferencesMap, activeConferenceCodes, conferenceLabel } from '../../hooks/useConferencesMap';
+import { useConferencesMap, activeConferenceCodes } from '../../hooks/useConferencesMap';
 import PageWrap from '../../components/layout/PageWrap';
-import SectionTitle from '../../components/ui/SectionTitle';
+import useFitCount from '../../hooks/useFitCount';
+import TeamName from '../../components/ui/TeamName';
+import { conferenceLeaders } from '../../utils/conferenceLeaders';
+import useWeekHighlights from '../../hooks/useWeekHighlights';
+import UpsetsTile from '../../components/home/UpsetsTile';
+import SwingTile from '../../components/home/SwingTile';
+import MoversPanel from '../../components/home/MoversPanel';
+import OpenJobsPanel from '../../components/home/OpenJobsPanel';
+import ColumnSwitch from '../../components/home/ColumnSwitch';
+import { getStorageItem } from '../../utils/utils';
+import HomeHeader from '../../components/home/HomeHeader';
+import HomeGameRow from '../../components/home/HomeGameRow';
+import ScoreboardLink from '../../components/home/ScoreboardLink';
+import TopRankingsPanel from '../../components/home/TopRankingsPanel';
+import ConferenceLeadersPanel from '../../components/home/ConferenceLeadersPanel';
 import Panel from '../../components/ui/Panel';
 import StatTile, { TileGrid } from '../../components/ui/StatTile';
-import TeamMark from '../../components/ui/TeamMark';
-import ConferenceMark from '../../components/ui/ConferenceMark';
-import GameCard from '../../components/game/cards/GameCard';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
-import logo from '../../assets/graphics/main_logo.png';
-import trophy from '../../assets/graphics/trophy.png';
 
 const resolveCurrentSeason = async () => {
     try {
@@ -32,47 +35,32 @@ const resolveCurrentSeason = async () => {
     }
 };
 
-const MiniRow = ({ to, children }) => (
-    <Box
-        component={to ? Link : 'div'}
-        to={to || undefined}
-        sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            px: '14px',
-            py: '8px',
-            borderBottom: '1px solid var(--line-soft)',
-            color: 'inherit',
-            textDecoration: 'none',
-            cursor: to ? 'pointer' : 'default',
-            '&:last-of-type': { borderBottom: 0 },
-            '&:hover': to ? { background: 'var(--surface-2)' } : {},
-        }}
-    >
-        {children}
-    </Box>
-);
-
-MiniRow.propTypes = {
-    to: PropTypes.string,
-    children: PropTypes.node,
-};
+const GAMES_FETCHED = 10;
 
 const Home = () => {
-    const teamsMap = useTeamsMap();
     useSeo(ROUTE_META['/']);
+    const [gamesFitRef, gamesShown] = useFitCount({
+        itemSelector: '[data-home-game]',
+        rowHeight: 74,
+        minRows: 3,
+        maxRows: GAMES_FETCHED,
+        initialRows: 5,
+        phoneCount: 5,
+        ownBottom: true,
+    });
 
     const [teams, setTeams] = useState([]);
     const [games, setGames] = useState([]);
     const [gamesLive, setGamesLive] = useState(false);
-    const [gamesPlayed, setGamesPlayed] = useState(null);
-    const [rankings, setRankings] = useState([]);
     const [season, setSeason] = useState(null);
-    const [champion, setChampion] = useState(null);
     const [confChampions, setConfChampions] = useState(null);
     const [loading, setLoading] = useState(true);
     const conferencesMap = useConferencesMap();
+    const highlights = useWeekHighlights(season);
+    const rankings = highlights.rankings;
+    const [gamesView, setGamesView] = useState('marquee');
+    const [pollView, setPollView] = useState('top25');
+    const [sideView, setSideView] = useState('jobs');
 
     useEffect(() => {
         let active = true;
@@ -91,27 +79,17 @@ const Home = () => {
                 const seasonNumber = current ?? latest?.season_number ?? latest?.seasonNumber ?? null;
                 setSeason(seasonNumber);
 
-                const rankingsChain = (async () => {
-                    const weeks = seasonNumber
-                        ? await getRankingWeeks(seasonNumber, 'COACHES_POLL').catch(() => [])
-                        : [];
-                    if (!active) {
-                        return;
-                    }
-                    const week = weeks.length ? Math.max(...weeks) : null;
-                    const poll = week ? await getRankings(seasonNumber, week, 'COACHES_POLL').catch(() => []) : [];
-                    if (!active) {
-                        return;
-                    }
-                    setRankings(poll || []);
-                })();
-
                 const gamesChain = (async () => {
                     const [ongoing, past] = await Promise.all([
-                        getFilteredGames({ category: 'ONGOING', sort: 'CLOSEST_TO_END', page: 0, size: 4 }).catch(
+                        getFilteredGames({
+                            category: 'ONGOING',
+                            sort: 'CLOSEST_TO_END',
+                            page: 0,
+                            size: GAMES_FETCHED,
+                        }).catch(() => null),
+                        getFilteredGames({ category: 'PAST', sort: 'NEWEST', page: 0, size: GAMES_FETCHED }).catch(
                             () => null
                         ),
-                        getFilteredGames({ category: 'PAST', sort: 'NEWEST', page: 0, size: 4 }).catch(() => null),
                     ]);
                     if (!active) {
                         return;
@@ -120,36 +98,17 @@ const Home = () => {
                     const live = ongoingList.length > 0;
                     setGames(live ? ongoingList : past?.content || []);
                     setGamesLive(live);
-                    setGamesPlayed(past?.total_elements ?? null);
                 })();
 
                 const postseasonChain = (async () => {
                     if (!latest) {
                         return;
                     }
-                    const teamsByName = Object.fromEntries(allTeams.map((team) => [team.name, team]));
-                    const champTeam =
-                        latest?.national_championship_winning_team ?? latest?.nationalChampionshipWinningTeam;
                     const postseason = await getPostseasonSchedule(latest.season_number ?? latest.seasonNumber).catch(
                         () => []
                     );
                     if (!active) {
                         return;
-                    }
-
-                    const game = (postseason || []).find((entry) => entry.game_type === 'NATIONAL_CHAMPIONSHIP');
-                    if (champTeam && game) {
-                        const homeWon = (game.home_score || 0) > (game.away_score || 0);
-                        setChampion({
-                            season: latest.season_number ?? latest.seasonNumber,
-                            winner: homeWon ? game.home_team : game.away_team,
-                            loser: homeWon ? game.away_team : game.home_team,
-                            winScore: homeWon ? game.home_score : game.away_score,
-                            loseScore: homeWon ? game.away_score : game.home_score,
-                            gameId: game.game_id,
-                        });
-                    } else if (champTeam) {
-                        setChampion({ season: latest.season_number ?? latest.seasonNumber, winner: champTeam });
                     }
 
                     if (current == null) {
@@ -168,7 +127,7 @@ const Home = () => {
                     }
                 })();
 
-                await Promise.all([rankingsChain, gamesChain, postseasonChain]);
+                await Promise.all([gamesChain, postseasonChain]);
             } finally {
                 if (active) {
                     setLoading(false);
@@ -183,7 +142,7 @@ const Home = () => {
     const teamsByName = useMemo(() => Object.fromEntries(teams.map((team) => [team.name, team])), [teams]);
 
     const stats = useMemo(() => {
-        const openCount = teams.filter((team) => !(team.coach_usernames && team.coach_usernames.length)).length;
+        const openCount = teams.filter((team) => !team.is_taken).length;
         const topElo = teams.reduce(
             (best, team) => ((team.current_elo || 0) > (best?.current_elo || 0) ? team : best),
             null
@@ -191,37 +150,25 @@ const Home = () => {
         return { programs: teams.length, open: openCount, topElo };
     }, [teams]);
 
+    const openTeams = useMemo(
+        () => teams.filter((team) => !team.is_taken).sort((a, b) => a.name.localeCompare(b.name)),
+        [teams]
+    );
+
     const showChampions = confChampions && Object.keys(confChampions).length > 0;
 
     const conferenceRows = useMemo(() => {
         if (showChampions) {
             return activeConferenceCodes()
                 .filter((conference) => confChampions[conference])
-                .map((conference) => ({ conference, team: teamsByName[confChampions[conference]], champion: true }));
+                .map((conference) => ({
+                    key: conference,
+                    conference,
+                    team: teamsByName[confChampions[conference]],
+                    champion: true,
+                }));
         }
-        const byConference = {};
-        teams.forEach((team) => {
-            if (!team.conference) {
-                return;
-            }
-            const rate =
-                (team.current_conference_wins || 0) + (team.current_conference_losses || 0) > 0
-                    ? (team.current_conference_wins || 0) /
-                      ((team.current_conference_wins || 0) + (team.current_conference_losses || 0))
-                    : 0;
-            const current = byConference[team.conference];
-            if (
-                !current ||
-                rate > current.rate ||
-                (rate === current.rate &&
-                    (team.current_conference_wins || 0) > (current.team.current_conference_wins || 0))
-            ) {
-                byConference[team.conference] = { team, rate };
-            }
-        });
-        return activeConferenceCodes()
-            .filter((conference) => byConference[conference])
-            .map((conference) => ({ conference, team: byConference[conference].team, champion: false }));
+        return conferenceLeaders(teams, activeConferenceCodes()).map((leader) => ({ ...leader, champion: false }));
     }, [teams, teamsByName, confChampions, showChampions, conferencesMap]);
 
     if (loading) {
@@ -234,338 +181,112 @@ const Home = () => {
         );
     }
 
+    const liveLabel = gamesLive ? 'Live' : 'Recent';
+    const marquee = highlights.marquee;
+    const shownGames = gamesView === 'marquee' && marquee?.games.length ? marquee.games : games;
+    const signedIn = Boolean(getStorageItem('local', 'token', ''));
+
     return (
         <PageWrap>
+            <HomeHeader season={season} week={highlights.week} />
+            <TileGrid minTile={150} sx={{ mt: '10px' }}>
+                <StatTile compact label="Open jobs" value={stats.open} caption={`of ${stats.programs} programs`} />
+                <StatTile
+                    compact
+                    label="Games left this week"
+                    value={highlights.remaining ?? '-'}
+                    caption={highlights.week ? `Week ${highlights.week}` : undefined}
+                />
+                <UpsetsTile upsets={highlights.upsets} brewing={highlights.brewing} />
+                <SwingTile swing={highlights.swing} />
+                <StatTile
+                    compact
+                    label="Top ELO"
+                    value={stats.topElo ? Math.round(stats.topElo.current_elo) : '-'}
+                    caption={stats.topElo && <TeamName name={stats.topElo.name} size={14} />}
+                />
+                {rankings[0] && (
+                    <StatTile
+                        compact
+                        label="#1 Coaches Poll"
+                        value={<TeamName name={rankings[0].teamName} size={22} />}
+                    />
+                )}
+            </TileGrid>
             <Box
                 sx={{
-                    position: 'relative',
-                    background: 'linear-gradient(160deg, var(--brand-deep), #01293b)',
-                    border: '1px solid var(--line)',
-                    borderRadius: 'var(--r-lg)',
-                    overflow: 'hidden',
-                    p: '30px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '26px',
-                    flexWrap: 'wrap',
-                    '&::before': {
-                        content: '""',
-                        display: { xs: 'none', sm: 'block' },
-                        position: 'absolute',
-                        right: '-60px',
-                        top: '-40px',
-                        bottom: '-40px',
-                        width: '230px',
-                        background: 'var(--live)',
-                        transform: 'skewX(-11deg)',
-                        opacity: 0.9,
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        xs: '1fr',
+                        md: '1fr 1fr',
+                        lg: 'minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr)',
                     },
-                    '&::after': {
-                        content: '""',
-                        display: { xs: 'none', sm: 'block' },
-                        position: 'absolute',
-                        right: '120px',
-                        top: '-40px',
-                        bottom: '-40px',
-                        width: '18px',
-                        background: '#b9c2c8',
-                        transform: 'skewX(-11deg)',
-                        opacity: 0.6,
-                    },
+                    gap: '14px',
+                    mt: '10px',
+                    alignItems: 'stretch',
                 }}
             >
-                <Box
-                    component="img"
-                    src={logo}
-                    alt="FCFB"
-                    sx={{ height: 118, width: 'auto', zIndex: 2, filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.5))' }}
-                />
-                <Box sx={{ zIndex: 2, flex: 1, minWidth: 260 }}>
-                    <Box
-                        sx={{
-                            fontSize: '0.6875rem',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.12em',
-                            fontWeight: 800,
-                            color: '#9fd6ec',
-                        }}
-                    >
-                        {season ? `Season ${season}` : 'Fake College Football'}
-                    </Box>
-                    <Box
-                        component="h1"
-                        sx={{
-                            fontFamily: 'var(--cond)',
-                            fontWeight: 800,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.01em',
-                            color: '#fff',
-                            fontSize: 'clamp(1.5rem, 2.8vw, 2rem)',
-                            lineHeight: 1,
-                            m: '8px 0 14px',
-                        }}
-                    >
-                        College football,
-                        <br />
-                        one number at a time
-                    </Box>
-                    <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                        <Box
-                            component="a"
-                            href="https://discord.gg/fcfb"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: { xs: '6px', sm: '8px' },
-                                background: 'var(--disc, #5865F2)',
-                                color: '#fff',
-                                borderRadius: 'var(--r-sm)',
-                                px: { xs: '10px', sm: '16px' },
-                                py: { xs: '6px', sm: '10px' },
-                                fontSize: { xs: '0.72rem', sm: '0.85rem' },
-                                fontWeight: 700,
-                                textDecoration: 'none',
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faDiscord} /> Join the Discord
-                        </Box>
-                        <Box
-                            component="a"
-                            href="https://www.patreon.com/fakecfb"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: { xs: '6px', sm: '8px' },
-                                background: 'rgba(255,255,255,0.1)',
-                                color: '#fff',
-                                border: '1px solid rgba(255,255,255,0.35)',
-                                borderRadius: 'var(--r-sm)',
-                                px: { xs: '10px', sm: '16px' },
-                                py: { xs: '6px', sm: '10px' },
-                                fontSize: { xs: '0.72rem', sm: '0.85rem' },
-                                fontWeight: 700,
-                                textDecoration: 'none',
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faPatreon} /> Support on Patreon
-                        </Box>
-                    </Box>
-                </Box>
-            </Box>
-
-            {champion && (
-                <Box
-                    component={champion.gameId ? Link : 'div'}
-                    to={champion.gameId ? `/game-details/${champion.gameId}` : undefined}
-                    sx={{
-                        display: 'flex',
-                        flexDirection: { xs: 'column', sm: 'row' },
-                        alignItems: { xs: 'flex-start', sm: 'center' },
-                        gap: '16px',
-                        background: 'linear-gradient(120deg, var(--brand-deep), #01293b)',
-                        border: '1px solid color-mix(in srgb, var(--gold) 40%, var(--line))',
-                        borderRadius: 'var(--r-lg)',
-                        p: '16px 20px',
-                        cursor: champion.gameId ? 'pointer' : 'default',
-                        mt: '16px',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        color: 'inherit',
-                        textDecoration: 'none',
-                        '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            right: '-40px',
-                            top: '-20px',
-                            bottom: '-20px',
-                            width: '120px',
-                            background: 'var(--gold)',
-                            opacity: 0.1,
-                            transform: 'skewX(-11deg)',
-                        },
-                    }}
-                >
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '16px',
-                            zIndex: 1,
-                            minWidth: 0,
-                            width: { xs: '100%', sm: 'auto' },
-                        }}
-                    >
-                        <Box
-                            component="img"
-                            src={trophy}
-                            alt="Trophy"
-                            sx={{ height: 52, width: 'auto', flexShrink: 0 }}
-                        />
-                        <Box sx={{ minWidth: 0 }}>
-                            <Box
-                                sx={{
-                                    fontSize: '0.66rem',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.1em',
-                                    fontWeight: 800,
-                                    color: 'var(--gold)',
-                                }}
-                            >
-                                Season {champion.season} National Champion
-                            </Box>
-                            <Box
-                                component="h2"
-                                sx={{ fontFamily: 'var(--cond)', color: '#fff', fontSize: '1.3rem', m: '3px 0 2px' }}
-                            >
-                                Congratulations to {champion.winner}
-                            </Box>
-                            {champion.loser && (
-                                <Box sx={{ color: '#cfe3ee', fontSize: '0.82rem' }}>
-                                    {champion.winner} defeated {champion.loser} {champion.winScore}-{champion.loseScore}{' '}
-                                    for the Season {champion.season} national championship.
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <ColumnSwitch
+                        value={gamesView}
+                        onChange={setGamesView}
+                        ariaLabel="Games"
+                        options={[
+                            { value: 'marquee', label: marquee?.kind === 'close' ? 'Closest games' : 'Marquee' },
+                            { value: 'all', label: liveLabel },
+                        ]}
+                        action={<ScoreboardLink />}
+                    />
+                    <Panel sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <Box ref={gamesFitRef}>
+                            {shownGames.length > 0 ? (
+                                shownGames
+                                    .slice(0, gamesShown)
+                                    .map((game) => (
+                                        <HomeGameRow
+                                            key={game.game_id ?? `${game.home_team}-${game.away_team}`}
+                                            game={game}
+                                        />
+                                    ))
+                            ) : (
+                                <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>
+                                    No games to show.
                                 </Box>
                             )}
                         </Box>
-                    </Box>
-                    {champion.loser && (
-                        <Box
-                            sx={{
-                                ml: { xs: 0, sm: 'auto' },
-                                zIndex: 1,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px',
-                                flexShrink: 0,
-                            }}
-                        >
-                            <TeamMark team={teamsMap[champion.loser]} size={40} />
-                            <Box sx={{ color: 'var(--text-dim)', fontWeight: 800 }}>
-                                {champion.loseScore}-{champion.winScore}
-                            </Box>
-                            <TeamMark team={teamsMap[champion.winner]} size={40} />
-                        </Box>
-                    )}
+                    </Panel>
                 </Box>
-            )}
-
-            <TileGrid sx={{ mt: '16px' }}>
-                <StatTile label="Programs" value={stats.programs} caption={`${stats.open} open`} />
-                <StatTile label="Games played" value={gamesPlayed != null ? gamesPlayed.toLocaleString() : '-'} />
-                <StatTile
-                    label="Top ELO"
-                    value={stats.topElo ? Math.round(stats.topElo.current_elo) : '-'}
-                    caption={stats.topElo?.name}
-                />
-                {rankings[0] && <StatTile label="#1 Coaches Poll" value={rankings[0].teamName} />}
-            </TileGrid>
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.5fr 1fr' }, gap: '16px', mt: '16px' }}>
-                <Box>
-                    <SectionTitle title={gamesLive ? 'Live games' : 'Recent results'} />
-                    {games.length > 0 ? (
-                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: '14px' }}>
-                            {games.map((game) => (
-                                <GameCard key={game.game_id} game={game} teamsMap={teamsMap} compact />
-                            ))}
-                        </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <ColumnSwitch
+                        value={pollView}
+                        onChange={setPollView}
+                        ariaLabel="Rankings"
+                        options={[
+                            { value: 'top25', label: 'Top 25' },
+                            { value: 'movers', label: 'Movers' },
+                        ]}
+                    />
+                    {pollView === 'top25' ? (
+                        <TopRankingsPanel rankings={rankings} dense />
                     ) : (
-                        <Panel>
-                            <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>No games to show.</Box>
-                        </Panel>
+                        <MoversPanel poll={highlights.pollMoves} elo={highlights.eloMoves} />
                     )}
                 </Box>
-
-                <Box>
-                    <SectionTitle title="Top 25" />
-                    <Panel>
-                        {rankings.slice(0, 8).map((row) => (
-                            <MiniRow key={row.rank} to={row.teamId ? `/team-details/${row.teamId}` : undefined}>
-                                <Box sx={{ color: 'var(--gold)', fontWeight: 800, fontSize: '0.72rem', width: 22 }}>
-                                    #{row.rank}
-                                </Box>
-                                <TeamMark team={teamsMap[row.teamName]} size={22} />
-                                <Box
-                                    sx={{
-                                        fontWeight: 700,
-                                        fontSize: '0.85rem',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                >
-                                    {row.teamName}
-                                </Box>
-                                <Box
-                                    sx={{ ml: 'auto', color: 'var(--text-dim)', fontSize: '0.75rem', fontWeight: 600 }}
-                                >
-                                    {row.wins}-{row.losses}
-                                </Box>
-                            </MiniRow>
-                        ))}
-                        <MiniRow to="/rankings">
-                            <Box
-                                sx={{
-                                    width: '100%',
-                                    textAlign: 'center',
-                                    color: 'var(--brand)',
-                                    fontWeight: 700,
-                                    fontSize: '0.78rem',
-                                }}
-                            >
-                                Full Top 25
-                            </Box>
-                        </MiniRow>
-                    </Panel>
-
-                    <SectionTitle title={showChampions ? 'Conference champions' : 'Conference leaders'} />
-                    <Panel>
-                        {conferenceRows
-                            .filter((row) => row.team)
-                            .map(({ conference, team, champion: isChampion }) => (
-                                <MiniRow key={conference} to={team.id ? `/team-details/${team.id}` : undefined}>
-                                    <TeamMark team={teamsMap[team.name]} size={22} />
-                                    <Box
-                                        sx={{
-                                            fontWeight: 700,
-                                            fontSize: '0.85rem',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap',
-                                        }}
-                                    >
-                                        {team.name}
-                                    </Box>
-                                    <Box
-                                        sx={{
-                                            ml: 'auto',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            flexShrink: 0,
-                                        }}
-                                    >
-                                        <Box
-                                            component="span"
-                                            sx={{
-                                                color: isChampion ? 'var(--gold)' : 'var(--text-dim)',
-                                                fontSize: '0.75rem',
-                                                fontWeight: isChampion ? 800 : 600,
-                                                whiteSpace: 'nowrap',
-                                            }}
-                                        >
-                                            {isChampion
-                                                ? `${conferenceLabel(conference)} Champion`
-                                                : `${team.current_conference_wins || 0}-${team.current_conference_losses || 0}`}
-                                        </Box>
-                                        <ConferenceMark conference={conference} size={20} />
-                                    </Box>
-                                </MiniRow>
-                            ))}
-                    </Panel>
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <ColumnSwitch
+                        value={sideView}
+                        onChange={setSideView}
+                        ariaLabel="Programs"
+                        options={[
+                            { value: 'jobs', label: 'Open jobs' },
+                            { value: 'leaders', label: showChampions ? 'Conference champions' : 'Conference leaders' },
+                        ]}
+                    />
+                    {sideView === 'jobs' ? (
+                        <OpenJobsPanel teams={openTeams} signedIn={signedIn} />
+                    ) : (
+                        <ConferenceLeadersPanel rows={conferenceRows} dense />
+                    )}
                 </Box>
             </Box>
         </PageWrap>

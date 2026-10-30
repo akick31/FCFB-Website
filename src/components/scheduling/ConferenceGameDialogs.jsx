@@ -5,79 +5,14 @@ import TeamMark from '../ui/TeamMark';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { camelOrSnakeField } from '../../utils/fieldHelper';
 import { weekLabel } from '../../utils/formatText';
+import { inputSx, labelSx, primaryButtonSx, secondaryButtonSx, selectSx } from '../../styles/controls';
 
 const TOTAL_WEEKS = 12;
 
-const selectSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    cursor: 'pointer',
-    '& option': { background: 'var(--surface)', color: 'var(--text)' },
-};
-const ctrlSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.78rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
-const inputSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    width: '100%',
-};
-const btnPrimarySx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-};
 const dialogPaperSx = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)' };
 const dialogTitleSx = { color: 'var(--text)', fontWeight: 800, fontSize: '1.05rem' };
 const autocompleteSx = { '& .MuiOutlinedInput-root': { borderRadius: 'var(--r-sm)' } };
 const errorTextSx = { mt: '4px', fontSize: '0.7rem', color: 'var(--live)' };
-const labelSx = {
-    display: 'block',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    mb: '5px',
-};
 
 const ConferenceGameDialogs = ({ editor, allTeams, teamsMap }) => {
     const {
@@ -292,10 +227,15 @@ const ConferenceGameDialogs = ({ editor, allTeams, teamsMap }) => {
                     </Box>
                 </DialogContent>
                 <DialogActions sx={{ px: '20px', pb: '18px' }}>
-                    <Box component="button" type="button" onClick={() => setAddGameDialogOpen(false)} sx={ctrlSx}>
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={() => setAddGameDialogOpen(false)}
+                        sx={secondaryButtonSx}
+                    >
                         Cancel
                     </Box>
-                    <Box component="button" type="button" onClick={handleAddGame} sx={btnPrimarySx}>
+                    <Box component="button" type="button" onClick={handleAddGame} sx={primaryButtonSx}>
                         Add Game
                     </Box>
                 </DialogActions>
@@ -404,7 +344,7 @@ const ConferenceGameDialogs = ({ editor, allTeams, teamsMap }) => {
                                         type="button"
                                         onClick={handleSaveEdits}
                                         disabled={scheduleLocked || savingEdits}
-                                        sx={{ ...ctrlSx, justifyContent: 'center' }}
+                                        sx={{ ...secondaryButtonSx, justifyContent: 'center' }}
                                     >
                                         {savingEdits ? 'Saving...' : 'Save neutral site / venue'}
                                     </Box>
@@ -424,15 +364,20 @@ const ConferenceGameDialogs = ({ editor, allTeams, teamsMap }) => {
                                     setMoveGameData(null);
                                 }
                             }}
-                            sx={{ ...ctrlSx, color: 'var(--live)', mr: 'auto' }}
+                            sx={{ ...secondaryButtonSx, color: 'var(--live)', mr: 'auto' }}
                         >
                             Delete Game
                         </Box>
                     )}
-                    <Box component="button" type="button" onClick={() => setMoveDialogOpen(false)} sx={ctrlSx}>
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={() => setMoveDialogOpen(false)}
+                        sx={secondaryButtonSx}
+                    >
                         Cancel
                     </Box>
-                    <Box component="button" type="button" onClick={handleMoveGame} sx={btnPrimarySx}>
+                    <Box component="button" type="button" onClick={handleMoveGame} sx={primaryButtonSx}>
                         Move
                     </Box>
                 </DialogActions>

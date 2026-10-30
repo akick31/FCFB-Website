@@ -10,6 +10,8 @@ jest.mock('../../hooks/useConferencesMap', () => ({
     allConferenceList: () => [{ code: 'TEST', label: 'Test Conference', active: true }],
 }));
 jest.mock('react-color', () => ({ ChromePicker: () => null }));
+jest.mock('../../api/uploadApi', () => ({ uploadLogo: jest.fn() }));
+jest.mock('../../utils/logoUrl', () => ({ resolveLogoUrl: (logo) => logo }));
 
 const choose = (label, option) => {
     fireEvent.mouseDown(screen.getByRole('combobox', { name: label }));

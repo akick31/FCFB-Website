@@ -1,16 +1,8 @@
 import React from 'react';
-import {
-    Box,
-    TextField,
-    Autocomplete,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    CircularProgress,
-} from '@mui/material';
+import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
+import FormField from '../admin/form/FormField';
+import TeamSelect from '../ui/TeamSelect';
 
 const ScrimmageDialog = ({
     open,
@@ -26,22 +18,24 @@ const ScrimmageDialog = ({
         <DialogTitle>Start Scrimmage</DialogTitle>
         <DialogContent>
             <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Autocomplete
-                    options={availableTeams}
-                    getOptionLabel={(option) => option.name || ''}
-                    value={availableTeams.find((team) => team.name === scrimmageTeams.homeTeam) || null}
-                    onChange={(event, newValue) => onHomeTeamChange(newValue ? newValue.name : '')}
-                    renderInput={(params) => <TextField {...params} label="Home Team" fullWidth />}
-                    isOptionDisabled={(option) => option.name === scrimmageTeams.awayTeam}
-                />
-                <Autocomplete
-                    options={availableTeams}
-                    getOptionLabel={(option) => option.name || ''}
-                    value={availableTeams.find((team) => team.name === scrimmageTeams.awayTeam) || null}
-                    onChange={(event, newValue) => onAwayTeamChange(newValue ? newValue.name : '')}
-                    renderInput={(params) => <TextField {...params} label="Away Team" fullWidth />}
-                    isOptionDisabled={(option) => option.name === scrimmageTeams.homeTeam}
-                />
+                <FormField label="Home team">
+                    <TeamSelect
+                        value={scrimmageTeams.homeTeam}
+                        onChange={onHomeTeamChange}
+                        teams={availableTeams.map((team) => team.name)}
+                        exclude={scrimmageTeams.awayTeam}
+                        ariaLabel="Home team"
+                    />
+                </FormField>
+                <FormField label="Away team">
+                    <TeamSelect
+                        value={scrimmageTeams.awayTeam}
+                        onChange={onAwayTeamChange}
+                        teams={availableTeams.map((team) => team.name)}
+                        exclude={scrimmageTeams.homeTeam}
+                        ariaLabel="Away team"
+                    />
+                </FormField>
             </Box>
         </DialogContent>
         <DialogActions>

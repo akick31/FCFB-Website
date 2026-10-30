@@ -3,27 +3,8 @@ import { Box, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButt
 import { Close } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 import { forgotPassword } from '../../api/authApi';
+import { inputSx, labelSx } from '../../styles/controls';
 
-const labelSx = {
-    display: 'block',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    mb: '5px',
-};
-const inputSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    py: '10px',
-    font: 'inherit',
-    fontSize: '0.88rem',
-};
 const btnBaseSx = {
     border: 0,
     borderRadius: 'var(--r-sm)',

@@ -1,34 +1,5 @@
-export const CONTROL_HEIGHT = '34px';
+import { CONTROL_HEIGHT } from '../../styles/controls';
 
-export const inputSx = {
-    height: CONTROL_HEIGHT,
-    boxSizing: 'border-box',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    py: 0,
-    font: 'inherit',
-    fontSize: '0.8rem',
-    '&:disabled': { opacity: 0.5 },
-};
-export const btnSx = {
-    height: CONTROL_HEIGHT,
-    boxSizing: 'border-box',
-    display: 'flex',
-    alignItems: 'center',
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:disabled': { opacity: 0.5, cursor: 'not-allowed' },
-};
 export const ghostBtnSx = {
     height: CONTROL_HEIGHT,
     boxSizing: 'border-box',
@@ -60,13 +31,6 @@ export const stepBtnSx = {
     alignItems: 'center',
     justifyContent: 'center',
     '&:disabled': { opacity: 0.4, cursor: 'not-allowed' },
-};
-export const labelSx = {
-    fontSize: '0.68rem',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
 };
 
 export const chipSx = (active) => ({

@@ -8,7 +8,7 @@ import PlayoffBracket from './PlayoffBracket';
 import OpenTeamsDialog from './OpenTeamsDialog';
 import { ensureTeam } from '../../hooks/useTeamsMap';
 
-jest.mock('../../hooks/useTeamsMap', () => ({ ensureTeam: jest.fn() }));
+jest.mock('../../hooks/useTeamsMap', () => ({ isTeamsListLoading: () => false, ensureTeam: jest.fn() }));
 jest.mock('react-router-dom', () => ({ Link: ({ children, to }) => <a href={to}>{children}</a> }));
 jest.mock('../ui/TeamMark', () => ({ __esModule: true, default: () => null }));
 jest.mock('../ui/Panel', () => ({

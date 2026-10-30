@@ -22,7 +22,19 @@ const StatLeaderboardCard = ({ title, statKey, rows, count, format, to }) => {
     return (
         <Panel
             header={
-                <Box component={Link} to={to} sx={{ cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}>
+                <Box
+                    component={Link}
+                    to={to}
+                    data-stat-card
+                    title="Open the full leaderboard"
+                    sx={{
+                        cursor: 'pointer',
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        '&::after': { content: '" ›"', color: 'var(--text-dim)' },
+                        '&:hover': { color: 'var(--brand)' },
+                    }}
+                >
                     {title}
                 </Box>
             }
@@ -62,7 +74,7 @@ const StatLeaderboardCard = ({ title, statKey, rows, count, format, to }) => {
                             alignItems: 'center',
                             gap: 1.25,
                             px: 1.75,
-                            py: 1,
+                            py: '6px',
                             borderBottom: '1px solid var(--line-soft)',
                             cursor: teamId ? 'pointer' : 'default',
                             textDecoration: 'none',

@@ -5,6 +5,7 @@ import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
 import SelectPill from '../../components/ui/SelectPill';
+import ConferencePill from '../../components/ui/ConferencePill';
 import NumberPill from '../../components/ui/NumberPill';
 import PillButton from '../../components/ui/PillButton';
 import Panel from '../../components/ui/Panel';
@@ -14,6 +15,7 @@ import StatTile, { TileGrid } from '../../components/ui/StatTile';
 import ConferenceMark from '../../components/ui/ConferenceMark';
 import StatLeaderboardCard from '../../components/stats/StatLeaderboardCard';
 import StatLeaderboardDetail from '../../components/stats/StatLeaderboardDetail';
+import useFitCount from '../../hooks/useFitCount';
 import Pager from '../../components/ui/Pager';
 import { getFilteredSeasonStats } from '../../api/seasonStatsApi';
 import { getFilteredLeagueStats } from '../../api/leagueStatsApi';
@@ -64,7 +66,6 @@ const SCOPE_TABS = [
     { value: 'regular', label: 'Regular season' },
     { value: 'postseason', label: 'Postseason' },
 ];
-const CARDS_PER_PAGE = 9;
 const KIND_TABS = [
     { value: 'all', label: 'All stats', dropdownLabel: 'All stats' },
     { value: 'counting', label: 'Counting', dropdownLabel: 'All counting stats' },
@@ -396,6 +397,15 @@ const Stats = () => {
         [seasonStatRows, conferenceFilter]
     );
 
+    const [cardsFitRef, cardsPerPage] = useFitCount({
+        itemSelector: '[data-stat-card]',
+        rowHeight: 230,
+        columnWidth: 316,
+        minRows: 1,
+        maxRows: 6,
+        phoneCount: 6,
+        resetKey: `${count}|${statKind}|${statFilter}`,
+    });
     const minPlaysApplies = season !== 'all';
     const leagueAveragePlays = useMemo(() => averagePlaysPerGame(seasonStatRows), [seasonStatRows]);
     const playsPerGameCap = useMemo(() => Math.floor(maxPlaysPerGame(seasonStatRows)), [seasonStatRows]);
@@ -510,9 +520,9 @@ const Stats = () => {
                 </>
             );
         }
-        const pageCount = Math.max(1, Math.ceil(filteredCatalog.length / CARDS_PER_PAGE));
+        const pageCount = Math.max(1, Math.ceil(filteredCatalog.length / cardsPerPage));
         const page = Math.min(cardPage, pageCount - 1);
-        const visible = filteredCatalog.slice(page * CARDS_PER_PAGE, page * CARDS_PER_PAGE + CARDS_PER_PAGE);
+        const visible = filteredCatalog.slice(page * cardsPerPage, page * cardsPerPage + cardsPerPage);
         const statOptions = [
             { value: '', label: KIND_TABS.find((tab) => tab.value === statKind)?.dropdownLabel || 'All stats' },
             ...kindCatalog.map((stat) => ({ value: stat.key, label: stat.label })),
@@ -528,7 +538,7 @@ const Stats = () => {
                 <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
                     {scopeControl}
                     {seasonControl}
-                    <SelectPill
+                    <ConferencePill
                         label="Conference"
                         value={conferenceFilter}
                         onChange={changeConferenceFilter}
@@ -561,25 +571,28 @@ const Stats = () => {
                     <SegTabs value={statKind} onChange={changeStatKind} options={KIND_TABS} ariaLabel="Stat kind" />
                     {statKind !== 'counting' && minPlaysApplies && minPlaysControl}
                 </Box>
-                <Box sx={{ color: 'var(--text-muted)', fontSize: '0.8rem', mb: 2 }}>
-                    Click a stat title to open its full leaderboard.
+                <Box ref={cardsFitRef}>
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                            gap: '16px',
+                        }}
+                    >
+                        {visible.map((stat) => (
+                            <StatLeaderboardCard
+                                key={stat.key}
+                                title={stat.label}
+                                statKey={stat.key}
+                                rows={buildLeaderboard(rowsForStat(stat), stat)}
+                                count={count}
+                                format={stat.format}
+                                to={{ pathname: `/stats/leaderboard/${stat.key}`, search: searchParams.toString() }}
+                            />
+                        ))}
+                    </Box>
+                    <Pager page={page} pageCount={pageCount} onChange={setCardPage} />
                 </Box>
-                <Box
-                    sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}
-                >
-                    {visible.map((stat) => (
-                        <StatLeaderboardCard
-                            key={stat.key}
-                            title={stat.label}
-                            statKey={stat.key}
-                            rows={buildLeaderboard(rowsForStat(stat), stat)}
-                            count={count}
-                            format={stat.format}
-                            to={{ pathname: `/stats/leaderboard/${stat.key}`, search: searchParams.toString() }}
-                        />
-                    ))}
-                </Box>
-                <Pager page={page} pageCount={pageCount} onChange={setCardPage} />
             </>
         );
     };

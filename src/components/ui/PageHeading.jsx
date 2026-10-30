@@ -10,7 +10,7 @@ const PageHeading = ({ eyebrow, title, leading, children }) => (
             justifyContent: 'space-between',
             gap: 2,
             flexWrap: 'wrap',
-            mb: '18px',
+            mb: '14px',
         }}
     >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -24,7 +24,7 @@ const PageHeading = ({ eyebrow, title, leading, children }) => (
                             letterSpacing: '0.12em',
                             fontWeight: 800,
                             color: 'var(--text-dim)',
-                            mb: '6px',
+                            mb: '4px',
                         }}
                     >
                         {eyebrow}

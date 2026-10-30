@@ -8,6 +8,7 @@ import NumberPill from '../../ui/NumberPill';
 import PillButton from '../../ui/PillButton';
 import SegTabs from '../../ui/SegTabs';
 import LogoScatterChart from '../../charts/LogoScatterChart';
+import useRoomBelow from '../../../hooks/useRoomBelow';
 import { getFilteredSeasonStats } from '../../../api/seasonStatsApi';
 import {
     useConferencesMap,
@@ -67,6 +68,7 @@ const plotIndexFromLegacyParam = (searchParams) => {
 const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope, sub, onSubChange }) => {
     const conferencesMap = useConferencesMap();
     const [searchParams, setSearchParams] = useSearchParams();
+    const [plotRoomRef, plotRoom] = useRoomBelow({ reserve: 24, min: 260, max: 640 });
     const [cf, setCf] = useState(() => (searchParams.get('cf') || 'all').toUpperCase());
     const [plotIndex, setPlotIndex] = useState(() => {
         const fromSub = PLOTS.findIndex((p) => p.key === sub);
@@ -276,13 +278,16 @@ const StatPlotsGraphTab = ({ season, teams, teamsMap, mode, scope, sub, onSubCha
                             No teams for this view.
                         </Box>
                     ) : (
-                        <LogoScatterChart
-                            points={points}
-                            xLabel={plot.xl}
-                            yLabel={plot.yl}
-                            invertX={plot.invX}
-                            resetKey={`${plot.key}-${cf}-${season}-${effectiveMinPlays}-${resetNonce}`}
-                        />
+                        <Box ref={plotRoomRef}>
+                            <LogoScatterChart
+                                maxHeight={plotRoom}
+                                points={points}
+                                xLabel={plot.xl}
+                                yLabel={plot.yl}
+                                invertX={plot.invX}
+                                resetKey={`${plot.key}-${cf}-${season}-${effectiveMinPlays}-${resetNonce}`}
+                            />
+                        </Box>
                     )}
                 </Box>
             </Panel>

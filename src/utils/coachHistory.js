@@ -32,7 +32,7 @@ export const buildCoachStints = (transactions, currentTeam) => {
         const position = entry.position || 'HEAD_COACH';
         const date = entry.transaction_date || '';
 
-        if (type === 'HIRED' || type === 'HIRED_INTERIM') {
+        if ((type === 'HIRED' || type === 'HIRED_INTERIM') && open[team]?.position !== position) {
             open[team] = { team, position, startDate: date };
         } else if (type === 'FIRED' && open[team]) {
             stints.push({ ...open[team], endDate: date });
@@ -80,11 +80,24 @@ export const buildTeamCoachHistory = (transactions, teamName, discordIdToUsernam
             return;
         }
 
+        const key = `${position}|${coach}`;
         if (type === 'HIRED' || type === 'HIRED_INTERIM') {
-            open[position] = { coach, coachDiscordId, position, startDate: date };
-        } else if (type === 'FIRED' && open[position]) {
-            stints.push({ ...open[position], endDate: date });
-            delete open[position];
+            if (open[key]) {
+                return;
+            }
+            const interim = type === 'HIRED_INTERIM';
+            if (!interim) {
+                Object.entries(open)
+                    .filter(([, stint]) => stint.position === position && !stint.interim)
+                    .forEach(([openKey, stint]) => {
+                        stints.push({ ...stint, endDate: date });
+                        delete open[openKey];
+                    });
+            }
+            open[key] = { coach, coachDiscordId, position, startDate: date, interim };
+        } else if (type === 'FIRED' && open[key]) {
+            stints.push({ ...open[key], endDate: date });
+            delete open[key];
         }
     });
 

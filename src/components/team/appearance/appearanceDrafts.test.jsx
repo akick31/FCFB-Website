@@ -15,7 +15,9 @@ jest.mock('./AppearanceControl', () => ({
 }));
 jest.mock('../../admin/LogoUrlField', () => ({
     __esModule: true,
-    default: ({ label, value, onChange }) => <input aria-label={label} value={value} onChange={onChange} />,
+    default: ({ label, value, onChange }) => (
+        <input aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} />
+    ),
 }));
 jest.mock('../../ui/Panel', () => ({ __esModule: true, default: ({ children }) => <div>{children}</div> }));
 const sections = [{ title: 'Settings', fields: [{ key: 'wall_text', label: 'Wall text', type: 'text' }] }];
@@ -155,14 +157,14 @@ test('a tertiary-only color save still excludes primary and secondary', async ()
         />
     );
     fireEvent.change(screen.getAllByRole('textbox')[2], { target: { value: '#444444' } });
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save colors' })));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save' })));
     expect(write).toHaveBeenCalledWith({ tertiary_color: '#444444' });
 });
 
 test('empty logos retain the existing null payload mapping', async () => {
     const write = jest.fn().mockResolvedValue({});
     render(<Host Editor={LogosEditor} props={{ canEdit: true }} initialSource={{}} write={write} />);
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save logos' })));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save' })));
     expect(write).toHaveBeenCalledWith({ logo: null, logo_dark: null, secondary_logo: null });
 });
 
@@ -218,7 +220,7 @@ test('save completion after unmount does not report the draft as clean', async (
         />
     );
     fireEvent.change(screen.getByRole('textbox', { name: 'Primary logo' }), { target: { value: 'submitted' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save logos' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     unmount();
     dirty.mockClear();
     await act(async () => finish({ logo: 'submitted' }));

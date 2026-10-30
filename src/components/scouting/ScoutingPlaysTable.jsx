@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import DataTable from '../ui/DataTable';
 
 const ScoutingPlaysTable = ({ visibleColumns, filteredPlays }) => (
-    <DataTable minWidth={2400}>
+    <DataTable minWidth={2400} dense>
         <thead>
             <tr>
                 {visibleColumns.map((column) => (

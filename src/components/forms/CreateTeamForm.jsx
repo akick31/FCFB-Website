@@ -21,6 +21,7 @@ import { Close } from '@mui/icons-material';
 import { ChromePicker } from 'react-color';
 import { createTeam } from '../../api/teamApi';
 import StyledButton from '../ui/StyledButton';
+import LogoUrlField from '../admin/LogoUrlField';
 import PropTypes from 'prop-types';
 
 const initialTeam = {
@@ -71,6 +72,13 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const changeField = (name) => (value) => {
         setFormData((prev) => ({
             ...prev,
             [name]: value,
@@ -208,28 +216,25 @@ const CreateTeamForm = ({ open, onClose, onTeamCreated }) => {
                                 inputProps={{ maxLength: 4 }}
                             />
 
-                            <TextField
+                            <LogoUrlField
                                 label="Logo URL"
-                                name="logo"
                                 value={formData.logo}
-                                onChange={handleChange}
-                                fullWidth
+                                onChange={changeField('logo')}
+                                uploadKind="TEAM"
                             />
 
-                            <TextField
+                            <LogoUrlField
                                 label="Dark Logo URL"
-                                name="logo_dark"
                                 value={formData.logo_dark}
-                                onChange={handleChange}
-                                fullWidth
+                                onChange={changeField('logo_dark')}
+                                uploadKind="TEAM"
                             />
 
-                            <TextField
+                            <LogoUrlField
                                 label="Scorebug Logo URL"
-                                name="scorebug_logo"
                                 value={formData.scorebug_logo}
-                                onChange={handleChange}
-                                fullWidth
+                                onChange={changeField('scorebug_logo')}
+                                uploadKind="TEAM"
                             />
 
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>

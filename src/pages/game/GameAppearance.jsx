@@ -6,6 +6,7 @@ import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import BackButton from '../../components/ui/BackButton';
 import AppearanceEditor from '../../components/team/appearance/AppearanceEditor';
+import GameStadiumPanel from '../../components/stadium/GameStadiumPanel';
 import { TEAM_FIELD_SECTIONS } from '../../components/team/appearance/appearanceSections';
 import { getGameById } from '../../api/gameApi';
 import { getTeamColors } from '../../api/teamAppearanceApi';
@@ -96,6 +97,14 @@ const GameAppearance = () => {
                     Only admins or commissioners can change a game&apos;s field.
                 </Alert>
             )}
+            <GameStadiumPanel
+                gameId={gameId}
+                venue={game.venue}
+                homeTeam={game.home_team}
+                awayTeam={game.away_team}
+                canEdit={canEdit}
+                onChanged={(venue) => setGame((current) => ({ ...current, venue }))}
+            />
             {field && (
                 <AppearanceEditor
                     team={game.home_team}

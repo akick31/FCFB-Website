@@ -2,21 +2,20 @@ import { useNavigate, useParams } from 'react-router-dom';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import AdminLayout from '../../components/layout/AdminLayout';
-import BackButton from '../../components/ui/BackButton';
 import Panel from '../../components/ui/Panel';
 import SegTabs from '../../components/ui/SegTabs';
 import FieldSettingsEditor from '../../components/admin/fieldAppearance/FieldSettingsEditor';
 import PostseasonFieldThumb from '../../components/admin/fieldAppearance/PostseasonFieldThumb';
+import EventPicker from '../../components/admin/fieldAppearance/EventPicker';
 import BowlMetaEditor from '../../components/admin/fieldAppearance/BowlMetaEditor';
+import EventStadiumTab from '../../components/admin/fieldAppearance/EventStadiumTab';
 import {
     BOWL_SECTIONS,
-    bowlSectionsWithStadiums,
     PLAYOFF_SECTIONS,
     CCG_SECTIONS,
     NC_SECTIONS,
 } from '../../components/admin/fieldAppearance/fieldDefinitions';
 import { getConferences } from '../../api/conferenceApi';
-import { getAllTeams } from '../../api/teamApi';
 import {
     getBowlFields,
     updateBowlField,
@@ -62,7 +61,12 @@ const CATEGORIES = {
                         !/independent/i.test(conference.label || '') &&
                         !/independent/i.test(conference.code || '')
                 )
-                .map((conference) => ({ id: conference.code, label: conference.label }))
+                .map((conference) => ({
+                    id: conference.code,
+                    label: conference.label,
+                    venue: conference.championship_venue,
+                    logo: conference.logo_url || undefined,
+                }))
                 .sort(byLabel),
         loadSource: getConferenceChampionshipField,
         save: updateConferenceChampionshipField,
@@ -70,6 +74,17 @@ const CATEGORIES = {
 };
 
 const PREVIEW_CATEGORY = { bowl: 'BOWL', playoff: 'PLAYOFF', conference: 'CCG' };
+
+const BOWL_TABS = [
+    { value: 'details', label: 'Details' },
+    { value: 'field', label: 'Field' },
+    { value: 'stadium', label: 'Stadium' },
+];
+
+const EVENT_TABS = [
+    { value: 'field', label: 'Field' },
+    { value: 'stadium', label: 'Stadium' },
+];
 
 const TAB_ORDER = ['conference', 'bowl', 'playoff'];
 const TAB_OPTIONS = TAB_ORDER.map((value) => ({ value, label: CATEGORIES[value].label }));
@@ -84,21 +99,6 @@ const slugify = (value) =>
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
 
-const selectSx = {
-    minWidth: 280,
-    maxWidth: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '40px',
-    font: 'inherit',
-    fontSize: '0.9rem',
-    fontWeight: 600,
-    cursor: 'pointer',
-};
-
 const AdminFieldAppearance = () => {
     const navigate = useNavigate();
     const params = useParams();
@@ -111,7 +111,7 @@ const AdminFieldAppearance = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [bowlDraft, setBowlDraft] = useState(null);
-    const [stadiumTeams, setStadiumTeams] = useState([]);
+    const [requestedTab, setEventTab] = useState(null);
     const [loadedCategory, setLoadedCategory] = useState(null);
     const categoryScopeRef = useRef(null);
     const routeScopeRef = useRef(null);
@@ -124,21 +124,6 @@ const AdminFieldAppearance = () => {
             scope.active = false;
         };
     }, [category, itemSlug]);
-
-    useEffect(() => {
-        if (category !== 'bowl' || stadiumTeams.length) {
-            return undefined;
-        }
-        const scope = { active: true };
-        getAllTeams()
-            .then((teams) => scope.active && setStadiumTeams(teams.map((team) => team.name).filter(Boolean)))
-            .catch(() => scope.active && setStadiumTeams([]));
-        return () => {
-            scope.active = false;
-        };
-    }, [category, stadiumTeams.length]);
-
-    const bowlSections = useMemo(() => bowlSectionsWithStadiums(stadiumTeams), [stadiumTeams]);
 
     const selectedId = useMemo(
         () =>
@@ -255,8 +240,23 @@ const AdminFieldAppearance = () => {
         return saved;
     };
 
+    const changeEventVenue = (venue) => {
+        if (category === 'conference') {
+            setItems((current) => current.map((item) => (item.id === selectedId ? { ...item, venue } : item)));
+            return;
+        }
+        setSource((current) => ({ ...current, venue }));
+        setItems((current) =>
+            current.map((item) =>
+                item.id === selectedId && item.source ? { ...item, source: { ...item.source, venue } } : item
+            )
+        );
+    };
+
     const selected = items.find((item) => item.id === selectedId);
     const routeScope = routeScopeRef.current;
+    const eventTabs = category === 'bowl' ? BOWL_TABS : EVENT_TABS;
+    const eventTab = eventTabs.some((option) => option.value === requestedTab) ? requestedTab : eventTabs[0].value;
 
     return (
         <AdminLayout
@@ -265,7 +265,6 @@ const AdminFieldAppearance = () => {
                 <SegTabs value={category} onChange={changeCategory} options={TAB_OPTIONS} ariaLabel="Field category" />
             }
         >
-            <BackButton onBack={() => navigate(-1)} />
             {error && (
                 <Alert severity="error" sx={{ mb: '16px' }}>
                     {error}
@@ -276,26 +275,30 @@ const AdminFieldAppearance = () => {
                     <CircularProgress />
                 </Box>
             ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'stretch' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'stretch' }}>
                     {items.length === 0 ? (
                         <Box sx={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>No {config.noun}s found.</Box>
                     ) : (
-                        <Box
-                            component="select"
-                            value={selectedId || ''}
-                            onChange={(event) => selectItem(event.target.value)}
-                            sx={selectSx}
-                            aria-label={config.label}
-                        >
-                            {items.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                    {item.label}
-                                </option>
-                            ))}
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
+                            <EventPicker
+                                items={items}
+                                selectedId={selectedId}
+                                onSelect={selectItem}
+                                label={config.label}
+                            />
+                            {selected && (
+                                <SegTabs
+                                    value={eventTab}
+                                    onChange={setEventTab}
+                                    options={eventTabs}
+                                    ariaLabel="Postseason section"
+                                    buttonSx={{ height: '32px' }}
+                                />
+                            )}
                         </Box>
                     )}
-                    <Box>
-                        {category === 'bowl' && selected && (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {eventTab === 'details' && category === 'bowl' && selected && (
                             <BowlMetaEditor
                                 key={selectedId}
                                 bowl={selectedId}
@@ -316,20 +319,27 @@ const AdminFieldAppearance = () => {
                                 }}
                             />
                         )}
-                        {selected && source && (
+                        {eventTab === 'stadium' && selected && source && (
+                            <EventStadiumTab
+                                key={`${category}:${selectedId}:stadium`}
+                                category={PREVIEW_CATEGORY[category]}
+                                eventKey={selectedId}
+                                venue={category === 'conference' ? selected.venue : source.venue}
+                                onChanged={changeEventVenue}
+                            />
+                        )}
+                        {eventTab === 'field' && selected && source && (
                             <FieldSettingsEditor
                                 key={`${category}:${selectedId}`}
-                                title={selected.label}
                                 sections={
                                     category === 'playoff' && selectedId === 'National Championship'
                                         ? NC_SECTIONS
-                                        : category === 'bowl'
-                                          ? bowlSections
-                                          : config.sections
+                                        : config.sections
                                 }
                                 source={source}
                                 onSave={save}
                                 preview={{ category: PREVIEW_CATEGORY[category], key: selectedId }}
+                                eventLogo={selected.logo}
                                 aside={
                                     category === 'playoff' ? (
                                         <Panel header="All rounds (saved)">

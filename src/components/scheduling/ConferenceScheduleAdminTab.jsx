@@ -2,56 +2,12 @@ import { formatConference } from '../../hooks/useConferencesMap';
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
-import Panel from '../ui/Panel';
+import EditDialog from '../ui/EditDialog';
 import ConferenceRulesEditor from './ConferenceRulesEditor';
 import ConferenceScheduleGrid from './ConferenceScheduleGrid';
+import ConferencePill from '../ui/ConferencePill';
+import { primaryButtonSx, secondaryButtonSx } from '../../styles/controls';
 
-const selectSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    cursor: 'pointer',
-    '& option': { background: 'var(--surface)', color: 'var(--text)' },
-};
-const btnPrimarySx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '14px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.8rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
-const ctrlSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.78rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
 const TOTAL_WEEKS = 12;
 
 const ConferenceScheduleAdminTab = ({
@@ -82,23 +38,26 @@ const ConferenceScheduleAdminTab = ({
     hasGamesPlayed = false,
     onSaveConferenceRules,
 }) => {
-    const [rulesExpanded, setRulesExpanded] = useState(false);
+    const [rulesOpen, setRulesOpen] = useState(false);
 
     return (
         <Box>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', mb: '16px', alignItems: 'center' }}>
-                <Box
-                    component="select"
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '8px', mb: '8px', alignItems: 'center' }}>
+                <ConferencePill
+                    label="Conference"
                     value={selectedConference}
-                    onChange={(e) => onConferenceChange(e.target.value)}
-                    sx={selectSx}
-                >
-                    {adminConferences.map((conf) => (
-                        <option key={conf.code} value={conf.code}>
-                            {conf.label}
-                        </option>
-                    ))}
+                    onChange={onConferenceChange}
+                    options={adminConferences.map((conf) => ({ value: conf.code, label: conf.label }))}
+                    sx={{ height: '38px' }}
+                />
+                <Box sx={{ color: 'var(--text-dim)', fontSize: '0.76rem' }}>
+                    {numConferenceGames} conference games, {TOTAL_WEEKS - numConferenceGames} OOC,{' '}
+                    {protectedRivalries.filter((r) => r.team1 && r.team2).length} rivalries
                 </Box>
+                <Box component="button" type="button" onClick={() => setRulesOpen(true)} sx={secondaryButtonSx}>
+                    Conference rules
+                </Box>
+                <Box sx={{ flex: 1 }} />
                 <Box
                     component="button"
                     type="button"
@@ -111,64 +70,44 @@ const ConferenceScheduleAdminTab = ({
                               ? 'Schedule is locked'
                               : ''
                     }
-                    sx={btnPrimarySx}
+                    sx={primaryButtonSx}
                 >
                     Auto-generate schedule
                 </Box>
-                <Box component="button" type="button" onClick={onAddGameManually} disabled={scheduleLocked} sx={ctrlSx}>
-                    + Add game manually
+                <Box
+                    component="button"
+                    type="button"
+                    onClick={onAddGameManually}
+                    disabled={scheduleLocked}
+                    sx={secondaryButtonSx}
+                >
+                    + Add game
                 </Box>
             </Box>
 
-            <Panel sx={{ mb: '16px' }}>
-                <Box
-                    onClick={() => setRulesExpanded(!rulesExpanded)}
-                    sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: '14px 16px',
-                        cursor: 'pointer',
-                        flexWrap: 'wrap',
-                        gap: '8px',
-                    }}
-                >
-                    <Box sx={{ fontWeight: 700, fontSize: '0.88rem' }}>
-                        Conference rules: {formatConference(selectedConference)}
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <Box sx={{ color: 'var(--text-dim)', fontSize: '0.76rem' }}>
-                            {numConferenceGames} conf games &middot; {TOTAL_WEEKS - numConferenceGames} OOC &middot;{' '}
-                            {conferenceTeams.length} teams &middot;{' '}
-                            {protectedRivalries.filter((r) => r.team1 && r.team2).length} rivalries
-                        </Box>
-                        <Box component="span" sx={{ color: 'var(--text-dim)' }}>
-                            {rulesExpanded ? '▲' : '▼'}
-                        </Box>
-                    </Box>
-                </Box>
-
-                {rulesExpanded && (
-                    <Box sx={{ p: '0 16px 16px', borderTop: '1px solid var(--line-soft)', pt: '16px' }}>
-                        <ConferenceRulesEditor
-                            key={selectedConference}
-                            conference={selectedConference}
-                            conferenceTeams={conferenceTeams}
-                            numConferenceGames={numConferenceGames}
-                            protectedRivalries={protectedRivalries}
-                            divisions={divisions}
-                            onNumConferenceGamesChange={onNumConferenceGamesChange}
-                            onAddRivalry={onAddRivalry}
-                            onRemoveRivalry={onRemoveRivalry}
-                            onUpdateRivalry={onUpdateRivalry}
-                            onToggleDivisions={onToggleDivisions}
-                            onUpdateDivision={onUpdateDivision}
-                            onSave={onSaveConferenceRules}
-                            disabled={scheduleLocked}
-                        />
-                    </Box>
-                )}
-            </Panel>
+            <EditDialog
+                open={rulesOpen}
+                title={`Conference rules: ${formatConference(selectedConference)}`}
+                onClose={() => setRulesOpen(false)}
+                maxWidth="md"
+            >
+                <ConferenceRulesEditor
+                    key={selectedConference}
+                    conference={selectedConference}
+                    conferenceTeams={conferenceTeams}
+                    numConferenceGames={numConferenceGames}
+                    protectedRivalries={protectedRivalries}
+                    divisions={divisions}
+                    onNumConferenceGamesChange={onNumConferenceGamesChange}
+                    onAddRivalry={onAddRivalry}
+                    onRemoveRivalry={onRemoveRivalry}
+                    onUpdateRivalry={onUpdateRivalry}
+                    onToggleDivisions={onToggleDivisions}
+                    onUpdateDivision={onUpdateDivision}
+                    onSave={onSaveConferenceRules}
+                    disabled={scheduleLocked}
+                />
+            </EditDialog>
 
             <ConferenceScheduleGrid
                 selectedConference={selectedConference}

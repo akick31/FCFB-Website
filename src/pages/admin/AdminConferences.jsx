@@ -1,70 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import Panel from '../../components/ui/Panel';
 import ConferenceMark from '../../components/ui/ConferenceMark';
 import DataTable from '../../components/ui/DataTable';
 import Toggle from '../../components/ui/Toggle';
 import SelectPill from '../../components/ui/SelectPill';
-import LogoUrlField from '../../components/admin/LogoUrlField';
-import { getConferences, createConference, setConferenceActive } from '../../api/conferenceApi';
+import PagedFooter from '../../components/ui/PagedFooter';
+import usePagedRows from '../../hooks/usePagedRows';
+import useFitCount from '../../hooks/useFitCount';
+import ConferenceEditDialog from '../../components/admin/ConferenceEditDialog';
+import ConferenceCreateDialog from '../../components/admin/ConferenceCreateDialog';
+import { getConferences, setConferenceActive } from '../../api/conferenceApi';
 import { getAllTeams } from '../../api/teamApi';
 import { refreshConferences } from '../../hooks/useConferencesMap';
+import { compact, primaryButtonSx, secondaryButtonSx } from '../../styles/controls';
 
-const labelSx = {
-    display: 'block',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    mb: '5px',
-};
-const inputSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-};
-const btnSx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
-const manageBtnSx = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    textDecoration: 'none',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '30px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.72rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-};
 const pillHeightSx = { height: '38px', boxSizing: 'border-box' };
 
 const ACTIVE_OPTIONS = [
@@ -73,17 +25,16 @@ const ACTIVE_OPTIONS = [
     { value: 'INACTIVE', label: 'Inactive only' },
 ];
 
-const emptyForm = { code: '', label: '', logoUrl: '', logoUrlDark: '' };
-
 const AdminConferences = () => {
     const [conferences, setConferences] = useState([]);
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-    const [form, setForm] = useState(emptyForm);
-    const [saving, setSaving] = useState(false);
+    const [creating, setCreating] = useState(false);
     const [activeFilter, setActiveFilter] = useState('ALL');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const editing = searchParams.get('edit');
 
     const scopeRef = useRef(null);
 
@@ -128,6 +79,8 @@ const AdminConferences = () => {
         }
         return conferences.filter((conference) => (activeFilter === 'ACTIVE' ? conference.active : !conference.active));
     }, [conferences, activeFilter]);
+    const [fitRef, pageSize] = useFitCount({ rowHeight: 37, columnWidth: 420, phoneCount: 12 });
+    const { page, pageCount, pageRows, setPage } = usePagedRows(filteredConferences, pageSize, activeFilter);
 
     const teamCountByConference = useMemo(() => {
         const counts = {};
@@ -154,35 +107,15 @@ const AdminConferences = () => {
         }
     };
 
-    const handleCreate = async (event) => {
-        event.preventDefault();
-        const scope = scopeRef.current;
-        setSaving(true);
-        setError(null);
-        setSuccess(null);
-        try {
-            await createConference({
-                code: form.code.trim().toUpperCase().replace(/\s+/g, '_'),
-                label: form.label.trim(),
-                logoUrl: form.logoUrl.trim() || null,
-                logoUrlDark: form.logoUrlDark.trim() || null,
-            });
-            refreshConferences();
-            if (!scope.active) {
-                return;
-            }
-            setForm(emptyForm);
-            setSuccess('Conference created');
-            await load(scope);
-        } catch (err) {
-            if (scope.active) {
-                setError(err.message || 'Failed to create conference');
-            }
-        } finally {
-            if (scope.active) {
-                setSaving(false);
-            }
-        }
+    const closeEditor = () => {
+        setSearchParams({}, { replace: true });
+        load(scopeRef.current);
+    };
+
+    const conferenceCreated = () => {
+        setCreating(false);
+        setSuccess('Conference created');
+        load(scopeRef.current);
     };
 
     if (loading) {
@@ -194,6 +127,9 @@ const AdminConferences = () => {
             </AdminLayout>
         );
     }
+
+    const half = Math.ceil(pageRows.length / 2);
+    const columns = [pageRows.slice(0, half), pageRows.slice(half)].filter((column) => column.length > 0);
 
     return (
         <AdminLayout title="Conference Management">
@@ -211,119 +147,105 @@ const AdminConferences = () => {
             <Panel
                 header="Conferences"
                 more={
-                    <SelectPill
-                        label="Status"
-                        value={activeFilter}
-                        onChange={setActiveFilter}
-                        options={ACTIVE_OPTIONS}
-                        sx={pillHeightSx}
-                    />
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                        <SelectPill
+                            label="Status"
+                            value={activeFilter}
+                            onChange={setActiveFilter}
+                            options={ACTIVE_OPTIONS}
+                            sx={pillHeightSx}
+                        />
+                        <Box component="button" type="button" onClick={() => setCreating(true)} sx={primaryButtonSx}>
+                            Add conference
+                        </Box>
+                    </Box>
                 }
                 sx={{ mb: '16px' }}
             >
-                <DataTable minWidth={640}>
-                    <thead>
-                        <tr>
-                            <th className="lft stick">Conference</th>
-                            <th style={{ textAlign: 'center' }}>Teams</th>
-                            <th style={{ textAlign: 'center' }}>Active</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredConferences.map((conference) => (
-                            <tr key={conference.code}>
-                                <td className="lft stick">
-                                    <Box className="teamcell">
-                                        {(conference.logo_url || conference.logo_url_dark) && (
-                                            <ConferenceMark conference={conference.code} size={22} />
-                                        )}
-                                        <span className="nm">{conference.label}</span>
-                                    </Box>
-                                </td>
-                                <td style={{ textAlign: 'center' }}>{teamCountByConference[conference.code] || 0}</td>
-                                <td style={{ textAlign: 'center' }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                        <Toggle
-                                            on={!!conference.active}
-                                            onClick={() => handleToggleActive(conference)}
-                                        />
-                                    </Box>
-                                </td>
-                                <td className="lft">
-                                    <Box
-                                        component={Link}
-                                        to={`/admin/conferences/${encodeURIComponent(conference.code)}`}
-                                        sx={manageBtnSx}
-                                    >
-                                        Manage
-                                    </Box>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </DataTable>
+                <Box
+                    ref={fitRef}
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' },
+                        gap: '12px',
+                        p: { lg: '12px' },
+                    }}
+                >
+                    {columns.map((column, index) => (
+                        <Box key={index}>
+                            <DataTable minWidth={420} phoneMinWidth={0} tableLayout="fixed" dense>
+                                <thead>
+                                    <tr>
+                                        <th className="lft stick">Conference</th>
+                                        <th style={{ textAlign: 'center', width: 64 }}>Teams</th>
+                                        <th style={{ textAlign: 'center', width: 70 }}>Active</th>
+                                        <th style={{ width: 64 }}></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {column.map((conference) => (
+                                        <tr key={conference.code}>
+                                            <td className="lft stick">
+                                                <Box
+                                                    component="button"
+                                                    type="button"
+                                                    className="teamcell"
+                                                    onClick={() => setSearchParams({ edit: conference.code })}
+                                                    sx={{
+                                                        border: 0,
+                                                        background: 'none',
+                                                        p: 0,
+                                                        font: 'inherit',
+                                                        color: 'inherit',
+                                                        cursor: 'pointer',
+                                                    }}
+                                                >
+                                                    {(conference.logo_url || conference.logo_url_dark) && (
+                                                        <ConferenceMark conference={conference.code} size={22} />
+                                                    )}
+                                                    <span className="nm">{conference.label}</span>
+                                                </Box>
+                                            </td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                {teamCountByConference[conference.code] || 0}
+                                            </td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                                    <Toggle
+                                                        on={!!conference.active}
+                                                        onClick={() => handleToggleActive(conference)}
+                                                    />
+                                                </Box>
+                                            </td>
+                                            <td className="lft">
+                                                <Box
+                                                    component="button"
+                                                    type="button"
+                                                    onClick={() => setSearchParams({ edit: conference.code })}
+                                                    sx={compact(secondaryButtonSx)}
+                                                >
+                                                    Edit
+                                                </Box>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </DataTable>
+                        </Box>
+                    ))}
+                </Box>
+                <PagedFooter
+                    page={page}
+                    pageCount={pageCount}
+                    pageSize={pageSize}
+                    total={filteredConferences.length}
+                    onChange={setPage}
+                    noun="conferences"
+                />
             </Panel>
 
-            <Panel header="Add conference">
-                <Box
-                    component="form"
-                    onSubmit={handleCreate}
-                    sx={{ p: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}
-                >
-                    <Box
-                        sx={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                            gap: '12px',
-                        }}
-                    >
-                        <Box>
-                            <Box sx={labelSx}>Code</Box>
-                            <Box
-                                component="input"
-                                value={form.code}
-                                onChange={(e) => setForm((prev) => ({ ...prev, code: e.target.value }))}
-                                required
-                                sx={inputSx}
-                            />
-                        </Box>
-                        <Box>
-                            <Box sx={labelSx}>Label</Box>
-                            <Box
-                                component="input"
-                                value={form.label}
-                                onChange={(e) => setForm((prev) => ({ ...prev, label: e.target.value }))}
-                                required
-                                sx={inputSx}
-                            />
-                        </Box>
-                    </Box>
-                    <Box
-                        sx={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                            gap: '12px',
-                        }}
-                    >
-                        <LogoUrlField
-                            label="Logo URL"
-                            value={form.logoUrl}
-                            onChange={(e) => setForm((prev) => ({ ...prev, logoUrl: e.target.value }))}
-                            previewBg="#ffffff"
-                        />
-                        <LogoUrlField
-                            label="Dark logo URL"
-                            value={form.logoUrlDark}
-                            onChange={(e) => setForm((prev) => ({ ...prev, logoUrlDark: e.target.value }))}
-                            previewBg="#0a1620"
-                        />
-                    </Box>
-                    <Box component="button" type="submit" disabled={saving} sx={{ ...btnSx, justifySelf: 'start' }}>
-                        {saving ? 'Adding...' : 'Add conference'}
-                    </Box>
-                </Box>
-            </Panel>
+            {editing && <ConferenceEditDialog code={editing} open onClose={closeEditor} />}
+            <ConferenceCreateDialog open={creating} onClose={() => setCreating(false)} onCreated={conferenceCreated} />
         </AdminLayout>
     );
 };

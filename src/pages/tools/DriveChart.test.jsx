@@ -14,6 +14,8 @@ jest.mock('react-router-dom', () => {
 jest.mock('../../api/gameApi', () => ({ getFilteredGames: jest.fn(), getGameById: jest.fn() }));
 jest.mock('../../api/playApi', () => ({ getAllPlaysByGameId: jest.fn() }));
 jest.mock('../../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    ensureTeam: jest.fn(),
     useTeamsMap: () => ({}),
     toEntry: ({ name }) => ({ name, abbreviation: name }),
 }));
@@ -89,7 +91,7 @@ const open = async (url = '/tools/drive-chart', strict = false) => {
     return { ...view, leave: () => act(async () => view.rerender(content(false))) };
 };
 const load = async (number) => {
-    const label = `#${number} · S12 Wk${number}: ${games[number - 1].away_team} @ ${games[number - 1].home_team}`;
+    const label = `S12 Wk${number}: ${games[number - 1].away_team} @ ${games[number - 1].home_team} (#${number})`;
     fireEvent.change(screen.getByRole('combobox', { name: 'drive-chart-game' }), { target: { value: label } });
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Load game' })));
 };
@@ -106,7 +108,7 @@ test.each(['resolve', 'reject'])(
         const previous = pending(getFilteredGames);
         await open('/tools/drive-chart', true);
         await previous[completion]({ content: [] });
-        expect(screen.getByRole('option', { name: '#1 · S12 Wk1: Beta @ Alpha' })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: 'S12 Wk1: Beta @ Alpha (#1)' })).toBeInTheDocument();
     }
 );
 test('unmount before lookup completion cannot launch URL auto-loading', async () => {
@@ -152,6 +154,6 @@ test('URL auto-load retains the direct game lookup for games outside recent opti
     await open('/tools/drive-chart?game=99');
     expect(getAllPlaysByGameId).toHaveBeenCalledWith(99);
     expect(getGameById).toHaveBeenCalledWith(99);
-    expect(screen.getByRole('combobox', { name: 'drive-chart-game' })).toHaveValue('#99 · S12 Wk1: Beta @ Alpha');
+    expect(screen.getByRole('combobox', { name: 'drive-chart-game' })).toHaveValue('S12 Wk1: Beta @ Alpha (#99)');
     expect(screen.getByText('Play 1 of 2')).toBeInTheDocument();
 });

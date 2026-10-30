@@ -1,48 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
-import BackButton from '../../components/ui/BackButton';
 import Panel from '../../components/ui/Panel';
-import TeamMark from '../../components/ui/TeamMark';
+import PagedFooter from '../../components/ui/PagedFooter';
+import TeamName from '../../components/ui/TeamName';
+import usePagedRows from '../../hooks/usePagedRows';
+import useFitCount from '../../hooks/useFitCount';
+import { inputSx } from '../../styles/controls';
 import TeamUniformThumb from '../../components/admin/TeamUniformThumb';
 import { getAllTeams } from '../../api/teamApi';
 import { isRealTeam } from '../../utils/teamDataUtils';
 
-const searchSx = {
-    width: '100%',
-    maxWidth: 320,
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.85rem',
-};
-const openSx = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    textDecoration: 'none',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '32px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.74rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-};
+const THUMB_VIEWS = ['HELMET', 'SECONDARY_HELMET', 'JERSEY', 'AWAY_JERSEY'];
 
 const AdminTeamAppearance = () => {
-    const navigate = useNavigate();
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -78,68 +50,96 @@ const AdminTeamAppearance = () => {
         }
         return teams.filter((team) => (team.name || '').toLowerCase().includes(term));
     }, [teams, query]);
+    const [fitRef, pageSize] = useFitCount({
+        itemSelector: 'a',
+        rowHeight: 114,
+        minRows: 2,
+        columnWidth: 240,
+        phoneCount: 8,
+    });
+    const { page, pageCount, pageRows, setPage } = usePagedRows(filtered, pageSize, query);
 
     return (
-        <AdminLayout
-            title="Team appearance"
-            controls={
-                <Box
-                    component="input"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search teams"
-                    sx={searchSx}
-                />
-            }
-        >
-            <BackButton onBack={() => navigate(-1)} />
+        <AdminLayout title="Team appearance">
             {error && (
                 <Alert severity="error" sx={{ mb: '16px' }}>
                     {error}
                 </Alert>
             )}
-            {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: '40px' }}>
-                    <CircularProgress />
-                </Box>
-            ) : (
-                <Box
-                    sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px' }}
-                >
-                    {filtered.map((team) => (
-                        <Panel key={team.name}>
-                            <Box sx={{ p: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                                    <TeamMark team={team} size={26} />
-                                    <Box
-                                        sx={{
-                                            fontWeight: 700,
-                                            fontSize: '0.82rem',
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                        }}
-                                    >
-                                        {team.name}
+            <Panel
+                header={`Teams (${filtered.length})`}
+                more={
+                    <Box
+                        component="input"
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        placeholder="Search teams"
+                        aria-label="Search teams"
+                        sx={{ ...inputSx, width: 220, height: '32px' }}
+                    />
+                }
+            >
+                {loading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: '40px' }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <Box ref={fitRef}>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
+                                gap: '10px',
+                                p: '12px',
+                            }}
+                        >
+                            {pageRows.map((team) => (
+                                <Box
+                                    key={team.name}
+                                    component={Link}
+                                    to={`/team-appearance/${team.id}`}
+                                    sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '8px',
+                                        p: '10px',
+                                        border: '1px solid var(--line)',
+                                        borderRadius: 'var(--r-md, 10px)',
+                                        background: 'var(--surface-2)',
+                                        color: 'inherit',
+                                        textDecoration: 'none',
+                                        '&:hover': { borderColor: 'var(--brand)' },
+                                    }}
+                                >
+                                    <TeamName
+                                        name={team.name}
+                                        size={22}
+                                        sx={{ fontWeight: 700, fontSize: '0.84rem' }}
+                                    />
+                                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
+                                        {THUMB_VIEWS.map((view) => (
+                                            <TeamUniformThumb key={view} team={team.name} view={view} height={52} />
+                                        ))}
                                     </Box>
                                 </Box>
-                                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                    <TeamUniformThumb team={team.name} view="HELMET" height={88} />
-                                    <TeamUniformThumb team={team.name} view="SECONDARY_HELMET" height={88} />
-                                    <TeamUniformThumb team={team.name} view="JERSEY" height={88} />
-                                    <TeamUniformThumb team={team.name} view="AWAY_JERSEY" height={88} />
+                            ))}
+                            {filtered.length === 0 && (
+                                <Box sx={{ color: 'var(--text-dim)', fontSize: '0.8rem', p: '16px' }}>
+                                    No teams match.
                                 </Box>
-                                <Box component={Link} to={`/team-appearance/${team.id}`} sx={openSx}>
-                                    Open editor
-                                </Box>
-                            </Box>
-                        </Panel>
-                    ))}
-                    {filtered.length === 0 && (
-                        <Box sx={{ color: 'var(--text-dim)', fontSize: '0.8rem', p: '16px' }}>No teams match.</Box>
-                    )}
-                </Box>
-            )}
+                            )}
+                        </Box>
+                        <PagedFooter
+                            page={page}
+                            pageCount={pageCount}
+                            pageSize={pageSize}
+                            total={filtered.length}
+                            onChange={setPage}
+                            noun="teams"
+                        />
+                    </Box>
+                )}
+            </Panel>
         </AdminLayout>
     );
 };

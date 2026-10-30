@@ -2,52 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
+import NumberInput from '../../components/ui/NumberInput';
 import Panel from '../../components/ui/Panel';
 import SegTabs from '../../components/ui/SegTabs';
 import RankingMetricsPanel from './RankingMetricsPanel';
 import { uploadRankings } from '../../api/rankingApi';
 import { getCurrentSeasonOrLatest, getCurrentWeekOrLatest } from '../../api/seasonApi';
 import { weekLabel } from '../../utils/formatText';
+import { labelSx, primaryButtonSx, selectSx, textareaSx } from '../../styles/controls';
 
-const labelSx = {
-    display: 'block',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    mb: '5px',
-};
-const inputSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    py: '10px',
-    font: 'inherit',
-    fontSize: '0.85rem',
-};
-const selectSx = {
-    ...inputSx,
-    cursor: 'pointer',
-    '& option': { background: 'var(--surface-2)', color: 'var(--text)' },
-};
-const textareaSx = { ...inputSx, fontFamily: 'monospace', resize: 'vertical' };
-const btnPrimarySx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '18px',
-    py: '10px',
-    font: 'inherit',
-    fontSize: '0.85rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
 const btnGhostSx = {
     border: '1px solid var(--line)',
     background: 'var(--surface-2)',
@@ -293,12 +256,11 @@ const RankingsManagement = () => {
                         >
                             <Box>
                                 <Box sx={labelSx}>Season</Box>
-                                <Box
-                                    component="input"
-                                    type="number"
+                                <NumberInput
                                     value={season}
-                                    onChange={(e) => setSeason(e.target.value)}
-                                    sx={inputSx}
+                                    onChange={(next) => setSeason(String(next))}
+                                    min={1}
+                                    ariaLabel="Season"
                                 />
                             </Box>
                             <Box>
@@ -337,7 +299,7 @@ const RankingsManagement = () => {
                             <Box sx={labelSx}>Teams (ranked order, one per line)</Box>
                             <Box
                                 component="textarea"
-                                rows={10}
+                                rows={6}
                                 value={namesText}
                                 onChange={(e) => handleNamesChange(e.target.value)}
                                 placeholder={'Georgia\nOhio State\nMichigan\n...'}
@@ -364,7 +326,7 @@ const RankingsManagement = () => {
                                 type="button"
                                 onClick={handleSubmit}
                                 disabled={submitting}
-                                sx={{ ...btnPrimarySx, display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                                sx={{ ...primaryButtonSx, display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                             >
                                 {submitting && <CircularProgress size={16} sx={{ color: '#fff' }} />}
                                 Upload {pollLabel}, {weekLabel}

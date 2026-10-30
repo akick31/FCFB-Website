@@ -1,8 +1,8 @@
-import { formatConference } from '../../hooks/useConferencesMap';
 import React from 'react';
 import { Box } from '@mui/material';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import FactList from '../ui/FactList';
 import { formatPosition, formatOffensivePlaybook, formatDefensivePlaybook } from '../../utils/formatText';
 
 const luminance = (hex) => {
@@ -29,16 +29,10 @@ const CoachHeader = ({ user, team, mark, championSeason }) => {
 
     const affiliation = team ? `${formatPosition(user.position)}, ${team.name}` : 'Free Agent';
 
-    const subParts = [];
-    if (team?.conference) {
-        subParts.push(formatConference(team.conference));
-    }
-    subParts.push(
-        `${formatOffensivePlaybook(user.offensive_playbook)} / ${formatDefensivePlaybook(user.defensive_playbook)}`
-    );
-    if (championSeason) {
-        subParts.push(`Season ${championSeason} national champion`);
-    }
+    const details = [
+        `${formatOffensivePlaybook(user.offensive_playbook)} / ${formatDefensivePlaybook(user.defensive_playbook)}`,
+        championSeason && `Season ${championSeason} national champion`,
+    ];
 
     return (
         <Box
@@ -52,10 +46,11 @@ const CoachHeader = ({ user, team, mark, championSeason }) => {
             <Box
                 sx={{
                     px: 3,
-                    py: '26px',
+                    py: '14px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '20px',
+                    flexWrap: 'wrap',
+                    gap: '18px',
                     position: 'relative',
                     background: `linear-gradient(120deg, ${primary}, #0a1620)`,
                     '&::after': {
@@ -100,7 +95,7 @@ const CoachHeader = ({ user, team, mark, championSeason }) => {
                         )}
                     </Box>
                 )}
-                <Box sx={{ zIndex: 1, color: '#fff', minWidth: 0 }}>
+                <Box sx={{ zIndex: 1, color: '#fff', minWidth: 0, flex: '1 1 240px' }}>
                     <Box
                         component={team?.id ? Link : 'div'}
                         to={team?.id ? `/team-details/${team.id}` : undefined}
@@ -109,7 +104,8 @@ const CoachHeader = ({ user, team, mark, championSeason }) => {
                             textTransform: 'uppercase',
                             letterSpacing: '0.08em',
                             fontWeight: 800,
-                            color: '#9fd6ec',
+                            color: '#fff',
+                            opacity: 0.85,
                             cursor: team?.id ? 'pointer' : 'default',
                             textDecoration: 'none',
                             display: 'inline-block',
@@ -118,20 +114,22 @@ const CoachHeader = ({ user, team, mark, championSeason }) => {
                         {affiliation}
                     </Box>
                     <Box
-                        component="h2"
+                        component="h1"
                         sx={{
                             m: '4px 0',
                             fontFamily: 'var(--cond)',
                             fontWeight: 800,
                             textTransform: 'uppercase',
                             letterSpacing: '0.01em',
-                            fontSize: '2rem',
+                            fontSize: '1.7rem',
                             lineHeight: 1,
                         }}
                     >
                         @{name}
                     </Box>
-                    <Box sx={{ opacity: 0.9, fontWeight: 600, fontSize: '0.85rem' }}>{subParts.join(' - ')}</Box>
+                    <Box sx={{ fontSize: '0.84rem', fontWeight: 600, opacity: 0.85 }}>
+                        <FactList items={details} />
+                    </Box>
                 </Box>
             </Box>
         </Box>

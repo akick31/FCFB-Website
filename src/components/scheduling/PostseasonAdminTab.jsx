@@ -1,6 +1,5 @@
-import PostseasonMatchupCard from './PostseasonMatchupCard';
+import PostseasonGamesTable from './PostseasonGamesTable';
 import { playoffAdvancement } from '../../utils/playoffAdvancement';
-import { btnPrimarySx, btnLiveSx, ctrlSx, cardGridSx } from './postseasonStyles';
 import ConferenceChampionshipDialog from './ConferenceChampionshipDialog';
 import PlayoffBracketDialog from './PlayoffBracketDialog';
 import AdvanceWinnerDialog from './AdvanceWinnerDialog';
@@ -15,7 +14,7 @@ import {
     updateScheduleEntry,
     deleteScheduleEntry,
 } from '../../api/scheduleApi';
-import { uploadPostseasonLogo } from '../../api/uploadApi';
+import { uploadLogo } from '../../api/uploadApi';
 import { useConferencesMap, activeConferenceList } from '../../hooks/useConferencesMap';
 import Postseason from '../schedule/Postseason';
 import { ROUND_LABELS, playoffWeekForRound, CFP_LOGO_URL } from '../../constants/playoffBracket';
@@ -23,6 +22,7 @@ import { camelOrSnakeField } from '../../utils/fieldHelper';
 import { initialPlayoffGames } from '../../utils/initialPlayoffGames';
 import { isRealTeam } from '../../utils/teamDataUtils';
 import { resolveLogoUrl } from '../../utils/logoUrl';
+import { compact, primaryButtonSx, secondaryButtonSx } from '../../styles/controls';
 
 const PostseasonAdminTab = ({
     season,
@@ -30,7 +30,6 @@ const PostseasonAdminTab = ({
     postseasonLoading = false,
     allTeams = [],
     teamMap = {},
-    venueNames = [],
     onRefresh,
     onShowSnackbar,
     onOpenAddGameDialog,
@@ -153,6 +152,13 @@ const PostseasonAdminTab = ({
         setPlayoffDialogOpen(true);
     };
 
+    const openCcgDialog = () => {
+        setCcgConference('');
+        setCcgHome(null);
+        setCcgAway(null);
+        setCcgDialogOpen(true);
+    };
+
     const handleCreateCCG = async () => {
         if (!ccgHome || !ccgAway) {
             onShowSnackbar('Please select both teams', 'error');
@@ -205,7 +211,7 @@ const PostseasonAdminTab = ({
         if (file) {
             setUploadingLogo(true);
             try {
-                const result = await uploadPostseasonLogo(file);
+                const result = await uploadLogo(file, 'POSTSEASON');
                 setEditingBowlLogo(result.url);
                 const reader = new FileReader();
                 reader.onloadend = () => {
@@ -436,57 +442,56 @@ const PostseasonAdminTab = ({
 
     return (
         <Box>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', mb: '16px', alignItems: 'center' }}>
-                <Box
-                    component="button"
-                    type="button"
-                    onClick={() => {
-                        setCcgConference('');
-                        setCcgHome(null);
-                        setCcgAway(null);
-                        setCcgDialogOpen(true);
-                    }}
-                    sx={btnPrimarySx}
-                >
-                    + Add CCG
-                </Box>
-                <Box component="button" type="button" onClick={handleOpenPlayoffDialog} sx={btnLiveSx}>
-                    {postseasonPlayoffs.length > 0 ? 'Edit playoff bracket' : 'Set up playoff bracket'}
-                </Box>
-                <Box component="button" type="button" onClick={() => onOpenAddGameDialog('BOWL', 14)} sx={ctrlSx}>
-                    + Add bowl game
-                </Box>
-                <Box component="button" type="button" onClick={() => onOpenAddGameDialog('PLAYOFFS', null)} sx={ctrlSx}>
-                    + Add playoff game
-                </Box>
-            </Box>
-
             {postseasonLoading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                     <CircularProgress />
                 </Box>
             ) : (
                 <Box>
-                    <Panel header="Conference championships" sx={{ mb: '16px' }}>
-                        {postseasonCCG.length > 0 ? (
-                            <Box sx={cardGridSx}>
-                                {postseasonCCG.map((game) => (
-                                    <PostseasonMatchupCard
-                                        key={game.id}
-                                        game={game}
-                                        teamMap={teamMap}
-                                        onDelete={handleDeleteGame}
-                                    />
-                                ))}
+                    <Panel
+                        header="Conference championships"
+                        more={
+                            <Box component="button" type="button" onClick={openCcgDialog} sx={compact(primaryButtonSx)}>
+                                + Add championship
                             </Box>
-                        ) : (
-                            <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>
-                                No conference championship games scheduled.
-                            </Box>
-                        )}
+                        }
+                        sx={{ mb: '16px' }}
+                    >
+                        <PostseasonGamesTable
+                            games={postseasonCCG}
+                            nameOf={(game) =>
+                                camelOrSnakeField(game, 'postseasonGameName', 'postseason_game_name') ||
+                                'Conference championship'
+                            }
+                            emptyText="No conference championships scheduled."
+                            onDelete={handleDeleteGame}
+                        />
                     </Panel>
 
-                    <Panel header="Playoff bracket" sx={{ mb: '16px' }}>
+                    <Panel
+                        header="Playoff bracket"
+                        more={
+                            <Box sx={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                <Box
+                                    component="button"
+                                    type="button"
+                                    onClick={handleOpenPlayoffDialog}
+                                    sx={compact(primaryButtonSx)}
+                                >
+                                    {postseasonPlayoffs.length > 0 ? 'Edit bracket' : 'Set up bracket'}
+                                </Box>
+                                <Box
+                                    component="button"
+                                    type="button"
+                                    onClick={() => onOpenAddGameDialog('PLAYOFFS', null)}
+                                    sx={compact(secondaryButtonSx)}
+                                >
+                                    + Add playoff game
+                                </Box>
+                            </Box>
+                        }
+                        sx={{ mb: '16px' }}
+                    >
                         <Box sx={{ p: '16px' }}>
                             <Postseason
                                 postseasonSchedule={playoffOnlySchedule}
@@ -502,25 +507,29 @@ const PostseasonAdminTab = ({
                         </Box>
                     </Panel>
 
-                    <Panel header="Bowl games">
-                        {postseasonBowls.length > 0 ? (
-                            <Box sx={cardGridSx}>
-                                {postseasonBowls.map((game) => (
-                                    <PostseasonMatchupCard
-                                        key={game.id}
-                                        game={game}
-                                        teamMap={teamMap}
-                                        showEdit
-                                        onEdit={handleEditBowlName}
-                                        onDelete={handleDeleteGame}
-                                    />
-                                ))}
+                    <Panel
+                        header={`Bowl games (${postseasonBowls.length})`}
+                        more={
+                            <Box
+                                component="button"
+                                type="button"
+                                onClick={() => onOpenAddGameDialog('BOWL', 14)}
+                                sx={compact(primaryButtonSx)}
+                            >
+                                + Add bowl game
                             </Box>
-                        ) : (
-                            <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>
-                                No bowl games scheduled.
-                            </Box>
-                        )}
+                        }
+                    >
+                        <PostseasonGamesTable
+                            games={postseasonBowls}
+                            nameOf={(game) =>
+                                camelOrSnakeField(game, 'postseasonGameName', 'postseason_game_name') ||
+                                'Unnamed bowl game'
+                            }
+                            emptyText="No bowl games scheduled."
+                            onEdit={handleEditBowlName}
+                            onDelete={handleDeleteGame}
+                        />
                     </Panel>
                 </Box>
             )}
@@ -567,7 +576,6 @@ const PostseasonAdminTab = ({
                 game={editingBowlGame}
                 name={editingBowlName}
                 onNameChange={setEditingBowlName}
-                venueNames={venueNames}
                 venue={editingBowlVenue}
                 onVenueChange={setEditingBowlVenue}
                 uploading={uploadingLogo}
@@ -587,7 +595,6 @@ PostseasonAdminTab.propTypes = {
     postseasonLoading: PropTypes.bool,
     allTeams: PropTypes.array,
     teamMap: PropTypes.object,
-    venueNames: PropTypes.arrayOf(PropTypes.string),
     onRefresh: PropTypes.func.isRequired,
     onShowSnackbar: PropTypes.func.isRequired,
     onOpenAddGameDialog: PropTypes.func.isRequired,

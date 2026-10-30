@@ -1,26 +1,51 @@
-import { formatConference } from '../../hooks/useConferencesMap';
 import React, { useMemo, useState } from 'react';
-import { Box, CircularProgress, Alert } from '@mui/material';
+import { Box, CircularProgress, useMediaQuery } from '@mui/material';
 import { WarningAmber } from '@mui/icons-material';
 import PropTypes from 'prop-types';
+import { camelOrSnakeField } from '../../utils/fieldHelper';
 import Panel from '../ui/Panel';
 import TeamMark from '../ui/TeamMark';
+import TeamSelect from '../ui/TeamSelect';
+import ScheduleGameCell from './grid/ScheduleGameCell';
+import ScheduleOpenCell from './grid/ScheduleOpenCell';
+import ScheduleLegend from './grid/ScheduleLegend';
+import TeamWeekList from './grid/TeamWeekList';
+import { buildScheduleGrid, conferenceGameCounts, weekNumbers } from './grid/scheduleGrid';
 
-import { camelOrSnakeField } from '../../utils/fieldHelper';
-
-const TOTAL_WEEKS = 12;
-
-const pillSx = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '5px',
-    fontSize: '0.62rem',
+const countPillSx = {
+    display: 'inline-block',
+    minWidth: 22,
+    fontSize: '0.66rem',
     fontWeight: 800,
-    letterSpacing: '0.05em',
-    px: '7px',
+    px: '5px',
     py: '3px',
     borderRadius: 'var(--r-sm)',
-    lineHeight: 1,
+    background: 'var(--surface-2)',
+};
+
+const tableSx = {
+    width: '100%',
+    tableLayout: 'fixed',
+    borderCollapse: 'collapse',
+    fontSize: '0.76rem',
+    '& th, & td': {
+        borderBottom: '1px solid var(--line-soft)',
+        p: '2px 3px',
+        textAlign: 'center',
+    },
+    '& thead th': {
+        position: 'sticky',
+        top: 0,
+        zIndex: 2,
+        background: 'var(--surface-2)',
+        color: 'var(--text-dim)',
+        fontSize: '0.62rem',
+        fontWeight: 800,
+        textTransform: 'uppercase',
+        py: '5px',
+    },
+    '& .tcol': { width: 96, textAlign: 'left', pl: '10px', borderRight: '1px solid var(--line)' },
+    '& .count': { width: 38 },
 };
 
 const ConferenceScheduleGrid = ({
@@ -37,75 +62,32 @@ const ConferenceScheduleGrid = ({
     onFilledCellClick,
     onGameDrop,
 }) => {
+    const phone = useMediaQuery('(max-width:900px)');
     const [dragSource, setDragSource] = useState(null);
-    const isIndependent = selectedConference === 'FBS_INDEPENDENT';
+    const [phoneTeam, setPhoneTeam] = useState('');
+    const independent = selectedConference === 'FBS_INDEPENDENT';
 
-    const grid = useMemo(() => {
-        const g = {};
-        const teamNames = conferenceTeams.map((t) => t.name);
-        conferenceTeams.forEach((team) => {
-            g[team.name] = {};
-            for (let w = 1; w <= TOTAL_WEEKS; w++) {
-                g[team.name][w] = null;
-            }
-        });
+    const grid = useMemo(
+        () => buildScheduleGrid(conferenceTeams, conferenceSchedule, allSeasonSchedule),
+        [conferenceTeams, conferenceSchedule, allSeasonSchedule]
+    );
+    const counts = useMemo(() => conferenceGameCounts(conferenceSchedule), [conferenceSchedule]);
+    const totalFor = (name) => (counts[name]?.home || 0) + (counts[name]?.away || 0);
+    const teamNames = new Set(conferenceTeams.map((team) => team.name));
+    const scheduleIsForTheseTeams = conferenceSchedule.some(
+        (game) =>
+            teamNames.has(camelOrSnakeField(game, 'homeTeam', 'home_team')) ||
+            teamNames.has(camelOrSnakeField(game, 'awayTeam', 'away_team'))
+    );
+    const isShort = (name) => scheduleIsForTheseTeams && totalFor(name) < numConferenceGames;
+    const incompleteTeams = conferenceTeams.filter((team) => isShort(team.name));
 
-        conferenceSchedule.forEach((game) => {
-            const week = game.week;
-            if (!week) {
-                return;
-            }
-            const home = camelOrSnakeField(game, 'homeTeam', 'home_team');
-            const away = camelOrSnakeField(game, 'awayTeam', 'away_team');
-
-            if (teamNames.includes(home)) {
-                g[home][week] = { ...game, opponent: away, isHome: true, gameType: 'CONFERENCE_GAME' };
-            }
-            if (teamNames.includes(away)) {
-                g[away][week] = { ...game, opponent: home, isHome: false, gameType: 'CONFERENCE_GAME' };
-            }
-        });
-
-        allSeasonSchedule.forEach((game) => {
-            const week = game.week;
-            if (!week || week > TOTAL_WEEKS) {
-                return;
-            }
-            const home = camelOrSnakeField(game, 'homeTeam', 'home_team');
-            const away = camelOrSnakeField(game, 'awayTeam', 'away_team');
-            const gameType = camelOrSnakeField(game, 'gameType', 'game_type');
-
-            if (teamNames.includes(home) && g[home][week] == null) {
-                g[home][week] = { ...game, opponent: away, isHome: true, gameType };
-            }
-            if (teamNames.includes(away) && g[away][week] == null) {
-                g[away][week] = { ...game, opponent: home, isHome: false, gameType };
-            }
-        });
-
-        return g;
-    }, [conferenceTeams, conferenceSchedule, allSeasonSchedule]);
-
-    const getGameCounts = (teamName) => {
-        let home = 0,
-            away = 0;
-        conferenceSchedule.forEach((game) => {
-            const h = camelOrSnakeField(game, 'homeTeam', 'home_team');
-            const a = camelOrSnakeField(game, 'awayTeam', 'away_team');
-            if (h === teamName) {
-                home++;
-            }
-            if (a === teamName) {
-                away++;
-            }
-        });
-        return { home, away };
+    const dropStateFor = (teamName, week) => {
+        if (scheduleLocked || !dragSource || dragSource.team !== teamName || dragSource.week === week) {
+            return 'none';
+        }
+        return teamWeekOccupiedAll?.has(`${dragSource.cell.opponent}|${week}`) ? 'invalid' : 'valid';
     };
-
-    const incompleteTeams = conferenceTeams.filter((t) => {
-        const c = getGameCounts(t.name);
-        return c.home + c.away < numConferenceGames;
-    });
 
     if (confLoading) {
         return (
@@ -115,338 +97,131 @@ const ConferenceScheduleGrid = ({
         );
     }
 
+    const shownTeam = phoneTeam || conferenceTeams[0]?.name || '';
+    const abbreviationOf = (team) => teamMap[team.name]?.abbreviation || team.abbreviation || team.name;
+
     return (
-        <Panel
-            header={`${formatConference(selectedConference)} conference schedule`}
-            more="Click an empty cell to schedule a game"
-        >
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '16px',
-                    px: '16px',
-                    pt: '12px',
-                    fontSize: '0.72rem',
-                    color: 'var(--text-muted)',
-                }}
-            >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Box
-                        sx={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: '3px',
-                            background: 'color-mix(in srgb, var(--brand) 30%, transparent)',
-                            border: '1px solid var(--brand)',
-                        }}
-                    />
-                    Conference game
-                </Box>
-                {!isIndependent && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Box
-                            sx={{
-                                width: 12,
-                                height: 12,
-                                borderRadius: '3px',
-                                background: 'color-mix(in srgb, var(--gold) 30%, transparent)',
-                                border: '1px solid var(--gold)',
-                            }}
-                        />
-                        Out of conference
-                    </Box>
-                )}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Box
-                        sx={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: '3px',
-                            background: 'color-mix(in srgb, var(--disc) 45%, transparent)',
-                            border: '1px solid var(--disc)',
-                        }}
-                    />
-                    Neutral site
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Box component="span" sx={{ color: 'var(--text-dim)' }}>
-                        vs
-                    </Box>
-                    Home
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Box component="span" sx={{ color: 'var(--text-dim)' }}>
-                        @
-                    </Box>
-                    Away
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <WarningAmber sx={{ color: 'var(--live)', fontSize: '0.85rem' }} />
-                    Fewer than {numConferenceGames} conference games scheduled
-                </Box>
+        <Panel>
+            <Box sx={{ p: '3px 12px', borderBottom: '1px solid var(--line-soft)' }}>
+                <ScheduleLegend independent={independent} numConferenceGames={numConferenceGames} />
             </Box>
             {incompleteTeams.length > 0 && conferenceSchedule.length > 0 && (
-                <Box sx={{ p: '12px 16px 0' }}>
-                    <Alert severity="warning" sx={{ py: 0.5 }}>
-                        {incompleteTeams.length} team{incompleteTeams.length > 1 ? 's have' : ' has'} fewer than{' '}
-                        {numConferenceGames} conference games scheduled:{' '}
-                        {incompleteTeams.map((t) => t.abbreviation || t.name).join(', ')}
-                    </Alert>
+                <Box sx={{ p: '6px 14px', fontSize: '0.74rem', color: 'var(--live)', fontWeight: 700 }}>
+                    Short on conference games: {incompleteTeams.map(abbreviationOf).join(', ')}
                 </Box>
             )}
-            <Box sx={{ overflowX: 'auto', p: '16px' }}>
-                <Box
-                    component="table"
-                    sx={{
-                        borderCollapse: 'collapse',
-                        fontSize: '0.76rem',
-                        minWidth: 900,
-                        width: '100%',
-                        '& th, & td': {
-                            borderBottom: '1px solid var(--line-soft)',
-                            borderRight: '1px solid var(--line-soft)',
-                            padding: '6px 8px',
-                            textAlign: 'center',
-                            whiteSpace: 'nowrap',
-                        },
-                        '& thead th': {
-                            background: 'var(--surface-2)',
-                            color: 'var(--text-dim)',
-                            fontSize: '0.62rem',
-                            textTransform: 'uppercase',
-                            fontWeight: 800,
-                            position: 'sticky',
-                            top: 0,
-                        },
-                        '& .tcol': {
-                            position: 'sticky',
-                            left: 0,
-                            background: 'var(--surface)',
-                            textAlign: 'left',
-                            zIndex: 1,
-                            borderRight: '1px solid var(--line)',
-                        },
-                        '& thead .tcol': { zIndex: 2, background: 'var(--surface-2)' },
-                    }}
-                >
+            {phone ? (
+                <>
+                    <Box sx={{ px: '14px', pb: '10px' }}>
+                        <TeamSelect
+                            value={shownTeam}
+                            onChange={setPhoneTeam}
+                            teams={conferenceTeams.map((team) => team.name)}
+                            ariaLabel="Team"
+                        />
+                    </Box>
+                    {shownTeam && (
+                        <TeamWeekList
+                            weeks={grid[shownTeam] || {}}
+                            independent={independent}
+                            locked={scheduleLocked}
+                            onGameClick={onFilledCellClick}
+                            onOpenClick={(week) => onEmptyCellClick(shownTeam, week)}
+                        />
+                    )}
+                </>
+            ) : (
+                <Box component="table" sx={tableSx}>
                     <thead>
                         <tr>
                             <th className="tcol">Team</th>
-                            {Array.from({ length: TOTAL_WEEKS }, (_, i) => (
-                                <th key={i + 1}>Wk {i + 1}</th>
+                            {weekNumbers.map((week) => (
+                                <th key={week}>Wk {week}</th>
                             ))}
-                            <th>H</th>
-                            <th>A</th>
+                            <th className="count" title="Conference home games">
+                                H
+                            </th>
+                            <th className="count" title="Conference away games">
+                                A
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {conferenceTeams.map((team) => {
-                            const counts = getGameCounts(team.name);
-                            const totalGames = counts.home + counts.away;
-                            const isIncomplete = totalGames < numConferenceGames;
+                            const total = totalFor(team.name);
+                            const short = isShort(team.name);
                             return (
                                 <tr
                                     key={team.name}
                                     style={
-                                        isIncomplete
+                                        short
                                             ? { background: 'color-mix(in srgb, var(--live) 6%, transparent)' }
                                             : undefined
                                     }
                                 >
                                     <td className="tcol">
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                                            <TeamMark
-                                                team={
-                                                    teamMap[team.name] || {
-                                                        name: team.name,
-                                                        abbreviation: team.abbreviation,
-                                                    }
-                                                }
-                                                size={20}
-                                            />
-                                            <Box component="b" sx={{ fontSize: '0.78rem' }}>
-                                                {team.abbreviation || team.name}
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <TeamMark team={{ name: team.name }} size={20} decorative />
+                                            <Box component="b" sx={{ fontSize: '0.76rem' }} title={team.name}>
+                                                {abbreviationOf(team)}
                                             </Box>
-                                            {isIncomplete && (
+                                            {short && (
                                                 <WarningAmber
-                                                    titleAccess={`${team.abbreviation || team.name} has ${totalGames}/${numConferenceGames} conference games scheduled`}
+                                                    titleAccess={`${team.name} has ${total}/${numConferenceGames} conference games`}
                                                     sx={{ color: 'var(--live)', fontSize: '0.85rem' }}
                                                 />
                                             )}
                                         </Box>
                                     </td>
-                                    {Array.from({ length: TOTAL_WEEKS }, (_, i) => {
-                                        const weekNum = i + 1;
-                                        const cell = grid[team.name]?.[weekNum];
-                                        if (cell) {
-                                            const isConference = cell.gameType === 'CONFERENCE_GAME';
-                                            const isNeutralSite = Boolean(
-                                                camelOrSnakeField(cell, 'neutralSite', 'neutral_site')
-                                            );
-                                            return (
-                                                <td key={weekNum}>
-                                                    <Box
-                                                        draggable={!scheduleLocked}
-                                                        onDragStart={(e) => {
-                                                            e.dataTransfer.effectAllowed = 'move';
-                                                            setDragSource({ team: team.name, week: weekNum, cell });
-                                                        }}
-                                                        onDragEnd={() => setDragSource(null)}
-                                                        onClick={() => onFilledCellClick(cell, weekNum)}
-                                                        title={`${isConference ? 'Conference' : 'Out of conference'}${isNeutralSite ? ', neutral site' : ''} - ${cell.isHome ? 'vs' : '@'} ${cell.opponent} (click to move/delete, or drag to another week)`}
-                                                        sx={{
-                                                            position: 'relative',
-                                                            display: 'inline-flex',
-                                                            alignItems: 'center',
-                                                            gap: '4px',
-                                                            justifyContent: 'center',
-                                                            cursor: scheduleLocked ? 'pointer' : 'grab',
-                                                            px: '6px',
-                                                            py: '4px',
-                                                            borderRadius: 'var(--r-sm)',
-                                                            background: isNeutralSite
-                                                                ? 'color-mix(in srgb, var(--disc) 18%, transparent)'
-                                                                : isConference
-                                                                  ? 'color-mix(in srgb, var(--brand) 12%, transparent)'
-                                                                  : isIndependent
-                                                                    ? 'transparent'
-                                                                    : 'color-mix(in srgb, var(--gold) 12%, transparent)',
-                                                            '&:hover': {
-                                                                background: isNeutralSite
-                                                                    ? 'color-mix(in srgb, var(--disc) 28%, transparent)'
-                                                                    : isConference
-                                                                      ? 'color-mix(in srgb, var(--brand) 20%, transparent)'
-                                                                      : isIndependent
-                                                                        ? 'var(--surface-2)'
-                                                                        : 'color-mix(in srgb, var(--gold) 20%, transparent)',
-                                                            },
-                                                        }}
-                                                    >
-                                                        {isNeutralSite && !isIndependent && (
-                                                            <Box
-                                                                sx={{
-                                                                    position: 'absolute',
-                                                                    top: '2px',
-                                                                    right: '2px',
-                                                                    width: 6,
-                                                                    height: 6,
-                                                                    borderRadius: '50%',
-                                                                    background: isConference
-                                                                        ? 'var(--brand)'
-                                                                        : 'var(--gold)',
-                                                                }}
-                                                            />
-                                                        )}
-                                                        <Box
-                                                            component="span"
-                                                            sx={{ fontSize: '0.62rem', color: 'var(--text-dim)' }}
-                                                        >
-                                                            {cell.isHome ? 'vs' : '@'}
-                                                        </Box>
-                                                        <TeamMark
-                                                            team={teamMap[cell.opponent] || { name: cell.opponent }}
-                                                            size={16}
-                                                        />
-                                                        <Box
-                                                            component="span"
-                                                            sx={{
-                                                                fontSize: '0.62rem',
-                                                                maxWidth: 50,
-                                                                overflow: 'hidden',
-                                                                textOverflow: 'ellipsis',
-                                                            }}
-                                                        >
-                                                            {teamMap[cell.opponent]?.abbreviation ||
-                                                                cell.opponent?.substring(0, 4)}
-                                                        </Box>
-                                                    </Box>
-                                                </td>
-                                            );
-                                        }
-                                        const isDropTarget =
-                                            !scheduleLocked &&
-                                            dragSource &&
-                                            dragSource.team === team.name &&
-                                            dragSource.week !== weekNum;
-                                        const opponentOccupied =
-                                            isDropTarget &&
-                                            teamWeekOccupiedAll?.has(`${dragSource.cell.opponent}|${weekNum}`);
-                                        const isValidDrop = isDropTarget && !opponentOccupied;
-                                        const dropColor = isValidDrop ? 'var(--field)' : 'var(--live)';
+                                    {weekNumbers.map((week) => {
+                                        const cell = grid[team.name]?.[week];
+                                        const dropState = dropStateFor(team.name, week);
                                         return (
-                                            <td key={weekNum}>
-                                                <Box
-                                                    onClick={() =>
-                                                        !scheduleLocked && onEmptyCellClick(team.name, weekNum)
-                                                    }
-                                                    onDragOver={(e) => {
-                                                        if (isValidDrop) {
-                                                            e.preventDefault();
+                                            <td key={week}>
+                                                {cell ? (
+                                                    <ScheduleGameCell
+                                                        cell={cell}
+                                                        independent={independent}
+                                                        locked={scheduleLocked}
+                                                        onClick={() => onFilledCellClick(cell, week)}
+                                                        onDragStart={() =>
+                                                            setDragSource({ team: team.name, week, cell })
                                                         }
-                                                    }}
-                                                    onDrop={(e) => {
-                                                        if (!isValidDrop) {
-                                                            return;
+                                                        onDragEnd={() => setDragSource(null)}
+                                                    />
+                                                ) : (
+                                                    <ScheduleOpenCell
+                                                        locked={scheduleLocked}
+                                                        dropState={dropState}
+                                                        blockedReason={
+                                                            dropState === 'invalid'
+                                                                ? `${dragSource.cell.opponent} already plays in week ${week}`
+                                                                : undefined
                                                         }
-                                                        e.preventDefault();
-                                                        onGameDrop(dragSource.cell, weekNum);
-                                                        setDragSource(null);
-                                                    }}
-                                                    title={
-                                                        opponentOccupied
-                                                            ? `${dragSource.cell.opponent} already has a game scheduled in Week ${weekNum}`
-                                                            : undefined
-                                                    }
-                                                    sx={{
-                                                        cursor: scheduleLocked
-                                                            ? 'default'
-                                                            : isDropTarget && !isValidDrop
-                                                              ? 'not-allowed'
-                                                              : 'pointer',
-                                                        py: '6px',
-                                                        borderRadius: 'var(--r-sm)',
-                                                        outline: isDropTarget ? `2px dashed ${dropColor}` : 'none',
-                                                        background: isDropTarget
-                                                            ? `color-mix(in srgb, ${dropColor} 12%, transparent)`
-                                                            : 'transparent',
-                                                        color: 'var(--text-dim)',
-                                                        '&:hover': scheduleLocked
-                                                            ? {}
-                                                            : {
-                                                                  background: isDropTarget
-                                                                      ? `color-mix(in srgb, ${dropColor} 20%, transparent)`
-                                                                      : 'var(--surface-2)',
-                                                              },
-                                                    }}
-                                                >
-                                                    &mdash;
-                                                </Box>
+                                                        onClick={() => onEmptyCellClick(team.name, week)}
+                                                        onDrop={() => {
+                                                            onGameDrop(dragSource.cell, week);
+                                                            setDragSource(null);
+                                                        }}
+                                                    />
+                                                )}
                                             </td>
                                         );
                                     })}
-                                    <td>
+                                    <td className="count">
                                         <Box
                                             component="span"
-                                            sx={{
-                                                ...pillSx,
-                                                background: 'var(--surface-2)',
-                                                color: isIncomplete ? 'var(--live)' : 'var(--field)',
-                                            }}
+                                            sx={{ ...countPillSx, color: short ? 'var(--live)' : 'var(--field)' }}
                                         >
-                                            {counts.home}
+                                            {counts[team.name]?.home || 0}
                                         </Box>
                                     </td>
-                                    <td>
+                                    <td className="count">
                                         <Box
                                             component="span"
-                                            sx={{
-                                                ...pillSx,
-                                                background: 'var(--surface-2)',
-                                                color: isIncomplete ? 'var(--live)' : 'var(--gold)',
-                                            }}
+                                            sx={{ ...countPillSx, color: short ? 'var(--live)' : 'var(--gold)' }}
                                         >
-                                            {counts.away}
+                                            {counts[team.name]?.away || 0}
                                         </Box>
                                     </td>
                                 </tr>
@@ -454,7 +229,7 @@ const ConferenceScheduleGrid = ({
                         })}
                     </tbody>
                 </Box>
-            </Box>
+            )}
         </Panel>
     );
 };

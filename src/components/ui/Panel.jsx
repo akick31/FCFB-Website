@@ -17,8 +17,9 @@ const Panel = ({ header, more, children, sx, onClick }) => (
             <Box
                 sx={{
                     display: 'flex',
+                    flexWrap: 'wrap',
                     alignItems: 'center',
-                    gap: '10px',
+                    gap: '4px 10px',
                     px: 2,
                     py: 1.5,
                     borderBottom: '1px solid var(--line-soft)',
@@ -39,7 +40,7 @@ const Panel = ({ header, more, children, sx, onClick }) => (
                         display: 'flex',
                         alignItems: 'center',
                         gap: '10px',
-                        flex: 1,
+                        flex: '1 1 160px',
                         minWidth: 0,
                     }}
                 >

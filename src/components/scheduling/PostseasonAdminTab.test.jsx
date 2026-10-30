@@ -16,9 +16,15 @@ jest.mock('../../api/scheduleApi', () => ({
     deleteScheduleEntry: jest.fn(),
 }));
 jest.mock('../../utils/logoUrl', () => ({ resolveLogoUrl: (logo) => logo }));
-jest.mock('../../api/uploadApi', () => ({ uploadPostseasonLogo: jest.fn() }));
+jest.mock('../../api/uploadApi', () => ({ uploadLogo: jest.fn() }));
 jest.mock('../../hooks/useConferencesMap', () => ({ useConferencesMap: jest.fn(), activeConferenceList: () => [] }));
 jest.mock('../ui/TeamMark', () => ({ __esModule: true, default: () => null }));
+jest.mock('./VenueField', () => ({
+    __esModule: true,
+    default: ({ value, onChange }) => (
+        <input role="combobox" value={value} onChange={(event) => onChange(event.target.value)} />
+    ),
+}));
 jest.mock('../schedule/Postseason', () => ({
     __esModule: true,
     default: ({ adminMode, onAdvanceTeam, postseasonSchedule }) =>
@@ -125,8 +131,8 @@ test('the extracted winner dialog submits the chosen team and closes after the w
     render(<PostseasonAdminTab {...props} postseasonSchedule={[{ ...games[0], finished: false }]} />);
     fireEvent.click(screen.getByRole('button', { name: 'Choose winner' }));
     const dialog = screen.getByRole('dialog');
-    fireEvent.change(within(dialog).getByRole('combobox'), { target: { value: 'First Opponent' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Advance Team' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: /First Opponent/ }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Advance winner' }));
     await act(async () => {});
     expect(createScheduleEntry).toHaveBeenCalledWith(
         expect.objectContaining({ homeTeam: 'First Opponent', playoffHomeSeed: 24, playoffRound: 2, season: 12 })
@@ -189,7 +195,7 @@ test('regeneration retains existing seeds and deletes all old games before creat
         playoff_away_seed: index * 2 + 2,
     }));
     render(<PostseasonAdminTab {...props} allTeams={teams} postseasonSchedule={schedule} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Edit playoff bracket' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit bracket' }));
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByRole('combobox', { name: 'Seed 1' }).value).toBe('Team 1');
     expect(within(dialog).getByRole('combobox', { name: 'Seed 24' }).value).toBe('Team 24');

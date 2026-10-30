@@ -1,3 +1,4 @@
+import { secondaryButtonSx } from '../../styles/controls';
 export const rowSx = {
     display: 'flex',
     alignItems: 'center',
@@ -11,31 +12,10 @@ export const rowSx = {
 export const lblSx = { fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)' };
 export const descSx = { color: 'var(--text-dim)', fontSize: '0.74rem' };
 export const ctrlSx = {
+    ...secondaryButtonSx,
     ml: 'auto',
     minWidth: '76px',
     textAlign: 'center',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '9px',
-    py: '5px',
-    font: 'inherit',
-    fontSize: '0.72rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-};
-export const inputSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    py: '10px',
-    font: 'inherit',
-    fontSize: '0.88rem',
 };
 export const primarySx = {
     border: 0,

@@ -11,10 +11,17 @@ import { useConferencesMap, activeConferenceCodes, conferenceLabel } from '../..
 import PageWrap from '../../components/layout/PageWrap';
 import PageHeading from '../../components/ui/PageHeading';
 import SegTabs from '../../components/ui/SegTabs';
+import AroundFcfb from '../../components/game/scoreboard/AroundFcfb';
 import SelectPill from '../../components/ui/SelectPill';
+import ConferencePill from '../../components/ui/ConferencePill';
 import Panel from '../../components/ui/Panel';
 import Pager from '../../components/ui/Pager';
 import GameCard from '../../components/game/cards/GameCard';
+import CompactGameGrid from '../../components/game/cards/CompactGameGrid';
+import ViewToggle from '../../components/game/cards/ViewToggle';
+import TeamFilterPill from '../../components/ui/TeamFilterPill';
+import useStoredView from '../../hooks/useStoredView';
+import useFitCount from '../../hooks/useFitCount';
 import { useSeo } from '../../hooks/useSeo';
 import { ROUTE_META } from '../../routeMeta';
 import { weekLabel } from '../../utils/formatText';
@@ -47,6 +54,15 @@ const EmptyPanel = ({ title, note }) => (
 
 EmptyPanel.propTypes = { title: PropTypes.string.isRequired, note: PropTypes.string };
 
+const toolbarSx = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '9px',
+    flexWrap: 'wrap',
+    mb: '16px',
+};
+
 const Scoreboard = () => {
     const { tab, season: seasonParam, week: weekParam } = useParams();
     const navigate = useNavigate();
@@ -72,6 +88,15 @@ const Scoreboard = () => {
     const [conference, setConference] = useState(searchParams.get('conference') || 'ALL');
     const [rankedOnly, setRankedOnly] = useState(searchParams.get('ranked') === '1');
     const [searchTeam, setSearchTeam] = useState(searchParams.get('team') || '');
+    const [view, setView] = useStoredView('fcfb.view.scoreboard');
+    const [fitRef, fitCount] = useFitCount({
+        itemSelector: 'a',
+        rowHeight: 86,
+        columnWidth: 228,
+        minRows: 2,
+        phoneCount: PAGE_SIZE,
+    });
+    const pageSize = view === 'compact' ? fitCount : PAGE_SIZE;
     const [allSeasons, setAllSeasons] = useState([]);
     const editedDefaults = useRef({ season: false, week: false });
 
@@ -250,7 +275,7 @@ const Scoreboard = () => {
                         }
                         const conferenceParam = conference !== 'ALL' ? conference : undefined;
                         const filterParams = rankedOnly ? ['RANKED_GAME'] : undefined;
-                        const fetchSize = searchesTeams ? SEARCH_SIZE : PAGE_SIZE;
+                        const fetchSize = searchesTeams ? SEARCH_SIZE : pageSize;
                         const fetchPage = searchesTeams ? 0 : page;
                         if (activeTab === 'live') {
                             const response = await getFilteredGames({
@@ -270,7 +295,7 @@ const Scoreboard = () => {
                                 category: 'SCRIMMAGE',
                                 sort: 'CLOSEST_TO_END',
                                 page,
-                                size: PAGE_SIZE,
+                                size: pageSize,
                                 conference: conferenceParam,
                                 filters: filterParams,
                             }).catch(() => null);
@@ -296,8 +321,8 @@ const Scoreboard = () => {
                                 )
                                 .filter(matchesSearch);
                             if (active) {
-                                setPageCount(Math.max(1, Math.ceil(finals.length / PAGE_SIZE)));
-                                setGames(finals.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE));
+                                setPageCount(Math.max(1, Math.ceil(finals.length / pageSize)));
+                                setGames(finals.slice(page * pageSize, page * pageSize + pageSize));
                             }
                         } else {
                             const [response, statsRows] = await Promise.all([
@@ -346,7 +371,7 @@ const Scoreboard = () => {
             active = false;
             clearTimeout(timeout);
         };
-    }, [activeTab, season, week, page, conference, rankedOnly, searchTeam, teamsMap]);
+    }, [activeTab, season, week, page, conference, rankedOnly, searchTeam, teamsMap, pageSize]);
 
     const weekOptions = useMemo(
         () => [
@@ -364,7 +389,7 @@ const Scoreboard = () => {
         [conferencesMap]
     );
 
-    const teamOptions = useMemo(() => Object.values(teamsMap).sort((a, b) => a.name.localeCompare(b.name)), [teamsMap]);
+    const teamOptions = useMemo(() => Object.keys(teamsMap).sort((a, b) => a.localeCompare(b)), [teamsMap]);
 
     const emptyCopy = {
         live: {
@@ -378,70 +403,53 @@ const Scoreboard = () => {
     return (
         <PageWrap>
             <PageHeading eyebrow={season ? `Season ${season}` : 'Fake College Football'} title="Scoreboard">
-                <SegTabs value={activeTab} onChange={changeTab} options={TABS} ariaLabel="Scoreboard filter" />
-                {activeTab === 'final' && allSeasons.length > 0 && (
-                    <SelectPill
-                        label="Season"
-                        value={season ?? ''}
-                        onChange={(next) => changeSeason(Number(next))}
-                        options={allSeasons.map((value) => ({ value, label: `Season ${value}` }))}
-                    />
-                )}
-                {activeTab === 'final' && (
-                    <SelectPill
-                        label="Week"
-                        value={week}
-                        onChange={(next) => changeWeek(next === 'postseason' ? 'postseason' : Number(next))}
-                        options={weekOptions}
-                    />
-                )}
-                <SelectPill
-                    label="Conference"
-                    value={conference}
-                    onChange={changeConference}
-                    options={conferenceOptions}
-                />
-                <SelectPill
-                    label="Rank"
-                    value={rankedOnly ? 'ranked' : 'all'}
-                    onChange={changeRanked}
-                    options={[
-                        { value: 'all', label: 'All games' },
-                        { value: 'ranked', label: 'Top 25 only' },
-                    ]}
-                />
-                {(activeTab === 'live' || activeTab === 'final') && (
-                    <>
-                        <Box
-                            component="input"
-                            list="scoreboard-team-options"
-                            placeholder="Search team…"
-                            aria-label="Search team"
-                            value={searchTeam}
-                            onChange={(event) => changeSearchTeam(event.target.value)}
-                            sx={{
-                                height: '34px',
-                                boxSizing: 'border-box',
-                                border: '1px solid var(--line)',
-                                background: 'var(--surface)',
-                                color: 'var(--text)',
-                                borderRadius: 'var(--r-sm)',
-                                padding: '0 10px',
-                                font: 'inherit',
-                                fontSize: '0.8rem',
-                                fontWeight: 700,
-                                minWidth: 170,
-                                '&::placeholder': { color: 'var(--text-dim)', fontWeight: 400 },
-                            }}
-                        />
-                        <datalist id="scoreboard-team-options">
-                            {teamOptions.map((team) => (
-                                <option key={team.name} value={team.name} />
-                            ))}
-                        </datalist>
-                    </>
-                )}
+                <ViewToggle value={view} onChange={setView} />
             </PageHeading>
+            <Box sx={toolbarSx}>
+                <SegTabs value={activeTab} onChange={changeTab} options={TABS} ariaLabel="Scoreboard filter" />
+                <Box sx={{ display: 'flex', gap: '9px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {activeTab === 'final' && allSeasons.length > 0 && (
+                        <SelectPill
+                            label="Season"
+                            value={season ?? ''}
+                            onChange={(next) => changeSeason(Number(next))}
+                            options={allSeasons.map((value) => ({ value, label: `Season ${value}` }))}
+                        />
+                    )}
+                    {activeTab === 'final' && (
+                        <SelectPill
+                            label="Week"
+                            value={week}
+                            onChange={(next) => changeWeek(next === 'postseason' ? 'postseason' : Number(next))}
+                            options={weekOptions}
+                        />
+                    )}
+                    <ConferencePill
+                        label="Conference"
+                        value={conference}
+                        onChange={changeConference}
+                        options={conferenceOptions}
+                    />
+                    <SelectPill
+                        label="Rank"
+                        value={rankedOnly ? 'ranked' : 'all'}
+                        onChange={changeRanked}
+                        options={[
+                            { value: 'all', label: 'All games' },
+                            { value: 'ranked', label: 'Top 25 only' },
+                        ]}
+                    />
+                    {(activeTab === 'live' || activeTab === 'final') && (
+                        <TeamFilterPill
+                            value={searchTeam}
+                            onChange={changeSearchTeam}
+                            teams={teamOptions}
+                            allValue=""
+                        />
+                    )}
+                </Box>
+            </Box>
+            {activeTab === 'live' && <AroundFcfb />}
 
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
@@ -451,13 +459,28 @@ const Scoreboard = () => {
                 <EmptyPanel title={emptyCopy.title} note={emptyCopy.note} />
             ) : (
                 <>
-                    <Box
-                        sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: '14px' }}
-                    >
-                        {games.map((game) => (
-                            <GameCard key={game.game_id} game={game} teamsMap={teamsMap} statsByGame={statsByGame} />
-                        ))}
-                    </Box>
+                    {view === 'compact' ? (
+                        <Box ref={fitRef}>
+                            <CompactGameGrid games={games} />
+                        </Box>
+                    ) : (
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+                                gap: '14px',
+                            }}
+                        >
+                            {games.map((game) => (
+                                <GameCard
+                                    key={game.game_id}
+                                    game={game}
+                                    teamsMap={teamsMap}
+                                    statsByGame={statsByGame}
+                                />
+                            ))}
+                        </Box>
+                    )}
                     {pageCount > 1 && (
                         <Box sx={{ mt: '18px' }}>
                             <Pager page={page} pageCount={pageCount} onChange={changePage} />

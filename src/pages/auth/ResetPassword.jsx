@@ -5,27 +5,8 @@ import { resetPassword } from '../../api/authApi';
 import { isStrongPassword } from '../../utils/validations';
 import PageWrap from '../../components/layout/PageWrap';
 import logo from '../../assets/graphics/main_logo.png';
+import { inputSx, labelSx } from '../../styles/controls';
 
-const labelSx = {
-    display: 'block',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    mb: '5px',
-};
-const inputSx = {
-    width: '100%',
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    py: '10px',
-    font: 'inherit',
-    fontSize: '0.88rem',
-};
 const btnBaseSx = {
     width: '100%',
     border: 0,

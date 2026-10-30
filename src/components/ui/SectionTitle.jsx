@@ -3,7 +3,7 @@ import { Box } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-const SectionTitle = ({ title, note, collapsible = false, collapsed = false, onToggle, sx }) => (
+const SectionTitle = ({ title, note, action, collapsible = false, collapsed = false, onToggle, sx }) => (
     <Box
         component={collapsible ? 'button' : 'div'}
         type={collapsible ? 'button' : undefined}
@@ -55,12 +55,14 @@ const SectionTitle = ({ title, note, collapsible = false, collapsed = false, onT
             {title}
         </Box>
         {note && <Box sx={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>{note}</Box>}
+        {action && <Box sx={{ ml: 'auto', alignSelf: 'center', my: '-8px' }}>{action}</Box>}
     </Box>
 );
 
 SectionTitle.propTypes = {
     title: PropTypes.node.isRequired,
     note: PropTypes.node,
+    action: PropTypes.node,
     collapsible: PropTypes.bool,
     collapsed: PropTypes.bool,
     onToggle: PropTypes.func,

@@ -33,7 +33,11 @@ jest.mock('../../config/api', () => ({ baseURL: 'https://example.test' }));
 jest.mock('../../config/discord', () => ({ clientId: 'client', redirectUri: 'https://example.test/login' }));
 jest.mock('../../api/authApi', () => ({ logout: jest.fn() }));
 jest.mock('../../api/conferenceApi', () => ({ getConferences: jest.fn().mockResolvedValue([]) }));
-jest.mock('../../hooks/useTeamsMap', () => ({ useTeamsMap: () => ({}) }));
+jest.mock('../../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    ensureTeam: jest.fn(),
+    useTeamsMap: () => ({}),
+}));
 jest.mock('../../context/ColorModeContext', () => ({ useColorMode: () => ({ mode: 'dark', setMode: jest.fn() }) }));
 jest.mock('../../hooks/useSeo', () => ({ useSeo: () => {} }));
 jest.mock('../../components/layout/PageWrap', () => ({

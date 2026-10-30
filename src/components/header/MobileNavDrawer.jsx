@@ -3,7 +3,7 @@ import { Drawer, Box, List, ListItem, ListItemButton, ListItemText, Divider } fr
 import { useLocation, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import mainLogo from '../../assets/graphics/main_logo.png';
-import { NAV_ITEMS, ANALYTICS_ITEMS, TOOLS_ITEMS } from './navConfig';
+import { NAV_ITEMS, NAV_MENUS } from './navConfig';
 
 const NavSection = ({ title, items, go, isActive, itemSx }) => (
     <>
@@ -97,8 +97,16 @@ const MobileNavDrawer = ({ open, onClose, isAuthenticated, isAdmin, onLogout }) 
                 )}
             </List>
             <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)', my: 1 }} />
-            <NavSection title="Analytics" items={ANALYTICS_ITEMS} go={go} isActive={isActive} itemSx={itemSx} />
-            <NavSection title="Tools" items={TOOLS_ITEMS} go={go} isActive={isActive} itemSx={itemSx} />
+            {NAV_MENUS.map((menu) => (
+                <NavSection
+                    key={menu.label}
+                    title={menu.label}
+                    items={menu.items}
+                    go={go}
+                    isActive={isActive}
+                    itemSx={itemSx}
+                />
+            ))}
             <List>
                 {isAuthenticated ? (
                     <>

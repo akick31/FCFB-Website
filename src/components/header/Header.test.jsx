@@ -8,7 +8,11 @@ import { useNavigate } from 'react-router-dom';
 jest.mock('react-router-dom', () => ({ useNavigate: jest.fn() }));
 jest.mock('../../api/apiClient', () => ({ post: jest.fn() }));
 jest.mock('../../api/userApi', () => ({ getUserById: jest.fn() }));
-jest.mock('../../hooks/useTeamsMap', () => ({ useTeamsMap: () => ({}), ensureTeam: jest.fn() }));
+jest.mock('../../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    useTeamsMap: () => ({}),
+    ensureTeam: jest.fn(),
+}));
 jest.mock('../../hooks/useConferencesMap', () => ({ useConferencesMap: jest.fn() }));
 jest.mock('./CommandBar', () => ({
     __esModule: true,

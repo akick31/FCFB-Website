@@ -1,0 +1,30 @@
+export const chipSx = (active) => ({
+    border: '1px solid',
+    borderColor: active ? 'var(--brand)' : 'var(--line)',
+    background: active ? 'var(--surface-2)' : 'transparent',
+    color: active ? 'var(--text)' : 'var(--text-muted)',
+    borderRadius: '999px',
+    px: '10px',
+    height: '28px',
+    font: 'inherit',
+    fontSize: '0.74rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+});
+
+export const partTabSx = (active) => ({
+    border: 0,
+    borderBottom: '2px solid',
+    borderColor: active ? 'var(--brand)' : 'transparent',
+    background: 'transparent',
+    color: active ? 'var(--text)' : 'var(--text-muted)',
+    px: '2px',
+    height: '34px',
+    font: 'inherit',
+    fontSize: '0.78rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    '&:hover': { color: 'var(--text)' },
+});

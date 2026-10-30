@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 import { getConferenceLogoColors } from '../../../api/teamAppearanceApi';
+import { selectSx } from '../../../styles/controls';
 
 const TOKENS = [
     { value: 'KEEP', label: 'Keep original' },
@@ -11,16 +12,6 @@ const TOKENS = [
     { value: 'WHITE', label: 'White' },
     { value: 'BLACK', label: 'Black' },
 ];
-const selectSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '8px',
-    height: '32px',
-    font: 'inherit',
-    fontSize: '0.8rem',
-};
 
 const parseMap = (value) => {
     if (!value) {

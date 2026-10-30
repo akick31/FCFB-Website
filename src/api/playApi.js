@@ -111,3 +111,8 @@ export const getUserDelayOfGameInstances = async (season, week) => {
         throw new Error('An unexpected error occurred while fetching user delay of game instances');
     }
 };
+
+export const getPlayById = async (playId) => {
+    const response = await apiClient.get('/play', { params: { playId } });
+    return response.data;
+};

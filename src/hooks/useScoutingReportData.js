@@ -75,7 +75,7 @@ const useScoutingReportData = ({
         () =>
             users
                 .filter((user) => user.discord_id)
-                .map((user) => ({ value: user.discord_id, label: userLabel(user) }))
+                .map((user) => ({ value: user.discord_id, label: userLabel(user), team: user.team || undefined }))
                 .sort((a, b) => a.label.localeCompare(b.label)),
         [users]
     );

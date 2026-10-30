@@ -1,33 +1,29 @@
 import React, { useMemo, useState } from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 import Panel from '../../ui/Panel';
+import PagedFooter from '../../ui/PagedFooter';
+import usePagedRows from '../../../hooks/usePagedRows';
+import useFitCount from '../../../hooks/useFitCount';
 import SegTabs from '../../ui/SegTabs';
-import SelectPill from '../../ui/SelectPill';
 import StatusPill from '../../ui/StatusPill';
 import { describePlay, formatDownDistanceSpot } from '../../../utils/formatPlay';
-import { getPlayAnimationUrl } from '../../../api/playAnimationApi';
-
-const COUNT_OPTIONS = [
-    { value: '5', label: 'Last 5' },
-    { value: '10', label: 'Last 10' },
-    { value: '25', label: 'Last 25' },
-    { value: '50', label: 'Last 50' },
-    { value: 'all', label: 'All plays' },
-];
+import PlayAnimation from '../play/PlayAnimation';
 
 const PlayRow = ({ play, homeAbbr, awayAbbr, homeName, awayName }) => {
     const [showHighlight, setShowHighlight] = useState(false);
     const spot = formatDownDistanceSpot(play, homeAbbr, awayAbbr);
     const description = describePlay(play, { homeName, awayName });
     const teamAbbr = play.possession === 'HOME' ? homeAbbr : awayAbbr;
-    const hasNumbers = play.offensive_number != null && play.defensive_number != null;
+    const hasNumbers = play.play_finished && play.offensive_number != null && play.defensive_number != null;
     const playId = play.play_id;
     return (
         <Box
+            data-play-row
             sx={{
                 px: 1.75,
-                py: 1,
+                py: 0.6,
                 borderBottom: '1px solid var(--line-soft)',
                 '&:last-of-type': { borderBottom: 'none' },
             }}
@@ -36,7 +32,11 @@ const PlayRow = ({ play, homeAbbr, awayAbbr, homeName, awayName }) => {
                 <Box component="b" sx={{ color: 'var(--text-dim)', fontSize: '0.64rem', width: 38, flex: '0 0 auto' }}>
                     {teamAbbr}
                 </Box>
-                <Box sx={{ flex: 1 }}>
+                <Box
+                    component={playId != null ? Link : 'span'}
+                    to={playId != null ? `/play-details/${playId}` : undefined}
+                    sx={{ flex: 1, color: 'inherit', textDecoration: 'none', '&:hover': { color: 'var(--brand)' } }}
+                >
                     {spot ? `${spot}. ` : ''}
                     {description}.
                     {play.scored && (
@@ -88,18 +88,10 @@ const PlayRow = ({ play, homeAbbr, awayAbbr, homeName, awayName }) => {
             )}
             {showHighlight && playId != null && (
                 <Box sx={{ mt: 1, ml: '48px' }}>
-                    <Box
-                        component="img"
-                        src={getPlayAnimationUrl(playId)}
-                        alt={`Animation of ${description}`}
-                        loading="lazy"
-                        sx={{
-                            width: '100%',
-                            maxWidth: 520,
-                            borderRadius: 'var(--r-sm)',
-                            border: '1px solid var(--line-soft)',
-                            display: 'block',
-                        }}
+                    <PlayAnimation
+                        playId={playId}
+                        description={description}
+                        sx={{ maxWidth: 520, borderRadius: 'var(--r-sm)', border: '1px solid var(--line-soft)' }}
                     />
                 </Box>
             )}
@@ -115,11 +107,10 @@ PlayRow.propTypes = {
     awayName: PropTypes.string,
 };
 
-const PlaysPanel = ({ plays, homeAbbr, awayAbbr, homeName, awayName }) => {
+const PlaysPanel = ({ plays, homeAbbr, awayAbbr, homeName, awayName, header, toolbar = true }) => {
     const [filter, setFilter] = useState('all');
     const [sort, setSort] = useState('new');
     const [search, setSearch] = useState('');
-    const [count, setCount] = useState('5');
 
     const ordered = useMemo(() => {
         const ascending = plays
@@ -150,94 +141,105 @@ const PlaysPanel = ({ plays, homeAbbr, awayAbbr, homeName, awayName }) => {
         return sort === 'new' ? [...result].reverse() : result;
     }, [ordered, filter, search, sort, homeAbbr, awayAbbr, homeName, awayName]);
 
-    const shown = count === 'all' ? filtered : filtered.slice(0, Number(count));
+    const [fitRef, pageSize] = useFitCount({
+        itemSelector: '[data-play-row]',
+        rowHeight: 56,
+        minRows: 3,
+        phoneCount: 15,
+    });
+    const {
+        page,
+        pageCount,
+        pageRows: shown,
+        setPage,
+    } = usePagedRows(filtered, pageSize, `${filter}|${search}|${sort}`);
 
     return (
-        <Panel header="Plays">
-            <Box
-                sx={{
-                    display: 'flex',
-                    gap: '8px',
-                    px: 1.75,
-                    py: 1.25,
-                    borderBottom: '1px solid var(--line-soft)',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                }}
-            >
-                <SegTabs
-                    ariaLabel="Play filter"
-                    value={filter}
-                    onChange={setFilter}
-                    options={[
-                        { value: 'all', label: 'All' },
-                        { value: 'scoring', label: 'Scoring' },
-                    ]}
-                />
-                <SelectPill label="Show" value={count} onChange={setCount} options={COUNT_OPTIONS} />
+        <Panel header={header}>
+            {toolbar && (
                 <Box
-                    component="button"
-                    type="button"
-                    onClick={() => setSort((s) => (s === 'new' ? 'old' : 'new'))}
                     sx={{
-                        border: '1px solid var(--line)',
-                        background: 'var(--surface-2)',
-                        color: 'var(--text-muted)',
-                        borderRadius: 'var(--r-sm)',
-                        px: 1.1,
-                        py: 0.5,
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
+                        display: 'flex',
+                        gap: '8px',
+                        px: 1.75,
+                        py: 1,
+                        borderBottom: '1px solid var(--line-soft)',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
                     }}
                 >
-                    {sort === 'new' ? '↓ Newest first' : '↑ Oldest first'}
-                </Box>
-                <Box
-                    component="input"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search plays (touchdown, first down…)"
-                    aria-label="Search plays"
-                    sx={{
-                        flex: 1,
-                        minWidth: 150,
-                        border: '1px solid var(--line)',
-                        background: 'var(--surface)',
-                        color: 'var(--text)',
-                        borderRadius: 'var(--r-sm)',
-                        px: 1.25,
-                        py: 0.75,
-                        font: 'inherit',
-                        fontSize: '0.8rem',
-                        '&::placeholder': { color: 'var(--text-dim)' },
-                    }}
-                />
-            </Box>
-            {shown.length === 0 ? (
-                <Box sx={{ p: 2.5, textAlign: 'center', color: 'var(--text-muted)' }}>No plays match.</Box>
-            ) : (
-                shown.map((play) => (
-                    <PlayRow
-                        key={play.play_id || play.play_number}
-                        play={play}
-                        homeAbbr={homeAbbr}
-                        awayAbbr={awayAbbr}
-                        homeName={homeName}
-                        awayName={awayName}
+                    <SegTabs
+                        ariaLabel="Play filter"
+                        value={filter}
+                        onChange={setFilter}
+                        options={[
+                            { value: 'all', label: 'All' },
+                            { value: 'scoring', label: 'Scoring' },
+                        ]}
                     />
-                ))
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={() => setSort((s) => (s === 'new' ? 'old' : 'new'))}
+                        sx={{
+                            border: '1px solid var(--line)',
+                            background: 'var(--surface-2)',
+                            color: 'var(--text-muted)',
+                            borderRadius: 'var(--r-sm)',
+                            px: 1.1,
+                            py: 0.5,
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                        }}
+                    >
+                        {sort === 'new' ? '↓ Newest first' : '↑ Oldest first'}
+                    </Box>
+                    <Box
+                        component="input"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search plays (touchdown, first down…)"
+                        aria-label="Search plays"
+                        sx={{
+                            flex: 1,
+                            minWidth: 150,
+                            border: '1px solid var(--line)',
+                            background: 'var(--surface)',
+                            color: 'var(--text)',
+                            borderRadius: 'var(--r-sm)',
+                            px: 1.25,
+                            py: 0.75,
+                            font: 'inherit',
+                            fontSize: '0.8rem',
+                            '&::placeholder': { color: 'var(--text-dim)' },
+                        }}
+                    />
+                </Box>
             )}
-            <Box
-                sx={{
-                    px: 1.75,
-                    py: 1.25,
-                    borderTop: '1px solid var(--line-soft)',
-                    color: 'var(--text-dim)',
-                    fontSize: '0.75rem',
-                }}
-            >
-                Showing {shown.length} of {filtered.length} plays
+            <Box ref={fitRef}>
+                {shown.length === 0 ? (
+                    <Box sx={{ p: 2.5, textAlign: 'center', color: 'var(--text-muted)' }}>No plays match.</Box>
+                ) : (
+                    shown.map((play) => (
+                        <PlayRow
+                            key={play.play_id || play.play_number}
+                            play={play}
+                            homeAbbr={homeAbbr}
+                            awayAbbr={awayAbbr}
+                            homeName={homeName}
+                            awayName={awayName}
+                        />
+                    ))
+                )}
+                <PagedFooter
+                    page={page}
+                    pageCount={pageCount}
+                    pageSize={pageSize}
+                    total={filtered.length}
+                    onChange={setPage}
+                    noun="plays"
+                />
             </Box>
         </Panel>
     );
@@ -249,6 +251,8 @@ PlaysPanel.propTypes = {
     awayAbbr: PropTypes.string,
     homeName: PropTypes.string,
     awayName: PropTypes.string,
+    header: PropTypes.node,
+    toolbar: PropTypes.bool,
 };
 
 export default PlaysPanel;

@@ -1,12 +1,21 @@
 /** @jest-environment jsdom */
 import React, { StrictMode } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import TeamManagement from './TeamManagement';
 import { getAllTeamsIncludingInactive, updateTeam } from '../../api/teamApi';
 import { getAllUsers } from '../../api/userApi';
 import { getEntireCoachTransactionLog } from '../../api/coachTransactionLogApi';
 
 let mockConferences;
+jest.mock('react-router-dom', () => {
+    global.TextEncoder = require('util').TextEncoder;
+    return jest.requireActual('react-router-dom');
+});
+jest.mock('../../components/admin/TeamEditDialog', () => ({
+    __esModule: true,
+    default: ({ teamId, onSaved }) => <button onClick={onSaved}>Save team {teamId}</button>,
+}));
 jest.mock('../../api/teamApi', () => ({
     getAllTeamsIncludingInactive: jest.fn(),
     updateTeam: jest.fn(),
@@ -16,7 +25,11 @@ jest.mock('../../api/teamApi', () => ({
 }));
 jest.mock('../../api/userApi', () => ({ getAllUsers: jest.fn() }));
 jest.mock('../../api/coachTransactionLogApi', () => ({ getEntireCoachTransactionLog: jest.fn() }));
-jest.mock('../../hooks/useTeamsMap', () => ({ useTeamsMap: () => ({}) }));
+jest.mock('../../hooks/useTeamsMap', () => ({
+    isTeamsListLoading: () => false,
+    ensureTeam: jest.fn(),
+    useTeamsMap: () => ({}),
+}));
 jest.mock('../../hooks/useConferencesMap', () => ({
     useConferencesMap: () => mockConferences,
     allConferenceList: () => Object.values(mockConferences),
@@ -42,14 +55,27 @@ jest.mock('../../components/ui/SelectPill', () => ({
         </select>
     ),
 }));
+jest.mock('../../components/ui/ConferencePill', () => ({
+    __esModule: true,
+    default: ({ label, options }) => (
+        <select aria-label={label}>
+            {options.map((option) => (
+                <option key={option.value}>{option.label}</option>
+            ))}
+        </select>
+    ),
+}));
 jest.mock('../../components/teamManagement/TeamsTable', () => ({
     __esModule: true,
-    default: ({ teams, effectiveActive, onToggleActive }) => (
+    default: ({ teams, effectiveActive, onToggleActive, onEditTeam }) => (
         <div>
             {teams.map((team) => (
-                <button key={team.name} onClick={() => onToggleActive(team)}>
-                    {team.name}: {String(effectiveActive(team))}
-                </button>
+                <div key={team.name}>
+                    <button onClick={() => onToggleActive(team)}>
+                        {team.name}: {String(effectiveActive(team))}
+                    </button>
+                    <button onClick={() => onEditTeam(team)}>Edit {team.name}</button>
+                </div>
             ))}
         </div>
     ),
@@ -62,7 +88,7 @@ jest.mock('../../components/teamManagement/HireCoachDialog', () => ({ __esModule
 jest.mock('../../components/teamManagement/FirePickerDialog', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../components/teamManagement/FireConfirmDialog', () => ({ __esModule: true, default: () => null }));
 
-const alpha = { name: 'Alpha', active: false, conference: 'A' };
+const alpha = { id: 7, name: 'Alpha', active: false, conference: 'A' };
 beforeEach(() => {
     jest.resetAllMocks();
     mockConferences = {};
@@ -73,14 +99,19 @@ beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 afterEach(() => jest.restoreAllMocks());
-const page = <TeamManagement user={{ username: 'Admin' }} />;
+const Page = () => (
+    <MemoryRouter>
+        <TeamManagement user={{ username: 'Admin' }} />
+    </MemoryRouter>
+);
+const page = <Page />;
 
 test('conference options follow the cache after a cold mount', async () => {
     const { rerender } = render(page);
     await act(async () => {});
     expect(screen.queryByRole('option', { name: 'Conference A' })).toBeNull();
     mockConferences = { A: { code: 'A', label: 'Conference A' } };
-    rerender(<TeamManagement user={{ username: 'Admin' }} />);
+    rerender(<Page />);
     expect(screen.getByRole('option', { name: 'Conference A' })).toBeTruthy();
 });
 
@@ -151,4 +182,13 @@ test('a reverted pending status remains visible and can be saved after the page 
     await act(async () => fireEvent.click(screen.getByText('Save status changes (1)')));
     expect(updateTeam.mock.calls).toEqual([[{ ...alpha, active: true }], [{ ...alpha, active: false }]]);
     expect(screen.getByText('Save status changes').disabled).toBe(true);
+});
+
+test('edit opens the team dialog and a save reloads the teams', async () => {
+    render(page);
+    await act(async () => {});
+    fireEvent.click(screen.getByText('Edit Alpha'));
+    await act(async () => fireEvent.click(screen.getByText('Save team 7')));
+    expect(screen.queryByText('Save team 7')).toBeNull();
+    expect(getAllTeamsIncludingInactive).toHaveBeenCalledTimes(2);
 });

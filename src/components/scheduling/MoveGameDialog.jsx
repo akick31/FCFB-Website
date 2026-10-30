@@ -1,80 +1,14 @@
 import React from 'react';
 import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
+import VenueField from './VenueField';
 import { camelOrSnakeField } from '../../utils/fieldHelper';
+import { labelSx, primaryButtonSx, secondaryButtonSx, selectSx } from '../../styles/controls';
 
 const TOTAL_WEEKS = 12;
 
-const selectSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    cursor: 'pointer',
-    '& option': { background: 'var(--surface)', color: 'var(--text)' },
-};
-const ctrlSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text-muted)',
-    borderRadius: 'var(--r-sm)',
-    px: '12px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.78rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:hover': { borderColor: 'var(--brand)', color: 'var(--text)' },
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
-const labelSx = {
-    display: 'block',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 800,
-    color: 'var(--text-dim)',
-    mb: '5px',
-};
-const inputSx = {
-    border: '1px solid var(--line)',
-    background: 'var(--surface-2)',
-    color: 'var(--text)',
-    borderRadius: 'var(--r-sm)',
-    px: '10px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    width: '100%',
-};
-const btnPrimarySx = {
-    border: 0,
-    background: 'var(--brand-deep)',
-    color: '#fff',
-    borderRadius: 'var(--r-sm)',
-    px: '16px',
-    height: '38px',
-    boxSizing: 'border-box',
-    font: 'inherit',
-    fontSize: '0.82rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    '&:disabled': { opacity: 0.6, cursor: 'default' },
-};
 const dialogPaperSx = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)' };
 const dialogTitleSx = { color: 'var(--text)', fontWeight: 800, fontSize: '1.05rem' };
-const errorTextSx = { mt: '4px', fontSize: '0.7rem', color: 'var(--live)' };
 
 const MoveGameDialog = ({
     open,
@@ -166,20 +100,15 @@ const MoveGameDialog = ({
                                     <Box component="label" sx={labelSx}>
                                         Venue
                                     </Box>
-                                    <Box
-                                        component="input"
+                                    <VenueField
                                         value={editVenue}
+                                        onChange={onEditVenueChange}
                                         disabled={scheduleLocked}
-                                        onChange={(e) => onEditVenueChange(e.target.value)}
-                                        placeholder="e.g., Mercedes-Benz Stadium, Atlanta, GA"
-                                        sx={{
-                                            ...inputSx,
-                                            borderColor: !editVenue.trim() ? 'var(--live)' : 'var(--line)',
-                                        }}
+                                        error={!editVenue.trim()}
+                                        helperText={
+                                            !editVenue.trim() ? 'Venue is required for a neutral site game' : ''
+                                        }
                                     />
-                                    {!editVenue.trim() && (
-                                        <Box sx={errorTextSx}>Venue is required for a neutral site game</Box>
-                                    )}
                                 </Box>
                             )}
 
@@ -188,7 +117,7 @@ const MoveGameDialog = ({
                                 type="button"
                                 onClick={onSaveEdits}
                                 disabled={scheduleLocked || savingEdits}
-                                sx={{ ...ctrlSx, justifyContent: 'center' }}
+                                sx={{ ...secondaryButtonSx, justifyContent: 'center' }}
                             >
                                 {savingEdits ? 'Saving...' : 'Save neutral site / venue'}
                             </Box>
@@ -202,15 +131,15 @@ const MoveGameDialog = ({
                     component="button"
                     type="button"
                     onClick={onDelete}
-                    sx={{ ...ctrlSx, color: 'var(--live)', mr: 'auto' }}
+                    sx={{ ...secondaryButtonSx, color: 'var(--live)', mr: 'auto' }}
                 >
                     Delete Game
                 </Box>
             )}
-            <Box component="button" type="button" onClick={onClose} sx={ctrlSx}>
+            <Box component="button" type="button" onClick={onClose} sx={secondaryButtonSx}>
                 Cancel
             </Box>
-            <Box component="button" type="button" onClick={onMove} sx={btnPrimarySx}>
+            <Box component="button" type="button" onClick={onMove} sx={primaryButtonSx}>
                 Move
             </Box>
         </DialogActions>

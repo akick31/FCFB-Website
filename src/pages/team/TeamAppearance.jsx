@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Alert, CircularProgress } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PropTypes from 'prop-types';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageWrap from '../../components/layout/PageWrap';
-import PageHeading from '../../components/ui/PageHeading';
-import SegTabs from '../../components/ui/SegTabs';
+import PageTabs from '../../components/ui/PageTabs';
 import TeamMark from '../../components/ui/TeamMark';
 import BackButton from '../../components/ui/BackButton';
 import AppearanceEditor from '../../components/team/appearance/AppearanceEditor';
@@ -182,33 +182,39 @@ const TeamAppearance = ({ user }) => {
     const panel = (key) => ({ sx: { display: tab === key ? 'block' : 'none' } });
 
     return (
-        <PageWrap>
-            <BackButton onBack={leave} />
-            <PageHeading
-                eyebrow={
-                    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                        <TeamMark team={team} size={20} />
-                        {teamName}
+        <PageWrap maxWidth={1440}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', py: '6px', mb: '6px' }}>
+                <Box
+                    component="button"
+                    type="button"
+                    onClick={leave}
+                    aria-label="Back"
+                    sx={{
+                        border: '1px solid var(--line)',
+                        background: 'transparent',
+                        color: 'var(--text-muted)',
+                        borderRadius: 'var(--r-sm)',
+                        width: 34,
+                        height: 34,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                    }}
+                >
+                    <ArrowBackIcon sx={{ fontSize: '1.1rem' }} />
+                </Box>
+                <TeamMark team={team} size={32} />
+                <Box component="h1" sx={{ m: 0, fontSize: '1.25rem', fontWeight: 900, lineHeight: 1.1, minWidth: 0 }}>
+                    {teamName}
+                    <Box
+                        component="span"
+                        sx={{ color: 'var(--text-dim)', fontWeight: 600, ml: '8px', fontSize: '0.95rem' }}
+                    >
+                        Team appearance
                     </Box>
-                }
-                title="Team appearance"
-            />
-            {!canEdit && (
-                <Alert severity="info" sx={{ mb: '16px' }}>
-                    You can only edit your own team&apos;s appearance. This is a read-only preview.
-                </Alert>
-            )}
-            <Box
-                sx={{
-                    mb: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                    flexWrap: 'wrap',
-                }}
-            >
-                <SegTabs value={tab} onChange={setTab} options={tabs} ariaLabel="Appearance section" />
+                </Box>
+                <Box sx={{ flex: 1 }} />
                 {canEdit && hasUnsaved && (
                     <Box
                         component="button"
@@ -221,10 +227,10 @@ const TeamAppearance = ({ user }) => {
                             color: '#fff',
                             borderRadius: 'var(--r-sm)',
                             px: '16px',
-                            height: '38px',
+                            height: '34px',
                             boxSizing: 'border-box',
                             font: 'inherit',
-                            fontSize: '0.85rem',
+                            fontSize: '0.82rem',
                             fontWeight: 700,
                             cursor: 'pointer',
                             '&:disabled': { opacity: 0.6, cursor: 'default' },
@@ -234,6 +240,12 @@ const TeamAppearance = ({ user }) => {
                     </Box>
                 )}
             </Box>
+            <PageTabs value={tab} onChange={setTab} options={tabs} ariaLabel="Appearance section" />
+            {!canEdit && (
+                <Alert severity="info" sx={{ mb: '10px', py: 0 }}>
+                    You can only edit your own team&apos;s appearance. This is a read-only preview.
+                </Alert>
+            )}
             {uniform && (
                 <Box {...panel('uniform')}>
                     <AppearanceEditor
@@ -246,13 +258,25 @@ const TeamAppearance = ({ user }) => {
                         teamColors={colors}
                         canEdit={canEdit}
                         previewGroups={[
-                            { title: 'Primary helmet', views: [{ view: 'HELMET' }] },
-                            { title: 'Home jersey', views: [{ view: 'JERSEY' }] },
-                            { title: 'Away jersey', views: [{ view: 'AWAY_JERSEY' }] },
+                            {
+                                title: 'Primary helmet',
+                                views: [{ view: 'HELMET' }],
+                                when: (part) => part.section === 'Helmet',
+                            },
                             {
                                 title: 'Secondary helmet',
                                 views: [{ view: 'SECONDARY_HELMET' }],
-                                note: 'Worn by the away team when both shells clash.',
+                                when: (part) => part.section === 'Secondary helmet',
+                            },
+                            {
+                                title: 'Home jersey',
+                                views: [{ view: 'JERSEY' }],
+                                when: (part) => part.section === 'Jersey' && part.group !== 'Away',
+                            },
+                            {
+                                title: 'Away jersey',
+                                views: [{ view: 'AWAY_JERSEY' }],
+                                when: (part) => part.section === 'Jersey' && part.group === 'Away',
                             },
                         ]}
                         onDirtyChange={setTabDirty('uniform')}
@@ -282,10 +306,11 @@ const TeamAppearance = ({ user }) => {
                             {
                                 title: 'Field',
                                 views: [{ view: 'FIELD' }],
-                                note: 'Unsaved edits shown here. Save to apply.',
+                                when: (part) => !['Wall', 'Goal post'].includes(part.section),
                             },
                             {
                                 title: 'End zone backdrops',
+                                when: (part) => ['Wall', 'Goal post'].includes(part.section),
                                 views: [
                                     { view: 'LEFT_WALL', label: 'Left wall' },
                                     { view: 'RIGHT_WALL', label: 'Right wall' },

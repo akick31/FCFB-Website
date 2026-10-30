@@ -15,6 +15,7 @@ import {
     TextField,
 } from '@mui/material';
 import PropTypes from 'prop-types';
+import TeamName from '../ui/TeamName';
 
 const HireCoachDialog = ({
     open,
@@ -31,7 +32,9 @@ const HireCoachDialog = ({
     onHire,
 }) => (
     <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
-        <DialogTitle>Hire Coach for {teamName}</DialogTitle>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Hire coach for <TeamName name={teamName} size={22} />
+        </DialogTitle>
         <DialogContent>
             <Box sx={{ pt: 2 }}>
                 <Autocomplete

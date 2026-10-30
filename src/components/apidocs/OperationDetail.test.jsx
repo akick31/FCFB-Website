@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import axios from 'axios';
 import OperationDetail from './OperationDetail';
 
+jest.mock('../ui/TeamMark', () => ({ __esModule: true, default: () => null }));
 jest.mock('axios', () => ({ request: jest.fn() }));
 jest.mock('../../api/apiDocsApi', () => ({ backendRoot: 'https://backend.test' }));
 jest.mock('./useApiExplorerLookups', () => ({ useApiExplorerLookups: () => ({}) }));

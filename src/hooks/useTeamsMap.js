@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getAllTeams, getTeamByName } from '../api/teamApi';
-
-const toDarkLogo = (logo) => (logo && logo.includes('/500/') ? logo.replace('/500/', '/500-dark/') : logo);
+import { toDarkLogo } from '../utils/teamLogo';
 
 export const toEntry = (team) => ({
     id: team.id,
@@ -46,6 +45,8 @@ const loadBulk = () => {
             bulkInflight = null;
         });
 };
+
+export const isTeamsListLoading = () => Boolean(bulkInflight);
 
 export const ensureTeam = (name) => {
     if (!name || lazy[name] || lazyInflight[name] || (bulk && bulk[name])) {

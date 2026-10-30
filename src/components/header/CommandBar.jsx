@@ -4,7 +4,7 @@ import { Menu as MenuIcon, Person, Logout, SportsFootball } from '@mui/icons-mat
 import { useLocation, Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import mainLogo from '../../assets/graphics/main_logo.png';
-import { NAV_ITEMS, ANALYTICS_ITEMS, TOOLS_ITEMS } from './navConfig';
+import { NAV_ITEMS, NAV_MENUS } from './navConfig';
 import { clickableProps } from '../../utils/a11y';
 import TeamMark from '../ui/TeamMark';
 import NavDropdown from './NavDropdown';
@@ -98,8 +98,9 @@ const CommandBar = ({ isAuthenticated, isAdmin, user, team, onMobileOpen, onLogo
                         {item.label}
                     </Button>
                 ))}
-                <NavDropdown label="Analytics" items={ANALYTICS_ITEMS} onNavigate={closeUserMenu} />
-                <NavDropdown label="Tools" items={TOOLS_ITEMS} onNavigate={closeUserMenu} />
+                {NAV_MENUS.map((menu) => (
+                    <NavDropdown key={menu.label} label={menu.label} items={menu.items} onNavigate={closeUserMenu} />
+                ))}
                 {isAdmin && (
                     <Button
                         component={Link}

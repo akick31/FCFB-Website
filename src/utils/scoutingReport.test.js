@@ -136,3 +136,15 @@ test('the derived fields drive custom filters', () => {
     expect(between.map((entry) => entry.play_number)).toEqual([2]);
     expect(trailing.map((entry) => entry.play_number)).toEqual([2, 3, 4]);
 });
+
+test('special teams plays split into offense and defense like any other play', () => {
+    const kicks = [
+        { play_call: 'PUNT', offensive_submitter_id: 'me', defensive_submitter_id: 'them' },
+        { play_call: 'KICKOFF_NORMAL', offensive_submitter_id: 'them', defensive_submitter_id: 'me' },
+    ];
+    const offense = applyScenarioFilters(kicks, { mode: 'coach', target: 'me', sides: ['OFFENSE'] });
+    const defense = applyScenarioFilters(kicks, { mode: 'coach', target: 'me', sides: ['DEFENSE'] });
+    expect(offense.map((play) => play.play_call)).toEqual(['PUNT']);
+    expect(defense.map((play) => play.play_call)).toEqual(['KICKOFF_NORMAL']);
+    expect(applyScenarioFilters(kicks, { mode: 'coach', target: 'me', sides: ['SPECIAL_TEAMS'] })).toHaveLength(2);
+});
