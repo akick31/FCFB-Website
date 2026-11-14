@@ -136,3 +136,29 @@ export const renderStadiumPreview = async (body) => {
         throw failure(error, 'Failed to render the stadium preview');
     }
 };
+
+const gameFieldRequests = new Map();
+
+const loadGameField = async (gameId) => {
+    const response = await apiClient.get('/appearance-preview/game-field', {
+        params: { gameId },
+        responseType: 'blob',
+    });
+    return {
+        url: URL.createObjectURL(response.data),
+        width: Number(response.headers['x-field-width']),
+        height: Number(response.headers['x-field-height']),
+        margin: Number(response.headers['x-field-margin']),
+    };
+};
+
+export const getGameField = (gameId) => {
+    if (!gameFieldRequests.has(gameId)) {
+        const request = loadGameField(gameId).catch((error) => {
+            gameFieldRequests.delete(gameId);
+            throw failure(error, 'Failed to load the game field');
+        });
+        gameFieldRequests.set(gameId, request);
+    }
+    return gameFieldRequests.get(gameId);
+};

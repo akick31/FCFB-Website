@@ -492,6 +492,7 @@ const GameDetails = ({ isAdmin }) => {
                         <Box sx={{ p: 2 }}>
                             <DriveFieldChart
                                 drive={currentDrive}
+                                gameId={game.game_id}
                                 homeMark={homeMark}
                                 awayMark={awayMark}
                                 homeColor={homeColor}
@@ -503,6 +504,7 @@ const GameDetails = ({ isAdmin }) => {
                         header="Plays this drive"
                         toolbar={false}
                         plays={currentDrive.plays}
+                        gamePlays={plays}
                         homeAbbr={homeMark?.abbreviation}
                         awayAbbr={awayMark?.abbreviation}
                         homeName={game.home_team}
@@ -535,8 +537,6 @@ const GameDetails = ({ isAdmin }) => {
                                     >
                                         <WinProbChart
                                             series={wpSeries}
-                                            homeColor={homeColor}
-                                            awayColor={awayColor}
                                             homeMark={homeMark}
                                             awayMark={awayMark}
                                             quarterMarks={wpMarks}
@@ -673,6 +673,7 @@ const GameDetails = ({ isAdmin }) => {
                     {viewedDrive && (
                         <DriveFieldChart
                             drive={viewedDrive}
+                            gameId={game.game_id}
                             homeMark={homeMark}
                             awayMark={awayMark}
                             homeColor={homeColor}

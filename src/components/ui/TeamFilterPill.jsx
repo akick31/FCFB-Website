@@ -2,6 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import TeamSelect from './TeamSelect';
+import { PILL_HEIGHT } from '../../styles/controls';
 
 const TeamFilterPill = ({
     value,
@@ -17,7 +18,7 @@ const TeamFilterPill = ({
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            height: '38px',
+            height: PILL_HEIGHT,
             boxSizing: 'border-box',
             border: '1px solid var(--line)',
             background: 'var(--surface)',
@@ -48,7 +49,8 @@ const TeamFilterPill = ({
             sx={{
                 flex: 1,
                 '& .MuiOutlinedInput-notchedOutline': { border: 0 },
-                '& .MuiOutlinedInput-root': { py: 0, pl: '2px' },
+                '& .MuiOutlinedInput-root': { py: 0, pl: '2px', height: `calc(${PILL_HEIGHT} - 2px)` },
+                '& .MuiAutocomplete-input': { py: 0 },
                 '& .MuiInputBase-input': { fontWeight: 700, fontSize: '0.8rem' },
             }}
         />

@@ -1,5 +1,5 @@
 import { camelOrSnakeField } from '../../../utils/fieldHelper';
-import { pickTeamColor } from '../../../utils/teamColor';
+import { matchupColorsFor } from '../../../utils/chartColor';
 import { conferenceLabel } from '../../../hooks/useConferencesMap';
 import { gameHeaderTitle } from '../../../utils/gameDetail';
 
@@ -32,6 +32,11 @@ export const spreadTextOf = (game, homeMark) =>
         ? `${homeMark?.abbreviation} ${game.home_vegas_spread > 0 ? '+' : ''}${game.home_vegas_spread}`
         : null;
 
+const matchupColorProps = (homeMark, awayMark, mode) => {
+    const { home, away } = matchupColorsFor(homeMark, awayMark, mode);
+    return { homeColor: home, awayColor: away };
+};
+
 export const buildScoreboardProps = ({
     game,
     awayMark,
@@ -46,8 +51,7 @@ export const buildScoreboardProps = ({
     awayMark,
     homeMark,
     homeTeam,
-    awayColor: pickTeamColor(awayMark, mode),
-    homeColor: pickTeamColor(homeMark, mode),
+    ...matchupColorProps(homeMark, awayMark, mode),
     spreadText: spreadTextOf(game, homeMark),
     subtitle: gameHeaderTitle(game, conferenceLabel(homeTeam?.conference)),
     threadLink:

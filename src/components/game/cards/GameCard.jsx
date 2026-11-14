@@ -9,6 +9,7 @@ import StatusPill from '../../ui/StatusPill';
 import GameTypeLabel from './GameTypeLabel';
 import { useColorMode } from '../../../context/ColorModeContext';
 import { pickTeamColor } from '../../../utils/teamColor';
+import { matchupColorsFor } from '../../../utils/chartColor';
 import { isGameOngoing, formatBallLocationWithTeam } from '../scoreboard/utils/scoreboardFormatters';
 import { formatScoreboardQuarter, formatDownAndDistance } from '../../../utils/gameUtils';
 import { describePlay } from '../../../utils/formatPlay';
@@ -194,6 +195,8 @@ const GameCard = ({ game, teamsMap, compact = false, statsByGame }) => {
     const leaderIsHome = homePct != null && homePct >= 50;
     const leaderPct = homePct != null ? Math.max(homePct, 100 - homePct) : null;
     const leaderTeam = leaderIsHome ? homeTeam : awayTeam;
+    const winProbColors = matchupColorsFor(home, away, mode);
+    const leaderColor = leaderIsHome ? winProbColors.home : winProbColors.away;
 
     const previousPlayText =
         ongoing && play ? describePlay(play, { homeName: game.home_team, awayName: game.away_team }) : null;
@@ -399,7 +402,7 @@ const GameCard = ({ game, teamsMap, compact = false, statsByGame }) => {
                                     fontWeight: 800,
                                 }}
                             >
-                                <Box component="span" sx={{ color: leaderTeam.__stripe }}>
+                                <Box component="span" sx={{ color: leaderColor }}>
                                     {leaderTeam.abbreviation} {leaderPct}% win probability
                                 </Box>
                                 <Box
@@ -415,8 +418,8 @@ const GameCard = ({ game, teamsMap, compact = false, statsByGame }) => {
                                 </Box>
                             </Box>
                             <Box sx={{ height: 6, borderRadius: '3px', display: 'flex', overflow: 'hidden' }}>
-                                <Box sx={{ width: `${100 - homePct}%`, backgroundColor: awayTeam.__stripe }} />
-                                <Box sx={{ width: `${homePct}%`, backgroundColor: homeTeam.__stripe }} />
+                                <Box sx={{ width: `${100 - homePct}%`, backgroundColor: winProbColors.away }} />
+                                <Box sx={{ width: `${homePct}%`, backgroundColor: winProbColors.home }} />
                             </Box>
                         </Box>
                     )}

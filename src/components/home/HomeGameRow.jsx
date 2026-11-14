@@ -7,7 +7,7 @@ import GameTypeLabel from '../game/cards/GameTypeLabel';
 import useLivePlay from '../../hooks/useLivePlay';
 import { useTeamsMap } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../context/ColorModeContext';
-import { pickTeamColor } from '../../utils/teamColor';
+import { matchupColorsFor } from '../../utils/chartColor';
 import { homeWinProbability } from '../../utils/winProbability';
 import { describePlay } from '../../utils/formatPlay';
 import { formatBallLocationWithTeam, isGameOngoing } from '../game/scoreboard/utils/scoreboardFormatters';
@@ -95,6 +95,7 @@ const HomeGameRow = ({ game }) => {
     const play = useLivePlay(game, ongoing);
     const home = teamsMap[game.home_team];
     const away = teamsMap[game.away_team];
+    const matchupColors = matchupColorsFor(home, away, mode);
     const homeProbability = ongoing ? homeWinProbability(game, play) : null;
     const situation =
         ongoing && game.down
@@ -169,8 +170,8 @@ const HomeGameRow = ({ game }) => {
                                 homePct={Math.round(homeProbability * 100)}
                                 homeName={home?.abbreviation || game.home_team}
                                 awayName={away?.abbreviation || game.away_team}
-                                homeColor={pickTeamColor(home, mode)}
-                                awayColor={pickTeamColor(away, mode)}
+                                homeColor={matchupColors.home}
+                                awayColor={matchupColors.away}
                             />
                         )}
                     </>

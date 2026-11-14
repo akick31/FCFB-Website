@@ -4,17 +4,21 @@ import { getHistoryWeek } from '../api/historyApi';
 
 const REFRESH_MS = 120000;
 
+const weekNumber = (raw) =>
+    typeof raw === 'number' ? raw : (raw?.week ?? raw?.current_week ?? raw?.currentWeek ?? null);
+
 const useAroundFcfb = () => {
     const [week, setWeek] = useState(null);
 
     useEffect(() => {
         let active = true;
         const load = async () => {
-            const [season, current] = await Promise.all([
+            const [season, rawWeek] = await Promise.all([
                 getCurrentSeason().catch(() => null),
                 getCurrentWeek().catch(() => null),
             ]);
-            if (!season || !current) {
+            const current = weekNumber(rawWeek);
+            if (!season || current == null) {
                 return;
             }
             const loaded = await getHistoryWeek(season, current).catch(() => null);

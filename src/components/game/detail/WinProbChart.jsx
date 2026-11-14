@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import TeamMark from '../../ui/TeamMark';
-import { pickChartColor } from '../../../utils/chartColor';
+import { pickMatchupColors } from '../../../utils/chartColor';
 import { TOKENS } from '../../../styles/tokens';
 import { useColorMode } from '../../../context/ColorModeContext';
 
@@ -58,23 +58,12 @@ const WinShare = ({ mark, percent, alignEnd = false }) => (
 
 WinShare.propTypes = { mark: PropTypes.object, percent: PropTypes.number.isRequired, alignEnd: PropTypes.bool };
 
-const WinProbChart = ({ series, homeColor, awayColor, homeMark, awayMark, quarterMarks }) => {
+const WinProbChart = ({ series, homeMark, awayMark, quarterMarks }) => {
     const [hover, setHover] = useState(null);
     const { mode } = useColorMode();
     const background = TOKENS[mode].surface;
     const fallback = mode === 'dark' ? '#ffffff' : TOKENS.light.text;
-    const homePlotColor = pickChartColor(
-        homeMark?.primaryColor || homeColor,
-        homeMark?.secondaryColor,
-        background,
-        fallback
-    );
-    const awayPlotColor = pickChartColor(
-        awayMark?.primaryColor || awayColor,
-        awayMark?.secondaryColor,
-        background,
-        fallback
-    );
+    const { home: homePlotColor, away: awayPlotColor } = pickMatchupColors(homeMark, awayMark, background, fallback);
     if (series.length < 2) {
         return null;
     }
@@ -252,8 +241,6 @@ const WinProbChart = ({ series, homeColor, awayColor, homeMark, awayMark, quarte
 
 WinProbChart.propTypes = {
     series: PropTypes.array.isRequired,
-    homeColor: PropTypes.string.isRequired,
-    awayColor: PropTypes.string.isRequired,
     homeMark: PropTypes.object,
     awayMark: PropTypes.object,
     quarterMarks: PropTypes.array.isRequired,

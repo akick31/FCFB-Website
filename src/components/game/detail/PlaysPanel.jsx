@@ -107,23 +107,27 @@ PlayRow.propTypes = {
     awayName: PropTypes.string,
 };
 
-const PlaysPanel = ({ plays, homeAbbr, awayAbbr, homeName, awayName, header, toolbar = true }) => {
+const PlaysPanel = ({ plays, gamePlays = plays, homeAbbr, awayAbbr, homeName, awayName, header, toolbar = true }) => {
     const [filter, setFilter] = useState('all');
     const [sort, setSort] = useState('new');
     const [search, setSearch] = useState('');
 
     const ordered = useMemo(() => {
-        const ascending = plays
-            .filter((play) => play.actual_result !== 'END_OF_GAME')
-            .sort((a, b) => (a.play_number || 0) - (b.play_number || 0));
+        const byPlayNumber = (a, b) => (a.play_number || 0) - (b.play_number || 0);
+        const scoredIds = new Set();
         let previousTotal = 0;
-        return ascending.map((play) => {
+        [...gamePlays].sort(byPlayNumber).forEach((play) => {
             const total = (play.home_score || 0) + (play.away_score || 0);
-            const scored = total > previousTotal;
+            if (total > previousTotal) {
+                scoredIds.add(play.play_id);
+            }
             previousTotal = total;
-            return { ...play, scored };
         });
-    }, [plays]);
+        return plays
+            .filter((play) => play.actual_result !== 'END_OF_GAME')
+            .sort(byPlayNumber)
+            .map((play) => ({ ...play, scored: scoredIds.has(play.play_id) }));
+    }, [plays, gamePlays]);
 
     const filtered = useMemo(() => {
         const query = search.trim().toLowerCase();
@@ -247,6 +251,7 @@ const PlaysPanel = ({ plays, homeAbbr, awayAbbr, homeName, awayName, header, too
 
 PlaysPanel.propTypes = {
     plays: PropTypes.array.isRequired,
+    gamePlays: PropTypes.array,
     homeAbbr: PropTypes.string,
     awayAbbr: PropTypes.string,
     homeName: PropTypes.string,

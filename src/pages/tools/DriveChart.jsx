@@ -13,7 +13,7 @@ import ScoreChart from '../../components/game/detail/ScoreChart';
 import DriveFieldChart from '../../components/game/detail/DriveFieldChart';
 import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
 import { useColorMode } from '../../context/ColorModeContext';
-import { pickTeamColor } from '../../utils/teamColor';
+import { matchupColorsFor } from '../../utils/chartColor';
 import { getFilteredGames, getGameById } from '../../api/gameApi';
 import { getAllPlaysByGameId } from '../../api/playApi';
 import { buildWinProbSeries, buildScoreSeries, quarterBoundaries, formatClock } from '../../utils/gameDetail';
@@ -208,8 +208,7 @@ const DriveChart = () => {
 
     const homeMark = game ? teamsMap[game.home_team] || toEntry({ name: game.home_team }) : null;
     const awayMark = game ? teamsMap[game.away_team] || toEntry({ name: game.away_team }) : null;
-    const homeColor = pickTeamColor(homeMark, mode);
-    const awayColor = pickTeamColor(awayMark, mode);
+    const { home: homeColor, away: awayColor } = matchupColorsFor(homeMark, awayMark, mode);
 
     const wpSeries = useMemo(() => buildWinProbSeries(orderedPlays), [orderedPlays]);
     const scoreSeries = useMemo(() => buildScoreSeries(orderedPlays), [orderedPlays]);
@@ -302,8 +301,6 @@ const DriveChart = () => {
                                     <Box sx={{ p: 2 }}>
                                         <WinProbChart
                                             series={wpSeries}
-                                            homeColor={homeColor}
-                                            awayColor={awayColor}
                                             homeMark={homeMark}
                                             awayMark={awayMark}
                                             quarterMarks={wpMarks}
@@ -462,6 +459,7 @@ const DriveChart = () => {
                     {viewedDrive && game && (
                         <DriveFieldChart
                             drive={viewedDrive}
+                            gameId={game.game_id}
                             homeMark={homeMark}
                             awayMark={awayMark}
                             homeColor={homeColor}
