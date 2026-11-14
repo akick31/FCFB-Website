@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { useColorMode } from '../../../theme/ColorModeContext';
 import { ordinalDown, formatDownDistanceSpot, describePlay } from '../../../utils/formatPlay';
 import { formatClock } from '../../../utils/gameDetail';
+import { pickMatchupColors } from '../../../utils/chartColor';
 
 const YARD_MARKS = [10, 20, 30, 40, 50, 40, 30, 20, 10];
 const MINOR_YARD_TICKS = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95];
@@ -63,6 +64,8 @@ const luminance = (hex) => {
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 };
 
+const TURF_COLOR = '#1a5c2a';
+
 const endZoneFill = (mark) => {
     const primary = mark?.primaryColor;
     const secondary = mark?.secondaryColor;
@@ -71,7 +74,7 @@ const endZoneFill = (mark) => {
     return primary || secondary || '#2a2a2a';
 };
 
-const DriveFieldChart = ({ drive = null, homeMark, awayMark, homeColor, awayColor }) => {
+const DriveFieldChart = ({ drive = null, homeMark, awayMark }) => {
     const { mode } = useColorMode();
     const [hoverIndex, setHoverIndex] = useState(null);
     if (!drive || drive.plays.length === 0) return null;
@@ -90,6 +93,7 @@ const DriveFieldChart = ({ drive = null, homeMark, awayMark, homeColor, awayColo
     const defenseMark = drive.possession === 'HOME' ? awayMark : homeMark;
     const offenseName = drive.possession === 'HOME' ? homeTeam : awayTeam;
     const defenseName = drive.possession === 'HOME' ? awayTeam : homeTeam;
+    const { home: homeColor, away: awayColor } = pickMatchupColors(homeMark, awayMark, TURF_COLOR);
     const driveColor = drive.possession === 'HOME' ? homeColor : awayColor;
     const isTouchdownDrive = drive.outcome.startsWith('Touchdown');
     const hoverRow = hoverIndex != null ? rows[hoverIndex] : null;
@@ -116,7 +120,7 @@ const DriveFieldChart = ({ drive = null, homeMark, awayMark, homeColor, awayColo
                 component="svg"
                 viewBox={`0 0 ${W} ${H}`}
                 preserveAspectRatio="none"
-                sx={{ width: '100%', height: 'auto', display: 'block', background: '#1a5c2a', borderRadius: 'var(--r-sm)' }}
+                sx={{ width: '100%', height: 'auto', display: 'block', background: TURF_COLOR, borderRadius: 'var(--r-sm)' }}
             >
                 <rect x={PAD_SIDE} y={0} width={END_ZONE_WIDTH} height={H} fill={endZoneFill(offenseMark)} />
                 <rect x={W - PAD_SIDE - END_ZONE_WIDTH} y={0} width={END_ZONE_WIDTH} height={H} fill={endZoneFill(defenseMark)} />
@@ -294,8 +298,6 @@ DriveFieldChart.propTypes = {
     }),
     homeMark: PropTypes.object,
     awayMark: PropTypes.object,
-    homeColor: PropTypes.string.isRequired,
-    awayColor: PropTypes.string.isRequired,
 };
 
 export default DriveFieldChart;

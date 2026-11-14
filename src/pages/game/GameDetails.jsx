@@ -284,7 +284,7 @@ const GameDetails = ({ isAdmin }) => {
                     <SectionTitle title="Current drive" note={`${currentDrive.team} · ${currentDrive.playCount} plays`} />
                     <Panel>
                         <Box sx={{ p: 2 }}>
-                            <DriveFieldChart drive={currentDrive} homeMark={homeMark} awayMark={awayMark} homeColor={homeColor} awayColor={awayColor} />
+                            <DriveFieldChart drive={currentDrive} homeMark={homeMark} awayMark={awayMark} />
                         </Box>
                     </Panel>
                 </Box>
@@ -346,18 +346,14 @@ const GameDetails = ({ isAdmin }) => {
                     {wpSeries.length > 1 ? (
                         <Panel header="Win probability" sx={{ display: 'flex', flexDirection: 'column' }}>
                             <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                <WinProbChart series={wpSeries} homeColor={homeColor} awayColor={awayColor} homeMark={homeMark} awayMark={awayMark} quarterMarks={wpMarks} />
+                                <WinProbChart series={wpSeries} homeMark={homeMark} awayMark={awayMark} quarterMarks={wpMarks} />
                             </Box>
                         </Panel>
                     ) : <span />}
                     {scoreSeries.length > 1 ? (
                         <Panel header="Score" sx={{ display: 'flex', flexDirection: 'column' }}>
                             <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                <ScoreChart series={scoreSeries} homeColor={homeColor} awayColor={awayColor} homeAbbr={homeMark?.abbreviation} awayAbbr={awayMark?.abbreviation} />
-                                <Box sx={{ display: 'flex', gap: 2, mt: 1, fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}><Box sx={{ width: 11, height: 3, borderRadius: '2px', background: awayColor }} />{awayMark?.name || game.away_team}</Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}><Box sx={{ width: 11, height: 3, borderRadius: '2px', background: homeColor }} />{homeMark?.name || game.home_team}</Box>
-                                </Box>
+                                <ScoreChart series={scoreSeries} homeMark={homeMark} awayMark={awayMark} homeName={homeMark?.name || game.home_team} awayName={awayMark?.name || game.away_team} />
                             </Box>
                         </Panel>
                     ) : <span />}
@@ -449,7 +445,7 @@ const GameDetails = ({ isAdmin }) => {
                 </DialogTitle>
                 <DialogContent dividers>
                     {viewedDrive && (
-                        <DriveFieldChart drive={viewedDrive} homeMark={homeMark} awayMark={awayMark} homeColor={homeColor} awayColor={awayColor} />
+                        <DriveFieldChart drive={viewedDrive} homeMark={homeMark} awayMark={awayMark} />
                     )}
                 </DialogContent>
             </Dialog>

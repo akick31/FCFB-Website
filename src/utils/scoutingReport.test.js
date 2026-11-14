@@ -1,4 +1,4 @@
-import { annotateScoutingFields, applyScenarioFilters, targetHasBall } from './scoutingReport';
+import { annotateScoutingFields, applyScenarioFilters, targetHasBall, coachedTeamOf } from './scoutingReport';
 
 const COACH = 'coach-1';
 const OPPONENT = 'coach-2';
@@ -135,4 +135,13 @@ test('the derived fields drive custom filters', () => {
 
     expect(between.map((entry) => entry.play_number)).toEqual([2]);
     expect(trailing.map((entry) => entry.play_number)).toEqual([2, 3, 4]);
+});
+
+test('the coached team follows the side the coach submitted for', () => {
+    const base = { home_team: 'UC Davis', away_team: 'Montana', possession: 'HOME' };
+
+    expect(coachedTeamOf({ ...base, offensive_submitter_id: COACH, defensive_submitter_id: OPPONENT }, COACH)).toBe('UC Davis');
+    expect(coachedTeamOf({ ...base, offensive_submitter_id: OPPONENT, defensive_submitter_id: COACH }, COACH)).toBe('Montana');
+    expect(coachedTeamOf({ ...base, possession: 'AWAY', offensive_submitter_id: COACH, defensive_submitter_id: OPPONENT }, COACH)).toBe('Montana');
+    expect(coachedTeamOf({ ...base, offensive_submitter_id: OPPONENT, defensive_submitter_id: 'coach-3' }, COACH)).toBeNull();
 });

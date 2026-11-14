@@ -1,8 +1,11 @@
 module.exports = {
-    preset: 'react-app', // Uses the default react-scripts config
     transform: {
-        '^.+\\.(js|jsx|mjs|cjs|ts|tsx)$': 'babel-jest', // Ensures Jest uses Babel to transform JS files
+        '^.+\\.(js|jsx|mjs|cjs)$': 'babel-jest',
     },
-    testEnvironment: 'jsdom', // Ensures tests run in a browser-like environment
-    moduleFileExtensions: ['js', 'jsx', 'mjs', 'json', 'node'], // Ensure Jest handles mjs (ESM) files
+    testEnvironment: 'node',
+    moduleFileExtensions: ['js', 'jsx', 'mjs', 'json', 'node'],
+    moduleNameMapper: {
+        '^(\\.{1,2}/)+config/api$': '<rootDir>/src/testUtils/stubs/apiConfig.js',
+        '\\.(png|jpe?g|gif|svg|webp)$': '<rootDir>/src/testUtils/stubs/fileStub.js',
+    },
 };

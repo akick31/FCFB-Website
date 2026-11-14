@@ -32,6 +32,7 @@
     "start": "vite",
     "build": "NODE_OPTIONS=--max_old_space_size=1536 vite build && NODE_OPTIONS=--max_old_space_size=1536 vite build --ssr src/entry-server.jsx --outDir dist-ssr && node scripts/prerender.mjs",
     "preview": "vite preview",
+    "test": "jest",
     "lint": "eslint src --ext .js,.jsx",
     "lint:fix": "eslint src --fix --ext .js,.jsx"
   },
