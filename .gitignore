@@ -24,15 +24,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Claude Code
-.claude/
-.agents/
-.aider.tags.cache*/
-
 # IDE
 .idea/
-
-/AGENTS.md
-/CLAUDE.md
-
-HANDOFF.md

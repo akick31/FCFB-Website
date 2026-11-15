@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useGameField } from '../../../hooks/useGameField';
+import { pickMatchupColors } from '../../../utils/chartColor';
 import { ordinalDown, formatDownDistanceSpot, describePlay } from '../../../utils/formatPlay';
 import { formatClock } from '../../../utils/gameDetail';
 
@@ -26,7 +27,7 @@ const fitRowTextX = (desiredX, text, fontSize, width) => {
     return Math.min(desiredX, width - BORDER_WIDTH - estimatedWidth);
 };
 
-const DriveFieldChart = ({ drive = null, gameId = null, homeMark, awayMark, homeColor, awayColor }) => {
+const DriveFieldChart = ({ drive = null, gameId = null, homeMark, awayMark }) => {
     const field = useGameField(gameId);
     const [hoverIndex, setHoverIndex] = useState(null);
     if (!drive || drive.plays.length === 0) {
@@ -57,6 +58,7 @@ const DriveFieldChart = ({ drive = null, gameId = null, homeMark, awayMark, home
         return { play, startAbs, endAbs };
     });
 
+    const { home: homeColor, away: awayColor } = pickMatchupColors(homeMark, awayMark, FALLBACK_TURF);
     const driveColor = offenseIsHome ? homeColor : awayColor;
     const isTouchdownDrive = drive.outcome.startsWith('Touchdown');
     const hoverRow = hoverIndex != null ? rows[hoverIndex] : null;
@@ -173,8 +175,6 @@ DriveFieldChart.propTypes = {
     gameId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     homeMark: PropTypes.object,
     awayMark: PropTypes.object,
-    homeColor: PropTypes.string.isRequired,
-    awayColor: PropTypes.string.isRequired,
 };
 
 export default DriveFieldChart;

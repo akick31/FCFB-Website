@@ -306,9 +306,18 @@ test('current head-to-head comparison preserves team arguments and URL', async (
 test('current tendency card preserves coach arguments and URL', async () => {
     render(<CoachTendencyCard />);
     await startCard();
-    expect(getCoachStats).toHaveBeenCalledWith('AlphaCoach');
+    expect(getCoachStats).toHaveBeenCalledWith('AlphaCoach', true);
     expect(getAllPlaysByDiscordId).toHaveBeenCalledWith('a');
-    expect(mockSetParams).toHaveBeenCalledWith({ coach: 'a', season: 'alltime' }, { replace: true });
+    expect(mockSetParams).toHaveBeenCalledWith({ coach: 'a', season: 'alltime', subs: '1' }, { replace: true });
+});
+
+test('tendency card can leave out sub games', async () => {
+    render(<CoachTendencyCard />);
+    await act(async () => {});
+    fireEvent.click(screen.getByRole('switch'));
+    await startCard();
+    expect(getCoachStats).toHaveBeenCalledWith('AlphaCoach', false);
+    expect(mockSetParams).toHaveBeenCalledWith({ coach: 'a', season: 'alltime', subs: '0' }, { replace: true });
 });
 
 test('preference failure is handled in the existing error area and can be retried', async () => {
@@ -387,7 +396,7 @@ test('current seasonal card retains the quiet game-read fallback', async () => {
     await startCard('14');
     expect(getGamesByIds).toHaveBeenCalledWith([]);
     expect(screen.queryByText('games unavailable')).toBeNull();
-    expect(mockSetParams).toHaveBeenCalledWith({ coach: 'a', season: '14' }, { replace: true });
+    expect(mockSetParams).toHaveBeenCalledWith({ coach: 'a', season: '14', subs: '1' }, { replace: true });
     expect(screen.getByRole('button', { name: 'Generate card' }).disabled).toBe(false);
 });
 

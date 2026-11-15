@@ -268,6 +268,14 @@ export const targetHasBall = (play, mode, target) => {
     );
 };
 
+export const coachedTeamOf = (play, target) => {
+    const hasBall = targetHasBall(play, 'coach', target);
+    if (hasBall == null) {
+        return null;
+    }
+    return (play.possession === 'HOME') === hasBall ? play.home_team : play.away_team;
+};
+
 const scoreMarginOf = (play, hasBall) => {
     if (hasBall == null) {
         return null;

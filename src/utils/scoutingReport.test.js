@@ -1,4 +1,4 @@
-import { annotateScoutingFields, applyScenarioFilters, targetHasBall } from './scoutingReport';
+import { annotateScoutingFields, applyScenarioFilters, targetHasBall, coachedTeamOf } from './scoutingReport';
 
 const COACH = 'coach-1';
 const OPPONENT = 'coach-2';
@@ -147,4 +147,24 @@ test('special teams plays split into offense and defense like any other play', (
     expect(offense.map((play) => play.play_call)).toEqual(['PUNT']);
     expect(defense.map((play) => play.play_call)).toEqual(['KICKOFF_NORMAL']);
     expect(applyScenarioFilters(kicks, { mode: 'coach', target: 'me', sides: ['SPECIAL_TEAMS'] })).toHaveLength(2);
+});
+
+test('the coached team follows the side the coach submitted for', () => {
+    const base = { home_team: 'UC Davis', away_team: 'Montana', possession: 'HOME' };
+
+    expect(coachedTeamOf({ ...base, offensive_submitter_id: COACH, defensive_submitter_id: OPPONENT }, COACH)).toBe(
+        'UC Davis'
+    );
+    expect(coachedTeamOf({ ...base, offensive_submitter_id: OPPONENT, defensive_submitter_id: COACH }, COACH)).toBe(
+        'Montana'
+    );
+    expect(
+        coachedTeamOf(
+            { ...base, possession: 'AWAY', offensive_submitter_id: COACH, defensive_submitter_id: OPPONENT },
+            COACH
+        )
+    ).toBe('Montana');
+    expect(
+        coachedTeamOf({ ...base, offensive_submitter_id: OPPONENT, defensive_submitter_id: 'coach-3' }, COACH)
+    ).toBeNull();
 });

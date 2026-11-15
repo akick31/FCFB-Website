@@ -69,3 +69,11 @@ describe('accent fallbacks', () => {
         expect(colors.away).toBe('#e0a526');
     });
 });
+
+describe('drive field colors', () => {
+    it('moves a dark green team off the turf to its secondary', () => {
+        const home = { primaryColor: '#154733', secondaryColor: '#fee123' };
+        const away = { primaryColor: '#990000', secondaryColor: '#ffffff' };
+        expect(pickMatchupColors(home, away, '#1a5c2a').home).toBe('#fee123');
+    });
+});

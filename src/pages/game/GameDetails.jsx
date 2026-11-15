@@ -495,8 +495,6 @@ const GameDetails = ({ isAdmin }) => {
                                 gameId={game.game_id}
                                 homeMark={homeMark}
                                 awayMark={awayMark}
-                                homeColor={homeColor}
-                                awayColor={awayColor}
                             />
                         </Box>
                     </Panel>
@@ -676,8 +674,6 @@ const GameDetails = ({ isAdmin }) => {
                             gameId={game.game_id}
                             homeMark={homeMark}
                             awayMark={awayMark}
-                            homeColor={homeColor}
-                            awayColor={awayColor}
                         />
                     )}
                 </DialogContent>

@@ -9,19 +9,21 @@ jest.mock('../../../hooks/useGameField', () => ({
 
 const play = { play_id: 1, ball_location: 25, yards: 10, down: 1, yards_to_go: 10, clock: 600 };
 const drive = (possession) => ({ possession, outcome: 'Punt', plays: [play] });
-const marks = { homeMark: { name: 'Wyoming' }, awayMark: { name: 'Idaho' } };
+const marks = {
+    homeMark: { name: 'Wyoming', primaryColor: '#492f24', secondaryColor: '#ffc425' },
+    awayMark: { name: 'Utah', primaryColor: '#c8102e', secondaryColor: '#ffffff' },
+};
 
-const renderChart = (possession) =>
-    render(<DriveFieldChart drive={drive(possession)} gameId={7} homeColor="#492f24" awayColor="#b3a369" {...marks} />);
+const renderChart = (possession) => render(<DriveFieldChart drive={drive(possession)} gameId={7} {...marks} />);
 
 test('the rendered game field is the chart background', () => {
     const { container } = renderChart('HOME');
     expect(container.querySelector('image').getAttribute('href')).toBe('blob:field');
 });
 
-test('the drive bar is drawn in the offense color', () => {
-    expect(renderChart('HOME').container.querySelector('rect[rx]').getAttribute('fill')).toBe('#492f24');
-    expect(renderChart('AWAY').container.querySelector('rect[rx]').getAttribute('fill')).toBe('#b3a369');
+test('the drive bar uses the offense color that stands out on the turf', () => {
+    expect(renderChart('HOME').container.querySelector('rect[rx]').getAttribute('fill')).toBe('#ffc425');
+    expect(renderChart('AWAY').container.querySelector('rect[rx]').getAttribute('fill')).toBe('#ffffff');
 });
 
 test('an away drive runs toward the left end zone', () => {

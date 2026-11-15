@@ -7,6 +7,7 @@ import Panel from '../../components/ui/Panel';
 import SectionTitle from '../../components/ui/SectionTitle';
 import SelectPill from '../../components/ui/SelectPill';
 import SearchableSelect from '../../components/ui/SearchableSelect';
+import Toggle from '../../components/ui/Toggle';
 import StatTile, { TileGrid } from '../../components/ui/StatTile';
 import DataTable from '../../components/ui/DataTable';
 import { getAllUsers } from '../../api/userApi';
@@ -15,7 +16,7 @@ import { getGamesByIds } from '../../api/gameApi';
 import { getCoachStats } from '../../api/coachStatsApi';
 import { getAllSeasons, getCurrentSeason } from '../../api/seasonApi';
 import { aggregateSeasonStats } from '../../utils/aggregateStats';
-import { orderedGameIdsFromPlays } from '../../utils/scoutingReport';
+import { orderedGameIdsFromPlays, coachedTeamOf } from '../../utils/scoutingReport';
 import {
     playCallSplit,
     playCallByDown,
@@ -26,7 +27,7 @@ import {
 import { formatResponseTime } from '../../utils/timeUtils';
 import { humanizeEnumValue } from '../../utils/humanize';
 import { useSeo } from '../../hooks/useSeo';
-import { inputSx, labelSx, primaryButtonSx } from '../../styles/controls';
+import { CONTROL_HEIGHT, inputSx, labelSx, primaryButtonSx } from '../../styles/controls';
 
 const userLabel = (user) => (user.team ? `${user.username} (${user.team})` : user.username);
 const num = (value) => (value == null ? '-' : Number(value).toLocaleString());
@@ -55,6 +56,7 @@ const CoachTendencyCard = () => {
     const [users, setUsers] = useState([]);
     const [seasons, setSeasons] = useState([]);
     const [seasonView, setSeasonView] = useState('alltime');
+    const [includeSubGames, setIncludeSubGames] = useState(true);
     const [loadingLookups, setLoadingLookups] = useState(true);
 
     const [targetLabel, setTargetLabel] = useState('');
@@ -109,7 +111,11 @@ const CoachTendencyCard = () => {
         [targetOptions, targetLabel]
     );
 
-    const generate = async (overrideTarget = resolvedTarget, overrideSeason = seasonView) => {
+    const generate = async (
+        overrideTarget = resolvedTarget,
+        overrideSeason = seasonView,
+        overrideIncludeSubGames = includeSubGames
+    ) => {
         const overrideUser = users.find((user) => user.discord_id === overrideTarget) || null;
         if (!overrideTarget || !overrideUser) {
             setError('Pick a coach first.');
@@ -119,10 +125,14 @@ const CoachTendencyCard = () => {
         setLoading(true);
         setError('');
         try {
-            const [seasonRows, plays] = await Promise.all([
-                getCoachStats(overrideUser.username).catch(() => []),
+            const [seasonRows, allPlays] = await Promise.all([
+                getCoachStats(overrideUser.username, overrideIncludeSubGames).catch(() => []),
                 getAllPlaysByDiscordId(overrideTarget).catch(() => []),
             ]);
+            const coachedTeams = new Set(seasonRows.map((row) => row.team));
+            const plays = overrideIncludeSubGames
+                ? allPlays
+                : allPlays.filter((play) => coachedTeams.has(coachedTeamOf(play, overrideTarget)));
 
             if (!scope.active) {
                 return;
@@ -164,7 +174,10 @@ const CoachTendencyCard = () => {
                 kickoff: kickoffTypeSplit(scopedPlays, 'coach', overrideTarget),
                 tempo: tempoSplit(scopedPlays, 'coach', overrideTarget),
             });
-            setSearchParams({ coach: overrideTarget, season: String(overrideSeason) }, { replace: true });
+            setSearchParams(
+                { coach: overrideTarget, season: String(overrideSeason), subs: overrideIncludeSubGames ? '1' : '0' },
+                { replace: true }
+            );
         } catch (err) {
             if (scope.active) {
                 setError(err.message);
@@ -183,6 +196,7 @@ const CoachTendencyCard = () => {
         autoRanRef.current = true;
         const urlTarget = searchParams.get('coach');
         const urlSeason = searchParams.get('season');
+        const urlIncludeSubGames = searchParams.get('subs') !== '0';
         const option = targetOptions.find((entry) => entry.value === urlTarget);
         if (option) {
             setTargetLabel(option.label);
@@ -191,8 +205,9 @@ const CoachTendencyCard = () => {
         if (urlSeason) {
             setSeasonView(resolvedSeason);
         }
+        setIncludeSubGames(urlIncludeSubGames);
         if (option) {
-            generate(option.value, resolvedSeason);
+            generate(option.value, resolvedSeason, urlIncludeSubGames);
         }
     }, [targetOptions]);
 
@@ -228,6 +243,20 @@ const CoachTendencyCard = () => {
                                 ]}
                                 ariaLabel="Season scope"
                             />
+                        </Box>
+                        <Box
+                            sx={{
+                                flex: '0 0 auto',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                height: CONTROL_HEIGHT,
+                            }}
+                        >
+                            <Toggle on={includeSubGames} onClick={() => setIncludeSubGames((prev) => !prev)} />
+                            <Box component="span" sx={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                Include sub games
+                            </Box>
                         </Box>
                         <Box
                             component="button"

@@ -462,8 +462,6 @@ const DriveChart = () => {
                             gameId={game.game_id}
                             homeMark={homeMark}
                             awayMark={awayMark}
-                            homeColor={homeColor}
-                            awayColor={awayColor}
                         />
                     )}
                 </DialogContent>
