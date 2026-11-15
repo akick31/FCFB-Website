@@ -13,8 +13,6 @@ import WinProbChart from '../../components/game/detail/WinProbChart';
 import ScoreChart from '../../components/game/detail/ScoreChart';
 import DriveFieldChart from '../../components/game/detail/DriveFieldChart';
 import { useTeamsMap, toEntry } from '../../hooks/useTeamsMap';
-import { useColorMode } from '../../theme/ColorModeContext';
-import { pickTeamColor } from '../../utils/teamColor';
 import { getFilteredGames, getGameById } from '../../api/gameApi';
 import { getAllPlaysByGameId } from '../../api/playApi';
 import { buildWinProbSeries, buildScoreSeries, quarterBoundaries, formatClock } from '../../utils/gameDetail';
@@ -36,7 +34,6 @@ const DriveChart = () => {
     useSeo({ title: 'Drive Chart & Replay | Fake College Football', description: 'Step through a game play-by-play with drive and win-probability context.' });
 
     const teamsMap = useTeamsMap();
-    const { mode } = useColorMode();
     const [searchParams, setSearchParams] = useSearchParams();
     const autoRanRef = useRef(false);
 
@@ -130,8 +127,6 @@ const DriveChart = () => {
 
     const homeMark = game ? (teamsMap[game.home_team] || toEntry({ name: game.home_team })) : null;
     const awayMark = game ? (teamsMap[game.away_team] || toEntry({ name: game.away_team })) : null;
-    const homeColor = pickTeamColor(homeMark, mode);
-    const awayColor = pickTeamColor(awayMark, mode);
 
     const wpSeries = useMemo(() => buildWinProbSeries(orderedPlays), [orderedPlays]);
     const scoreSeries = useMemo(() => buildScoreSeries(orderedPlays), [orderedPlays]);
@@ -167,12 +162,12 @@ const DriveChart = () => {
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '16px', mb: '16px', alignItems: 'stretch' }}>
                         <Panel header="Win probability">
                             <Box sx={{ p: 2 }}>
-                                <WinProbChart series={wpSeries} homeColor={homeColor} awayColor={awayColor} homeMark={homeMark} awayMark={awayMark} quarterMarks={wpMarks} />
+                                <WinProbChart series={wpSeries} homeMark={homeMark} awayMark={awayMark} quarterMarks={wpMarks} />
                             </Box>
                         </Panel>
                         <Panel header="Score">
                             <Box sx={{ p: 2 }}>
-                                <ScoreChart series={scoreSeries} homeColor={homeColor} awayColor={awayColor} homeAbbr={homeMark?.abbreviation} awayAbbr={awayMark?.abbreviation} />
+                                <ScoreChart series={scoreSeries} homeMark={homeMark} awayMark={awayMark} homeName={homeMark?.name || game.home_team} awayName={awayMark?.name || game.away_team} />
                             </Box>
                         </Panel>
                     </Box>
@@ -273,7 +268,7 @@ const DriveChart = () => {
                 </DialogTitle>
                 <DialogContent dividers>
                     {viewedDrive && game && (
-                        <DriveFieldChart drive={viewedDrive} homeMark={homeMark} awayMark={awayMark} homeColor={homeColor} awayColor={awayColor} />
+                        <DriveFieldChart drive={viewedDrive} homeMark={homeMark} awayMark={awayMark} />
                     )}
                 </DialogContent>
             </Dialog>
