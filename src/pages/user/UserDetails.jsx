@@ -31,6 +31,7 @@ import SeasonStatTable from '../../components/team/SeasonStatTable';
 import MultiLineChart from '../../components/charts/MultiLineChart';
 import CoachHeader from '../../components/user/CoachHeader';
 import PageTabs from '../../components/ui/PageTabs';
+import Toggle from '../../components/ui/Toggle';
 import CoachEditDialog from '../../components/admin/CoachEditDialog';
 import { compact, secondaryButtonSx } from '../../styles/controls';
 import CurrentTeamsPanel from '../../components/user/CurrentTeamsPanel';
@@ -95,7 +96,8 @@ const UserDetails = ({ user: signedInUser }) => {
     const [allTeams, setAllTeams] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [seriesByTeam, setSeriesByTeam] = useState({});
-    const [coachStats, setCoachStats] = useState([]);
+    const [allCoachStats, setAllCoachStats] = useState([]);
+    const [includeSubGames, setIncludeSubGames] = useState(false);
     const [seasons, setSeasons] = useState([]);
     const [seasonView, setSeasonView] = useState(null);
     const [championSeason, setChampionSeason] = useState(null);
@@ -156,12 +158,12 @@ const UserDetails = ({ user: signedInUser }) => {
                     coachedTeamNames.length
                         ? getEloHistoryForTeams(coachedTeamNames).catch(() => [])
                         : Promise.resolve([]),
-                    getCoachStats(foundUser.username),
+                    getCoachStats(foundUser.username, true),
                 ]);
                 if (!active) {
                     return;
                 }
-                setCoachStats(statsData);
+                setAllCoachStats(statsData);
 
                 const perTeam = coachedTeamNames.map((teamName) => {
                     const teamEloRows = eloRows.filter((row) => row.team === teamName);
@@ -222,6 +224,18 @@ const UserDetails = ({ user: signedInUser }) => {
         }
         return teamEntries[0]?.team || fromUserTeam || null;
     }, [teamEntries, allTeams, user]);
+
+    const hasSubGameStats = useMemo(() => allCoachStats.some((row) => row.sub_games), [allCoachStats]);
+
+    const coachStats = useMemo(
+        () => (includeSubGames ? allCoachStats : allCoachStats.filter((row) => !row.sub_games)),
+        [allCoachStats, includeSubGames]
+    );
+
+    const toggleSubGames = () => {
+        setIncludeSubGames((prev) => !prev);
+        setStatsSeasonView('career');
+    };
 
     const careerStats = useMemo(() => aggregateSeasonStats(coachStats), [coachStats]);
 
@@ -401,17 +415,35 @@ const UserDetails = ({ user: signedInUser }) => {
 
             {shownTab === 'stats' && (
                 <>
-                    {statSeasons.length > 0 && (
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '12px' }}>
-                            <SelectPill
-                                label="Viewing"
-                                value={statsSeasonView}
-                                onChange={(next) => setStatsSeasonView(next === 'career' ? 'career' : Number(next))}
-                                options={[
-                                    { value: 'career', label: 'Career' },
-                                    ...statSeasons.map((option) => ({ value: option, label: `Season ${option}` })),
-                                ]}
-                            />
+                    {(statSeasons.length > 0 || hasSubGameStats) && (
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                alignItems: 'center',
+                                gap: '16px',
+                                mb: '12px',
+                            }}
+                        >
+                            {hasSubGameStats && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Toggle on={includeSubGames} onClick={toggleSubGames} />
+                                    <Box component="span" sx={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                        Include sub games
+                                    </Box>
+                                </Box>
+                            )}
+                            {statSeasons.length > 0 && (
+                                <SelectPill
+                                    label="Viewing"
+                                    value={statsSeasonView}
+                                    onChange={(next) => setStatsSeasonView(next === 'career' ? 'career' : Number(next))}
+                                    options={[
+                                        { value: 'career', label: 'Career' },
+                                        ...statSeasons.map((option) => ({ value: option, label: `Season ${option}` })),
+                                    ]}
+                                />
+                            )}
                         </Box>
                     )}
                     <TileGrid>
@@ -457,7 +489,7 @@ const UserDetails = ({ user: signedInUser }) => {
                             <SeasonStatTable stats={displayedStats} />
                         </Panel>
                     )}
-                    {coachStats.length === 0 && (
+                    {allCoachStats.length === 0 && (
                         <Panel sx={{ mt: '16px' }}>
                             <Box sx={{ p: 3, textAlign: 'center', color: 'var(--text-muted)' }}>
                                 Detailed stats for this coach haven&apos;t been generated yet. They fill in after the

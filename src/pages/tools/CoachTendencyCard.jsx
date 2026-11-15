@@ -56,7 +56,7 @@ const CoachTendencyCard = () => {
     const [users, setUsers] = useState([]);
     const [seasons, setSeasons] = useState([]);
     const [seasonView, setSeasonView] = useState('alltime');
-    const [includeSubGames, setIncludeSubGames] = useState(true);
+    const [includeSubGames, setIncludeSubGames] = useState(false);
     const [loadingLookups, setLoadingLookups] = useState(true);
 
     const [targetLabel, setTargetLabel] = useState('');
@@ -196,7 +196,7 @@ const CoachTendencyCard = () => {
         autoRanRef.current = true;
         const urlTarget = searchParams.get('coach');
         const urlSeason = searchParams.get('season');
-        const urlIncludeSubGames = searchParams.get('subs') !== '0';
+        const urlIncludeSubGames = searchParams.get('subs') === '1';
         const option = targetOptions.find((entry) => entry.value === urlTarget);
         if (option) {
             setTargetLabel(option.label);

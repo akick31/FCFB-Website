@@ -160,7 +160,7 @@ test('an obsolete username-history response cannot launch coach stats or set a c
     await act(async () => rerender(<UserDetails />));
     await act(async () => finish([]));
     expect(screen.getByText('Coach B Champion null')).toBeTruthy();
-    expect(getCoachStats.mock.calls).toEqual([['B']]);
+    expect(getCoachStats.mock.calls).toEqual([['B', true]]);
 });
 
 test('username history completed after unmount cannot start more profile requests', async () => {
