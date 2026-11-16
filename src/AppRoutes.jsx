@@ -314,7 +314,7 @@ const AppRoutes = () => {
                         <Route path="*" element={<NotFound />} />
                     </Routes>
                 </Box>
-                <Footer />
+                <Footer user={user} />
             </Box>
         </ColorModeProvider>
     );
