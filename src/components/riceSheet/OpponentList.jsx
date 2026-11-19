@@ -1,10 +1,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, Link } from '@mui/material';
 
 const COLUMNS = '28px 1fr 40px 56px';
 
-const OpponentList = ({ loading, opponents }) => {
+const messageSx = {
+    height: 240,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 0.5,
+    color: 'var(--text-muted)',
+    fontSize: '0.78rem',
+};
+
+const OpponentList = ({ loading, failed, onRetry, opponents }) => {
     if (loading) {
         return (
             <Box sx={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -12,21 +23,23 @@ const OpponentList = ({ loading, opponents }) => {
             </Box>
         );
     }
-    if (!opponents.length) {
+    if (failed) {
         return (
-            <Box
-                sx={{
-                    height: 240,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--text-muted)',
-                    fontSize: '0.78rem',
-                }}
-            >
-                No games scheduled yet.
+            <Box sx={messageSx}>
+                Couldn&apos;t load schedule.
+                <Link
+                    component="button"
+                    type="button"
+                    onClick={onRetry}
+                    sx={{ color: 'var(--brand)', fontWeight: 700, font: 'inherit' }}
+                >
+                    Retry
+                </Link>
             </Box>
         );
+    }
+    if (!opponents.length) {
+        return <Box sx={messageSx}>No games scheduled yet.</Box>;
     }
     return (
         <Box sx={{ height: 240, overflowY: 'auto' }}>
@@ -91,6 +104,8 @@ const OpponentList = ({ loading, opponents }) => {
 
 OpponentList.propTypes = {
     loading: PropTypes.bool.isRequired,
+    failed: PropTypes.bool.isRequired,
+    onRetry: PropTypes.func.isRequired,
     opponents: PropTypes.arrayOf(
         PropTypes.shape({
             week: PropTypes.number.isRequired,

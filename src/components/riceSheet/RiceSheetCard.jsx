@@ -62,6 +62,8 @@ const RiceSheetCard = ({
     sosRank,
     opponents,
     opponentsLoading,
+    opponentsFailed,
+    onRetryOpponents,
     onRemove,
     compact,
     onToggleCompact,
@@ -208,7 +210,12 @@ const RiceSheetCard = ({
                             </Box>
 
                             <Box sx={{ borderTop: '1px solid var(--line-soft)', pt: 0.5 }} onClick={stopPropagation}>
-                                <OpponentList loading={opponentsLoading} opponents={opponents} />
+                                <OpponentList
+                                    loading={opponentsLoading}
+                                    failed={opponentsFailed}
+                                    onRetry={onRetryOpponents}
+                                    opponents={opponents}
+                                />
                             </Box>
 
                             <Box
@@ -251,6 +258,8 @@ RiceSheetCard.propTypes = {
     sosRank: PropTypes.number,
     opponents: PropTypes.array.isRequired,
     opponentsLoading: PropTypes.bool.isRequired,
+    opponentsFailed: PropTypes.bool.isRequired,
+    onRetryOpponents: PropTypes.func.isRequired,
     onRemove: PropTypes.func.isRequired,
     compact: PropTypes.bool,
     onToggleCompact: PropTypes.func,

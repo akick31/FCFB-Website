@@ -91,6 +91,7 @@ const RiceSheet = () => {
     const [seasonConferenceByTeam, setSeasonConferenceByTeam] = useState({});
     const [opponentsByTeamId, setOpponentsByTeamId] = useState({});
     const [opponentsLoadingByTeamId, setOpponentsLoadingByTeamId] = useState({});
+    const [opponentsFailedByTeamId, setOpponentsFailedByTeamId] = useState({});
     const opponentsScope = useRef(null);
 
     useEffect(() => {
@@ -328,6 +329,7 @@ const RiceSheet = () => {
         opponentsScope.current = scope;
         setOpponentsByTeamId({});
         setOpponentsLoadingByTeamId({});
+        setOpponentsFailedByTeamId({});
         return () => {
             if (opponentsScope.current === scope) {
                 opponentsScope.current = null;
@@ -341,7 +343,7 @@ const RiceSheet = () => {
         }
         const scope = opponentsScope.current;
         selectedTeams.forEach((team) => {
-            if (opponentsByTeamId[team.id] || opponentsLoadingByTeamId[team.id]) {
+            if (opponentsByTeamId[team.id] || opponentsLoadingByTeamId[team.id] || opponentsFailedByTeamId[team.id]) {
                 return;
             }
             setOpponentsLoadingByTeamId((prev) => ({ ...prev, [team.id]: true }));
@@ -372,7 +374,7 @@ const RiceSheet = () => {
                 })
                 .catch(() => {
                     if (opponentsScope.current === scope) {
-                        setOpponentsByTeamId((prev) => ({ ...prev, [team.id]: [] }));
+                        setOpponentsFailedByTeamId((prev) => ({ ...prev, [team.id]: true }));
                     }
                 })
                 .finally(() => {
@@ -381,7 +383,14 @@ const RiceSheet = () => {
                     }
                 });
         });
-    }, [selectedTeams, season, opponentsByTeamId, opponentsLoadingByTeamId]);
+    }, [selectedTeams, season, opponentsByTeamId, opponentsLoadingByTeamId, opponentsFailedByTeamId]);
+
+    const retryOpponents = (teamId) =>
+        setOpponentsFailedByTeamId((prev) => {
+            const next = { ...prev };
+            delete next[teamId];
+            return next;
+        });
 
     const rankedOpponents = (teamId) =>
         (opponentsByTeamId[teamId] || [])
@@ -557,6 +566,8 @@ const RiceSheet = () => {
                                 sosRank={sosRankByTeamId[team.id]}
                                 opponents={rankedOpponents(team.id)}
                                 opponentsLoading={Boolean(opponentsLoadingByTeamId[team.id])}
+                                opponentsFailed={Boolean(opponentsFailedByTeamId[team.id])}
+                                onRetryOpponents={() => retryOpponents(team.id)}
                                 onRemove={() => removeTeam(team.id)}
                                 compact={isCardCompact(team.id)}
                                 onToggleCompact={() => toggleCardCompact(team.id)}
