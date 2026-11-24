@@ -10,7 +10,7 @@ import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import { getAllSeasons, getCurrentSeasonOrLatest } from '../../api/seasonApi';
 import { getTeamSeasonConference } from '../../api/teamSeasonConferenceApi';
 import { getScheduleBySeasonAndTeam } from '../../api/scheduleApi';
-import { getRankingMetrics, getValidRankingMetricWeeks } from '../../api/rankingMetricApi';
+import { getRankingMetrics, getRankingMetricWeeks } from '../../api/rankingMetricApi';
 import { getTeamResumeMetrics } from '../../api/teamResumeMetricApi';
 import { rankMetricEntries } from '../../utils/rankMetricEntries';
 import { rankingMetricHigherIsBetter } from '../../constants/rankingMetrics';
@@ -35,6 +35,7 @@ const METRIC_TYPES = [
 const MAX_TEAMS = 25;
 const BOWL_START_WEEK = 14;
 const TOP_N_QUICK_VIEWS = [10, 25];
+const WEEK_SOURCE_METRIC_TYPE = 'COMPOSITE';
 
 const OPPONENT_SORTS = [
     { value: 'week', label: 'Week' },
@@ -136,7 +137,7 @@ const RiceSheet = () => {
             return undefined;
         }
         let active = true;
-        getValidRankingMetricWeeks(season)
+        getRankingMetricWeeks(season, WEEK_SOURCE_METRIC_TYPE)
             .then((weeks) => {
                 if (active) {
                     setValidWeeks(weeks || []);
@@ -264,7 +265,7 @@ const RiceSheet = () => {
     );
 
     useEffect(() => {
-        if (!Object.keys(seasonConferenceByTeam).length) {
+        if (!teams.length || !Object.keys(seasonConferenceByTeam).length) {
             return;
         }
         setSelectedTeamIds((prev) =>
