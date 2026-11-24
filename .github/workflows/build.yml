@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,20 +22,20 @@ jobs:
     steps:
       # Checkout the repository
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       # Set up Node.js environment
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '22.23.3'
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
       # Install dependencies
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit --no-fund
 #
 #      # Run tests
 #      - name: Run tests
@@ -83,7 +87,7 @@ jobs:
         id: get_crumb
         run: |
           CRUMB=$(curl -u "${{ secrets.JENKINS_USER }}:${{ secrets.JENKINS_API_TOKEN }}" -X GET "http://51.81.32.234:8080/crumbIssuer/api/json" | jq -r .crumb)
-          echo "::set-output name=crumb::$CRUMB"
+          echo "crumb=$CRUMB" >> "$GITHUB_OUTPUT"
 
       # Trigger Jenkins build
       - name: Trigger Jenkins build
