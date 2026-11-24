@@ -10,7 +10,7 @@ import { getAllTeamsIncludingInactive } from '../../api/teamApi';
 import { getAllSeasons, getCurrentSeasonOrLatest } from '../../api/seasonApi';
 import { getTeamSeasonConference } from '../../api/teamSeasonConferenceApi';
 import { getScheduleBySeasonAndTeam } from '../../api/scheduleApi';
-import { getRankingMetrics, getValidRankingMetricWeeks } from '../../api/rankingMetricApi';
+import { getRankingMetrics, getRankingMetricWeeks } from '../../api/rankingMetricApi';
 import { getTeamResumeMetrics } from '../../api/teamResumeMetricApi';
 import { rankMetricEntries } from '../../utils/rankMetricEntries';
 import { rankingMetricHigherIsBetter } from '../../constants/rankingMetrics';
@@ -29,6 +29,7 @@ const METRIC_TYPES = [
 const MAX_TEAMS = 25;
 const BOWL_START_WEEK = 14;
 const TOP_N_QUICK_VIEWS = [10, 25];
+const WEEK_SOURCE_METRIC_TYPE = 'COMPOSITE';
 
 const OPPONENT_SORTS = [
     { value: 'week', label: 'Week' },
@@ -50,6 +51,8 @@ const maxWeek = (list) => {
     const numeric = (list || []).map(Number).filter(Number.isFinite);
     return numeric.length ? Math.max(...numeric) : null;
 };
+
+const opponentsKey = (season, teamId) => `${season}:${teamId}`;
 
 const higherIsBetterFor = (type) => (type.startsWith('ADJUSTED_') ? adjustedMetricHigherIsBetter(type) : rankingMetricHigherIsBetter(type));
 
@@ -106,7 +109,7 @@ const RiceSheet = () => {
     useEffect(() => {
         if (season == null) return undefined;
         let active = true;
-        getValidRankingMetricWeeks(season).then((weeks) => {
+        getRankingMetricWeeks(season, WEEK_SOURCE_METRIC_TYPE).then((weeks) => {
             if (active) setValidWeeks(weeks || []);
         }).catch(() => { if (active) setValidWeeks([]); });
         return () => { active = false; };
@@ -183,7 +186,7 @@ const RiceSheet = () => {
     );
 
     useEffect(() => {
-        if (!Object.keys(seasonConferenceByTeam).length) return;
+        if (!teams.length || !Object.keys(seasonConferenceByTeam).length) return;
         setSelectedTeamIds((prev) => prev.filter((id) => {
             const team = teamById[id];
             return team && seasonConferenceByTeam[team.name] != null;
@@ -230,8 +233,9 @@ const RiceSheet = () => {
     useEffect(() => {
         if (season == null) return;
         selectedTeams.forEach((team) => {
-            if (opponentsByTeamId[team.id] || opponentsLoadingByTeamId[team.id]) return;
-            setOpponentsLoadingByTeamId((prev) => ({ ...prev, [team.id]: true }));
+            const key = opponentsKey(season, team.id);
+            if (opponentsByTeamId[key] || opponentsLoadingByTeamId[key]) return;
+            setOpponentsLoadingByTeamId((prev) => ({ ...prev, [key]: true }));
             getScheduleBySeasonAndTeam(season, team.name).then((entries) => {
                 const opponents = (entries || [])
                     .filter((entry) => entry.home_team === team.name || entry.away_team === team.name)
@@ -251,16 +255,16 @@ const RiceSheet = () => {
                         };
                     })
                     .sort((a, b) => (a.week || 0) - (b.week || 0));
-                setOpponentsByTeamId((prev) => ({ ...prev, [team.id]: opponents }));
+                setOpponentsByTeamId((prev) => ({ ...prev, [key]: opponents }));
             }).catch(() => {
-                setOpponentsByTeamId((prev) => ({ ...prev, [team.id]: [] }));
+                setOpponentsByTeamId((prev) => ({ ...prev, [key]: [] }));
             }).finally(() => {
-                setOpponentsLoadingByTeamId((prev) => ({ ...prev, [team.id]: false }));
+                setOpponentsLoadingByTeamId((prev) => ({ ...prev, [key]: false }));
             });
         });
     }, [selectedTeams, season]);
 
-    const rankedOpponents = (teamId) => (opponentsByTeamId[teamId] || [])
+    const rankedOpponents = (teamId) => (opponentsByTeamId[opponentsKey(season, teamId)] || [])
         .filter((opponent) => !excludeBowls || opponent.week < BOWL_START_WEEK)
         .map((opponent) => ({
             ...opponent,
@@ -392,7 +396,7 @@ const RiceSheet = () => {
                                 resume={resumeByTeamId[team.id]}
                                 sosRank={sosRankByTeamId[team.id]}
                                 opponents={rankedOpponents(team.id)}
-                                opponentsLoading={Boolean(opponentsLoadingByTeamId[team.id])}
+                                opponentsLoading={Boolean(opponentsLoadingByTeamId[opponentsKey(season, team.id)])}
                                 onRemove={() => removeTeam(team.id)}
                                 compact={isCardCompact(team.id)}
                                 onToggleCompact={() => toggleCardCompact(team.id)}
