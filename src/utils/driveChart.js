@@ -6,7 +6,11 @@ export const orderPlaysChronologically = (plays) => [...plays].sort((a, b) =>
     || ((b.clock ?? 0) - (a.clock ?? 0))
     || ((a.play_id ?? 0) - (b.play_id ?? 0)));
 
-const KICKOFF_CALLS = ['KICKOFF_NORMAL', 'KICKOFF_ONSIDE', 'KICKOFF_SQUIB'];
+const REGULATION_QUARTERS = 4;
+const isOvertime = (play) => (play.quarter ?? 0) > REGULATION_QUARTERS;
+const startsNewOvertimePeriod = (play, previousPlay) => isOvertime(play) && play.quarter !== previousPlay.quarter;
+
+const KICKOFF_CALLS =['KICKOFF_NORMAL', 'KICKOFF_ONSIDE', 'KICKOFF_SQUIB'];
 const isKickoff = (play) => KICKOFF_CALLS.includes(String(play.play_call || '').toUpperCase());
 
 const RETURN_TOUCHDOWN_RESULTS = ['RETURN_TOUCHDOWN', 'PUNT_RETURN_TOUCHDOWN', 'KICK_SIX', 'TURNOVER_TOUCHDOWN', 'KICKING_TEAM_TOUCHDOWN', 'PUNT_TEAM_TOUCHDOWN'];
@@ -77,6 +81,13 @@ const driveOutcomeLabel = (plays, endedByClock) => {
     return humanizeEnumValue(outcome || call || 'drive ended');
 };
 
+const driveStartReason = (play, lastKickoff, previousDrive) => {
+    if (lastKickoff) return kickoffStartReason(lastKickoff);
+    if (isOvertime(play)) return 'Overtime possession';
+    if (previousDrive) return turnoverStartReason(previousDrive.plays[previousDrive.plays.length - 1]);
+    return 'Start of game';
+};
+
 export const buildDrives = (orderedPlays) => {
     const halfEndQuarters = new Set();
     let hasGameEndMarker = false;
@@ -103,11 +114,10 @@ export const buildDrives = (orderedPlays) => {
         }
         const previousPlay = current?.plays[current.plays.length - 1];
         const continuesReturnTouchdown = isConversionAttempt(play) && previousPlay && isReturnTouchdown(previousPlay);
-        if (!current || (!continuesReturnTouchdown && current.possession !== play.possession)) {
+        const possessionChanged = current && !continuesReturnTouchdown && current.possession !== play.possession;
+        if (!current || possessionChanged || startsNewOvertimePeriod(play, previousPlay)) {
             const previousDrive = drives[drives.length - 1];
-            const startReason = lastKickoff
-                ? kickoffStartReason(lastKickoff)
-                : (previousDrive ? turnoverStartReason(previousDrive.plays[previousDrive.plays.length - 1]) : 'Start of game');
+            const startReason = driveStartReason(play, lastKickoff, previousDrive);
             current = {
                 possession: play.possession,
                 team: play.possession === 'HOME' ? play.home_team : play.away_team,
@@ -126,10 +136,11 @@ export const buildDrives = (orderedPlays) => {
     });
 
     drives.forEach((drive, i) => {
-        const driveEndQuarter = drive.plays[drive.plays.length - 1].quarter;
+        const driveEndPlay = drive.plays[drive.plays.length - 1];
+        const driveEndQuarter = driveEndPlay.quarter;
         const nextDrive = drives[i + 1];
         const precedesLaterQuarter = !nextDrive || nextDrive.plays[0].quarter > driveEndQuarter;
-        if (!precedesLaterQuarter) return;
+        if (!precedesLaterQuarter || isOvertime(driveEndPlay)) return;
         if (!nextDrive && hasGameEndMarker) {
             drive.endedByClock = 'END_OF_GAME';
         } else if (halfEndQuarters.has(driveEndQuarter)) {
